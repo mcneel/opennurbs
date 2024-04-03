@@ -105,6 +105,9 @@ public:
   bool m_bVisible;    // true if notes window is showing
   bool m_bHTML;       // true if notes are in HTML
 
+  bool m_bLocked = false;
+  unsigned char reserved1 = 0;
+
   // last window position
   int m_window_left;
   int m_window_top;

@@ -696,6 +696,19 @@ ON__UINT64 ON_SerialNumberMap::ActiveIdCount() const
   return m_active_id_count;
 }
 
+// 10 March 2024 S. Baer (RH-80748)
+// The VS2022 compiler crashes in a release build when compiling the
+// following function. Disable optimizations for this specific compile.
+#if defined(ON_RUNTIME_WIN) && defined(_MSC_VER) && !defined(ON_DEBUG)
+// Visual Studio 2022 initial release is 1930
+#if _MSC_VER >= 1930
+#define ON_VS2022_COMPILER_CRASH
+#endif
+#endif
+
+#if defined(ON_VS2022_COMPILER_CRASH)
+#pragma optimize("", off)
+#endif
 ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FirstElement() const
 {
   SN_ELEMENT* e=nullptr;
@@ -756,6 +769,10 @@ ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FirstElement() const
   }
   return e;
 }
+#if defined(ON_VS2022_COMPILER_CRASH)
+#pragma optimize("", on)
+#endif
+
 
 struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::LastElement() const
 {

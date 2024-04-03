@@ -714,7 +714,7 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
       ++m_sharp_edge_count;
       bSharpQuadrant[i % 4U] = true;
       bSharpQuadrant[(i + 1U) % 4U] = true;
-      bSharpQuadrant[(i + 2U) % 4U] = true;
+      bSharpQuadrant[(i + 3U) % 4U] = true;
     }
   }
 
@@ -733,15 +733,30 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
   bExtraordinaryCornerVertex[fvi2] = bExtraordinaryCornerVertex[fvi1];
   bExtraordinaryCornerVertex[fvi3] = bExtraordinaryCornerVertex[fvi1];
 
+
+  const ON_SubDVertex* quad_vertex[4] = {
+    m_vertex_grid[1][1],
+    m_vertex_grid[2][1],
+    m_vertex_grid[2][2],
+    m_vertex_grid[1][2]
+  };
+
+  for (unsigned int corner_index = 0; corner_index < 4; corner_index++)
+  {
+    // Dale Lear 2024 Feb 28 Fix RH-80676
+    // Even when bSharpQuadrant[corner_index] is true from tests above,
+    // we have to call quad_vertex[corner_index]->VertexSharpness() to
+    // insure all sharp edges are taken into account.
+    if (quad_vertex[corner_index]->VertexSharpness() > 0.0)
+    {
+      bSharpQuadrant[corner_index] = true;
+      bSharpQuadrant[(corner_index + 1U) % 4U] = true;
+      bSharpQuadrant[(corner_index + 3U) % 4U] = true;
+    }
+  }
+
   if (false == bEdgeTagX)
   {
-    const ON_SubDVertex* quad_vertex[4] = {
-      m_vertex_grid[1][1],
-      m_vertex_grid[2][1],
-      m_vertex_grid[2][2],
-      m_vertex_grid[1][2]
-    };
-
     const bool bQuadVertexIsSmoothOrCrease[4] =
     {
       quad_vertex[0]->IsSmoothOrCrease(),
@@ -757,9 +772,6 @@ void ON_SubDQuadNeighborhood::SetPatchStatus(
 
       if (quad_vertex[corner_index]->IsDart())
         continue;
-
-      if (false == bSharpQuadrant[corner_index] && quad_vertex[corner_index]->Internal_CreaseSectorVertexSharpnessForExperts() > 0.0)
-        bSharpQuadrant[corner_index] = true;
 
       if (false == bQuadVertexIsSmoothOrCrease[(corner_index+1)%4])
         continue;

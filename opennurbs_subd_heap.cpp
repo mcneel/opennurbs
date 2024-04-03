@@ -477,11 +477,13 @@ ON_SubDVertex* ON_SubD_FixedSizeHeap::AllocateVertex(
 
   v1->m_vertex_tag = vertex0->m_vertex_tag;
 
-  const double crease_sector_vertex_sharpness0 = vertex0->Internal_CreaseSectorVertexSharpnessForExperts();
+  const double crease_sector_vertex_sharpness0 = vertex0->Internal_InteriorCreaseVertexSharpnessForExperts();
   if (crease_sector_vertex_sharpness0 > 1.0)
   {
+    // subdivide this value
     const double crease_sector_vertex_sharpness1 = ON_SubDEdgeSharpness::Sanitize(crease_sector_vertex_sharpness0 - 1.0);
-    v1->Internal_UpdateCreaseSectorVertexSharpnessForExperts(crease_sector_vertex_sharpness1);
+    // The 2nd parameter is true because we have not attached the edges and faces yet.
+    v1->Internal_SetInteriorCreaseVertexSharpnessForExperts(crease_sector_vertex_sharpness1, true);
   }
 
   if (vertex0->SurfacePointIsSet())

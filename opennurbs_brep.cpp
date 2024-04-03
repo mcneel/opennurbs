@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <array>
+#include <mutex>
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -788,6 +789,7 @@ public:
   std::shared_ptr<const ON_Mesh> m_render_mesh;
   std::shared_ptr<const ON_Mesh> m_analysis_mesh;
   std::shared_ptr<const ON_Mesh> m_preview_mesh;
+  std::mutex m_mesh_mutex;
 };
 
 ON_BrepFace::ON_BrepFace()
@@ -808,6 +810,8 @@ ON_BrepFace::ON_BrepFace(int face_index)
 
 unsigned int ON_BrepFace::SizeOf() const
 {
+  std::lock_guard<std::mutex> lock(m_pImpl->m_mesh_mutex);
+
   unsigned int sz = ON_SurfaceProxy::SizeOf();
   sz += (sizeof(*this) - sizeof(ON_SurfaceProxy));
   sz += m_li.SizeOfArray();
@@ -836,6 +840,10 @@ ON_BrepFace& ON_BrepFace::operator=(const ON_BrepFace& src)
     m_face_material_channel = src.m_face_material_channel;
     m_face_uuid = src.m_face_uuid;
     m_per_face_color = src.m_per_face_color;
+
+    std::lock_guard<std::mutex> lock(m_pImpl->m_mesh_mutex);
+    std::lock_guard<std::mutex> lock2(src.m_pImpl->m_mesh_mutex);
+
     m_pImpl->m_render_mesh   = src.m_pImpl->m_render_mesh   ? src.m_pImpl->m_render_mesh   : nullptr;
     m_pImpl->m_analysis_mesh = src.m_pImpl->m_analysis_mesh ? src.m_pImpl->m_analysis_mesh : nullptr;
     m_pImpl->m_preview_mesh  = src.m_pImpl->m_preview_mesh  ? src.m_pImpl->m_preview_mesh  : nullptr;
@@ -1088,8 +1096,11 @@ const std::shared_ptr<const ON_Mesh>& ON_BrepFace::UniqueMesh(ON::mesh_type mesh
 }
 
 
+
 const std::shared_ptr<const ON_Mesh>& ON_BrepFace::SharedMesh(ON::mesh_type mesh_type) const
 {
+  std::lock_guard<std::mutex> lock(m_pImpl->m_mesh_mutex);
+
   std::shared_ptr<const ON_Mesh>* pMesh = nullptr;
 
   switch (mesh_type)
@@ -1129,6 +1140,8 @@ const ON_Mesh* ON_BrepFace::Mesh( ON::mesh_type mt ) const
 
 bool ON_BrepFace::SetMesh(ON::mesh_type mt, const std::shared_ptr<const ON_Mesh>& mesh)
 {
+  std::lock_guard<std::mutex> lock(m_pImpl->m_mesh_mutex);
+
   bool rc = true;
   switch (mt)
   {
@@ -1150,6 +1163,8 @@ bool ON_BrepFace::SetMesh(ON::mesh_type mt, const std::shared_ptr<const ON_Mesh>
 
 bool ON_BrepFace::SetMesh(ON::mesh_type mt, ON_Mesh* mesh)
 {
+  std::lock_guard<std::mutex> lock(m_pImpl->m_mesh_mutex);
+
   bool rc = true;
   switch (mt)
   {
@@ -1176,6 +1191,8 @@ void ON_BrepFace::DestroyMesh( ON::mesh_type mt, bool bDeleteMesh )
 
 void ON_BrepFace::DestroyMesh(ON::mesh_type mt)
 {
+  std::lock_guard<std::mutex> lock(m_pImpl->m_mesh_mutex);
+
   switch(mt) {
   case ON::render_mesh:
     m_pImpl->m_render_mesh.reset();

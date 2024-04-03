@@ -428,3 +428,16 @@ void ON_RandomNumberGenerator::RandomPermutation(void* base, size_t nel, size_t 
   }
 }
 
+void ON_RandomNumberGenerator::TwoGaussians(double* u, double* v)
+{
+  if (!u || !v) return;
+  double t = RandomDouble();
+  double s = RandomDouble();
+  // if there is a problem with the random number generator, we don't want to crash the FPU in the logarithm
+  if (t < 1e-20 || t > 1.0)  
+    t = .5;
+  double m = sqrt(-2.0 * log(t));
+  *u = m * cos(ON_2PI * s);
+  *v = m * sin(ON_2PI * s);
+}
+

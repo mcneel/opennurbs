@@ -820,7 +820,7 @@ public:
   /// <returns>Sharpness or ON_DBL_QNAN if end_index is out of range.</returns>
   double EndSharpness(int end_index) const;
 
-  ON_DEPRECATED_MSG("Use the version with a global_vertex_sharpness parameter.")
+  ON_DEPRECATED_MSG("Use the version with an interior_crease_vertex_sharpness parameter.")
   static double VertexSharpness(
     ON_SubDVertexTag vertex_tag,
     unsigned sharp_edge_end_count,
@@ -837,14 +837,15 @@ public:
   /// For smooth, crease, and dart, this is used to determine the number of attached crease edges.
   /// COrner vertices always have sharpness = 0.
   /// </param>
-  /// <param name="global_vertex_sharpness">
-  /// The cases where maximum_edge_end_sharpness arise only when the vertex_tag is crease,
-  /// a subset of a SubD is being used to calculate maximum_edge_end_sharpness,
-  /// the crease vertex has two sectors and the maximum_edge_end_sharpness is different
-  /// for the two sectors, and only one sector of a 2 sector crease vertex is in the subset.
-  /// This is a very specialized situation thot occurs only in low level SubD evaluation
-  /// code. In all other cases, this value doesn't matter as long
-  /// as it is 0 &lt;= global_vertex_sharpness &lt;= maximum_edge_end_sharpness.
+  /// <param name="interior_crease_vertex_sharpness">
+  /// If the original source of the vertex is an interior crease vertex 
+  /// (vertex_tag = ON_SubDVertexTag::Crease, 2 sectors, EdgeCount() = FaceCount() &gt;= 2),
+  /// then interior_crease_vertex_sharpness is the maximum edge sharpness at the
+  /// vertex's end of all smooth edges from both sectors. 
+  /// This paramter is important in special situations that occur
+  /// in low level SubD evaluation code where information from only one
+  /// sector is present. In all other cases, this value doesn't matter as long
+  /// as &lt;= global_vertex_sharpness &lt;= maximum_edge_end_sharpness.
   /// When in doubt pass 0.0.
   /// </param>
   /// <param name="sharp_edge_end_count">
@@ -857,11 +858,10 @@ public:
   /// <returns></returns>
   static double VertexSharpness(
     ON_SubDVertexTag vertex_tag,
-    double global_vertex_sharpness,
+    double interior_crease_vertex_sharpness,
     unsigned sharp_edge_end_count,
     double maximum_edge_end_sharpness
   );
-
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
@@ -3006,8 +3006,25 @@ class ON_CLASS ON_SubDComponentPtrPairHashTable : ON_Hash32Table
 public:
   ON_SubDComponentPtrPairHashTable();
 
+  /// <summary>
+  /// This is a good choice of constructor when you have a good estimate of 
+  /// the number of pairs that will be in the hash table.
+  /// </summary>
+  /// <param name="pair_count_estimate">
+  /// A good estimate of the number of pairs that will be in this hash table.
+  /// </param>
+  ON_SubDComponentPtrPairHashTable(size_t pair_count_estimate);
+
+
+  /// <summary>
+  /// This is a good choice of constructor when the hash table is used
+  /// to find pairs of vertices and edges.
+  /// </summary>
+  /// <param name="subd">
+  /// subd.VertexCount() + subd.EdgeCount() is used as the pair count estimate.
+  /// </param>
   ON_SubDComponentPtrPairHashTable(const class ON_SubD& subd);
-  
+
   ~ON_SubDComponentPtrPairHashTable() = default;
   
   bool AddComponentPair(
@@ -3045,6 +3062,10 @@ public:
 
   const ON_SubDComponentPtrPair PairFromSecondEdge(
     const class ON_SubDEdge* second_e
+  );
+
+  const ON_SubDComponentPtrPair PairFromSecondFace(
+    const class ON_SubDFace* second_f
   );
 
 private:
@@ -3088,6 +3109,16 @@ public:
   */
   static const ON_SubD_ComponentIdTypeAndTag CreateFromEdge(const class ON_SubDEdge* e);
 
+  /*
+  Parameters:
+    eptr - [in]
+      If e->m_edge_tag is ON_SubDEdgeTag::SmoothX, the ON_SubD_ComponentIdTypeAndTag EdgeTag() will be ON_SubDEdgeTag::Smoooth.
+  Returns:
+    If e is not nullptr and e->m_id > 0, a ON_SubD_ComponentIdTypeAndTag with EdgeTag() = e->m_edge_tag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromEdge(const class ON_SubDEdgePtr eptr);
+
 
   /*
   Parameters:
@@ -3099,6 +3130,17 @@ public:
     Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
   */
   static const ON_SubD_ComponentIdTypeAndTag CreateFromEdgeId(unsigned edge_id, ON_SubDEdgeTag etag);
+
+  /*
+  Parameters:
+    edge_id - [in]
+    etag - [in]
+      If etag is ON_SubDEdgeTag::SmoothX, the ON_SubD_ComponentIdTypeAndTag EdgeTag() will be ON_SubDEdgeTag::Smoooth.
+  Returns:
+    If edge_id > 0, a ON_SubD_ComponentIdTypeAndTag with EdgeTag() = etag is returned.
+    Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
+  */
+  static const ON_SubD_ComponentIdTypeAndTag CreateFromEdgeId(unsigned edge_id, ON_SubDEdgeTag etag, ON_SubDEdgeSharpness sharpness);
 
 
   /*
@@ -3119,7 +3161,7 @@ public:
   Parameters:
     face_id - [in]
     ftag - [in]
-      Any value and the interpretation is up to the context using the ON_SubD_ComponentIdTypeAndTag.
+      Any value from 0 to 7. The interpretation is up to the context using the ON_SubD_ComponentIdTypeAndTag.
   Returns:
     If face_id > 0, a ON_SubD_ComponentIdTypeAndTag with FaceTag() = vtag is returned.
     Otherwise ON_SubD_ComponentIdTypeAndTag::Unset is returned.
@@ -3140,6 +3182,8 @@ public:
     Dictionary compare on ComponentType(), ComponentId(), and tag in that order.
   */
   static int CompareTypeAndIdAndTag(const ON_SubD_ComponentIdTypeAndTag* lhs, const ON_SubD_ComponentIdTypeAndTag* rhs);
+
+  static const ON_SubD_ComponentIdTypeAndTag FindFromTypeAndId(ON_SubDComponentPtr::Type type, unsigned id, const ON_SimpleArray< ON_SubD_ComponentIdTypeAndTag>& sorted_tags);
 
   /*
   Parameters:
@@ -3239,6 +3283,11 @@ public:
 
   unsigned EdgeId() const;
 
+  const ON_SubDEdgeSharpness EdgeSharpness(bool bUseCreaseSharpness) const;
+  
+  const double VertexSharpness() const;
+  void SetVertexSharpness(double s);
+
   unsigned char FaceTag() const;
 
   unsigned FaceId() const;
@@ -3246,11 +3295,34 @@ public:
   const ON_wString ToString() const;
 
 private:
-  ON_SubDComponentPtr m_cptr = ON_SubDComponentPtr::Null;
+  // Dale lear 2024 Feb 20
+  // Replaced unsued 
+  // ON_SubDComponentPtr m_cptr 
+  // with 
+  // ON_SubDEdgeSharpness m_sharpness. 
+  // 8 = sizeof(ON_SubDComponentPtr) = ON_SubDEdgeSharpness(ON_SubDEdgeSharpness),
+  // so this switch does not change the sizeof(ON_SubD_ComponentIdTypeAndTag)
+  // and everything involved is a private member. 
+  // Thus, this change does not "break the SDK."
+  ON_SubDEdgeSharpness m_sharpness = ON_SubDEdgeSharpness::Smooth;
   unsigned m_id = 0;
   ON_SubDComponentPtr::Type m_type = ON_SubDComponentPtr::Type::Unset;
-  unsigned char m_tag = 0;
-  unsigned char m_bits = 0;
+  // tag = (0x07 & m_tag_and_dir).
+  // dir = (0x80 & dir) ? 1 : 0; 1 = reversed.
+  unsigned char m_tag_and_dirx = 0;
+
+  // returns (0x07 & m_tag_and_dir);
+  unsigned char Internal_Tag() const;
+
+  void Internal_SetTag(unsigned char tag);
+
+  // returns (0x80 & m_tag_and_dir) != 0 ? 1 : 0;
+  unsigned char Internal_Dir() const;
+
+  void Internal_SetDir(unsigned char dir);
+
+
+  unsigned short m_reserved = 0;
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -7224,6 +7296,15 @@ public:
     double v1_sector_coefficient
   );
 
+  class ON_SubDEdge* AddEdgeWithSectorCoefficients(
+    ON_SubDEdgeTag edge_tag,
+    class ON_SubDVertex* v0,
+    double v0_sector_coefficient,
+    class ON_SubDVertex* v1,
+    double v1_sector_coefficient,
+    ON_SubDEdgeSharpness sharpness
+  );
+
   /*
   Description:
     Expert user tool to add an edge with specified information. This function
@@ -7253,6 +7334,17 @@ public:
     double v0_sector_coefficient,
     class ON_SubDVertex* v1,
     double v1_sector_coefficient,
+    unsigned int initial_face_capacity
+  );
+
+  class ON_SubDEdge* AddEdgeForExperts(
+    unsigned int candidate_edge_id,
+    ON_SubDEdgeTag edge_tag,
+    class ON_SubDVertex* v0,
+    double v0_sector_coefficient,
+    class ON_SubDVertex* v1,
+    double v1_sector_coefficient,
+    ON_SubDEdgeSharpness sharpness,
     unsigned int initial_face_capacity
   );
 
@@ -12931,52 +13023,77 @@ private:
   unsigned short  m_reserved2 = 0;
 
 private:
-  // The vertex sharpness is the maximum edge end sharpenss of the
-  // ends attached to the vertex. When a SubD is complete, 
-  // all edges are present and the value can be calculated as needed.
-  // 
-  // In low level subdivision point evaluation code, a subset of the SubD containing 
-  // only the components from the sector being evaluated is used. There is one situation 
-  // where m_crease_sector_vertex_sharpness needs to be set to properly
-  // evaluate the subdivision points and limit points.
-  // 1) The vertex is an interior crease 
-  // (vertex has a crease tag and 2 sectors - implies both crease will have 2 faces).
-  // 2) The sharp edges in the two sectors generate different vertex sharpnesses.
-  // Again, this only occurs in low level evauation code.
-  // This value should be zero or be the same as the maximum sharpness 
-  // of all smooth edge ends at this vertex in the complete SubD.
-  // The value is mutable because it is updated in the case above
-  // at appropriate times in the evaluation calculation.
-  // If per vertex sharpness is ever added, that value must be stored someplace else
-  // as, depending on the initial sharpness configuration, this value can be
-  // larger, smaller, or equal to a per vertex sharpness.
-  mutable float m_crease_sector_vertex_sharpness = 0.0;
-
+  /// The level 0 interior crease vertex sharpness is the maximum edge end sharpenss
+  /// at the vertex of all smooth edges in both sectors of an interior crease vertex. 
+  /// It can also be set by subdividing a previous level's value.
+  /// 
+  /// In low level subdivision point evaluation code, a subset of the SubD containing 
+  /// only the components from the sector being evaluated is used. There is one situation 
+  /// where m_interior_crease_vertex_sharpness needs to be set to properly
+  /// evaluate the subdivision points and limit points.
+  /// 1) The vertex is an interior crease.
+  /// (The vertex has a crease tag and 2 sectors. 
+  /// This implies both crease edges have 2 faces and the vertex's m_edge_count = m_face_count &gt;= 2).
+  /// 2) The sharp edges in the two sectors generate different vertex sharpnesses.
+  /// Again, this only occurs in low level evauation code.
+  /// This value should be zero or be the same as the maximum sharpness 
+  /// of all smooth edge ends at this vertex in the complete SubD.
+  /// The value is mutable because it is updated in the case above
+  /// at appropriate times in the evaluation calculation.
+  /// If per vertex sharpness is ever added, that value must be stored someplace else
+  /// as, depending on the initial sharpness configuration, this value can be
+  /// larger, smaller, or equal to a per vertex sharpness.
+  mutable float m_interior_crease_vertex_sharpness = 0.0;
 private:
 
 #if defined(ON_COMPILING_OPENNURBS)
 public:
   /// <summary>
-  /// This function is for use in ON_SubDVertexQuadSector 
-  /// when a subset of a SubD is being used
-  /// to calculate a global subdivision point. 
-  /// Always use the tools that set edge sharpnesses to
-  /// edit SubD sharpness. Never use this function as
-  /// a way to modify SubD sharpness properties.
+  /// This function is used to save vertex sharpnesses at interior crease vertices
+  /// so that low level evaulation code (like that in ON_SubDVertexQuadSector) will
+  /// get correct subdivision and limit points for interior crease vertices that
+  /// have different maximum edge end shaprness values in their two sectors.
+  /// The level 0 value passed in must be calucated while the vertex is in the orginal 
+  /// complete configuration with two sectors. Subsets used in low level N > 0 evaluations
+  /// sometimes pass in a value calculated by subdividing the previous level's value.
   /// </summary>
-  /// <param name="crease_sector_vertex_sharpness">
-  /// Maximum edge end sharpness at this vertex in the complete SubD.
+  /// <param name="interior_crease_vertex_sharpness">
+  /// Maximum edge end sharpness of the interior crease vertex calculated 
+  /// from all level 0 smooth edges in both sectors or calculated by subdividing
+  /// a previous level's value.
   /// </param>
-  void Internal_UpdateCreaseSectorVertexSharpnessForExperts(double crease_sector_vertex_sharpness) const;
+  /// <param name="bSkipEdgeCountTest">
+  /// If bSkipEdgeCountTest is false, then v must be a level 0 crease vertex
+  /// with m_edge_count = m_face_count &gt;= 2 of a level N &gt; 0 vertex
+  /// with m_edge_count = 1+m_face_count &gt;= 1. 
+  /// If bSkipEdgeCountTest the edge count tests are skipped. The expert user
+  /// is certain this vertex is being initialized before the edges and faces are
+  /// attached and it's control net topology will satisify the above conditions
+  /// before the vertex is used.
+  /// </param>
+  void Internal_SetInteriorCreaseVertexSharpnessForExperts(
+    double interior_crease_vertex_sharpness,
+    bool bSkipEdgeCountTest
+  ) const;
 
   /// <summary>
-  /// This function is for use by experts in low level subdivisino point 
-  /// evaluations when the center vertex is a crease with two sectors.
+  /// Unconditionally sets the interior crease vertex sharpness to zero.
+  /// </summary>
+  void Internal_ClearInteriorCreaseVertexSharpnessForExperts() const;
+
+
+  /// <summary>
+  /// This function is for use by experts in low level subdivision point 
+  /// evaluations when the center vertex is an interior crease with two sectors.
+  /// It exists so that low level evaluation code using information about
+  /// only one of the sectors is present (like the situation that occurs in
+  /// ON_SubDVertexQuadSector functions).
   /// </summary>
   /// <returns>
-  /// The crease sector vertex sharpness.
+  /// The interior crease sector vertex sharpness. This value must be properly
+  /// epertly used with other information to get the correct subdivision point.
   /// </returns>
-  double Internal_CreaseSectorVertexSharpnessForExperts() const;
+  double Internal_InteriorCreaseVertexSharpnessForExperts() const;
 #endif
 
 public:
@@ -13311,8 +13428,50 @@ public:
   /*
   Returns:
     True if m_vertex_tag is ON_SubDVertexTag::Crease.
+    If the vertex is a boundary crease, there will be one sector.
+    If the vertex is an interior crease, there will be two sectors.
   */
   bool IsCrease() const;
+
+  /// <summary>
+  /// There are 2 configurations a valid crease vertex can have.
+  /// 
+  /// 1) A crease vertex with one sector has EdgeCount() = 1+FaceCount(),
+  /// two crease edges that are attached to a single face,
+  /// and the other edges are smooth and are attached to two faces.
+  ///
+  /// 2) A crease vertex with two sectors has EdgeCount() = FaceCount(),
+  /// two crease edges, and all edges are attached to two faces.
+  /// 
+  /// In a complete SubD (not a subset), a 1 sector crease vertex is
+  /// always on the boundary of the SubD. In all cases a 2 sector crease vertex
+  /// is an interior vertex.
+  /// </summary>
+  /// <returns>
+  /// True if the vertex tag is ON_SubDVertexTag::Crease, EdgeCount() = 1+FaceCount(), 
+  /// and FaceCount() &gt;= 1.
+  /// </returns>
+  bool IsOneSectorCrease() const;
+
+  /// <summary>
+  /// There are 2 configurations a valid crease vertex can have.
+  /// 
+  /// 1) A crease vertex with one sector has EdgeCount() = 1+FaceCount(),
+  /// two crease edges that are attached to a single face,
+  /// and the other edges are smooth and are attached to two faces.
+  ///
+  /// 2) A crease vertex with two sectors has EdgeCount() = FaceCount(),
+  /// two crease edges, and all edges are attached to two faces.
+  /// 
+  /// In a complete SubD (not a subset), a 1 sector crease vertex is
+  /// always on the boundary of the SubD. In all cases a 2 sector crease vertex
+  /// is an interior vertex.
+  /// </summary>
+  /// <returns>
+  /// True if the vertex tag is ON_SubDVertexTag::Crease, EdgeCount() = FaceCount(), 
+  /// and FaceCount() &gt;= 2.
+  /// </returns>
+  bool IsTwoSectorCrease() const;
 
   /*
   Returns:
