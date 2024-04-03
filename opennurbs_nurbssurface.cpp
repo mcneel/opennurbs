@@ -580,8 +580,7 @@ bool ON_NurbsSurface::IsValid( ON_TextLog* text_log ) const
   else
   {
     rc = true;
-    int i;
-    for ( i = 0; i < 2 && rc; i++ )
+    for ( int i = 0; i < 2 && rc; i++ )
     {
       rc = false;
       if (m_order[i] < 2 )
@@ -637,6 +636,23 @@ bool ON_NurbsSurface::IsValid( ON_TextLog* text_log ) const
             text_log->Print("ON_NurbsSurface.m_cv_stride[] = {%d,%d} is not valid.\n",m_cv_stride[0],m_cv_stride[1]);
           }
           rc = false;
+        }
+      }
+    }
+
+    if (rc)
+    {
+      const int cvdim = CVSize();
+      for (int i = 0; m_cv_count[0] > i; ++i)
+      {
+        for (int j = 0; m_cv_count[1] > j; ++j)
+        {
+          const double* cv = CV(i, j);
+          for (int k = 0; cvdim > k; ++k)
+          {
+            if (false == ON_CV_COORDINATE_IS_VALID(cv[k]))
+              return false;
+          }
         }
       }
     }
