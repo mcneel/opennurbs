@@ -553,24 +553,6 @@ void ON_SunEngine::ConvertSolarVectorToHorizonCoords(const double* dVector, doub
     dAzimuth += 360.0;
 }
 
-void ON_SunEngine::GetCurrentLocalDateTime(int& y, int& m, int& d, double& h)
-{
-  const time_t time = ON_SecondsSinceJanOne1970UTC();
-
-  tm ttm = { 0 };
-
-#ifdef ON_RUNTIME_WIN
-  _localtime64_s(&ttm, &time);
-#else
-  ttm = *localtime(&time);
-#endif
-
-  y = ttm.tm_year + 1900;
-  m = ttm.tm_mon + 1;
-  d = ttm.tm_mday;
-  h = ttm.tm_hour + (ttm.tm_min / 60.0) + (ttm.tm_sec / 3600.0);
-}
-
 class ON_Sun::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -811,14 +793,11 @@ void ON_Sun::CImpl::SetDaylightSavingMinutes(int minutes)
 
 void ON_Sun::CImpl::LocalDateTime(int& year, int& month, int& day, double& hours) const
 {
-  int cy = 0, cm = 0, cd = 0; double ch = 0.0;
-  ON_SunEngine::GetCurrentLocalDateTime(cy, cm, cd, ch);
-
   const wchar_t* s = XMLPath_Sun();
-  year  = GetParameter(s, ON_RDK_SUN_DATE_YEAR,  cy);
-  month = GetParameter(s, ON_RDK_SUN_DATE_MONTH, cm);
-  day   = GetParameter(s, ON_RDK_SUN_DATE_DAY,   cd);
-  hours = GetParameter(s, ON_RDK_SUN_TIME_HOURS, ch);
+  year  = GetParameter(s, ON_RDK_SUN_DATE_YEAR,  2000);
+  month = GetParameter(s, ON_RDK_SUN_DATE_MONTH, 1);
+  day   = GetParameter(s, ON_RDK_SUN_DATE_DAY,   1);
+  hours = GetParameter(s, ON_RDK_SUN_TIME_HOURS, 0.0);
 }
 
 bool ON_Sun::CImpl::SetLocalDateTime(int year, int month, int day, double hours)
@@ -1343,13 +1322,10 @@ void ON_Sun::LoadFromXMLNode(const ON_XMLNode& node)
 {
   ON_XMLParameters p(node);
 
-  int cy = 0, cm = 0, cd = 0; double ch = 0.0;
-  ON_SunEngine::GetCurrentLocalDateTime(cy, cm, cd, ch);
-
-  const auto y = p.GetParam(ON_RDK_SUN_DATE_YEAR,  cy).AsInteger();
-  const auto m = p.GetParam(ON_RDK_SUN_DATE_MONTH, cm).AsInteger();
-  const auto d = p.GetParam(ON_RDK_SUN_DATE_DAY,   cd).AsInteger();
-  const auto h = p.GetParam(ON_RDK_SUN_TIME_HOURS, ch).AsDouble();
+  const auto y = p.GetParam(ON_RDK_SUN_DATE_YEAR,  2000).AsInteger();
+  const auto m = p.GetParam(ON_RDK_SUN_DATE_MONTH,    1).AsInteger();
+  const auto d = p.GetParam(ON_RDK_SUN_DATE_DAY,      1).AsInteger();
+  const auto h = p.GetParam(ON_RDK_SUN_TIME_HOURS, 12.0).AsDouble();
   SetLocalDateTime(y, m, d, h);
 
   SetEnableAllowed        (p.GetParam(ON_RDK_SUN_ENABLE_ALLOWED, false));

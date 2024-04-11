@@ -2314,87 +2314,6 @@ bool ON_Texture::IsWcsBoxProjected() const
   return (m_mapping_channel_id == (unsigned int)MAPPING_CHANNEL::wcs_box_channel);
 }
 
-ON_3dPoint ON_Texture::WcsBoxMapping(const ON_3dPoint& pt, const ON_3dVector& n)
-{
-  // This code is moved here from CRhRdkTexture::WcsBoxMapping
-
-  int side0 = 0;
-
-  const ON_3dPoint& rst(pt);
-
-  // set side0 = side closest to the point
-  int side1 = (std::abs(rst.x) >= std::abs(rst.y)) ? 0 : 1;
-  if (std::abs(rst.z) > std::abs(((double*)&rst.x)[side1]))
-    side1 = 2;
-
-  double t1 = (&rst.x)[side1];
-  if (t1 < 0.0)
-    side0 = 2 * side1 + 1;
-  else
-    side0 = 2 * side1 + 2;
-
-  side1 = (std::abs(n.x) >= std::abs(n.y)) ? 0 : 1;
-  if (std::abs(n.z) > std::abs((&n.x)[side1]))
-  {
-    side1 = 2;
-  }
-
-  t1 = n[side1];
-  if (0.0 != t1)
-  {
-    if (t1 < 0.0)
-      side0 = 2 * side1 + 1;
-    else
-      if (t1 > 0.0)
-        side0 = 2 * side1 + 2;
-  }
-
-  // side flag
-  //  1 =  left side (x=-1)
-  //  2 =  right side (x=+1)
-  //  3 =  back side (y=-1)
-  //  4 =  front side (y=+1)
-  //  5 =  bottom side (z=-1)
-  //  6 =  top side (z=+1)
-  ON_3dPoint v;
-  switch (side0)
-  {
-  case 1:
-    v.x = -pt.y;
-    v.y = pt.z;
-    v.z = pt.x;
-    break;
-  case 2:
-    v.x = pt.y;
-    v.y = pt.z;
-    v.z = pt.x;
-    break;
-  case 3:
-    v.x = pt.x;
-    v.y = pt.z;
-    v.z = pt.y;
-    break;
-  case 4:
-    v.x = -pt.x;
-    v.y = pt.z;
-    v.z = pt.y;
-    break;
-  case 5:
-    v.x = -pt.x;
-    v.y = pt.y;
-    v.z = pt.z;
-    break;
-  case 6:
-  default:
-    v.x = pt.x;
-    v.y = pt.y;
-    v.z = pt.z;
-    break;
-  }
-
-  return v;
-}
-
 ON_Texture::TYPE ON_Texture::TypeFromUnsigned(unsigned int type_as_unsigned)
 {
   switch (type_as_unsigned)
@@ -2703,8 +2622,6 @@ const ON_wString ON_TextureMapping::TypeToString(ON_TextureMapping::TYPE texture
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::brep_mapping_primitive);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::ocs_mapping);
   ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::false_colors);
-  ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::wcs_projection);
-  ON_ENUM_TO_WIDE_STRING_CASE(ON_TextureMapping::TYPE::wcsbox_projection);
   }
 
   ON_ERROR("Invalid texture_mapping_type value.");
@@ -3770,16 +3687,6 @@ int ON_TextureMapping::Evaluate(
     rc = 0;
 		break;
 
-  case ON_TextureMapping::TYPE::wcs_projection:
-    *T = m_Pxyz * P;
-    rc = 1;
-    break;
-
-  case ON_TextureMapping::TYPE::wcsbox_projection:
-    *T = ON_Texture::WcsBoxMapping(m_Pxyz * P, m_Nxyz * N);
-    rc = 1;
-    break;
-
 	default:
 		rc = EvaluatePlaneMapping(P,N,T);
 		break;
@@ -4020,9 +3927,6 @@ bool ON_TextureMapping::RequiresVertexNormals() const
   if(m_type == ON_TextureMapping::TYPE::box_mapping)
     return true;
 	if(m_type == ON_TextureMapping::TYPE::cylinder_mapping && m_bCapped)
-    return true;
-
-  if (m_type == ON_TextureMapping::TYPE::wcsbox_projection)
     return true;
 
 	return false;
@@ -4506,7 +4410,6 @@ bool ON_TextureMapping::GetTextureCoordinates(
            || ON_TextureMapping::TYPE::box_mapping == m_type
            || ON_TextureMapping::TYPE::cylinder_mapping == m_type
            || ON_TextureMapping::TYPE::mesh_mapping_primitive == m_type
-           || ON_TextureMapping::TYPE::wcsbox_projection == m_type
 		   )
         )
   	{

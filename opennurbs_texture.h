@@ -292,12 +292,6 @@ public:
   */
   bool IsWcsBoxProjected() const;
 
-  /*
-  Description:
-    Evaluates WCS box projection at point pt with normal n.
-  */
-  static ON_3dPoint WcsBoxMapping(const ON_3dPoint& pt, const ON_3dVector& n);
-
   // If the m_mapping_channel_id value is one of the built-in 
   // mappings listed in the MAPPING_CHANNEL enum, then that 
   // mapping is used.  Otherwise, if an object has rendering
