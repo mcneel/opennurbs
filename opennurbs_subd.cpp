@@ -1543,12 +1543,7 @@ bool ON_SubDComponentTest::Passes(const ON_SubDFace* f) const
 
 ON_SubDComponentId::ON_SubDComponentId(ON_SubDComponentPtr::Type component_type, unsigned int component_id)
   : m_id(component_id)
-  , m_type_and_dir((unsigned char)component_type)
-{}
-
-ON_SubDComponentId::ON_SubDComponentId(ON_SubDComponentPtr::Type component_type, unsigned int component_id, ON__UINT_PTR dir)
-  : m_id(component_id)
-  , m_type_and_dir(((unsigned char)component_type) | ((unsigned char)(dir%2)))
+  , m_type(component_type)
 {}
 
 ON_SubDComponentId::ON_SubDComponentId(ON_SubDComponentPtr cptr)
@@ -1557,8 +1552,7 @@ ON_SubDComponentId::ON_SubDComponentId(ON_SubDComponentPtr cptr)
   if (nullptr != b)
   {
     m_id = b->m_id;
-    Internal_SetType(cptr.ComponentType());
-    Internal_SetDir(0 == cptr.ComponentDirection() ? 0u : 1u);
+    m_type = cptr.ComponentType();
   }
 }
 
@@ -1567,18 +1561,7 @@ ON_SubDComponentId::ON_SubDComponentId(const class ON_SubDVertex* v)
   if (nullptr != v)
   {
     m_id = v->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Vertex);
-  }
-}
-
-ON_SubDComponentId::ON_SubDComponentId(const class ON_SubDVertexPtr vptr)
-{
-  const ON_SubDVertex* v = vptr.Vertex();
-  if (nullptr != v)
-  {
-    m_id = v->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Vertex);
-    Internal_SetDir(0 == vptr.VertexDirection() ? 0u : 1u);
+    m_type = ON_SubDComponentPtr::Type::Vertex;
   }
 }
 
@@ -1587,18 +1570,7 @@ ON_SubDComponentId::ON_SubDComponentId(const class ON_SubDEdge* e)
   if (nullptr != e)
   {
     m_id = e->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Edge);
-  }
-}
-
-ON_SubDComponentId::ON_SubDComponentId(ON_SubDEdgePtr eptr)
-{
-  const ON_SubDEdge* e = eptr.Edge();
-  if (nullptr != e)
-  {
-    m_id = e->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Edge);
-    Internal_SetDir(0 == eptr.EdgeDirection() ? 0u : 1u);
+    m_type = ON_SubDComponentPtr::Type::Edge;
   }
 }
 
@@ -1607,80 +1579,20 @@ ON_SubDComponentId::ON_SubDComponentId(const class ON_SubDFace* f)
   if (nullptr != f)
   {
     m_id = f->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Face);
+    m_type = ON_SubDComponentPtr::Type::Face;
   }
 }
-
-ON_SubDComponentId::ON_SubDComponentId(ON_SubDFacePtr fptr)
-{
-  const ON_SubDFace* f = fptr.Face();
-  if (nullptr != f)
-  {
-    m_id = f->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Face);
-    Internal_SetDir(0 == fptr.FaceDirection() ? 0u : 1u);
-  }
-}
-
-ON_SubDComponentId::ON_SubDComponentId(const class ON_SubDFace* f, unsigned face_corner_index)
-{
-  if (nullptr != f)
-  {
-    m_id = f->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Face);
-    if (face_corner_index < (unsigned)f->m_edge_count && (unsigned)f->m_edge_count < 4096u)
-    {
-      Internal_SetValueA(face_corner_index);
-      Internal_SetValueB(f->m_edge_count);
-    }
-  }
-}
-
-ON_SubDComponentId::ON_SubDComponentId(ON_SubDFacePtr fptr, unsigned face_corner_index)
-{
-  const ON_SubDFace* f = fptr.Face();
-  if (nullptr != f)
-  {
-    m_id = f->m_id;
-    Internal_SetType(ON_SubDComponentPtr::Type::Face);
-    Internal_SetDir(0 == fptr.FaceDirection() ? 0u : 1u);
-    if (face_corner_index < (unsigned)f->m_edge_count && (unsigned)f->m_edge_count < 4096u)
-    {
-      Internal_SetValueA(face_corner_index);
-      Internal_SetValueB(f->m_edge_count);
-    }
-  }
-}
-
 
 
 int ON_SubDComponentId::CompareTypeAndId(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs)
 {
-  const unsigned char lhs_type = (lhs.m_type_and_dir & ON_SubDComponentId::bits_type_mask);
-  const unsigned char rhs_type = (rhs.m_type_and_dir & ON_SubDComponentId::bits_type_mask);
-  if (lhs_type < rhs_type)
+  if (static_cast<unsigned char>(lhs.m_type) < static_cast<unsigned char>(rhs.m_type))
     return -1;
-  if (lhs_type > rhs_type)
+  if (static_cast<unsigned char>(lhs.m_type) > static_cast<unsigned char>(rhs.m_type))
     return 1;
   if (lhs.m_id < rhs.m_id)
     return -1;
   if (lhs.m_id > rhs.m_id)
-    return 1;
-  return 0;
-}
-
-int ON_SubDComponentId::CompareTypeAndIdAndDirection(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs)
-{
-  const int rc = CompareTypeAndId(lhs, rhs);
-  if (0 != rc)
-    return rc;
-
-  // compare dir
-  const unsigned char lhs_dir = (lhs.m_type_and_dir & ON_SubDComponentId::bits_dir_mask);
-  const unsigned char rhs_dir = (rhs.m_type_and_dir & ON_SubDComponentId::bits_dir_mask);
-  if (lhs_dir < rhs_dir)
-    return -1;
-  if (lhs_dir > rhs_dir)
     return 1;
   return 0;
 }
@@ -1696,20 +1608,14 @@ int ON_SubDComponentId::CompareTypeAndIdFromPointer(const ON_SubDComponentId* lh
   if (nullptr == rhs)
     return -1;
 
-  // compare type
-  const unsigned char lhs_type = (lhs->m_type_and_dir & ON_SubDComponentId::bits_type_mask);
-  const unsigned char rhs_type = (rhs->m_type_and_dir & ON_SubDComponentId::bits_type_mask);
-  if (lhs_type < rhs_type)
+  if (static_cast<unsigned char>(lhs->m_type) < static_cast<unsigned char>(rhs->m_type))
     return -1;
-  if (lhs_type > rhs_type)
+  if (static_cast<unsigned char>(lhs->m_type) > static_cast<unsigned char>(rhs->m_type))
     return 1;
-
-  // compare id
   if (lhs->m_id < rhs->m_id)
     return -1;
   if (lhs->m_id > rhs->m_id)
     return 1;
-
   return 0;
 }
 
@@ -1718,198 +1624,14 @@ unsigned int ON_SubDComponentId::ComponentId() const
   return m_id;
 }
 
-void ON_SubDComponentId::Internal_SetType(ON_SubDComponentPtr::Type type)
-{
-  m_type_and_dir &= ~((unsigned char)ON_SubDComponentId::bits_type_mask);
-  m_type_and_dir |= (((unsigned char)type) & ON_SubDComponentId::bits_type_mask);
-}
-
-void ON_SubDComponentId::Internal_SetDir(unsigned dir)
-{
-  // invalid dir is treaded as 0
-  if (1 == dir)
-    m_type_and_dir |= ((unsigned char)ON_SubDComponentId::bits_dir_mask);
-  else
-    m_type_and_dir &= ~((unsigned char)ON_SubDComponentId::bits_dir_mask);
-}
-
-void ON_SubDComponentId::Internal_SetValueA(unsigned a)
-{
-  if (a < 0x0FFFu)
-  {
-    m_valueAB[0] = (unsigned char)(a & 0x00FFu);
-    const unsigned char ahigh = (unsigned char)((a & 0x0F00u) >> 8);
-    m_valueAB[2] = (m_valueAB[2] & 0xF0u) | ahigh;
-  }
-}
-
-void ON_SubDComponentId::Internal_SetValueB(unsigned b)
-{
-  if (b < 0x0FFFu)
-  {
-    m_valueAB[1] = (unsigned char)(b & 0x00FFu);
-    const unsigned char bhigh = (unsigned char)((b & 0x0F00u) >> 4);
-    m_valueAB[2] = (m_valueAB[2] & 0x0Fu) | bhigh;
-  }
-}
-
-unsigned ON_SubDComponentId::Internal_ValueA() const
-{
-  const unsigned alow = m_valueAB[0];
-  const unsigned ahigh = ((unsigned)(m_valueAB[2] & 0x0Fu)) << 8;
-  return alow | ahigh;
-}
-
-unsigned ON_SubDComponentId::Internal_ValueB() const
-{
-  const unsigned blow = m_valueAB[0];
-  const unsigned bhigh = ((unsigned)(m_valueAB[2] & 0xF0u)) << 4;
-  return blow | bhigh;
-}
-
-unsigned ON_SubDComponentId::ComponentDirection() const
-{
-  return (m_type_and_dir & ON_SubDComponentId::bits_dir_mask);
-}
-
 ON_SubDComponentPtr::Type ON_SubDComponentId::ComponentType() const
 {
-  return ON_SubDComponentPtr::ComponentPtrTypeFromUnsigned(m_type_and_dir & ON_SubDComponentId::bits_type_mask);
+  return m_type;
 }
 
 bool ON_SubDComponentId::IsSet() const
 {
-  return 0 != m_id && ON_SubDComponentPtr::Type::Unset != ComponentType();
-}
-
-bool ON_SubDComponentId::IsNotSet() const
-{
-  return 0 == m_id || ON_SubDComponentPtr::Type::Unset == ComponentType();
-}
-
-bool ON_SubDComponentId::IsVertexId() const
-{
-  return m_id > 0 && ON_SubDComponentPtr::Type::Vertex == this->ComponentType();
-}
-
-bool ON_SubDComponentId::IsEdgeId() const
-{
-  return m_id > 0 && ON_SubDComponentPtr::Type::Edge == this->ComponentType();
-}
-
-bool ON_SubDComponentId::IsFaceId() const
-{
-  return m_id > 0 && ON_SubDComponentPtr::Type::Face == this->ComponentType();
-}
-
-const ON_SubDComponentId ON_SubDComponentId::Reversed() const
-{
-  ON_SubDComponentId c = *this;
-  c.Internal_SetDir(1u - this->ComponentDirection());
-  return c;
-}
-
-const ON_SubDComponentPtr ON_SubDComponentId::ComponentPtr(const class ON_SubD* subd) const
-{
-  return nullptr != subd ? this->ComponentPtr(*subd) : ON_SubDComponentPtr::Null;
-}
-
-const ON_SubDComponentPtr ON_SubDComponentId::ComponentPtr(const class ON_SubD& subd) const
-{
-  if (0 != m_id)
-  {
-    ON_SubDComponentPtr cptr;
-    switch (this->ComponentType())
-    {
-    case ON_SubDComponentPtr::Type::Vertex:
-      cptr = ON_SubDComponentPtr::Create(subd.VertexFromId(m_id));
-      break;
-    case ON_SubDComponentPtr::Type::Edge:
-      cptr = ON_SubDComponentPtr::Create(subd.EdgeFromId(m_id));
-      break;
-    case ON_SubDComponentPtr::Type::Face:
-      cptr = ON_SubDComponentPtr::Create(subd.FaceFromId(m_id));
-      break;
-    default:
-      cptr = ON_SubDComponentPtr::Null;
-      break;
-    }
-    if (cptr.IsNotNull() && 0 != (m_type_and_dir & ON_SubDComponentId::bits_dir_mask))
-      cptr.SetComponentDirection(1);
-    return cptr;
-  }
-  return ON_SubDComponentPtr::Null;
-}
-
-const ON_SubDVertex* ON_SubDComponentId::Vertex(const class ON_SubD& subd) const
-{
-  return this->ComponentPtr(subd).Vertex();
-}
-
-const ON_SubDVertexPtr ON_SubDComponentId::VertexPtr(const class ON_SubD& subd) const
-{
-  return this->ComponentPtr(subd).VertexPtr();
-}
-
-const ON_SubDVertex* ON_SubDComponentId::Vertex(const class ON_SubD* subd) const
-{
-  return (nullptr != subd) ? this->ComponentPtr(*subd).Vertex() : nullptr;
-}
-
-const ON_SubDVertexPtr ON_SubDComponentId::VertexPtr(const class ON_SubD* subd) const
-{
-  return (nullptr != subd) ? this->ComponentPtr(*subd).VertexPtr() : ON_SubDVertexPtr::Null;
-}
-
-const ON_SubDEdge* ON_SubDComponentId::Edge(const class ON_SubD& subd) const
-{
-  return this->ComponentPtr(subd).Edge();
-}
-
-const ON_SubDEdgePtr ON_SubDComponentId::EdgePtr(const class ON_SubD& subd) const
-{
-  return this->ComponentPtr(subd).EdgePtr();
-}
-
-const ON_SubDEdge* ON_SubDComponentId::Edge(const class ON_SubD* subd) const
-{
-  return (nullptr != subd) ? this->ComponentPtr(*subd).Edge() : nullptr;
-}
-
-const ON_SubDEdgePtr ON_SubDComponentId::EdgePtr(const class ON_SubD* subd) const
-{
-  return (nullptr != subd) ? this->ComponentPtr(*subd).EdgePtr() : ON_SubDEdgePtr::Null;
-}
-
-const ON_SubDFace* ON_SubDComponentId::Face(const class ON_SubD& subd) const
-{
-  return this->ComponentPtr(subd).Face();
-}
-
-const ON_SubDFacePtr ON_SubDComponentId::FacePtr(const class ON_SubD& subd) const
-{
-  return this->ComponentPtr(subd).FacePtr();
-}
-
-const ON_SubDFace* ON_SubDComponentId::Face(const class ON_SubD* subd) const
-{
-  return (nullptr != subd) ? this->ComponentPtr(*subd).Face() : nullptr;
-}
-
-const ON_SubDFacePtr ON_SubDComponentId::FacePtr(const class ON_SubD* subd) const
-{
-  return (nullptr != subd) ? this->ComponentPtr(*subd).FacePtr() : ON_SubDFacePtr::Null;
-}
-
-const ON_SubDFaceCornerDex ON_SubDComponentId::FaceCornerDex() const
-{
-  if (IsFaceId())
-  {
-    const ON_SubDFaceCornerDex cid(this->Internal_ValueA(), this->Internal_ValueB());
-    if (cid.IsSet())
-      return cid;
-  }
-  return ON_SubDFaceCornerDex::Unset;
+  return 0 != m_id && ON_SubDComponentPtr::Type::Unset != m_type;
 }
 
 bool ON_SubDComponentIdList::Passes(const ON_SubDComponentPtr cptr) const
@@ -9393,12 +9115,6 @@ unsigned int ON_SubD::DumpTopology(
           break;
         case  ON_TextureMapping::TYPE::false_colors:
           text_log.Print("false colors");
-          break;
-        case  ON_TextureMapping::TYPE::wcs_projection	:
-          text_log.Print("wcs projection");
-          break;
-        case  ON_TextureMapping::TYPE::wcsbox_projection	:
-          text_log.Print("wcs box projection");
           break;
         }
         text_log.PrintNewLine();
@@ -28335,5 +28051,6 @@ double ON_SubDExpandEdgesParameters::CleanupOffset(double x)
 
   return ON_DBL_QNAN;
 }
+
 
 

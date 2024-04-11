@@ -287,85 +287,6 @@ const double ON_DBL_QNAN = Internal_ON__dblinithelper(1);
 const double ON_DBL_PINF = Internal_ON__dblinithelper(2);
 const double ON_DBL_NINF = -Internal_ON__dblinithelper(2);
 
-const double ON_DBL::Nan = ON_DBL_QNAN;
-const double ON_DBL::PositiveInfinity = ON_DBL_PINF;
-const double ON_DBL::NegativeInfinity = ON_DBL_NINF;
-
-const double ON_DBL::PositiveMax = ON_DBL_MAX;
-const double ON_DBL::NegativeMax = -ON_DBL_MAX;
-
-const double ON_DBL::PositiveMin = ON_DBL_MIN;
-const double ON_DBL::NegativeMin = -ON_DBL_MIN;
-
-const double ON_DBL::Unset = ON_UNSET_VALUE;
-const double ON_DBL::PositiveUnset = ON_UNSET_POSITIVE_VALUE;
-
-bool ON_DBL::IsValid(double x)
-{
-  return x > ON_UNSET_VALUE && x < ON_UNSET_POSITIVE_VALUE;
-}
-
-bool ON_DBL::IsNan(double x)
-{
-  return (x == x) ? false : true;
-}
-
-int ON_DBL::Sign(double x)
-{
-  return (x > 0.0 ? 1 : ((x < 0.0) ? -1 : 0));
-}
-
-bool ON_DBL::IsInfinity(double x)
-{
-  return (x >= ON_DBL_PINF || x <= ON_DBL_NINF);
-}
-
-bool ON_DBL::IsPositiveInfinity(double x)
-{
-  return (x >= ON_DBL_PINF);
-}
-
-bool ON_DBL::IsNegativeInfinity(double x)
-{
-  return (x <= ON_DBL_NINF);
-}
-
-bool ON_DBL::IsNotNan(double x)
-{
-  return (x == x);
-}
-
-bool ON_DBL::IsUnset(double x)
-{
-  return (ON_UNSET_VALUE == fabs(x));
-}
-
-int ON_DBL::CompareValue(double lhs, double rhs)
-{
-  if (lhs < rhs)
-    return -1;
-  if (lhs > rhs)
-    return 1;
-  if (lhs == rhs)
-    return 0; 
-
-  // At least one of lhs or rhs is a nan. Sort nans to end
-  return (ON_IS_NAN(lhs) ? 1 : 0) - (ON_IS_NAN(rhs) ? 1 : 0);
-}
-
-
-int ON_DBL::Compare(const double* lhs, const double* rhs)
-{
-  // sort nullpt to the end
-  if (lhs == rhs)
-    return 0;
-  if (nullptr == lhs)
-    return 1;
-  if (nullptr == rhs)
-    return -1;
-  return ON_DBL::CompareValue(*lhs, *rhs);
-}
-
 const float  ON_FLT_QNAN = Internal_ON__fltinithelper(1);
 const float  ON_FLT_PINF = Internal_ON__fltinithelper(2);
 const float  ON_FLT_NINF = -Internal_ON__fltinithelper(2);
@@ -412,10 +333,6 @@ const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Maximum = ON_SubDEdgeSharpness:
 const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Nan = ON_SubDEdgeSharpness::FromConstant(ON_DBL_QNAN);
 
 const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Crease = ON_SubDEdgeSharpness::FromConstant(ON_SubDEdgeSharpness::CreaseValue);
-
-const ON_SubDFaceCornerDex ON_SubDFaceCornerDex::Unset(0, 0);
-
-const ON_SubDFaceParameter ON_SubDFaceParameter::Nan = { ON_SubDFaceCornerDex::Unset, ON_DBL_QNAN, ON_DBL_QNAN };
 
 const double ON_SubDSectorType::MinimumCornerAngleRadians = (2.0*ON_PI)/((double)(ON_SubDSectorType::MaximumCornerAngleIndex));
 const double ON_SubDSectorType::MaximumCornerAngleRadians = 2.0*ON_PI - ON_SubDSectorType::MinimumCornerAngleRadians;
@@ -2839,10 +2756,6 @@ const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::NullVertex = { 2 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::NullEdge = { 4 };
 const ON_SubDComponentPtr ON_SubDComponentPtr::NullFace = { 6 };
-
-const ON_SubDComponentId ON_SubDComponentId::Unset(ON_SubDComponentPtr::Null);
-
-const ON_SubDComponentParameter ON_SubDComponentParameter::Unset = {};
 
 const ON_SubDComponentPtrPair ON_SubDComponentPtrPair::Null = ON_SubDComponentPtrPair::Create(ON_SubDComponentPtr::Null,ON_SubDComponentPtr::Null);
 

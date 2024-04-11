@@ -469,10 +469,6 @@ private:
 #define ON_IS_INFINITE_FLOAT(x) ((x) > 3.402823466e+38F || (x) < -3.402823466e+38F)
 
 #define ON_IS_VALID(x)  ((x) > ON_UNSET_VALUE && (x) < ON_UNSET_POSITIVE_VALUE)
-// March 27, 2024 - Tim
-// Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-81184
-// The vertexes were crap just not quite ON_UNSET_VALUE crap
-#define ON_CV_COORDINATE_IS_VALID(x) (-1.0e307 < x && x < 1.0e307)
 #define ON_IS_VALID_FLOAT(x)  ((x) > ON_UNSET_FLOAT && (x) < ON_UNSET_POSITIVE_FLOAT)
 #define ON_IS_UNSET_DOUBLE(x) (ON_UNSET_VALUE == (x) || ON_UNSET_POSITIVE_VALUE == (x))
 #define ON_IS_UNSET_FLOAT(x) (ON_UNSET_FLOAT == (x) || ON_UNSET_POSITIVE_FLOAT == (x))

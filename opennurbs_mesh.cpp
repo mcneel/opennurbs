@@ -12,8 +12,6 @@
 ////////////////////////////////////////////////////////////////
 
 #include "opennurbs.h"
-#include <functional>
-#include <unordered_map>
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -4311,402 +4309,6 @@ bool ON_Mesh::HasCachedTextureCoordinates() const
   return false;
 }
 
-// Note: We are exporting this function for use in CRhinoObject::SetCachedTextureCoordinatesFromPlugIn
-ON_DECL bool ON_Mesh_Private_CacheMappingChannel(std::function<ON_TextureMapping(const ON_MappingChannel*)> get_mapping_func, const ON_MappingChannel* pMC, const ON_SimpleArray<ON_TextureMapping::TYPE>& mappings_to_cache, const int mapping_channel_id, std::unordered_map<unsigned int, ON_TextureMapping>& mapInOut)
-{
-  const bool cache_all = (mappings_to_cache.Count() == 0);
-  
-  if (nullptr == pMC)
-  {
-    const ON_TextureMapping& srfp_mapping = ON_TextureMapping::SurfaceParameterTextureMapping;
-    if(cache_all || mappings_to_cache.Search(srfp_mapping.m_type) >= 0)
-    {
-      // If the mapping channel is null, then we can assume that the textures implicitly
-      // reference the surface parameter mapping.
-      // This is done according to the documentation for ON_Texture::m_mapping_channel_id.
-      mapInOut[mapping_channel_id] = srfp_mapping;
-    }
-  }
-  else
-  {
-    ON_TextureMapping mapping = get_mapping_func(pMC);
-
-    if (mapping.m_type != ON_TextureMapping::TYPE::no_mapping)
-    {
-      // How to handle ON_TextureMapping::TYPE::ocs_mapping
-      // and ON_TextureMapping::TYPE::false_colors ?
-      if(cache_all || mappings_to_cache.Search(mapping.m_type) >= 0)
-      {
-        mapInOut[mapping_channel_id] = mapping;
-      }
-    }
-  }
-
-  return true;
-}
-
-// Note: We are exporting this function for use in CRhinoObject::SetCachedTextureCoordinatesFromPlugIn
-ON_DECL bool ON_Mesh_Private_AddPerVertexMappingChannels(std::function<ON_TextureMapping(const ON_MappingChannel*)> get_texture_mapping_func, const ON_MappingRef* mapping_ref, const ON_SimpleArray<ON_TextureMapping::TYPE>& mappings_to_cache, const ON_Material& material, std::unordered_map<unsigned int, ON_TextureMapping>& mappings)
-{
-  for (int i = 0; i < material.m_textures.Count(); i++)
-  {
-    if (material.m_textures[i].m_bOn)
-    {
-      // Get mapping channel id and check if mapping already is in the map
-      const unsigned int mapping_channel_id = material.m_textures[i].m_mapping_channel_id;
-      if (mappings.find(mapping_channel_id) == mappings.end())
-      {
-        const ON_MappingChannel* mapping_channel = nullptr;
-        if (mapping_ref)
-        {
-          // Get texture mapping and add it to the map
-          mapping_channel = mapping_ref->MappingChannel(mapping_channel_id);
-          if (mapping_channel == nullptr)
-          {
-            // If a mapping channel is not found using 'mapping_channel_id', then try with a mapping channel id of 1.
-            // This is done according to the documentation for ON_Texture::m_mapping_channel_id.
-            mapping_channel = mapping_ref->MappingChannel(1);
-          }
-        }
-
-        if (!ON_Mesh_Private_CacheMappingChannel(get_texture_mapping_func, mapping_channel, mappings_to_cache, mapping_channel_id, mappings))
-          return false;
-      }
-    }
-  }
-
-  // If we didn't cache any texture coordinates above, but we have a material with anisotropy,
-  // which requires tangents, which in turn requires texture coordinates, then we cache
-  // the texture coordinates from mapping channel 1.
-  if (mappings.size() == 0)
-  {
-    if (material.IsPhysicallyBased() && material.PhysicallyBased()->Anisotropic() > 0.0)
-    {
-      const ON_MappingChannel* mapping_channel = mapping_ref ? mapping_ref->MappingChannel(1) : nullptr;
-
-      if (!ON_Mesh_Private_CacheMappingChannel(get_texture_mapping_func, mapping_channel, mappings_to_cache, 1, mappings))
-        return false;
-    }
-  }
-
-  return true;
-}
-
-// Note: We are exporting this function for use in CRhinoObject::SetCachedTextureCoordinatesFromPlugIn
-ON_DECL bool ON_Mesh_Private_SetCachedTextureCoordinatesFromMaterial(ON_SimpleArray<const ON_Mesh*>& meshes, std::unordered_map<unsigned int, ON_TextureMapping>& per_vertex_channels, const ON_MappingRef* mapping_ref, bool perform_cleanup, std::shared_ptr<class CRhVboData>* vbo_data)
-{
-  ON_ClassArray<ON_SimpleArray<int>> indices_to_preserve;
-  indices_to_preserve.SetCapacity(meshes.Count());
-  indices_to_preserve.SetCount(meshes.Count());
-
-  // Set cached texture coordinates for each mapping on the map for every render mesh
-  for (auto pvcit = per_vertex_channels.begin(); pvcit != per_vertex_channels.end(); pvcit++)
-  {
-    const unsigned int mapping_channel_id = pvcit->first;
-    const ON_TextureMapping& mapping = pvcit->second;
-
-    // Get object mapping transformation
-    const ON_MappingChannel* pMC = mapping_ref ? mapping_ref->MappingChannel(mapping_channel_id) : nullptr;
-
-    const ON_Xform* pObjectXform = (pMC == nullptr || pMC->m_object_xform.IsIdentity() || pMC->m_object_xform.IsZero()) ? nullptr : &pMC->m_object_xform;
-
-    // Set cached texture coordinates for each of the render meshes
-    for (int mi = 0; mi < meshes.Count(); mi++)
-    {
-      // Const cast render mesh and set texture coordinates
-      ON_Mesh* pMesh = const_cast<ON_Mesh*>(meshes[mi]);
-      if (nullptr != pMesh)
-      {
-        bool has_matching_cached_tcs = false;
-        for (int i = 0; i < pMesh->m_TC.Count(); i++)
-        {
-          if (pMesh->VertexCount() == pMesh->m_TC[i].m_T.Count() && mapping.HasMatchingTextureCoordinates(pMesh->m_TC[i].m_tag, pObjectXform))
-          {
-            indices_to_preserve[mi].Append(i);
-            has_matching_cached_tcs = true;
-            break;
-          }
-        }
-
-        if (!has_matching_cached_tcs)
-        {
-          indices_to_preserve[mi].Append(pMesh->m_TC.Count());
-
-          pMesh->SetCachedTextureCoordinatesEx(mapping, pObjectXform, true, false);
-          
-          if(vbo_data)
-            vbo_data->reset();
-        }
-      }
-    }
-  }
-
-  if(perform_cleanup)
-  {
-    for (int mi = 0; mi < meshes.Count(); mi++)
-    {
-      ON_Mesh* pMesh = const_cast<ON_Mesh*>(meshes[mi]);
-      if (nullptr != pMesh)
-      {
-        const int tc_count = pMesh->m_TC.Count();
-        if (tc_count > per_vertex_channels.size())
-        {
-          int wcs_mapping_count = 0;
-          int wcs_box_mapping_count = 0;
-          ON_SimpleArray<int> indices_to_remove;
-          
-          for (int tci = tc_count - 1; tci >= 0; tci--)
-          {
-            if (indices_to_preserve[mi].Search(tci) == -1)
-            {
-              ON_TextureMapping::TYPE mapping_type = pMesh->m_TC[tci].m_tag.m_mapping_type;
-              bool remove_index = true;
-              
-              // Only clean up WCS and WCS Box mappings if there exist more recent versions
-              // in the array. They are considered more recent if they appear later in the array.
-              if(mapping_type == ON_TextureMapping::TYPE::wcs_projection && wcs_mapping_count++ == 0)
-              {
-                remove_index = false; // Don't remove first one we find
-              }
-              else if(mapping_type == ON_TextureMapping::TYPE::wcsbox_projection && wcs_box_mapping_count++ == 0)
-              {
-                remove_index = false;  // Don't remove first one we find
-              }
-              
-              if(remove_index)
-                indices_to_remove.Append(tci);
-            }
-          }
-          
-          for (int tci = indices_to_remove.Count() - 1; tci >= 0; tci--)
-            pMesh->m_TC.Remove(indices_to_remove[tci]);
-          
-          if(vbo_data && indices_to_remove.Count() > 0)
-            vbo_data->reset();
-        }
-      }
-    }
-  }
-  
-  return true;
-}
-
-static ON_UUID WcsMappingId(const ON_Xform& ocsTransform, bool bBox)
-{
-  // {47D62129-341E-4E3D-BF11-9C051AF4ED98}
-  static const ON_UUID uuidBaseWcs =
-  { 0x47d62129, 0x341e, 0x4e3d, { 0xbf, 0x11, 0x9c, 0x5, 0x1a, 0xf4, 0xed, 0x98 } };
-
-  // {4DC9AA78-9617-46FB-923F-3E65E14182FC}
-  static const ON_UUID uuidBaseWcsBox =
-  { 0x4dc9aa78, 0x9617, 0x46fb, { 0x92, 0x3f, 0x3e, 0x65, 0xe1, 0x41, 0x82, 0xfc } };
-
-  ON_UUID uuid = bBox ? uuidBaseWcsBox : uuidBaseWcs;
-  uuid.Data1 = ocsTransform.CRC32(uuid.Data1);
-  return uuid;
-}
-
-static ON_Xform GetOcsTransform(std::function<ON_TextureMapping(const ON_MappingChannel*)> get_mapping_func, const ON_MappingRef* mapping_ref)
-{
-  ON_Xform ocsTransform = ON_Xform::IdentityTransformation;
-  if (nullptr != mapping_ref)
-  {
-    const ON_MappingChannel* pMC = mapping_ref->MappingChannel(ON_ObjectRenderingAttributes::OCSMappingChannelId());
-    if (nullptr != pMC)
-    {
-      const ON_TextureMapping tm = get_mapping_func(pMC);
-      ON_Xform inverseObjectTransform = pMC->m_object_xform;
-      if (inverseObjectTransform.Invert())
-      {
-        ocsTransform = tm.m_Pxyz * inverseObjectTransform;
-      }
-      else
-      {
-        ocsTransform = tm.m_Pxyz;
-      }
-    }
-  }
-  return ocsTransform;
-}
-
-static void CacheWcsProjections(const ON_Mesh& mesh, std::function<ON_TextureMapping(const ON_MappingChannel*)> get_mapping_func, const ON_Material& material, const ON_MappingRef* mapping_ref)
-{
-  bool bWcsProjectionNeeded = false;
-  bool bWcsBoxProjectionNeeded = false;
-  for (int ti = 0; ti < material.m_textures.Count(); ti++)
-  {
-    if (material.m_textures[ti].IsWcsProjected())
-      bWcsProjectionNeeded = true;
-    if (material.m_textures[ti].IsWcsBoxProjected())
-      bWcsBoxProjectionNeeded = true;
-  }
-
-  if (bWcsProjectionNeeded)
-  {
-    const ON_Xform ocsTransform = GetOcsTransform(get_mapping_func, mapping_ref);
-    const ON_UUID uuidWcsMapping = WcsMappingId(ocsTransform, false);
-    ON_TextureMapping wcsMapping;
-    wcsMapping.m_type = ON_TextureMapping::TYPE::wcs_projection;
-    wcsMapping.SetId(uuidWcsMapping);
-    wcsMapping.m_Pxyz = ocsTransform;
-    if (!wcsMapping.HasMatchingCachedTextureCoordinates(mesh))
-    {
-      ON_TextureCoordinates& tcs = const_cast<ON_Mesh*>(&mesh)->m_TC.AppendNew();
-      wcsMapping.GetTextureCoordinates(mesh, tcs.m_T);
-      tcs.m_tag.Set(wcsMapping);
-      tcs.m_tag.m_mesh_xform = ON_Xform::ZeroTransformation;
-      tcs.m_dim = 2;
-      return;
-    }
-  }
-  if (bWcsBoxProjectionNeeded)
-  {
-    const ON_Xform ocsTransform = GetOcsTransform(get_mapping_func, mapping_ref);
-    const ON_UUID uuidWcsBoxMapping = WcsMappingId(ocsTransform, true);
-    ON_TextureMapping wcsBoxMapping;
-    wcsBoxMapping.m_type = ON_TextureMapping::TYPE::wcsbox_projection;
-    wcsBoxMapping.SetId(uuidWcsBoxMapping);
-    wcsBoxMapping.m_Pxyz = ocsTransform;
-    wcsBoxMapping.m_Pxyz.GetSurfaceNormalXform(wcsBoxMapping.m_Nxyz);
-    if (!wcsBoxMapping.HasMatchingCachedTextureCoordinates(mesh))
-    {
-      ON_TextureCoordinates& tcs = const_cast<ON_Mesh*>(&mesh)->m_TC.AppendNew();
-      wcsBoxMapping.GetTextureCoordinates(mesh, tcs.m_T);
-      tcs.m_tag.Set(wcsBoxMapping);
-      tcs.m_tag.m_mesh_xform = ON_Xform::ZeroTransformation;
-      tcs.m_dim = 2;
-      return;
-    }
-  }
-}
-
-bool SetCachedTextureCoordinatesFromMaterial(const ON_Mesh& mesh, std::function<ON_TextureMapping(const ON_MappingChannel*)> get_mapping_func, const ON_Material& material, const ON_MappingRef* mapping_ref, const ON_SimpleArray<ON_TextureMapping::TYPE>& mappings_to_cache, bool perform_cleanup)
-{
-  // Create a map of all texture mappings that require per-vertex texture coordinates
-  std::unordered_map<unsigned int, ON_TextureMapping> per_vertex_channels;
-  if (!ON_Mesh_Private_AddPerVertexMappingChannels(get_mapping_func, mapping_ref, mappings_to_cache, material, per_vertex_channels))
-    return false;
-
-  ON_SimpleArray<const ON_Mesh*> meshes;
-  meshes.Append(&mesh);
-
-  CacheWcsProjections(mesh, get_mapping_func, material, mapping_ref);
-
-  return ON_Mesh_Private_SetCachedTextureCoordinatesFromMaterial(meshes, per_vertex_channels, mapping_ref, perform_cleanup, nullptr);
-}
-
-bool ON_Mesh::SetCachedTextureCoordinatesFromMaterial(const ONX_Model& onx_model, const ON_Material& material, const ON_MappingRef* mapping_ref) const
-{
-  auto get_mapping_func = [&onx_model](const ON_MappingChannel* pMC)
-  {
-    ON_TextureMapping mapping = ON_TextureMapping::SurfaceParameterTextureMapping;
-    
-    ONX_ModelComponentIterator it(onx_model, ON_ModelComponent::Type::TextureMapping);
-
-    for ( ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
-    {
-      const ON_TextureMapping* texture_mapping = ON_TextureMapping::Cast(cr.ModelComponent());
-      if (nullptr == texture_mapping)
-        continue;
-      
-      if(ON_UuidCompare(&texture_mapping->Id(), &pMC->m_mapping_id) == 0)
-      {
-        mapping = *texture_mapping;
-        break;
-      }
-    }
-    
-    return mapping;
-  };
-  
-  ON_SimpleArray<ON_TextureMapping::TYPE> mappings_to_cache;
-  return ::SetCachedTextureCoordinatesFromMaterial(*this, get_mapping_func, material, mapping_ref, mappings_to_cache, false);
-}
-
-static const ON_TextureCoordinates* Internal_GetCachedTextureCoordinates(const ON_Mesh& mesh, std::function<ON_TextureMapping(const ON_MappingChannel*)> get_mapping_func, const ON_Texture& texture, const ON_MappingRef* mapping_ref)
-{
-  if (texture.IsWcsProjected() || texture.IsWcsBoxProjected())
-  {
-    const ON_Xform ocsTransform = GetOcsTransform(get_mapping_func, mapping_ref);
-    const ON_UUID mappingId = WcsMappingId(ocsTransform, texture.IsWcsBoxProjected());
-    const ON_TextureCoordinates* pTCs = mesh.CachedTextureCoordinates(mappingId);
-    return pTCs;
-  }
-  else if (texture.m_mapping_channel_id >= 0)
-  {
-    if (nullptr != mapping_ref)
-    {
-      const ON_MappingChannel* pMC = mapping_ref->MappingChannel(texture.m_mapping_channel_id);
-      if (nullptr != pMC)
-      {
-        const ON_TextureCoordinates* pTCs = mesh.CachedTextureCoordinates(pMC->m_mapping_id);
-        // Probably best to not const cast and start setting the texture coordinates.
-        // All previously returned pointers to the m_TC should be kept valid.
-        //if (nullptr == pTCs)
-        //{
-        //  ON_TextureMapping mapping = get_mapping_func(pMC);
-        //  pTCs = const_cast<ON_Mesh*>(this)->SetCachedTextureCoordinatesEx(mapping, &pMC->m_object_xform, true, false);
-        //}
-        return pTCs;
-      }
-    }
-    else
-    {
-      // Return surface parameter mapping if there is nothing else
-      const ON_TextureCoordinates* pTCs = mesh.CachedTextureCoordinates(ON_TextureMapping::SurfaceParameterTextureMappingId);
-      return pTCs;
-    }
-  }
-  return nullptr;
-}
-
-const ON_TextureCoordinates* ON_Mesh::GetCachedTextureCoordinates(const ONX_Model& onx_model, const ON_Texture& texture, const ON_MappingRef* mapping_ref) const
-{
-  auto get_mapping_func = [&onx_model](const ON_MappingChannel* pMC)
-    {
-      ON_TextureMapping mapping = ON_TextureMapping::SurfaceParameterTextureMapping;
-
-      ONX_ModelComponentIterator it(onx_model, ON_ModelComponent::Type::TextureMapping);
-
-      for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
-      {
-        const ON_TextureMapping* texture_mapping = ON_TextureMapping::Cast(cr.ModelComponent());
-        if (nullptr == texture_mapping)
-          continue;
-
-        if (ON_UuidCompare(&texture_mapping->Id(), &pMC->m_mapping_id) == 0)
-        {
-          mapping = *texture_mapping;
-          break;
-        }
-      }
-
-      return mapping;
-    };
-
-  return ::Internal_GetCachedTextureCoordinates(*this, get_mapping_func, texture, mapping_ref);
-}
-
-static GET_TEXMAP_FROM_DOCUMENT pFnGetTexMapFromDocument = nullptr;
-
-// Note: We are exporting this function for use in CRhinoObject::SetCachedTextureCoordinatesFromPlugIn
-ON_DECL std::function<ON_TextureMapping(const ON_MappingChannel*)> ON_Mesh_Private_GetTextureMappingFromDocumentLambda(const CRhinoDoc& rhino_doc)
-{
-  return [&rhino_doc](const ON_MappingChannel* pMC)
-  {
-    if ( pFnGetTexMapFromDocument )
-    {
-      // Call into Rhino
-      return pFnGetTexMapFromDocument(rhino_doc, pMC);
-    }
-    else
-    {
-      return ON_TextureMapping::SurfaceParameterTextureMapping;
-    }
-  };
-}
-
-
 const ON_TextureCoordinates* 
 ON_Mesh::CachedTextureCoordinates( const ON_UUID& mapping_id ) const
 {
@@ -4791,18 +4393,6 @@ bool ON_Mesh::SetCurvatureColorAnalysisColors(
   ON_SurfaceCurvatureColorMapping kappa_colors
 )
 {
-  if (false == this->HasPrincipalCurvatures())
-  {
-#if 0
-    // will be added April/May of 2024
-    if (kappa_colors.IsSet())
-    {
-      this->ComputeVertexPrincipalCurvatures(ON_Mesh::CurvatureSettingMethod::DiscreteDefault, false);
-      bLazy = false; // m_C[] is probably out of date even if the mapping tag is set.
-    }
-#endif
-    return this->HasPrincipalCurvatures();
-  }
   const bool bSetColors = kappa_colors.IsSet() && this->HasPrincipalCurvatures();
   const ON_MappingTag Ctag = kappa_colors.ColorMappingTag();
   if (bSetColors && bLazy && HasVertexColors() && this->m_Ctag == Ctag)
@@ -6681,40 +6271,6 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
       // will be recomputed if required
       delete m_kstat[j];
       m_kstat[j] = 0;
-    }
-  }
-
-  bool bAllowNewCachedTCs = (vcount0 == 0);
-  for (mi = 0; mi < mesh_count; mi++)
-  {
-    m = meshes[mi];
-    if (0 == m)
-      continue;
-
-    if (bAllowNewCachedTCs)
-    {
-      m_TC = m->m_TC;
-      bAllowNewCachedTCs = false;
-    }
-    else
-    {
-      for (int tci = 0; tci < m_TC.Count(); tci++)
-      {
-        bool bKeep = false;
-        for (int tcimi = 0; tcimi < m->m_TC.Count(); tcimi++)
-        {
-          if (m_TC[tci].m_tag == m->m_TC[tcimi].m_tag)
-          {
-            m_TC[tci].m_T.Append(m->m_TC[tcimi].m_T.Count(), m->m_TC[tcimi].m_T.Array());
-            bKeep = true;
-          }
-        }
-        if (!bKeep)
-        {
-          m_TC.Remove(tci);
-          tci--;
-        }
-      }
     }
   }
 
@@ -8607,10 +8163,6 @@ bool ON_Mesh::ConvertQuadsToTriangles()
 
 double ON_TriangleArea3d(ON_3dPoint A, ON_3dPoint B, ON_3dPoint C)
 {
-  // MF, March 18 24:
-  // a faster and numerically more robust version would be William Kahan's version of Heron's formula,
-  // see "Accuracy and Stability of Numerical Algorithms", N. Higham.
-
   // speed this up if needed
   return 0.5*ON_CrossProduct(B-A,C-A).Length();
 }
@@ -9160,19 +8712,6 @@ bool ON_Mesh::ComputeVertexNormals()
   }
   return rc;
 }
-
-
-#if 0
-// Will be added April/may of 2024
-bool ON_Mesh::ComputeVertexPrincipalCurvatures(
-  ON_Mesh::CurvatureSettingMethod method,
-  bool bLazy
-)
-{
-  // NOT INCLUDED IN PUBLIC OPENNURBS
-  return false;
-}
-#endif
 
 bool ON_Mesh::NormalizeTextureCoordinates()
 {
@@ -9813,123 +9352,6 @@ const ON_SurfaceCurvature ON_SurfaceCurvature::CreateFromPrincipalCurvatures(
   return k;
 }
 
-const ON_SurfaceCurvature ON_SurfaceCurvature::CreateFromGaussianAndMeanCurvatures(
-  double gaussian_curvature,
-  double mean_curvature
-)
-{
-  if (ON_IS_VALID(gaussian_curvature) && ON_IS_VALID(mean_curvature))
-  {
-    const double r = mean_curvature * mean_curvature - gaussian_curvature;
-    if (r >= 0.0)
-    {
-      const double k1 = mean_curvature + sqrt(r);
-      const double k2 = mean_curvature - sqrt(r);
-      return ON_SurfaceCurvature::CreateFromPrincipalCurvatures(k1, k2);
-    }
-    else if (r < 0.0)
-    {
-      // Dale Lear - March 2024 - RH-81078
-      // We end up here when r < 0 and gaussian_curvature > 0.
-      // We are in one of 3 cases:
-      // 1) We are dealing with a very small and noisy negative r.
-      // 2) We are dealing with esimates of mean and gaussian.        
-      // 3) Something else that is uncommon.
-      
-      // In case 1, mean*mean and gaussian are both larger relative to fabs(r).
-      // We don't know which input value is more precise, but people typically
-      // care more about gaussian so we use k1=k2=sign(mean)*sqrt(gaussian) instead of
-      // k1 = k2 = mean.
-      // 
-      // In case 2, the value of gaussian is typically more important than the value 
-      // of mean, because people are often testing to see how a mesh can be flattened.
-      //
-      // So, we assume we are at or near an umbilic (k1=k2) and set them so that
-      // k1*k2 = gaussian_curvature and sign(k1+k2) = sign(mean). 
-      // These choices preserve gaussian minimize fabs( 0.5*(k1+k2) - mean_curvature).
-      const double k1 = ((mean_curvature < 0.0) ? -1.0 : 1.0) * sqrt(gaussian_curvature);
-      const double k2 = k1;
-      return ON_SurfaceCurvature::CreateFromPrincipalCurvatures(k1, k2);
-      // put a breakpoint on the line above to dectect when we are in
-      // this unusual situation.
-    } 
-  }
-  if (ON_IS_VALID(gaussian_curvature))
-  {
-    // It can happen that only Gaussian was estimated, whether on purpose or not.
-    const double k1 = sqrt(fabs(gaussian_curvature));
-    const double k2 = ((gaussian_curvature < 0.0) ? -1.0 : 1.0) * k1;
-    return ON_SurfaceCurvature::CreateFromPrincipalCurvatures(k1, k2);
-  }
-  if (ON_IS_VALID(mean_curvature))
-  {
-    // It can also happen that only mean was estimated, whether on purpose or not.
-    return ON_SurfaceCurvature::CreateFromPrincipalCurvatures(mean_curvature, mean_curvature);
-  }
-  return ON_SurfaceCurvature::Nan;
-}
-
-const ON_SurfaceCurvature ON_SurfaceCurvature::FlipSurfaceOrientation() const
-{
-  // negate and reverse the order of (this->k1, this->k2)
-  return ON_SurfaceCurvature::CreateFromPrincipalCurvatures(-k2, -k1);
-}
-
-int ON_SurfaceCurvature::Compare(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  if (lhs.IsNan())
-    return rhs.IsNan() ? 0 : 1; // nans sort last
-  if (rhs.IsNan())
-    return -1;  // nans sort last
-  if (lhs.k1 < rhs.k1)
-    return -1;
-  if (lhs.k1 > rhs.k1)
-    return 1;
-  if (lhs.k2 < rhs.k2)
-    return -1;
-  if (lhs.k2 > rhs.k2)
-    return 1;
-  return 0;
-}
-
-int ON_SurfaceCurvature::CompareMaximumAndMinimumPrincipalCurvatures(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  const int rc = ON_SurfaceCurvature::CompareMaximumPrincipalCurvature(lhs, rhs);
-  return 0 != rc ? rc : ON_SurfaceCurvature::CompareMinimumPrincipalCurvature(lhs, rhs);
-}
-
-int ON_SurfaceCurvature::CompareMaximumPrincipalCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  return ON_DBL::CompareValue(lhs.MaximumPrincipalCurvature(), rhs.MaximumPrincipalCurvature());
-}
-
-int ON_SurfaceCurvature::CompareMinimumPrincipalCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  return ON_DBL::CompareValue(lhs.MinimumPrincipalCurvature(), rhs.MinimumPrincipalCurvature());
-}
-
-int ON_SurfaceCurvature::CompareGaussianCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  return ON_DBL::CompareValue(lhs.GaussianCurvature(), rhs.GaussianCurvature());
-}
-
-int ON_SurfaceCurvature::CompareMeanCurvature(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  return ON_DBL::CompareValue(lhs.MeanCurvature(), rhs.MeanCurvature());
-}
-
-int ON_SurfaceCurvature::CompareMaximumRadius(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  return ON_DBL::CompareValue(lhs.MaximumRadius(), rhs.MaximumRadius());
-}
-
-int ON_SurfaceCurvature::CompareMinimumRadius(const ON_SurfaceCurvature& lhs, const ON_SurfaceCurvature& rhs)
-{
-  return ON_DBL::CompareValue(lhs.MinimumRadius(), rhs.MinimumRadius());
-}
-
-
-
 double ON_SurfaceCurvature::KappaValue(ON::curvature_style kappa_style) const
 {
   double k;
@@ -10075,28 +9497,10 @@ bool operator!=(const ON_SurfaceCurvatureColorMapping& lhs, const ON_SurfaceCurv
   return false;
 }
 
-bool operator==(
-  const ON_SurfaceCurvature& lhs,
-  const ON_SurfaceCurvature& rhs
-  )
-{
-  return (lhs.k1 == rhs.k1 && lhs.k2 == rhs.k2);
-}
-
-bool operator!=(
-  const ON_SurfaceCurvature& lhs,
-  const ON_SurfaceCurvature& rhs
-  )
-{
-  // Note well: 
-  // ON_SurfaceCurvature::IsNan() is true if either of k1 or k2 is a nan.
-  // and the code below is correct.
-  return (lhs.k1 != rhs.k1 || lhs.k2 != rhs.k2) || (lhs.IsNan() && rhs.IsNan());
-}
 
 bool ON_SurfaceCurvature::IsSet() const
 {
-  return (ON_UNSET_VALUE < k1 && k1 < ON_UNSET_POSITIVE_VALUE && ON_UNSET_VALUE < k2 && k2 < ON_UNSET_POSITIVE_VALUE);
+  return (ON_UNSET_VALUE < k1&& k1 < ON_UNSET_POSITIVE_VALUE&& ON_UNSET_VALUE < k2&& k2 < ON_UNSET_POSITIVE_VALUE);
 }
 
 bool ON_SurfaceCurvature::IsZero() const
@@ -10109,30 +9513,25 @@ bool ON_SurfaceCurvature::IsUnset() const
   return IsSet() ? false : true;
 }
 
-bool ON_SurfaceCurvature::IsNan() const
-{
-  return (ON_IS_NAN(k1) || ON_IS_NAN(k2));
-}
-
-
-double ON_SurfaceCurvature::MaximumPrincipalCurvature() const
-{
-  return IsSet() ? ((k1 >= k2) ? k1 : k2) : ON_DBL_QNAN;
-}
-
-double ON_SurfaceCurvature::MinimumPrincipalCurvature() const
-{
-  return IsSet() ? ((k1 <= k2) ? k1 : k2) : ON_DBL_QNAN;
-}
 
 double ON_SurfaceCurvature::GaussianCurvature() const
 {
-  return (ON_IS_VALID(k1) && ON_IS_VALID(k2)) ? (k1 * k2) : ON_DBL_QNAN;
+  if (ON_IS_VALID(k1) && ON_IS_VALID(k2))
+  {
+    return k1 * k2;
+  }
+
+  return ON_DBL_QNAN;
 }
 
 double ON_SurfaceCurvature::MeanCurvature() const
 {
-  return (ON_IS_VALID(k1) && ON_IS_VALID(k2)) ? ((k1 == k2) ? k1 : 0.5 * (k1 + k2)) : ON_DBL_QNAN;
+  if (ON_IS_VALID(k1) && ON_IS_VALID(k2))
+  {
+    return 0.5 * (k1 + k2);
+  }
+
+  return ON_DBL_QNAN;
 }
 
 double ON_SurfaceCurvature::MinimumRadius() const
@@ -10158,7 +9557,7 @@ double ON_SurfaceCurvature::MaximumRadius() const
   {
     // k = minimum directional curvature
     double k;
-    if (ON_DBL::Sign(k1)*ON_DBL::Sign(k2) <= 0 || fabs(k1) <= 1e-300 || fabs(k2) <= 1e-300)
+    if (k1 * k2 <= 0.0 || fabs(k1) <= 1e-300 || fabs(k2) <= 1e-300)
     {
       // If principal curvatures have opposite signs,
       // there is a direction with zero directional curvature.
@@ -13331,12 +12730,6 @@ void ON_MappingTag::Dump( ON_TextLog& text_log ) const
       break;
     case  ON_TextureMapping::TYPE::false_colors:
       text_log.Print("false colors");
-      break;
-    case  ON_TextureMapping::TYPE::wcs_projection:
-      text_log.Print("wcs projection");
-      break;
-    case  ON_TextureMapping::TYPE::wcsbox_projection:
-      text_log.Print("wcs box projection");
       break;
     }
     text_log.Print("\n");

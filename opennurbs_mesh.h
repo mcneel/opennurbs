@@ -4253,78 +4253,7 @@ Returns:
     );
 
   bool ComputeVertexNormals();    // uses face normals to cook up a vertex normal
-
-#if 0
-  // Will be added April/may of 2024
-
-#pragma region NOT_YET_RH_C_SHARED_ENUM [ON_Mesh::CurvatureSettingMethod] [Rhino.Geometry.MeshCurvatureSettingMethod] [byte]
-  /// <summary>
-  /// Enumberates the methods available to set the vertex principal curvature
-  /// values saved in the ON_Mesh m_K[] array.
-  /// </summary>
-  enum class CurvatureSettingMethod : unsigned char
-  {
-    /// <summary>
-    /// The most appropriate method for current context will be used.
-    /// </summary>
-    Unset = 0,
-
-    /// <summary>
-    /// The mesh is being created from a surface and the mesh's principal curvatures
-    /// will be set from the surface's first and second partial deriatives.
-    /// </summary>
-    SurfaceEvaluation = 1,
-
-    /// <summary>
-    /// The mesh's principal curvatures will be set using 
-    /// ON_SurfaceCurvature::CreateFromGaussianAndMeanCurvatures()
-    /// with input values from
-    /// ON_Mesh::ComputeDiscreteGaussianMeshCurvature() and
-    /// ON_Mesh::ComputeDiscreteLaplacianMeanMeshCurvatures().
-    /// </summary>
-    DiscreteDefault = 2,
-
-    /// <summary>
-    /// The mesh's principal curvatures will be set using 
-    /// ON_SurfaceCurvature::CreateFromGaussianAndMeanCurvatures()
-    /// with input values from
-    /// ON_Mesh::ComputeDiscreteGaussianMeshCurvature() and
-    /// ON_Mesh::ComputeDiscreteLaplacianMeanMeshCurvatures().
-    /// </summary>
-    DiscreteLaplacianMean = 3,
-
-    /// <summary>
-    /// The mesh's principal curvatures will be set using 
-    /// ON_SurfaceCurvature::CreateFromGaussianAndMeanCurvatures()
-    /// with input values from
-    /// ON_Mesh::ComputeDiscreteGaussianMeshCurvature() and
-    /// ON_Mesh::ComputeDiscreteDihedralMeanMeshCurvature().
-    /// </summary>
-    DiscreteDihedralMean = 4
-  };
-#pragma endregion
-
-  /// <summary>
-  /// Use discrete curvature estimates to set the principal curvature values
-  /// in the mesh's m_K[] array.
-  /// </summary>
-  /// <param name="method">
-  /// Specifies the method to use.
-  /// One of the discrete methods must be specified. 
-  /// When in doubt, pass ON_Mesh::CurvatureSettingMethod::DiscreteDefault.
-  /// </param>
-  /// <param name="bLazy">
-  /// If bLazy=true, only unset m_K[] values will be set.
-  /// If bLazy=false, only unset m_K[] values will be set.
-  /// </param>
-  /// <returns></returns>
-  bool ComputeVertexPrincipalCurvatures(
-    ON_Mesh::CurvatureSettingMethod method,
-    bool bLazy
-  );
-
-#endif
-
+  
   //////////
   // Scales textures so the texture domains are [0,1] and
   // eliminates any texture rotations.
@@ -4403,150 +4332,18 @@ Returns:
     bool bSeamCheck = true
   );
 
-  /*
-  Description:
-    Returns true if the mesh has at least one set of valid
-    cached texture coordinates in the m_TC array.
-  Returns:
-    True if the mesh contains cached texture coordinates.
-  See Also:
-   ON_Mesh::SetCachedTextureCoordinatesFromMaterial
-   ON_Mesh::CachedTextureCoordinates
-   ON_Mesh::SetCachedTextureCoordinatesEx
-  */
   bool HasCachedTextureCoordinates() const;
-  
-  /*
-  Description:
-    Prepares the cached texture coordinates by filling the
-    m_TC array with the relevant texture coordinates needed
-    to render the provided material using the provided
-    mapping ref and ONX model.
-   Call this function first if you are planning on storing
-   the results from repeated calls to any of the following
-   methods:
-    * CachedTextureCoordinates
-    * SetCachedTextureCoordinates
-    * SetCachedTextureCoordinatesEx
-    * GetCachedTextureCoordinates
-  Parameters:
-    onx_model - [in]
-      The ONX model that contains the texture mappings.
-    material - [in]
-      The material which contains the textures we want to
-      calculate the texture coordinates for.
-    mapping_ref - [in]
-      The texture mapping ref to use to get at the texture mapping.
-  Returns:
-    True if successful.
-  See Also:
-   ON_Mesh::CachedTextureCoordinates
-   ON_Mesh::SetCachedTextureCoordinatesEx
-  */
-  bool SetCachedTextureCoordinatesFromMaterial(const class ONX_Model& onx_model, const ON_Material& material, const ON_MappingRef* mapping_ref) const;
-  
-  /*
-  Description:
-    Returns the cached texture coordinates corresponding to
-    the provided texture if they exist. If they don't
-    exist, they can be created using the following methods:
-    * SetCachedTextureCoordinatesFromMaterial
-    * SetCachedTextureCoordinates
-    * SetCachedTextureCoordinatesEx
 
-    NOTE: If you store the pointers of the results from this
-    function, you need to first call
-    SetCachedTextureCoordinatesFromMaterial to make sure the
-    pointers don't get invalidated by subsequent calls to
-    functions like SetCachedTextureCoordinates and
-    SetCachedTextureCoordinatesEx.
-  Parameters:
-    onx_model - [in]
-      The ONX model that contains the texture mappings.
-     texture - [in]
-       The texture to calculate the texture coordinates for.
-     mapping_ref - [in]
-       The texture mapping ref to use to get at the texture mapping.
-  Returns:
-    A pointer to the matching cached texture coordinates,
-    nullptr if none exist.
-  See Also:
-    ON_Mesh::SetCachedTextureCoordinatesFromMaterial
-    ON_Mesh::SetCachedTextureCoordinatesEx
-  */
-  const ON_TextureCoordinates* GetCachedTextureCoordinates(const class ONX_Model& onx_model, const ON_Texture& texture, const ON_MappingRef* mapping_ref) const;
-
-
-  /*
-  Description:
-    Returns the cached texture coordinates corresponding to
-    the provided mapping id if they exist. If they don't
-    exist, they can be created using the following methods:
-    * SetCachedTextureCoordinatesFromMaterial
-    * SetCachedTextureCoordinates
-    * SetCachedTextureCoordinatesEx
-  
-    NOTE: If you store the pointers of the results from this
-    function, you need to first call
-    SetCachedTextureCoordinatesFromMaterial to make sure the
-    pointers don't get invalidated by subsequent calls to
-    functions like SetCachedTextureCoordinates and
-    SetCachedTextureCoordinatesEx.
-  Parameters:
-    mapping_id - [in]
-      The texture mapping to use for the calculation.
-  Returns:
-    A pointer to the matching cached texture coordinates,
-    nullptr if none exist.
-  See Also:
-    ON_Mesh::SetCachedTextureCoordinatesFromMaterial
-    ON_Mesh::SetCachedTextureCoordinatesEx
-  */
   const ON_TextureCoordinates* CachedTextureCoordinates( 
           const ON_UUID& mapping_id 
           ) const;
 
-  // Use SetCachedTextureCoordinatesEx instead
   const ON_TextureCoordinates* SetCachedTextureCoordinates( 
           const class ON_TextureMapping& mapping,
           const class ON_Xform* mesh_xform = 0,
           bool bLazy = true
           );
 
-  /*
-  Description:
-    Returns the cached texture coordinates corresponding to
-    the provided mapping and other parameters. If they don't
-    exist, this function will attempt to create them first.
-    If they do exist and bLazy is true, then no calculation
-    is performed.
-
-    NOTE: Subsequent calls to this function with different
-    parameters can invalidate previously returned
-    ON_TextureCoordinates pointers. If you want store the
-    pointers of previous results, you need to first call
-    SetCachedTextureCoordinatesFromMaterial.
-  Parameters:
-    mapping - [in]
-      The texture mapping to use for the calculation.
-    mesh_xform  - [in]
-      If not nullptr, the mapping calculation is performed as
-      if the mesh were transformed by mesh_xform
-    bLazy - [in]
-      If true and the m_TC[] values were set using the same
-      mapping parameters, then no calculation is performed.
-    bSeamCheck - [in]
-      If true then some mesh edges might be unwelded to better
-      represent UV discontinuities in the texture mapping.
-      This only happens for the following mappings:
-      Box, Sphere, Cylinder.
-  Returns:
-    A pointer to the cached texture coordinates, nullptr if
-    the function failed to calculate the texture coordinates.
-  See Also:
-    ON_Mesh::SetCachedTextureCoordinatesFromMaterial
-    ON_Mesh::CachedTextureCoordinates
-  */
   const ON_TextureCoordinates* SetCachedTextureCoordinatesEx(
           const class ON_TextureMapping& mapping,
           const class ON_Xform* mesh_xform = 0,

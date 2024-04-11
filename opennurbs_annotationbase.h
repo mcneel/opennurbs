@@ -204,7 +204,7 @@ public:
 
   /*
   Returns:
-  Text information with rich text formatting instructions removed.
+  Text information with rich text formatting insturctions removed.
   The result string from evaluating fields is included
   Field results may be cached from previous evaluation
   */
