@@ -1801,6 +1801,84 @@ const ON_3dVector ON_SubDMeshFragment::VertexNormal(
     ;
 }
 
+
+const ON_SubDFaceParameter ON_SubDMeshFragment::VertexSubDFaceParameter(
+  ON_2udex grid2dex
+) const
+{
+  return VertexSubDFaceParameter(grid2dex.i, grid2dex.j);
+}
+
+const ON_SubDFaceParameter ON_SubDMeshFragment::VertexSubDFaceParameter(
+  unsigned grid2dex_i,
+  unsigned grid2dex_j
+) const
+{
+  for (;;)
+  {
+    const ON_3dPoint debugP = VertexPoint(grid2dex_i, grid2dex_j);
+    if (false == debugP.IsValid())
+      break;
+
+
+    const unsigned gc = m_grid.SideSegmentCount();
+    if (gc < 1)
+      break;
+    if (grid2dex_i > gc || grid2dex_j > gc)
+      break;
+
+    // quad faces have m_face_fragment_count = 1;
+    // n-gon faces have m_face_fragment_count = n (n = 3 or n >= 5)
+    const unsigned face_edge_count 
+      = (1 == m_face_fragment_count) 
+      ? 4u
+      : ((unsigned)m_face_fragment_count);
+
+    if (face_edge_count < 3)
+      break;
+
+    if (4 == face_edge_count)
+    {
+      // quad face
+      if (0 != m_face_fragment_index)
+        break;
+      // quad parameters run from 0.0 to 1.0.
+      const double gdelta = 1.0 / ((double)gc);
+      const double quad_s = gdelta * grid2dex_i;
+      const double quad_t = gdelta * grid2dex_j;
+      const ON_SubDFaceParameter p = ON_SubDFaceParameter::CreateFromQuadFaceParameteters(quad_s, quad_t);
+      if (p.IsNotSet())
+        break;
+      return p;
+    }
+
+    // ngon face
+    if (0 != m_face_fragment_index >= face_edge_count)
+      break;
+    // corner parameters run from 0.0 to 0.5.
+    const double gdelta = 0.5 / ((double)gc);
+    const double corner_s = gdelta * grid2dex_i;
+    const double corner_t = gdelta * grid2dex_j;
+    const ON_SubDFaceCornerDex cdex(m_face_fragment_index, face_edge_count);
+    const ON_SubDFaceParameter p(cdex, corner_s, corner_t);
+    if (p.IsNotSet())
+      break;
+    return p;
+  }
+
+  return ON_SubDFaceParameter::Nan;
+}
+
+const ON_SubDFaceParameter ON_SubDMeshFragment::VertexSubDFaceParameter(
+  unsigned grid_point_index
+) const
+{
+  return
+    (grid_point_index < VertexCount())
+    ? VertexSubDFaceParameter(m_grid.Grid2dexFromPointIndex(grid_point_index))
+    : ON_SubDFaceParameter::Nan;
+}
+
 const class ON_SubDEdge* ON_SubDMeshFragment::SubDEdge(
   unsigned int grid_side_index
   ) const

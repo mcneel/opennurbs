@@ -5339,8 +5339,11 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_ON, false);
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 60);
 
+          int cy = 0, cm = 0, cd = 0; double ch = 0.0;
+          ON_SunEngine::GetCurrentLocalDateTime(cy, cm, cd, ch);
+
           ON_SunEngine engine(ON_SunEngine::Accuracy::Minimum);
-          engine.SetLocalDateTime(2000, 1, 1, 12.0);
+          engine.SetLocalDateTime(cy, cm, cd, ch);
           int y = 0, m = 0, d = 0; double h = 0.0;
           engine.LocalDateTime(y, m, d, h);
           p.SetParam(ON_RDK_SUN_DATE_YEAR,  y);

@@ -440,6 +440,10 @@
 		D6B06A951BC57E52000B5948 /* opennurbs_archive_manifest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D6B06A941BC57E52000B5948 /* opennurbs_archive_manifest.cpp */; };
 		D6F232111C0086D700D1B680 /* opennurbs_file_utilities.h in Headers */ = {isa = PBXBuildFile; fileRef = D6F232101C0086D700D1B680 /* opennurbs_file_utilities.h */; };
 		D6F232131C0086E500D1B680 /* opennurbs_file_utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D6F232121C0086E500D1B680 /* opennurbs_file_utilities.cpp */; };
+		DE0517582BC6E45E00653EF9 /* opennurbs_plus_implicitfn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEE5EF022BC668C5008B7FC3 /* opennurbs_plus_implicitfn.cpp */; };
+		DE05175B2BC6E47700653EF9 /* opennurbs_plus_implicitfn.h in Headers */ = {isa = PBXBuildFile; fileRef = DEE5EEFE2BC6689D008B7FC3 /* opennurbs_plus_implicitfn.h */; };
+		DEE5EF012BC6689D008B7FC3 /* opennurbs_plus_implicitfn.h in Headers */ = {isa = PBXBuildFile; fileRef = DEE5EEFE2BC6689D008B7FC3 /* opennurbs_plus_implicitfn.h */; };
+		DEE5EF032BC668C6008B7FC3 /* opennurbs_plus_implicitfn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEE5EF022BC668C5008B7FC3 /* opennurbs_plus_implicitfn.cpp */; };
 		DF2447021BE96D2600FD193A /* opennurbs_md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2446FE1BE96D2600FD193A /* opennurbs_md5.cpp */; };
 		DF2447031BE96D2600FD193A /* opennurbs_md5.h in Headers */ = {isa = PBXBuildFile; fileRef = DF2446FF1BE96D2600FD193A /* opennurbs_md5.h */; };
 		DF2447041BE96D2600FD193A /* opennurbs_sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DF2447001BE96D2600FD193A /* opennurbs_sha1.cpp */; };
@@ -1129,6 +1133,8 @@
 		D6B06A941BC57E52000B5948 /* opennurbs_archive_manifest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_archive_manifest.cpp; sourceTree = "<group>"; };
 		D6F232101C0086D700D1B680 /* opennurbs_file_utilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opennurbs_file_utilities.h; sourceTree = "<group>"; };
 		D6F232121C0086E500D1B680 /* opennurbs_file_utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_file_utilities.cpp; sourceTree = "<group>"; };
+		DEE5EEFE2BC6689D008B7FC3 /* opennurbs_plus_implicitfn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opennurbs_plus_implicitfn.h; sourceTree = "<group>"; };
+		DEE5EF022BC668C5008B7FC3 /* opennurbs_plus_implicitfn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_plus_implicitfn.cpp; sourceTree = "<group>"; };
 		DF2446FE1BE96D2600FD193A /* opennurbs_md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_md5.cpp; sourceTree = "<group>"; };
 		DF2446FF1BE96D2600FD193A /* opennurbs_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opennurbs_md5.h; sourceTree = "<group>"; };
 		DF2447001BE96D2600FD193A /* opennurbs_sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = opennurbs_sha1.cpp; sourceTree = "<group>"; };
@@ -1358,6 +1364,7 @@
 				D69DB7151A957AA10080DA91 /* opennurbs_plus_hiddenline_impl.h */,
 				D69DB7161A957AA10080DA91 /* opennurbs_plus_hiddenline.h */,
 				D6184CAB1B0F83560099E507 /* opennurbs_plus_idimage.h */,
+				DEE5EEFE2BC6689D008B7FC3 /* opennurbs_plus_implicitfn.h */,
 				DFFC2022169E4D36007E9A98 /* opennurbs_plus_massprop.h */,
 				1D0BCB481D7F6F2A00B5F9CD /* opennurbs_plus_mesh_intersection.h */,
 				E7DDF94D22958CEF00B22F2C /* opennurbs_plus_meshbooleans_impl.h */,
@@ -1576,6 +1583,7 @@
 				10A930DE0B2F16980022B2F6 /* opennurbs_plus_ginfinity.cpp */,
 				D69DB7191A957ABA0080DA91 /* opennurbs_plus_hiddenline.cpp */,
 				D66DBD861A67505A00125759 /* opennurbs_plus_idimage.cpp */,
+				DEE5EF022BC668C5008B7FC3 /* opennurbs_plus_implicitfn.cpp */,
 				DFFC2028169E4D6C007E9A98 /* opennurbs_plus_massprop.cpp */,
 				DFB8D1C92183D5DC00A0307C /* opennurbs_plus_memory_apple.cpp */,
 				10D7CFE609E04F0A0056FF9C /* opennurbs_plus_memory_new.cpp */,
@@ -1850,6 +1858,7 @@
 				369B20181CE520E000A5CB6E /* opennurbs_annotationbase.h in Headers */,
 				10D7D0F909E0523C0056FF9C /* opennurbs_pluginlist.h in Headers */,
 				10D7D0FA09E0523C0056FF9C /* opennurbs_point.h in Headers */,
+				DEE5EF012BC6689D008B7FC3 /* opennurbs_plus_implicitfn.h in Headers */,
 				10D7D0FB09E0523C0056FF9C /* opennurbs_pointcloud.h in Headers */,
 				10D7D0FC09E0523C0056FF9C /* opennurbs_pointgeometry.h in Headers */,
 				D69DB7181A957AA10080DA91 /* opennurbs_plus_hiddenline.h in Headers */,
@@ -1952,6 +1961,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DE05175B2BC6E47700653EF9 /* opennurbs_plus_implicitfn.h in Headers */,
 				1D741C1621B9C5DC00AA10E5 /* opennurbs_sleeplock.h in Headers */,
 				99284D062800FD4B00CA9E82 /* opennurbs_render_channels.h in Headers */,
 				A165DED527C953020006F184 /* opennurbs_xml.h in Headers */,
@@ -2284,6 +2294,7 @@
 				1D496A012354FE1700BFB6AA /* opennurbs_plus_subd_facegroups.cpp in Sources */,
 				10D7D05E09E04F820056FF9C /* opennurbs_zlib_memory.cpp in Sources */,
 				10D7D05F09E04F820056FF9C /* opennurbs_zlib.cpp in Sources */,
+				DEE5EF032BC668C6008B7FC3 /* opennurbs_plus_implicitfn.cpp in Sources */,
 				1DB1AA931ED7B864007648CC /* opennurbs_plus_memory.cpp in Sources */,
 				10A930E50B2F16980022B2F6 /* opennurbs_plus_ctree.cpp in Sources */,
 				10A930E60B2F16980022B2F6 /* opennurbs_plus_ginfinity.cpp in Sources */,
@@ -2532,6 +2543,7 @@
 				1D496A022354FE1700BFB6AA /* opennurbs_plus_subd_facegroups.cpp in Sources */,
 				DF6D39021F2A72DF00D997E4 /* opennurbs_zlib_memory.cpp in Sources */,
 				DF6D39031F2A72DF00D997E4 /* opennurbs_zlib.cpp in Sources */,
+				DE0517582BC6E45E00653EF9 /* opennurbs_plus_implicitfn.cpp in Sources */,
 				DF6D39041F2A72DF00D997E4 /* opennurbs_plus_memory.cpp in Sources */,
 				DF6D39051F2A72DF00D997E4 /* opennurbs_plus_ctree.cpp in Sources */,
 				DF6D39061F2A72DF00D997E4 /* opennurbs_plus_ginfinity.cpp in Sources */,

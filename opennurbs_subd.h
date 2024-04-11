@@ -896,6 +896,344 @@ ON_DECL
 bool operator!=(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs);
 
 /// <summary>
+/// A ON_SubDFaceCornerDex is a value that identifies a subd face corner.
+/// </summary>
+class ON_WIP_CLASS ON_SubDFaceCornerDex
+{
+private:
+  unsigned short m_corner_index = 0;
+  unsigned short m_edge_count = 0;
+
+public:  
+  ON_SubDFaceCornerDex() = default;
+  ~ON_SubDFaceCornerDex() = default;
+  ON_SubDFaceCornerDex(const ON_SubDFaceCornerDex&) = default;
+  ON_SubDFaceCornerDex& operator=(const ON_SubDFaceCornerDex&) = default;
+
+  ON_SubDFaceCornerDex(unsigned face_corner_index, unsigned face_edge_count);
+
+  /// <summary>
+  /// ON_SubDFaceCorner::Unset has CornerIndex()=0 and EdgeCount()=0.
+  /// </summary>
+  static const ON_SubDFaceCornerDex Unset;
+
+  /// <summary>
+  /// Dictionary compares EdgeCount() then CornerIndex(). 
+  /// Any set value &lt; any unset value.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>
+  /// -1 if lsh &lt; rhs. 
+  /// 0 if lhs = rhs. 
+  /// +1 if lhs &gt; rhs.
+  /// </returns>
+  static int CompareAll(const ON_SubDFaceCornerDex& lhs, const ON_SubDFaceCornerDex& rhs);
+
+  /// <summary>
+  /// Uses ON_SubDFaceCornerDex::CompareAll to dictionary sort nonnull inputs and safely sorts
+  /// nullptr to the end.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int Compare(const ON_SubDFaceCornerDex* lhs, const ON_SubDFaceCornerDex* rhs);
+
+  /// <returns>
+  /// True if EdgeCount() &gt;= 3 and 0&lt; =CornerIndex() &lt; EdgeCount().
+  /// False otherwise.
+  /// </returns>
+  bool IsSet() const;
+
+  /// <returns>
+  /// True if EdgeCount() &lt; 3 or CornerIndex() &gt;= EdgeCount().
+  /// False otherwise.
+  /// </returns>  
+  bool IsNotSet() const;
+
+  /// <param name="face"></param>
+  /// <returns>
+  /// True if IsSet() is true, nullptr != face, and EdgeCount() = face->EdgeCount().
+  /// </returns>
+  bool IsValid(const class ON_SubDFace* face) const;
+
+  /// <returns>
+  /// Zero based index identifying the corner of a subd face.
+  /// </returns>
+  unsigned CornerIndex() const;
+
+  /// <returns>
+  /// The number of edges in the subd face.
+  ///</returns>
+  unsigned EdgeCount() const;
+
+  /// <returns>True if this is a corner of a quad face (IsSet() && 4 == EdgeCount()).</returns>
+  bool IsQuadFace() const;
+
+  /// <summary>
+  /// NextCornerDex() = (this->CornerDex() + 1) % this->EdgeCount().
+  /// If this is not set, then ON_SubDFaceCornerDex::Unset is returned.
+  /// </summary>
+  /// <returns>
+  /// The next face coner in the counter-clocwise sense.
+  /// </returns>
+  const ON_SubDFaceCornerDex NextCornerDex() const;
+
+  /// <summary>
+  /// NextCornerDex() = (this->CornerDex() + this->EdgeCount() - 1) % this->EdgeCount().
+  /// If this is not set, then ON_SubDFaceCornerDex::Unset is returned.
+  /// </summary>
+  /// <returns>
+  /// The previous face coner in the counter-clocwise sense.
+  /// </returns>
+  const ON_SubDFaceCornerDex PreviousCornerDex() const;
+
+  /// <summary>
+  /// Get the vertex at the corner of the face identified by this.
+  /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
+  /// then nullptr is returned.
+  /// </summary>
+  /// <param name="face"></param>
+  /// <returns>The vertex at the face corner</returns>
+  const ON_SubDVertex* CornerVertex(const class ON_SubDFace* face) const;
+
+  /// <summary>
+  /// Get the vertex at the corner of the face identified by this->PreviousCornerDex().
+  /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
+  /// then nullptr is returned.
+  /// </summary>
+  /// <param name="face"></param>
+  /// <returns>The vertex at the previous corner of the face</returns>
+  const ON_SubDVertex* PreviousCornerVertex(const class ON_SubDFace* face) const;
+
+  /// <summary>
+  /// Get the vertex at the corner of the face identified by this->NextCornerDex().
+  /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
+  /// then nullptr is returned.
+  /// </summary>
+  /// <param name="face"></param>
+  /// <returns>The vertex at the next corner of the face</returns>
+  const ON_SubDVertex* NextCornerVertex(const class ON_SubDFace* face) const;
+
+  /// <summary>
+  /// Get the edge face->EdgePtr(this->CornerIndex()).
+  /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
+  /// then ON_SubDEdgePtr::Null is returned.
+  /// </summary>
+  /// <param name="face"></param>
+  /// <param name="corner_edge_dex">
+  /// 0=edge entering the corner = this->LeftEdgePtr(face);
+  /// 1=edge leaving the corner
+  /// </param>
+  /// <returns></returns>
+  const ON_SubDEdgePtr EdgePtr(const class ON_SubDFace* face, unsigned corner_edge_dex) const;
+
+  /// <summary>
+  /// Get the edge of face that goes from the the previous
+  /// face corner to this face corner. The edge pointer 
+  /// is oriented from PreviousCornerVertex() to CornerVertex().
+  /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
+  /// then ON_SubDEdgePtr::Null is returned.
+  /// </summary>
+  /// <param name="face"></param>
+  /// <returns>face->EdgePtr(this->PreviousCornerDex().CornerIndex())</returns>
+  const ON_SubDEdgePtr LeftEdgePtr(const class ON_SubDFace* face) const;
+
+  /// <summary>
+  /// Get the edge of face that goes from the this face corner
+  /// to the next face corner. The edge pointer 
+  /// is oriented from CornerVertex() to NextCornerVertex().
+  /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
+  /// then ON_SubDEdgePtr::Null is returned.
+  /// </summary>
+  /// <param name="face"></param>
+  /// <returns>face->EdgePtr(this->CornerIndex())</returns>
+  const ON_SubDEdgePtr RightEdgePtr(const class ON_SubDFace* face) const;
+};
+
+class ON_WIP_CLASS ON_SubDFaceParameter
+{
+public:
+  ON_SubDFaceParameter() = default;
+  ~ON_SubDFaceParameter() = default;
+  ON_SubDFaceParameter(const ON_SubDFaceParameter&) = default;
+  ON_SubDFaceParameter& operator=(const ON_SubDFaceParameter&) = default;
+
+
+  /// <summary>
+  /// Create a SubD face parameter that identifies a point on the face. 
+  /// The parameters (0,0) correspond the the corner vertex cdex.Vertex(face). 
+  /// The corner_s parameter runs from the corner vertex to the midpoint of cdex.RightEdge(face).
+  /// The corner_t parameter runs from the corner vertex to the midpoint of cdex.LeftEdge(face).
+  /// The parameters (1/2, 1/2) correspond the the center of the face.
+  /// </summary>
+  /// <param name="cdex">
+  /// Identifies the face's corner subdivison quad.
+  /// </param>
+  /// <param name="corner_s">
+  /// 0 &lt;= corner_s &lt;= 1/2
+  /// </param>
+  /// <param name="corner_t">
+  /// 0 &lt;= corner_t &lt;= 1/2
+  /// </param>
+  ON_SubDFaceParameter(
+    ON_SubDFaceCornerDex cdex,
+    double corner_s,
+    double corner_t
+  );
+
+  /// <summary>
+  /// Create at ON_SubDFaceParameter the corresponds to the the specified quad face parameters.
+  /// The quad face parameters for face.Vertex(0) are (0,0).
+  /// The quad face parameters for face.Vertex(1) are (1,0).
+  /// The quad face parameters for face.Vertex(2) are (1,1).
+  /// The quad face parameters for face.Vertex(3) are (0,1).
+  /// </summary>
+  /// <param name="quad_face_s">
+  /// 0 &lt;= quad_face_s &lt= 1.
+  /// </param>
+  /// <param name="quad_face_t">
+  /// 0 &lt;= quad_face_t &lt= 1.
+  /// </param>
+  /// <returns>
+  /// The ON_SubDFaceParameter the references the quad face point.
+  /// </returns>
+  static const ON_SubDFaceParameter CreateFromQuadFaceParameteters(
+    double quad_face_s,
+    double quad_face_t
+  );
+
+
+  /// <summary>
+  /// ON_SubDFaceParameter::Nan has face_edge_count=0, corner_index=0, s=ON_DBL_QNAN, t=ON_DBL_QNAN.
+  /// </summary>
+  static const ON_SubDFaceParameter Nan;
+
+  /// <returns>True if all values are valid.</returns>
+  bool IsSet();
+
+  /// <returns>True if all values are not valid.</returns>
+  bool IsNotSet();
+
+  /// <summary>
+  /// Well ordered dictionary compare of m_cdex, m_s, and m_t using
+  /// ON_SubDFaceCornerDex::CompareAll() and ON_DBL::CompareValue().
+  /// Any set value &lt; any unset value.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>
+  /// -1: lhs &lt; rhs
+  ///  0: lhs = rhs
+  /// +1: lhs &gt; rhs
+  /// </returns>
+  static int CompareAll(const ON_SubDFaceParameter& lhs, const ON_SubDFaceParameter& rhs);
+
+  /// <summary>
+  /// Well ordered dictionary compare that uses ON_SubDFaceParameter::CompareAll() to
+  /// compare nonnull values and safely sorts nullptr to the end.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int Compare(const ON_SubDFaceParameter* lhs, const ON_SubDFaceParameter* rhs);
+
+  bool IsSet() const;
+
+  bool IsNotSet() const;
+
+  /// <summary>
+  /// m_cdex identifies face's subdivision quad the s and t parameters apply to.
+  /// The corner vertex is V = m_cdex.Vertex(face).
+  /// The edge entering the corner is LE = m_cdex.LeftEdge(face).
+  /// The edge leaving the corner is RE = m_cdex.RightEdge(face).
+  /// V = LE.RelativeVertex(1) = RE.RelativeVertex(0).
+  /// </summary>
+  const ON_SubDFaceCornerDex FaceCornerDex() const;
+
+  /// <summary>
+  /// cdex = FaceCornerDex() identifies face's subdivision quad the s and t parameters apply to.
+  /// The corner vertex is V = cdex.Vertex(face).
+  /// The edge entering the corner is LE = cdex.LeftEdge(face).
+  /// The edge leaving the corner is RE = cdex.RightEdge(face).
+  /// V = LE.RelativeVertex(1) = RE.RelativeVertex(0).
+  /// 
+  /// p = FaceCornerParameters();
+  /// The p.x parameter runs along half of RE from V to the midpoint of RE.
+  /// 0 &lt;= p.x &lt; 1/2.
+  /// The p.y parameter runs along half of LE from V to the midpoint of LE.
+  /// 0 &lt;= p.y &lt; 1/2.
+  /// At V, p=(0,0).
+  /// At the midpoint of RE, p=(1/2,0)
+  /// At the midpoint of LE, p=(0,1/2)
+  /// At the center of the face, p=(1/2,1/2).
+  /// </summary>
+  const ON_2dPoint FaceCornerParameters() const;
+
+  /// <summary>
+  /// For quad faces, QuadFaceParameters() returns 2 normalized parameters that span the entire quad face.
+  /// The 2d points (0,0), (1,0), (1,1), (0,1) corresponed to the quad face's vertices 
+  /// face.Vertex(0), face.Vertex(1), face.Vertex(2), face.Vertex(3).
+  /// </summary>
+  /// <returns>
+  /// If m_cdex.IsQUadFace() is true, then the 2 normalized quad face parameters 
+  /// corresponding to this ON_SubDFaceParameter are returned.
+  /// Otherwise ON_2dPoint::NanPoint is returned.
+  /// </returns>
+  const ON_2dPoint QuadFaceParameters() const;
+
+
+private:
+  /// <summary>
+  /// m_cdex identifies face's subdivision quad the s and t parameters apply to.
+  /// The corner vertex is V = m_cdex.Vertex(face).
+  /// The edge entering the corner is LE = m_cdex.LeftEdge(face).
+  /// The edge leaving the corner is RE = m_cdex.RightEdge(face).
+  /// V = LE.RelativeVertex(1) = RE.RelativeVertex(0).
+  /// </summary>
+  ON_SubDFaceCornerDex m_cdex;
+
+  /// <summary>
+  /// m_cdex identifies face's subdivision quad the s and t parameters apply to.
+  /// The corner vertex is V = m_cdex.Vertex(face).
+  /// The edge entering the corner is LE = m_cdex.LeftEdge(face).
+  /// The edge leaving the corner is RE = m_cdex.RightEdge(face).
+  /// V = LE.RelativeVertex(1) = RE.RelativeVertex(0).
+  /// 
+  /// The m_s parameter runs along half of RE from V to the midpoint of RE.
+  /// 0 &lt;= m_s &lt; 1/2.
+  /// m_s = 0 at V = RE.RelativeVertex(0) = LE.RelativeVertex(1).
+  /// m_s = 1/2 at the midpoint of RE.
+  /// At V, (m_s,m_t)=(0,0).
+  /// At the center of the face, (m_s,m_t)=(1/2,1/2).
+  /// </summary>
+  double m_s = ON_DBL_QNAN;
+
+  /// <summary>
+  /// m_cdex identifies face's subdivision quad the s and t parameters apply to.
+  /// The corner vertex is V = m_cdex.Vertex(face).
+  /// The edge entering the corner is LE = m_cdex.LeftEdge(face).
+  /// The edge leaving the corner is RE = m_cdex.RightEdge(face).
+  /// V = LE.RelativeVertex(1) = RE.RelativeVertex(0).
+  /// 
+  /// The m_t parameter runs along half of LE from V to the midpoint of LE.
+  /// 0 &lt;= m_t &lt; 1/2.
+  /// m_t = 0 at V = RE.RelativeVertex(0) = LE.RelativeVertex(1).
+  /// m_t = 1/2 at the midpoint of LE.
+  /// At V, (m_s,m_t)=(0,0).
+  /// At the center of the face, (m_s,m_t)=(1/2,1/2).
+  /// </summary>
+  double m_t = ON_DBL_QNAN;
+};
+
+ON_WIP_DECL
+bool operator==(const ON_SubDFaceParameter& lhs, const ON_SubDFaceParameter& rhs);
+
+ON_WIP_DECL
+bool operator!=(const ON_SubDFaceParameter& lhs, const ON_SubDFaceParameter& rhs);
+
+
+/// <summary>
 /// ON_SubDHash provides a simple way to save a SubD's vertex, edge, and face SHA1 hashes.
 /// Typically it is used when a calculation needs to know if the current SubD has is geometrically
 /// identical to a previous SubD. When speed is not important, comparing the current value of
@@ -1063,7 +1401,6 @@ private:
 bool operator==(const ON_SubDHash& lhs, const ON_SubDHash& rhs);
 
 bool operator!=(const ON_SubDHash& lhs, const ON_SubDHash& rhs);
-
 
 class ON_CLASS ON_SubDToBrepParameters
 {
@@ -2809,28 +3146,133 @@ public:
   ON_SubDComponentId& operator=(const ON_SubDComponentId&) = default;
 
   ON_SubDComponentId(ON_SubDComponentPtr::Type component_type, unsigned int component_id);
+  ON_SubDComponentId(ON_SubDComponentPtr::Type component_type, unsigned int component_id, ON__UINT_PTR dir);
   ON_SubDComponentId(ON_SubDComponentPtr cptr);
   ON_SubDComponentId(const class ON_SubDVertex* v);
+  ON_SubDComponentId(ON_SubDVertexPtr vptr);
   ON_SubDComponentId(const class ON_SubDEdge* e);
+  ON_SubDComponentId(ON_SubDEdgePtr eptr);
   ON_SubDComponentId(const class ON_SubDFace* f);
+  ON_SubDComponentId(ON_SubDFacePtr fptr);
+  ON_SubDComponentId(const class ON_SubDFace* f, unsigned face_corner_index);
+  ON_SubDComponentId(ON_SubDFacePtr fptr, unsigned face_corner_index);
 
   static int CompareTypeAndId(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs);
+  static int CompareTypeAndIdAndDirection(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs);
   static int CompareTypeAndIdFromPointer(const ON_SubDComponentId* lhs, const ON_SubDComponentId* rhs);
 
-  unsigned int ComponentId() const;
+
+  /// <returns>
+  /// The type of the referenced component.
+  /// </returns>
   ON_SubDComponentPtr::Type ComponentType() const;
+
+  /// <returns>
+  /// The id of the reference component. 0 means the id is not set.
+  /// </returns>
+  unsigned int ComponentId() const;
+
+  /// <returns>
+  /// 0 or 1. 
+  /// 1 indicates the orientation or direction of the referenced components
+  /// is opposite its intrinsic orientation or direction.
+  /// </returns>
+  unsigned int ComponentDirection() const;
 
   /*
   Returns:
-    true if type is not unset and id > 0
+    true if id > 0 and type is set to vertex, edge or face.
   */
   bool IsSet() const;
 
+  /*
+  Returns:
+    true if type is unset or id is 0.
+  */
+  bool IsNotSet() const;
+
+  /// <returns>
+  /// True if id > 0 and type = vertex.
+  /// </returns>
+  bool IsVertexId() const;
+
+  /// <returns>
+  /// True if id > 0 and type = edge.
+  /// </returns>
+  bool IsEdgeId() const;
+
+  /// <returns>
+  /// True if id > 0 and type = face.
+  /// </returns>
+  bool IsFaceId() const;
+
+  /// <summary>
+  /// Create an ON_SubDComponentId that references the same SubD component
+  /// but with the opposite value of this->ComponentDirection().
+  /// </summary>
+  /// <returns>A ON_SubDComponentId with the same type, same id, and opposite direction.</returns>
+  const ON_SubDComponentId Reversed() const;
+
+  /// <summary>
+  /// Get the referenced SubD component from a component id.
+  /// </summary>
+  /// <param name="subd">
+  /// The subd containing the referenced component.
+  /// </param>
+  /// <returns>
+  /// The referenced SubD component from subd.
+  /// </returns>
+  const ON_SubDComponentPtr ComponentPtr(const class ON_SubD& subd) const;
+
+  /// <summary>
+  /// Get the referenced SubD component from a component id.
+  /// </summary>
+  /// <param name="subd">
+  /// The subd containing the referenced component.
+  /// </param>
+  /// <returns>
+  /// The referenced SubD component from subd.
+  /// </returns>
+  const ON_SubDComponentPtr ComponentPtr(const class ON_SubD* subd) const;
+
+  const ON_SubDVertex* Vertex(const class ON_SubD& subd) const;
+  const ON_SubDVertexPtr VertexPtr(const class ON_SubD& subd) const;
+  const ON_SubDVertex* Vertex(const class ON_SubD* subd) const;
+  const ON_SubDVertexPtr VertexPtr(const class ON_SubD* subd) const;
+
+  const ON_SubDEdge* Edge(const class ON_SubD& subd) const;
+  const ON_SubDEdgePtr EdgePtr(const class ON_SubD& subd) const;
+  const ON_SubDEdge* Edge(const class ON_SubD* subd) const;
+  const ON_SubDEdgePtr EdgePtr(const class ON_SubD* subd) const;
+
+  const ON_SubDFace* Face(const class ON_SubD& subd) const;
+  const ON_SubDFacePtr FacePtr(const class ON_SubD& subd) const;
+  const ON_SubDFace* Face(const class ON_SubD* subd) const;
+  const ON_SubDFacePtr FacePtr(const class ON_SubD* subd) const;
+  const ON_SubDFaceCornerDex FaceCornerDex() const;
+
 private:
   unsigned int m_id = 0;
-  ON_SubDComponentPtr::Type m_type = ON_SubDComponentPtr::Type::Unset;
-  unsigned char m_reserved1 = 0;
-  unsigned short m_reserved2 = 0;
+  
+  unsigned char m_type_and_dir = 0;
+  enum : unsigned char
+  {
+    bits_dir_mask = 0x01,
+    bits_type_mask = 0x06,
+    // the remaining bits may be used in the future
+  };
+  void Internal_SetType(ON_SubDComponentPtr::Type type);
+  void Internal_SetDir(unsigned dir);
+
+  // The "A" and "B" values are two 12 bit unsigned integer values 
+  // (0 to 4095 decimal) that are encoded in the 3 bytes m_valueAB[].
+  // When the referenced component is a SubD face, A = number of face edges
+  // and B = face corner index.
+  void Internal_SetValueA(unsigned a);
+  void Internal_SetValueB(unsigned b);
+  unsigned Internal_ValueA() const;
+  unsigned Internal_ValueB() const;
+  unsigned char m_valueAB[3] = {};
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -4386,6 +4828,292 @@ private:
 bool operator==(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs);
 bool operator!=(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs);
 
+class ON_WIP_CLASS ON_SubDComponentParameter
+{
+public:
+  ON_SubDComponentParameter() = default;
+  ~ON_SubDComponentParameter() = default;
+  ON_SubDComponentParameter(const ON_SubDComponentParameter&) = default;
+  ON_SubDComponentParameter& operator=(const ON_SubDComponentParameter&) = default;
+
+
+  ON_SubDComponentParameter(ON_SubDComponentId cid);
+  ON_SubDComponentParameter(ON_SubDComponentPtr cptr);
+
+  ON_SubDComponentParameter(
+    const class ON_SubDVertex* v,
+    const class ON_SubDEdge* active_edge,
+    const class ON_SubDFace* active_face
+  );
+
+  ON_SubDComponentParameter(
+    const ON_SubDVertexPtr vptr,
+    const class ON_SubDEdge* active_edge,
+    const class ON_SubDFace* active_face
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="e"></param>
+  /// <param name="p">
+  /// 0 &lt;= p &lt;= 1.
+  /// </param>
+  /// <param name="active_face">
+  /// nullptr or a face attached to the edge.
+  /// </param>
+  ON_SubDComponentParameter(
+    const class ON_SubDEdge* e,
+    double p,
+    const class ON_SubDFace* active_face
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="eptr"></param>
+  /// <param name="p">
+  /// 0 &lt;= p &lt;= 1.
+  /// NOTE WELL: p is relative to the direction of eptr.
+  /// </param>  
+  /// <param name="active_face">
+  /// nullptr or a face attached to the edge.
+  /// </param>
+  ON_SubDComponentParameter(
+    const ON_SubDEdgePtr eptr,
+    double p,
+    const class ON_SubDFace* active_face
+  );
+
+  ON_SubDComponentParameter(
+    const ON_SubDFace* face,
+    ON_SubDFaceParameter fp
+  );
+
+  ON_SubDComponentParameter(
+    const ON_SubDFacePtr fptr,
+    ON_SubDFaceParameter fp
+  );
+
+  ON_SubDComponentParameter(
+    const class ON_SubDFace* quad_face,
+    double quad_s,
+    double quad_t
+  );
+  ON_SubDComponentParameter(
+    const class ON_SubDFacePtr quad_fptr,
+    double quad_s,
+    double quad_t
+  );
+
+
+  static const ON_SubDComponentParameter Unset;
+
+  /// <summary>
+  /// Dictionary compares component type and component id.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareComponentTypeAndId(const ON_SubDComponentParameter& lhs, const ON_SubDComponentParameter& rhs);
+
+  /// <summary>
+  /// Dictionary compares component type, component id, and component dir.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareComponentTypeAndIdAndDirection(const ON_SubDComponentParameter& lhs, const ON_SubDComponentParameter& rhs);
+
+
+  /// <summary>
+  /// Dictionary compares component type, component id, component direction, first parameter, second parameter.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>
+  /// -1: lhs &lt; rhs
+  ///  0: lhs = rhs
+  /// +1: lhs &gt; rhs
+  /// </returns>
+  static int CompareAll(const ON_SubDComponentParameter& lhs, const ON_SubDComponentParameter& rhs);
+
+  /// <summary>
+  /// Dictionary compares component type, component id, component direction, first parameter, second parameter
+  /// and safely sorts nullptr to end.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int Compare(const ON_SubDComponentParameter* lhs, const ON_SubDComponentParameter* rhs);
+
+  const ON_SubDComponentId ComponentIdAndType() const;
+  unsigned ComponentId() const;
+  ON_SubDComponentPtr::Type ComponentType() const;
+  unsigned ComponentDirection() const;
+
+  /// <returns>
+  /// True if the referenced component is a vertex.
+  /// </returns>
+  bool IsVertexParameter() const;
+
+  /// <summary>
+  /// If this parameter references a vertex and the subd has a vertex
+  /// with this->ComponentId(), then that vertex is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced vertex in subd.
+  /// </returns>
+  const ON_SubDVertex* Vertex(const ON_SubD* subd) const;
+
+  /// <summary>
+  /// If this parameter references a vertex and the subd has a vertex
+  /// with this->ComponentId(), then that vertex is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced vertex in subd along with the direction value.
+  /// </returns>
+  const ON_SubDVertexPtr VertexPtr(const ON_SubD* subd) const;
+
+  /// <summary>
+  /// In some cases, an edge attached to this parameter's vertex is required. 
+  /// In that case, this edge is used.
+  /// </summary>
+  /// <returns>
+  /// The prefered edge attached to this vertex.
+  /// </returns>
+  const ON_SubDComponentId VertexEdge() const;
+
+  /// <summary>
+  /// In some cases, a face attached to this parameter's vertex is required. 
+  /// In these cases this face is used.
+  /// </summary>
+  /// <returns>
+  /// The prefered face attached to this vertex.
+  /// </returns>
+  const ON_SubDComponentId VertexFace() const;
+
+  /// <returns>
+  /// True if the referenced component is an edge.
+  /// </returns>
+  bool IsEdgeParameter() const;
+
+  /// <summary>
+  /// If this parameter references an edge and the subd has an edge
+  /// with this->ComponentId(), then that edge is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced edge in subd.
+  /// </returns>
+  const ON_SubDEdge* Edge(const ON_SubD* subd) const;
+
+  /// <summary>
+  /// If this parameter references an edge and the subd has an edge
+  /// with this->ComponentId(), then that edge is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced edge in subd along with the direction value.
+  /// </returns>
+  const ON_SubDEdgePtr EdgePtr(const ON_SubD* subd) const;
+
+  /// <summary>
+  /// Returns a parameter between 0 and 1 that identifies a point on the edge.
+  /// This is always an intrisic parameter; 
+  /// ComponentDirection() is not taken into account. 
+  /// If the reference component is not an edge, then ON_DBL_QNAN is returned.
+  /// </summary>
+  /// <returns>
+  /// Returns a parameter between 0 and 1 identifying the point
+  /// on the edge. Note that ComponentDirection() is not taken
+  /// into account. If this does not reference an edge or the
+  /// parameter is not set, then ON_DBL_QNAN is returned.
+  /// </returns>
+  double EdgeParameter() const;
+
+  /// <summary>
+  /// In some cases, a face attached to this parameter's edge is required. 
+  /// In that case, this face is used.
+  /// </summary>
+  /// <returns>
+  /// The prefered edge attached to this vertex.
+  /// </returns>
+  const ON_SubDComponentId EdgeFace() const;
+
+  /// <returns>
+  /// True if the referenced component is a face.
+  /// </returns>
+  bool IsFaceParameter() const;
+
+  /// <summary>
+  /// If this parameter references a face and the subd has a face
+  /// with this->ComponentId(), then that face is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced face in subd.
+  /// </returns>  
+  const ON_SubDFace* Face(const ON_SubD* subd) const;
+
+  /// <summary>
+  /// If this parameter references a face and the subd has a face
+  /// with this->ComponentId(), then that face is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced face in subd along with the direction value.
+  /// </returns>
+  const ON_SubDFacePtr FacePtr(const ON_SubD* subd) const;
+
+  /// <returns>
+  /// If a valid face and face parameter were passed to the constructor,
+  /// then that face parameter is returned.
+  /// Otherwise ON_SubDFaceParameter::Nan is returned.
+  /// </returns>
+  const ON_SubDFaceParameter FaceParameter() const;
+
+  /// <summary>
+  /// If the subd has a component with the same type and id,
+  /// then that component is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced component in subd along with the direction value.
+  /// </returns>
+  const ON_SubDComponentPtr ComponentPtr(const class ON_SubD* subd) const;
+
+  /// <summary>
+  /// If the subd has a component with the same type and id,
+  /// then that component is returned.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <returns>
+  /// The referenced component in subd along with the direction value.
+  /// </returns>
+  const ON_SubDComponentPtr ComponentPtr(const class ON_SubD& subd) const;
+
+private:
+  ON_SubDComponentId m_cid = ON_SubDComponentId::Unset;
+
+  union
+  {
+    ON_SubDComponentId v_active_e; // vertex's active edge
+    double eptr_s;         // Relative with respect to m_cid.Direction().
+    double f_corner_s;     // 0 <= f_corner_s <= 1/2
+  } m_p0 = {};
+
+  union
+  {
+    ON_SubDComponentId v_active_f; // vertex's active face
+    ON_SubDComponentId e_active_f; // edge's active face
+    double f_corner_t;  // 0 <= f_corner_t <= 1/2
+  } m_p1 = {};
+
+  bool Internal_Init(ON_SubDComponentId cid);
+};
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -5301,6 +6029,7 @@ public:
     const class ON_SubDFromMeshParameters* from_mesh_parameters,
     ON_SubD* subd
     );
+
 
 public:
 #pragma region RH_C_SHARED_ENUM [ON_SubD::AutomaticMeshToSubDContext] [Rhino.Geometry.SubDAutomaticMeshToSubDContext] [byte]
@@ -7887,7 +8616,7 @@ public:
 
   /*
   Description:
-    Clear all cached evaluation information (meshes, surface points, boundiang boxes, ...) 
+    Clear all cached evaluation information (meshes, surface points, bounding boxes, ...) 
     that depends on edge tags, vertex tags, and the location of vertex control points.
   */
   void ClearEvaluationCache() const;
@@ -10614,7 +11343,54 @@ public:
   const ON_3dVector VertexNormal(
     unsigned grid_point_index
   ) const;
-  
+
+  /// <summary>
+  /// Get the SubD face evaluation parameter for the 
+  /// SubD surface point where this vertex is located.
+  /// </summary>
+  /// <param name="grid2dex_i">
+  /// 0 &lt;= grid2dex_i &lt;= m_grid.SideSegmentCount()</param>
+  /// <param name="grid2dex_j">
+  /// 0 &lt;= grid2dex_j &lt;= m_grid.SideSegmentCount()</param>
+  /// </param>
+  /// <returns>
+  /// The SubD face evaluation parameter at this grid vertex.
+  /// </returns>
+  const ON_SubDFaceParameter VertexSubDFaceParameter(
+    unsigned grid2dex_i,
+    unsigned grid2dex_j
+  ) const;
+
+  /// <summary>
+  /// Get the SubD face evaluation parameter for the 
+  /// SubD surface point where this vertex is located.
+  /// </summary>
+  /// <param name="grid2dex_i">
+  /// 0 &lt;= grid2dex.i &lt;= m_grid.SideSegmentCount()</param>
+  /// <param name="grid2dex_j">
+  /// 0 &lt;= grid2dex.j &lt;= m_grid.SideSegmentCount()</param>
+  /// </param>
+  /// <returns>
+  /// The SubD face evaluation parameter at this grid vertex.
+  /// </returns>
+  const ON_SubDFaceParameter VertexSubDFaceParameter(
+    ON_2udex grid2dex
+  ) const;
+
+  /// <summary>
+  /// Get the SubD face evaluation parameter for the 
+  /// SubD surface point where this vertex is located.
+  /// </summary>
+  /// <param name="grid_point_index">
+  /// 0 &lt;= grid_point_index &lt;= m_grid.GridPointCount()</param>
+  /// </param>
+  /// <returns>
+  /// The SubD face evaluation parameter at this grid vertex.
+  /// </returns>
+  const ON_SubDFaceParameter VertexSubDFaceParameter(
+    unsigned grid_point_index
+  ) const;
+
   /*
   Parameters:
     grid2dex_i - [in]
@@ -10905,24 +11681,35 @@ public:
   ON_ComponentStatus Status() const;
 
   /// <summary>
-  /// This simple version
-  /// transforms the points and normals and unconditionally
-  /// makes no changes to the curvatures, texture coordinates and colors.
+  /// This simple version transforms the points and normals and attempts possible
+  /// transformations to the curvatures, texture coordinates and colors:
+  ///   - Normals are transformed with the inverse transpose of xform, then flipped
+  ///     if the transformation is mirroring, and unitized if the transformation has
+  ///     a scale component.
+  ///   - Texture coordinates are unchanged in value,
+  ///     ON_SubDimple::Transform(xform) will update the texture coordinate tag
+  ///     with subdimple.m_texture_mapping_tag.Transform(xform)
+  ///   - Colors are unchanged in value if xform is an isometry, deleted otherwise.
+  ///     ON_SubDimple::Transform(xform) will update the colors tag
+  ///      with subdimple.m_color_mapping_tag.Transform(xform)
+  ///   - Curvatures are scaled by 1/det(xform), if xform is a Similarity tranformation,
+  ///     deleted otherwise.
   /// 
-  /// Typically lots of fragments are being transformed and
-  /// the type and context of the transformation determines
-  /// if texture coordinate, curvature and color inforation should be 
-  /// preserved or destroyed. It is better to determine the answers to these
-  /// questions and call the version of Transform with
-  /// the bKeepTextures, bKeepCurvatures and bKeepColors parameters. 
-  /// For example if the transformation is an isometry and the colors
-  /// are set from the curvatures, then curvatures and colors should be
-  /// kept. If the transformation is not an isometry, the curvatures should
-  /// be destroyed.
-  /// If the texture coordinates are set from grid location 
-  /// (fake surface paramaters), the the texture coordinates should be kept.
+  /// Typically lots of fragments are being transformed and the type and context
+  /// of the transformation determines if and how normals, texture coordinate,
+  /// curvature and color inforation should be preserved, transformed, or destroyed.
+  /// It is better to determine the answers to these questions and call the version
+  /// of Transform with the bKeepTextures, bKeepCurvatures and bKeepColors parameters.
+  /// 
+  /// For example if the transformation is an isometry and the colors are set from
+  /// the curvatures, then curvatures and colors should be kept. If the transformation
+  /// is a similarity, the curvatures should be scaled and the colors destroyed. If
+  /// the transformation is not a similarity both colors and curvatures should be destroyed.
+  /// 
+  /// If the texture coordinates are set from grid location (fake surface paramaters),
+  /// then the texture coordinates should be kept.
   /// If transform is not an identity and the texture coordinates come from a 
-  /// world object mapping, the should generally be destroyed.
+  /// world object mapping, they should generally be destroyed.
   /// </summary>
   /// <param name="xform"></param>
   /// <returns></returns>
@@ -10931,7 +11718,20 @@ public:
   );
 
   /// <summary>
-  /// 
+  /// This version transforms the points and normals and attempts possible
+  /// transformations to the curvatures, texture coordinates and colors, if they are kept:
+  ///   - Normals are transformed with the inverse transpose of xform, then flipped
+  ///     if the transformation is mirroring, and unitized if the transformation has a scale component.
+  ///   - Texture coordinates are unchanged in value, ON_SubDimple::Transform(xform) will update
+  ///       them with subdimple.m_texture_mapping_tag.Transform(xform).
+  ///       If bKeepTextures is false, texture coordinates are destroyed.
+  ///   - Curvatures are either:
+  ///       - scaled by 1/det(xform), if xform is a Similarity tranformation
+  ///       - unchanged in value, if not.
+  ///       If bKeepCurvatures is false, curvatures are destroyed.
+  ///   - Colors are unchanged in value, ON_SubDimple::Transform(xform) will update
+  ///       them with subdimple.m_color_mapping_tag.Transform(xform)
+  ///       If bKeepColors is false, colors are destroyed.
   /// </summary>
   /// <param name="bKeepTextures"></param>
   /// <param name="bKeepCurvatures"></param>
@@ -10943,6 +11743,37 @@ public:
     bool bKeepCurvatures,
     bool bKeepColors,
     const ON_Xform& xform
+  );
+
+  /// <summary>
+  /// This version transforms the points, normals, curvatures, texture coordinates,
+  /// and colors, if they are kept.
+  ///   - Normals are transformed with xformNormals.
+  ///   - Texture coordinates are transformed with xformTextures.
+  ///       If bKeepTextures is false, texture coordinates are destroyed.
+  ///   - Curvatures are transformed with xformCurvatures.
+  ///       If bKeepCurvatures is false, curvatures are destroyed.
+  ///   - Colors are transformed with xformColors.
+  ///       If bKeepColors is false, colors are destroyed.
+  /// </summary>
+  /// <param name="bKeepTextures"></param>
+  /// <param name="bKeepCurvatures"></param>
+  /// <param name="bKeepColors"></param>
+  /// <param name="xform"></param>
+  /// <param name="xformNormals"></param>
+  /// <param name="xformTextures"></param>
+  /// <param name="xformCurvatures"></param>
+  /// <param name="xformColors"></param>
+  /// <returns></returns>
+  bool Transform(
+    bool bKeepTextures,
+    bool bKeepCurvatures,
+    bool bKeepColors,
+    const ON_Xform& xform,
+    const ON_Xform& xformNormals,
+    const ON_Xform& xformTextures,
+    const ON_Xform& xformCurvatures,
+    const ON_Xform& xformColors
   );
 
   ON_SubDMeshFragment* m_next_fragment;
@@ -12092,8 +12923,19 @@ public:
     ON_SubDMesh& b
     );
 
-  bool Transform( 
+  bool Transform(
     const ON_Xform& xform
+    );
+
+  bool Transform(
+    bool bKeepCurvatures,
+    bool bKeepTextures,
+    bool bKeepColors,
+    const ON_Xform& xform,
+    const ON_Xform& xformNormals,
+    const ON_Xform& xformCurvatures,
+    const ON_Xform& xformTextures,
+    const ON_Xform& xformColors
     );
 
   ON_DEPRECATED_MSG("AbsoluteSubDDisplayDensity")
@@ -12281,6 +13123,11 @@ public:
   bool Transform(
     const ON_Xform& xform
     );
+
+  bool Transform(
+    const ON_Xform& xform,
+    const ON_Xform& xformNormals
+  );
 
   /// <summary>
   /// Get a limit surface point.
@@ -12940,7 +13787,7 @@ public:
 
   /*
   Description:
-    Apply a tranxfomration matrix to vertex geometry information.
+    Apply a transformation matrix to vertex geometry information.
   Parameters:
     bTransformationSavedSubdivisionPoint - [in]
       If the transformation is being applied to every vertex, edge and 
@@ -12957,6 +13804,12 @@ public:
   bool Transform(
     bool bTransformationSavedSubdivisionPoint,
     const class ON_Xform& xform
+    );
+
+  bool Transform(
+    bool bTransformationSavedSubdivisionPoint,
+    const class ON_Xform& xform,
+    const class ON_Xform& xformNormals
     );
 
   bool SetControlNetPoint(
@@ -14030,7 +14883,7 @@ public:
 
   /*
   Description:
-    Apply a tranxfomration matrix to vertex geometry information.
+    Apply a transformation matrix to edge geometry information.
 
   Parameters:
     bTransformationSavedSubdivisionPoint - [in]
@@ -14971,7 +15824,7 @@ public:
 
   /*
   Description:
-    Apply a tranxfomration matrix to vertex geometry information.
+    Apply a transformation matrix to face geometry information.
 
   Parameters:
     bTransformationSavedSubdivisionPoint - [in]
@@ -14989,6 +15842,50 @@ public:
   bool Transform(
     bool bTransformationSavedSubdivisionPoint,
     const class ON_Xform& xform
+  );
+
+  /*
+  Description:
+    Apply a transformation matrix to face geometry information.
+    This version transforms the points, normals, curvatures, texture coordinates,
+    and colors, if they are kept.
+      - Normals are transformed with xformNormals.
+      - Texture coordinates are transformed with xformTextures.
+          If bKeepTextures is false, texture coordinates are destroyed.
+      - Curvatures are transformed with xformCurvatures.
+          If bKeepCurvatures is false, curvatures are destroyed.
+      - Colors are transformed with xformColors.
+          If bKeepColors is false, colors are destroyed.
+
+  Parameters:
+    bTransformationSavedSubdivisionPoint - [in]
+      If the transformation is being applied to every vertex, edge and
+      face in every level of a subdivision object, and the transformation
+      is an orientation preserving isometry (rotation, translation, ...),
+      then set bTransformationSavedSubdivisionPoint = true to apply the
+      transformation to saved subdivision and saved limit point information.
+      In all other cases, set bTransformationSavedSubdivisionPoint = false
+      and any saved subdivision points or saved limit points will be
+      deleted.  When in doubt, pass false.
+    bKeepTExtures - [in]
+    bKeepCurvatures - [in]
+    bKeepColors - [in]
+    xform - [in]
+    xformNormals - [in]
+    xformTextures - [in]
+    xformCurvatures - [in]
+    xformColors - [in]
+  */
+  bool Transform(
+    bool bTransformationSavedSubdivisionPoint,
+    bool bKeepCurvatures,
+    bool bKeepTextures,
+    bool bKeepColors,
+    const ON_Xform& xform,
+    const ON_Xform& xformNormals,
+    const ON_Xform& xformCurvatures,
+    const ON_Xform& xformTextures,
+    const ON_Xform& xformColors
   );
 
   const ON_BoundingBox ControlNetBoundingBox() const;

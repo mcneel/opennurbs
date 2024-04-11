@@ -101,6 +101,9 @@ public:
   // Helper function; converts unit vector to azimuth and altitude.
   static void ConvertSolarVectorToHorizonCoords(const double* dVector, double& dAzimuth, double& dAltitude);
 
+  // Helper function; gets the current local date and time.
+  static void GetCurrentLocalDateTime(int& y, int& m, int& d, double& h);
+
 private:
   class CImpl;
   CImpl* _impl;

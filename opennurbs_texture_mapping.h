@@ -30,6 +30,7 @@ class ON_3dPoint;
 
 typedef int  ( *TEXMAP_INTERSECT_LINE_SURFACE )( const ON_Line*, const ON_BrepFace*, ON_SimpleArray<ON_X_EVENT>& );
 typedef bool ( *TEXMAP_BREP_FACE_CLOSEST_POINT )( const ON_BrepFace*, const ON_3dPoint*, ON_3dPoint& );
+typedef ON_TextureMapping ( *GET_TEXMAP_FROM_DOCUMENT )( const class CRhinoDoc&, const ON_MappingChannel* );
 
 class ON_CLASS ON_TextureMapping : public ON_ModelComponent
 {
@@ -91,7 +92,9 @@ public:
     srf_mapping_primitive  = 7, // m_mapping_primitive is an ON_Surface
     brep_mapping_primitive = 8,  // m_mapping_primitive is an ON_Brep
     ocs_mapping = 9,             // same as plane_mapping - used to differentiate between OCS and plane mapping in the UI
-    false_colors = 10 // some kind of false color mapping used to set per vertex colors.
+    false_colors = 10, // some kind of false color mapping used to set per vertex colors.
+    wcs_projection    = 11,      // used for ON_MappingTag when creating texture coordinates for WCS projections
+    wcsbox_projection = 12       // used for ON_MappingTag when creating texture coordinates for WCS box projections
   };
 
   static ON_TextureMapping::TYPE TypeFromUnsigned( 

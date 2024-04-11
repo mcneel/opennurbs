@@ -82,7 +82,9 @@ bool ON_Line::Create( const ON_2dPoint from_pt, const ON_2dPoint to_pt )
 
 bool ON_Line::IsValid() const
 {
-  return (from != to && from.IsValid() && to.IsValid());
+  bool from_rc = ON_CV_COORDINATE_IS_VALID(from.x) && ON_CV_COORDINATE_IS_VALID(from.y) && ON_CV_COORDINATE_IS_VALID(from.z);
+  bool to_rc = ON_CV_COORDINATE_IS_VALID(to.x) && ON_CV_COORDINATE_IS_VALID(to.y) && ON_CV_COORDINATE_IS_VALID(to.z);
+  return (from != to && true == from_rc && true == to_rc);
 }
 
 double ON_Line::Length() const

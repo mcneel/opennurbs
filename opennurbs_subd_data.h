@@ -3000,8 +3000,19 @@ public:
 
   void ClearTree();
   
-  bool Transform( 
+  bool Transform(
     const ON_Xform& xform
+    );
+  
+  bool Transform(
+    bool bKeepCurvatures,
+    bool bKeepTextures,
+    bool bKeepColors,
+    const ON_Xform& xform,
+    const ON_Xform& xformNormals,
+    const ON_Xform& xformCurvatures,
+    const ON_Xform& xformTextures,
+    const ON_Xform& xformColors
     );
 
 
