@@ -573,7 +573,7 @@ std::shared_ptr<const ON_SubDFace*> ON_SubDLevel::FaceArray() const
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubD::Tranxform
+// ON_SubD::Transform
 // ON_SubDimple::Transform
 // ON_SubDLevel::Transform
 // ON_SubDVertex::Transform
@@ -632,6 +632,18 @@ bool ON_SubDSectorSurfacePoint::Transform(
   return rc;
 }
 
+bool ON_SubDSectorSurfacePoint::Transform(
+  const ON_Xform& xform,
+  const ON_Xform& xformNormals
+)
+{
+  TransformPoint(&xform.m_xform[0][0], m_limitP);
+  TransformVector(&xform.m_xform[0][0], m_limitT1);
+  TransformVector(&xform.m_xform[0][0], m_limitT2);
+  TransformVector(&xformNormals.m_xform[0][0], m_limitN);
+  return true;
+}
+
 
 bool ON_SubDVertex::Transform(
   bool bTransformationSavedSubdivisionPoint,
@@ -661,6 +673,46 @@ bool ON_SubDVertex::Transform(
     {
       for (const ON_SubDSectorSurfacePoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
         const_cast<ON_SubDSectorSurfacePoint*>(lp)->Transform(xform);
+    }
+    else
+      Internal_ClearSurfacePointFlag();
+  }
+  else
+    this->ClearSavedSubdivisionPoints();
+
+  return true;
+}
+
+
+bool ON_SubDVertex::Transform(
+  bool bTransformationSavedSubdivisionPoint,
+  const class ON_Xform& xform,
+  const class ON_Xform& xformNormals
+  )
+{
+  TransformPoint(&xform.m_xform[0][0],m_P);
+
+  if (bTransformationSavedSubdivisionPoint)
+  {
+    // Transform saved subdivision point
+    Internal_TransformComponentBase(bTransformationSavedSubdivisionPoint, xform);
+
+    // NOTE WELL:
+    //   If the vertex 
+    //     is tagged as ON_SubDVertexTag::Corner
+    //     and bTransformationSavedSubdivisionPoint is true, 
+    //     and the corner sector(s) contains interior smooth edges,
+    //     and the transformation changes the angle between a corner sector's crease boundary, 
+    //   then the sector's interior smooth edge's m_sector_coefficient[] could change
+    //   and invalidate the subdivison points and limit points.
+    //   This is only possible for uncommon (in practice) transformations
+    //   and corner sectors and will require a fair bit of testing for 
+    //   now it's easier to simply set bTransformationSavedSubdivisionPoint to false
+    //   at a higher level when these types of transformations are encountered.
+    if (bTransformationSavedSubdivisionPoint && Internal_SurfacePointFlag())
+    {
+      for (const ON_SubDSectorSurfacePoint* lp = &m_limit_point; nullptr != lp; lp = lp->m_next_sector_limit_point)
+        const_cast<ON_SubDSectorSurfacePoint*>(lp)->Transform(xform, xformNormals);
     }
     else
       Internal_ClearSurfacePointFlag();
@@ -837,21 +889,49 @@ bool ON_SubDFace::Transform(
   const class ON_Xform& xform
   )
 {
+  ON_Xform xformNormals{ ON_Xform::IdentityTransformation };
+  const double det{ xform.GetSurfaceNormalXform(xformNormals) };
+  ON_Xform xformCurvatures{ ON_Xform::IdentityTransformation };
+  if (abs(det) > ON_EPSILON) {
+    xformNormals = xformNormals * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+    xformCurvatures = xformCurvatures * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+  }
+  const bool bKeepCurvatures{ xform.IsSimilarity() != 0 };
+  const bool bKeepTextures{ true };
+  const bool bKeepColors{ xform.IsRigid() != 0 };
+
+
+  // bTransformationSavedSubdivisionPoint = true should mean that
+  // xform is a similarity.
+  // If it's more complicated than this, the calling code should
+  // reset or adjust colors as needed based on information in the
+  // SubD's texture coordinate mapping tag and color mapping tag.
+  // Note that both of those tags have their transformation updated
+  // so intelligent decisions can be made at a higher level where
+  // there is enough context to make the correct decision.
+  return Transform(bTransformationSavedSubdivisionPoint, bKeepCurvatures, bKeepTextures, bKeepColors, xform, xformNormals, xformCurvatures, ON_Xform::IdentityTransformation, ON_Xform::IdentityTransformation);
+}
+
+bool ON_SubDFace::Transform(
+  bool bTransformationSavedSubdivisionPoint,
+  bool bKeepCurvatures,
+  bool bKeepTextures,
+  bool bKeepColors,
+  const ON_Xform& xform,
+  const ON_Xform& xformNormals,
+  const ON_Xform& xformCurvatures,
+  const ON_Xform& xformTextures,
+  const ON_Xform& xformColors
+  )
+{
   if (bTransformationSavedSubdivisionPoint)
   {
     Internal_TransformComponentBase(true, xform);
 
     if (Internal_SurfacePointFlag())
     {
-      // bTransformationSavedSubdivisionPoint = true means xform is an isometry.
-      // If its more complicated than this, the calling code should
-      // reset or addjut colors as needed based on information in the
-      // SubD's texture coordinate mapping tag and color mapping tag.
-      // Note that both of those tags have their transformation updated
-      // so intelligent decisions can be made at a higher level where
-      // there is enough context to make the correct decision.
       for (ON_SubDMeshFragment* f = m_mesh_fragments; nullptr != f; f = f->m_next_fragment)
-        f->Transform(true, true, true, xform);
+        f->Transform(bKeepCurvatures, bKeepTextures, bKeepColors, xform, xformNormals, xformCurvatures, xformTextures, xformColors);
     }
     else
       Internal_ClearSurfacePointFlag();
@@ -868,12 +948,25 @@ bool ON_SubDLevel::Transform(
   )    
 {
   bool rc = true;
+  ON_Xform xformNormals{ ON_Xform::IdentityTransformation };
+  const double det{ xform.GetSurfaceNormalXform(xformNormals) };
+  ON_Xform xformCurvatures{ ON_Xform::IdentityTransformation };
+  if (abs(det) > ON_EPSILON) {
+    xformNormals = xformNormals * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+    xformCurvatures = xformCurvatures * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+  }
+  else {
+    rc = false;
+  }
+  const bool bKeepCurvatures{ xform.IsSimilarity() != 0 };
+  const bool bKeepTextures{ true };
+  const bool bKeepColors{ xform.IsRigid() != 0 };
 
   m_aggregates.m_bDirtyBoundingBox = true;
 
   for (const ON_SubDVertex* vertex = m_vertex[0]; nullptr != vertex; vertex = vertex->m_next_vertex)
   {
-    if (false == const_cast<ON_SubDVertex*>(vertex)->Transform(bTransformationSavedSubdivisionPoint, xform))
+    if (false == const_cast<ON_SubDVertex*>(vertex)->Transform(bTransformationSavedSubdivisionPoint, xform, xformNormals))
       rc = false;
   }
   
@@ -885,14 +978,23 @@ bool ON_SubDLevel::Transform(
   
   for (const ON_SubDFace* face = m_face[0]; nullptr != face; face = face->m_next_face)
   {
-    if (false == const_cast<ON_SubDFace*>(face)->Transform(bTransformationSavedSubdivisionPoint, xform))
+    if (false == const_cast<ON_SubDFace*>(face)->Transform(
+      bTransformationSavedSubdivisionPoint, bKeepCurvatures, bKeepTextures, bKeepColors,
+      xform, xformNormals, xformCurvatures, ON_Xform::IdentityTransformation, ON_Xform::IdentityTransformation
+    ))
       rc = false;
   }
 
-  if (false == m_surface_mesh.Transform(xform))
+  if (false == m_surface_mesh.Transform(
+    bKeepCurvatures, bKeepTextures, bKeepColors,
+    xform, xformNormals, xformCurvatures, ON_Xform::IdentityTransformation, ON_Xform::IdentityTransformation
+  ))
     rc = false;
   
-  if (false == m_control_net_mesh.Transform(xform))
+  if (false == m_control_net_mesh.Transform(
+    bKeepCurvatures, bKeepTextures, bKeepColors,
+    xform, xformNormals, xformCurvatures, ON_Xform::IdentityTransformation, ON_Xform::IdentityTransformation
+  ))
     rc = false;
 
   if (rc)
@@ -916,6 +1018,30 @@ bool ON_SubDMesh::Transform(
   if ( nullptr == impl )
     return true; // transform applied to empty mesh is true on purpose.  Changing to false will break other code.
   return impl->Transform(xform);
+}
+
+
+bool ON_SubDMesh::Transform(
+  bool bKeepCurvatures,
+  bool bKeepTextures,
+  bool bKeepColors,
+  const ON_Xform& xform,
+  const ON_Xform& xformNormals,
+  const ON_Xform& xformCurvatures,
+  const ON_Xform& xformTextures,
+  const ON_Xform& xformColors
+  )
+{
+  if (false == xform.IsValid())
+    return false;
+  if (xform.IsIdentity())
+    return true;
+  if (xform.IsZero())
+    return false;
+  ON_SubDMeshImpl* impl = m_impl_sp.get();
+  if ( nullptr == impl )
+    return true; // transform applied to empty mesh is true on purpose.  Changing to false will break other code.
+  return impl->Transform(bKeepCurvatures, bKeepTextures, bKeepColors, xform, xformNormals, xformCurvatures, xformTextures, xformColors);
 }
 
 bool ON_SubDimple::Transform(
@@ -949,14 +1075,14 @@ bool ON_SubDimple::Transform(
   // If 
   // 1) The transformation is being applied to every vertex, edge and 
   //    face in every level of a subdivision object, and
-  // 2) the transformation is an isometry (rotation, translation, ...),
+  // 2) the transformation is an isometry (rotation, translation, mirror, ...),
   //   a uniform scale, or a composition of these types, 
   // then set bTransformationSavedSubdivisionPoint = true to apply the
   // transformation to saved subdivision and saved limit point information.
   // In all other cases, set bTransformationSavedSubdivisionPoint = false
   // and any saved subdivision points or saved limit points will be
   // deleted.
-  const bool bTransformationSavedSubdivisionPoint = (1 == xform.IsRigid());
+  const bool bTransformationSavedSubdivisionPoint = (0 != xform.IsSimilarity());
 
   bool bHasTextures = false;
   bool bHasColors = false;
@@ -1058,14 +1184,46 @@ bool ON_SubDMeshFragment::Transform(
   const ON_Xform& xform
 )
 {
-  return this->Transform(true, true, true, xform);
+  const bool bKeepCurvatures{ xform.IsSimilarity() != 0 };
+  const bool bKeepTextures{ true };
+  const bool bKeepColors{ xform.IsRigid() != 0 };
+  return this->Transform(bKeepCurvatures, bKeepTextures, bKeepColors, xform);
 }
 
 bool ON_SubDMeshFragment::Transform(
   bool bKeepCurvatures,
-  bool bKeepTextureCoordinates,
+  bool bKeepTextures,
   bool bKeepColors,
   const ON_Xform& xform
+)
+{
+  ON_Xform xformNormals{ON_Xform::IdentityTransformation};
+  const double det{xform.GetSurfaceNormalXform(xformNormals)};
+  ON_Xform xformCurvatures{ON_Xform::IdentityTransformation};
+  if (abs(det) > ON_EPSILON) {
+    xformNormals = xformNormals * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+    xformCurvatures = xformCurvatures * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+  }
+  else {
+    return ON_SUBD_RETURN_ERROR(false);
+  }
+
+  return this->Transform(
+    bKeepCurvatures, bKeepTextures, bKeepColors,
+    xform, xformNormals, xformCurvatures, ON_Xform::IdentityTransformation, ON_Xform::IdentityTransformation
+  );
+}
+
+bool ON_SubDMeshFragment::Transform(
+  bool bKeepCurvatures,
+  bool bKeepTextures,
+  bool bKeepColors,
+  const ON_Xform& xform,
+  const ON_Xform& xformNormals,
+  const ON_Xform& xformCurvatures,
+  const ON_Xform& xformTextures,
+  const ON_Xform& xformColors
+
 )
 {
   const unsigned count = PointCount();
@@ -1078,7 +1236,7 @@ bool ON_SubDMeshFragment::Transform(
     return ON_SUBD_RETURN_ERROR(false);
   if (count == NormalCount())
   {
-    if (false == ON_TransformVectorList(3, count, (int)m_N_stride, m_N, xform))
+    if (false == ON_TransformVectorList(3, count, (int)m_N_stride, m_N, xformNormals))
       return ON_SUBD_RETURN_ERROR(false);
   }
   if (0 != (ON_SubDMeshFragment::EtcControlNetQuadBit & m_vertex_count_etc))
@@ -1102,9 +1260,7 @@ bool ON_SubDMeshFragment::Transform(
     const ON_3dVector A(m_ctrlnetN);
     if (A.IsNotZero())
     {
-      ON_3dVector B = xform * A;
-      if ( A.IsUnitVector() && false == B.IsUnitVector() )
-        B = B.UnitVector();
+      ON_3dVector B = xformNormals * A;
       m_ctrlnetN[0] = B.x;
       m_ctrlnetN[1] = B.y;
       m_ctrlnetN[2] = B.z;
@@ -1112,30 +1268,63 @@ bool ON_SubDMeshFragment::Transform(
   }
   ON_GetPointListBoundingBox(3,0,count,(int)m_P_stride,m_P,&m_surface_bbox.m_min.x,&m_surface_bbox.m_max.x,false);
 
-  if (false == bKeepTextureCoordinates)
-  {
-    this->SetTextureCoordinatesExistForExperts(false);
-    double* p = &this->m_ctrlnetT[0][0];
-    double* p1 = p + sizeof(this->m_ctrlnetT) / sizeof(this->m_ctrlnetT[0][0]);
-    while (p < p1)
-      *p++ = ON_DBL_QNAN;
+  if (TextureCoordinatesExistForExperts()) {
+    this->SetTextureCoordinatesExistForExperts(bKeepTextures);
+    if (bKeepTextures) {
+      if (xformTextures.IsNotIdentity()) {
+        double* p = &this->m_ctrlnetT[0][0];
+        constexpr unsigned dim = sizeof(this->m_ctrlnetT[0]) / sizeof(this->m_ctrlnetT[0][0]);
+        constexpr unsigned tcount = sizeof(this->m_ctrlnetT) / sizeof(this->m_ctrlnetT[0]);
+        if (false == ON_TransformPointList(dim, false, tcount, dim, p, xformTextures))
+          return ON_SUBD_RETURN_ERROR(false);
+      }
+    }
+    else {
+      double* p = &this->m_ctrlnetT[0][0];
+      const double* p1 = p + sizeof(this->m_ctrlnetT) / sizeof(this->m_ctrlnetT[0][0]);
+      while (p < p1)
+        *p++ = ON_DBL_QNAN;
+    }
   }
-  if (false == bKeepCurvatures)
-  {
-    this->SetCurvaturesExistForExperts(false);
-    this->m_ctrlnetK[0] = ON_SurfaceCurvature::Nan;
-    this->m_ctrlnetK[1] = ON_SurfaceCurvature::Nan;
-    this->m_ctrlnetK[2] = ON_SurfaceCurvature::Nan;
-    this->m_ctrlnetK[3] = ON_SurfaceCurvature::Nan;
+
+  if (CurvaturesExistForExperts()) {
+    this->SetCurvaturesExistForExperts(bKeepCurvatures);
+    if (bKeepCurvatures) {
+      if (xformCurvatures.IsNotIdentity()) {
+        constexpr unsigned dim{sizeof(ON_SurfaceCurvature) / sizeof(double)};
+        constexpr unsigned ccount{sizeof(m_ctrlnetK) / sizeof(m_ctrlnetK[0])};
+        if (false == ON_TransformVectorList(dim, ccount, dim, (double*)m_ctrlnetK, xformCurvatures))
+          return ON_SUBD_RETURN_ERROR(false);
+      }
+    }
+    else {
+      this->m_ctrlnetK[0] = ON_SurfaceCurvature::Nan;
+      this->m_ctrlnetK[1] = ON_SurfaceCurvature::Nan;
+      this->m_ctrlnetK[2] = ON_SurfaceCurvature::Nan;
+      this->m_ctrlnetK[3] = ON_SurfaceCurvature::Nan;
+    }
   }
-  if (false == bKeepColors)
-  {
-    this->SetColorsExistForExperts(false);
-    this->m_ctrlnetC[0] = ON_Color::UnsetColor;
-    this->m_ctrlnetC[1] = ON_Color::UnsetColor;
-    this->m_ctrlnetC[2] = ON_Color::UnsetColor;
-    this->m_ctrlnetC[3] = ON_Color::UnsetColor;
+
+  if (ColorsExistForExperts()) {
+    this->SetColorsExistForExperts(bKeepColors);
+    if (bKeepColors) {
+      if (xformColors.IsNotIdentity()) {
+        for (int i = 0; i < 4; ++i) {
+          ON_Color& color{ m_ctrlnetC[i] };
+          ON_4dPoint rgba{ (double)color.Red(), (double)color.Green(), (double)color.Blue(), (double)color.Alpha() };
+          rgba.Transform(xformColors);
+          m_ctrlnetC->SetRGBA((int)rgba[0], (int)rgba[1], (int)rgba[2], (int)rgba[3]);
+        }
+      }
+    }
+    else {
+      this->m_ctrlnetC[0] = ON_Color::UnsetColor;
+      this->m_ctrlnetC[1] = ON_Color::UnsetColor;
+      this->m_ctrlnetC[2] = ON_Color::UnsetColor;
+      this->m_ctrlnetC[3] = ON_Color::UnsetColor;
+    }
   }
+
   return true;
 }
 
@@ -1143,12 +1332,42 @@ bool ON_SubDMeshImpl::Transform(
   const ON_Xform& xform
   )
 {
+  m_bbox = ON_BoundingBox::EmptyBoundingBox;
+  ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
+  for (const ON_SubDMeshFragment* fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
+  {
+    if (false == const_cast<ON_SubDMeshFragment*>(fragment)->Transform(xform))
+      return ON_SUBD_RETURN_ERROR(false);
+    if (fragment == m_first_fragment)
+      bbox = fragment->m_surface_bbox;
+    else
+      bbox.Union(fragment->m_surface_bbox);
+  }
+  m_bbox = bbox;
+  ChangeContentSerialNumber();
+  return true;
+}
+
+bool ON_SubDMeshImpl::Transform(
+  bool bKeepCurvatures,
+  bool bKeepTextures,
+  bool bKeepColors,
+  const ON_Xform& xform,
+  const ON_Xform& xformNormals,
+  const ON_Xform& xformCurvatures,
+  const ON_Xform& xformTextures,
+  const ON_Xform& xformColors
+  )
+{
   const bool bIsometry = (1 == xform.IsRigid());
   m_bbox = ON_BoundingBox::EmptyBoundingBox;
   ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
   for ( const ON_SubDMeshFragment* fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
   {
-    if ( false == const_cast<ON_SubDMeshFragment*>(fragment)->Transform(bIsometry, bIsometry, bIsometry, xform) )
+    if ( false == const_cast<ON_SubDMeshFragment*>(fragment)->Transform(
+      bKeepCurvatures, bKeepTextures, bKeepColors,
+      xform, xformNormals, xformCurvatures, xformTextures, xformColors
+    ) )
       return ON_SUBD_RETURN_ERROR(false);
     if ( fragment == m_first_fragment )
       bbox = fragment->m_surface_bbox;

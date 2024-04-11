@@ -132,6 +132,7 @@
 #endif
 
 
+
 // ON_DEPRECATED is used to mark deprecated functions.
 #if defined(ON_COMPILER_MSC)
 #define ON_DEPRECATED  __declspec(deprecated)
@@ -156,8 +157,40 @@
 #else
 #define ON_DEPRECATED
 #define ON_DEPRECATED_MSG(s)
+
+// Dale Lear 2024-March-14 
+// Why are ON_WIP_SDK and ON_INTERNAL_SDK defined here?
+// This seems exactly the opposite of what should happen.
+// I think these should be wrapped in a 
+// #if defined(OPENNURBS_IN_RHINO) ... #endif block
+// and that change needs extensive testing.
+// 
+// #if defined(OPENNURBS_IN_RHINO)
 #define ON_WIP_SDK
 #define ON_INTERNAL_SDK
+// #endif
+
+#endif
+
+#if defined(ON_WIP_SDK)
+// Functions with ON_WIP_DECL are works in progress. 
+// Classes with ON_WIP_CLASS are works in progress. 
+// Externals with ON_WIP_EXTERN_DECL are works in progress. 
+// These items can be seen and used in Rhino core code.
+// These items are not part of the public SDK.
+// These items can and will change or be removed at any time without notice.
+// Any C++ code using ON_WIP_* features is likely to fail catastrophically
+// at the most inconvenient time imaginable.
+#define ON_WIP_CLASS ON_CLASS
+#define ON_WIP_DECL ON_DECL
+#define ON_WIP_EXTERN_DECL ON_EXTERN_DECL
+#else
+// This header is not being parsed while building core Rhino modules and plug-ins.
+// Any 3rd party code linking with the public C++ Rhino SDK will be unable to link
+// with the work-in-progess items. Code could 
+#define ON_WIP_CLASS 
+#define ON_WIP_DECL 
+#define ON_WIP_EXTERN_DECL 
 #endif
 
 #if defined(PI)
@@ -314,7 +347,6 @@ extern ON_EXTERN_DECL const float  ON_FLT_QNAN;
 extern ON_EXTERN_DECL const float  ON_FLT_PINF;
 extern ON_EXTERN_DECL const float  ON_FLT_NINF;
 
-
 /*
 The ON_PTR_SEMAPHORE* values are used in rare cases
 when a special signal must be passed as a pointer argument.
@@ -387,6 +419,126 @@ ON__UINT64 ON_NextContentSerialNumber();
 ON_END_EXTERNC
 
 #if defined(ON_CPLUSPLUS)
+
+class ON_WIP_CLASS ON_DBL
+{
+public:
+
+  /// <summary>
+  /// ON_DBL::Nan is an IEEE quiet nan (not a number).
+  /// </summary>
+  static const double Nan;
+
+  /// <summary>
+  /// ON_DBL::PositiveInfinity is IEEE +infinity.
+  /// </summary>
+  static const double PositiveInfinity;
+
+  /// <summary>
+  /// ON_DBL::NegativeInfinity is IEEE -infinity.
+  /// </summary>
+  static const double NegativeInfinity;
+
+  /// <summary>
+  /// ON_DBL::PositiveMax = +1.7976931348623158e+308
+  /// </summary>
+  static const double PositiveMax;
+
+  /// <summary>
+  /// ON_DBL::NegativeMax = -1.7976931348623158e+308
+  /// </summary>
+  static const double NegativeMax;
+
+  /// <summary>
+  /// ON_DBL::PositiveMax = +2.22507385850720200e-308
+  /// </summary>
+  static const double PositiveMin;
+
+  /// <summary>
+  /// ON_DBL::NegativeMax = -2.22507385850720200e-308
+  /// </summary>
+  static const double NegativeMin;
+
+  /// <summary>
+  /// ON_DBL::Unset = -1.23432101234321e+308
+  /// </summary>
+  static const double Unset;
+
+  /// <summary>
+  /// ON_DBL::PositiveUnset = +1.23432101234321e+308
+  /// </summary>
+  static const double PositiveUnset;
+
+  /// <param name="x"></param>
+  /// <returns>True if x is any type of nan (signaling or quiet).</returns>
+  static bool IsNan(double x);
+
+  /// <param name="x"></param>
+  /// <returns>True if x is any type of infinity (positive, negative, projective).</returns>
+  static bool IsInfinity(double x);
+
+  static bool IsPositiveInfinity(double x);
+  static bool IsNegativeInfinity(double x);
+
+  /// <param name="x"></param>
+  /// <returns>
+  /// If x &gt; 0, then +1 is returned. 
+  /// If x &lt; 0, then -1 is returned. 
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static int Sign(double x);
+
+  /// <summary>
+  /// All nans, +infinity, -infinity, 
+  /// x &lt;= than ON_DBL::Unset and 
+  /// x &gt;= ON_DBL::PositiveUnset
+  /// are considered invalid because using them in typical calculations
+  /// almost always returns useless results.
+  /// </summary>
+  /// <param name="x">
+  /// value to test.
+  /// </param>
+  /// <returns>
+  /// (ON_DBL::Unset &lt; x &amp;&amp; x &lt; ON_DBL::PositiveUnset)
+  /// </returns>
+  static bool IsValid(double x);
+
+  /// <param name="x"></param>
+  /// <returns>True if x is not a nan..</returns>
+  static bool IsNotNan(double x);
+
+  static bool IsUnset(double x);
+
+
+  /// <summary>
+  /// Well ordered compare that handles nans and sorts them to the end.
+  /// ON_DBL::CompareValue(nan, nan) = 0;
+  /// ON_DBL::CompareValue(non_nan, nan) = -1;
+  /// ON_DBL::CompareValue(nan, non_nan) = +1;
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns>
+  /// -1 if lhs &lt; rhs or IsNotNan(lhs) and IsNan(rhs).
+  ///  0 if lhs == rhs or IsNan(lhs) &amp;&amp; IsNan(rhs).
+  /// +1 if lhs &gt; rhs or IsNotNan(lhs) &amp;&amp; IsNan(rhs).
+  /// </returns>
+  static int CompareValue(double lhs, double rhs);
+
+  /// <summary>
+  /// Well ordered compare that handles nullpt and nans and sorts them
+  /// to the end.
+  /// ON_DBL::Compare(nullptr, nullptr) = 0;
+  /// ON_DBL::Compare(not nullptr, nullptr) = -1;
+  /// ON_DBL::Compare(nullptr, not nullptr) = +1;
+  /// ON_DBL::Compare(not nullptr, not nullptr) = ON_DBL::CompareValue(*lhs,*rhs);
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int Compare(const double* lhs, const double* rhs);
+};
+
 ON_DECL
 bool ON_IsNullPtr(const void* ptr);
 

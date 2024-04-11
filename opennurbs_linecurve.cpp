@@ -186,7 +186,18 @@ ON_LineCurve::SwapCoordinates( int i, int j )
 
 bool ON_LineCurve::IsValid( ON_TextLog* text_log ) const
 {
-  return ( m_t[0] < m_t[1] && !m_line.from.IsCoincident(m_line.to)  ) ? true : false;
+  bool rc = true;
+  if (m_t[0] > m_t[1])
+  {
+    if (text_log) text_log->Print(L"Line domain not valid.");
+    rc = false;
+  }
+  if (m_line.from.IsCoincident(m_line.to))
+  {
+    if (text_log) text_log->Print(L"Line points are coincident.");
+    rc = false;
+  }
+  return rc;
 }
 
 void ON_LineCurve::Dump( ON_TextLog& dump ) const

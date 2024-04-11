@@ -38,16 +38,21 @@ bool ON_Polyline::IsValid( double tolerance ) const
   {
     for ( i = 1; rc && i < m_count; i++ )
     {
-      if ( m_a[i].DistanceTo(m_a[i-1]) <= tolerance )
+      if (false == m_a[i].IsValid() || false == m_a[i-1].IsValid())
+        rc = false;
+      else if ( m_a[i].DistanceTo(m_a[i-1]) <= tolerance )
         rc = false;
     }
     if ( rc && m_count < 4 && m_a[0].DistanceTo(m_a[m_count-1]) <= tolerance )
       rc = false;
   }
-  else {
+  else 
+  {
     for ( i = 1; rc && i < m_count && rc; i++ )
     {
-      if ( m_a[i] == m_a[i-1] )
+      if (false == m_a[i].IsValid() || false == m_a[i - 1].IsValid())
+        rc = false;
+      else if ( m_a[i] == m_a[i-1] )
         rc = false;
     }
     if ( rc && m_count < 4 && m_a[0] == m_a[m_count-1] )

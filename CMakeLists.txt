@@ -387,6 +387,7 @@ set( OPENNURBS_PLUS_HEADERS
     opennurbs_plus_hiddenline.h
     opennurbs_plus_hiddenline_impl.h
     opennurbs_plus_idimage.h
+    opennurbs_plus_implicitfn.h
     opennurbs_plus_massprop.h
     opennurbs_plus_mesh_intersection.h
     opennurbs_plus_mesh_marker.h
@@ -418,6 +419,7 @@ set( OPENNURBS_PLUS_SOURCES
     opennurbs_plus_ginfinity.cpp
     opennurbs_plus_hiddenline.cpp
     opennurbs_plus_idimage.cpp
+    opennurbs_plus_implicitfn.cpp
     opennurbs_plus_massprop.cpp
     opennurbs_plus_memory.cpp
     opennurbs_plus_memory_new.cpp
