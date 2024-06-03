@@ -1855,10 +1855,24 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
 
 const ON_SubDFace* ON_SubDSectorIterator::IncrementToCrease(
   int increment_direction
-  )
+)
 {
+  const ON_SubDEdgeTag etag = this->IncrementToCrease(
+    increment_direction,
+    nullptr
+  );
+  return (ON_SubDEdgeTag::Crease == etag) ? this->CurrentFace() : nullptr;
+}
+
+ON_SubDEdgeTag ON_SubDSectorIterator::IncrementToCrease(
+  int increment_direction,
+  unsigned* increment_count
+)
+{
+  if (nullptr != increment_count)
+    *increment_count = 0;
   if (nullptr == m_center_vertex)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgeTag::Unset);
 
   const unsigned int N = m_center_vertex->m_edge_count;
   const unsigned int edge_side = increment_direction > 0 ? 1 : 0;
@@ -1866,7 +1880,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementToCrease(
   ON_SubDSectorIterator sit(*this);
   const ON_SubDFace* face0 = sit.CurrentFace();
   if (nullptr == face0)
-    return ON_SUBD_RETURN_ERROR(nullptr);
+    return ON_SUBD_RETURN_ERROR(ON_SubDEdgeTag::Unset);
 
   // The for (unsigned int i = 0; i < N; i++) {} prevents infinite looping
   // if the topology is pointers contain an invalid cycle.
@@ -1874,22 +1888,24 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementToCrease(
   {
     const ON_SubDEdge* edge = sit.CurrentEdge(edge_side);
     if (nullptr == edge)
-      return ON_SUBD_RETURN_ERROR(nullptr);
+      return ON_SUBD_RETURN_ERROR(ON_SubDEdgeTag::Unset);
 
     if (edge->m_face_count != 2 || ON_SubDEdgeTag::Crease == edge->m_edge_tag)
     {
+      if (nullptr != increment_count)
+        *increment_count = i;
       *this = sit;
-      return CurrentFace();
+      return ON_SubDEdgeTag::Crease;
     }
 
     const ON_SubDFace* face = sit.IncrementFace(increment_direction,ON_SubDSectorIterator::StopAt::AnyCrease);
     if (nullptr == face)
-      return ON_SUBD_RETURN_ERROR(nullptr);
+      return ON_SUBD_RETURN_ERROR(ON_SubDEdgeTag::Unset);
     if ( face == face0 )
-      return nullptr; // not an error - no crease and back where we started
+      return ON_SubDEdgeTag::Smooth; // no crease and back where we started
   }
 
-  return ON_SUBD_RETURN_ERROR(nullptr);
+  return ON_SUBD_RETURN_ERROR(ON_SubDEdgeTag::Unset);
 }
 
 bool ON_SubDSectorIterator::InitializeToCurrentFace()

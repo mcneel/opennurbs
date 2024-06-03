@@ -16,7 +16,7 @@
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
-// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined
 // and the opennurbs .h files alter what is declared and how it is declared.
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
@@ -25,12 +25,12 @@
 static int w2c_size( int, const wchar_t* ); // gets minimum "c_count" arg for w2c().
 static int w2c( int,            // w_count = number of wide chars to convert
                 const wchar_t*, // source wide char string
-                int,            // c_count, 
+                int,            // c_count,
                 char*           // array of at least c_count+1 characters
                 );
 static int c2w( int,           // c_count = number of chars to convert
                 const char*,   // source byte char string
-                int,           // w_count, 
+                int,           // w_count,
                 wchar_t*       // array of at least c_count+1 wide characters
                 );
 
@@ -52,21 +52,21 @@ static int w2c_size( int w_count, const wchar_t* w )
   return rc;
 }
 
-static int w2c( int w_count, 
-                const wchar_t* w, 
-                int c_count, 
+static int w2c( int w_count,
+                const wchar_t* w,
+                int c_count,
                 char* c // array of at least c_count+1 characters
                 )
 {
   // convert wide char string to UTF-8 string
   int rc = 0;
-  if ( c ) 
+  if ( c )
     c[0] = 0;
   // returns length of converted c[]
   if ( c_count > 0 && c )
   {
     c[0] = 0;
-    if ( w ) 
+    if ( w )
     {
       unsigned int error_status = 0;
       unsigned int error_mask = 0xFFFFFFFF;
@@ -79,7 +79,7 @@ static int w2c( int w_count,
       }
       if ( rc > 0 && rc <= c_count )
         c[rc] = 0;
-      else 
+      else
       {
         c[c_count] = 0;
         rc = 0;
@@ -89,20 +89,20 @@ static int w2c( int w_count,
 	return rc;
 }
 
-static int c2w( int c_count, 
-                const char* c, 
-                int w_count, 
+static int c2w( int c_count,
+                const char* c,
+                int w_count,
                 wchar_t* w // array of at least w_count+1 wide characters
                 )
 {
   // convert UTF-8 string to UTF-16 string
   int rc = 0;
-  if ( w ) 
+  if ( w )
     w[0] = 0;
   // returns length of converted c[]
   if ( w_count > 0 && w && c_count > 0 && c && c[0] ) {
     w[0] = 0;
-    if ( c ) 
+    if ( c )
     {
       unsigned int error_status = 0;
       unsigned int error_mask = 0xFFFFFFFF;
@@ -162,7 +162,7 @@ public:
   {}
 
 public:
-  // NOTE WELL: 
+  // NOTE WELL:
   //  ref_count must be a signed 32-bit integer type that
   //  supports atomic increment/decrement operations.
   std::atomic<int> ref_count;
@@ -177,7 +177,7 @@ private:
   ON_Internal_Empty_wString(const ON_Internal_Empty_wString&) = delete;
   ON_Internal_Empty_wString& operator=(const ON_Internal_Empty_wString&) = delete;
 
-public: 
+public:
   ON_Internal_Empty_wString()
     : header(-1,0)
   {}
@@ -185,7 +185,7 @@ public:
 
 public:
   ON_wStringHeader header;
-  wchar_t  s = 0;    
+  wchar_t  s = 0;
 };
 
 static ON_Internal_Empty_wString empty_wstring;
@@ -265,7 +265,7 @@ bool ON_wString::IsValid(
     const int string_capacity = hdr->string_capacity;
     if (string_capacity <= 0)
       break;
-    if (string_capacity > ON_String::MaximumStringLength)
+    if (string_capacity > ON_wString::MaximumStringLength)
       break;
     const int string_length = hdr->string_length;
     if (string_length < 0)
@@ -322,7 +322,7 @@ ON_wStringHeader* ON_wString::IncrementedHeader() const
   ON_wStringHeader* hdr = (ON_wStringHeader*)m_s;
   if (nullptr == hdr)
     return nullptr;
-  
+
   hdr--;
   if (hdr == pEmptyStringHeader)
     return nullptr;
@@ -345,12 +345,12 @@ ON_wStringHeader* ON_wString::Header() const
 wchar_t* ON_wString::CreateArray( int capacity )
 {
   Destroy();
-  if (capacity > ON_String::MaximumStringLength)
+  if (capacity > ON_wString::MaximumStringLength)
   {
-    ON_ERROR("Requested capacity > ON_String::MaximumStringLength");
+    ON_ERROR("Requested capacity > ON_wString::MaximumStringLength");
     return nullptr;
   }
-  if ( capacity > 0 ) 
+  if ( capacity > 0 )
   {
     // This scope does not need atomic operations
 		void* buffer = onmalloc( sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
@@ -373,7 +373,7 @@ void ON_wString::Destroy()
 void ON_wString::Empty()
 {
   Destroy();
-  Create();  
+  Create();
 }
 
 void ON_wString::EmergencyDestroy()
@@ -398,7 +398,7 @@ void ON_wString::CopyArray()
   // Call CopyArray() before modifying array contents.
   // hdr0 = original header
   ON_wStringHeader* hdr0 = Header();
-  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && (int)(hdr0->ref_count) > 1 ) 
+  if ( hdr0 != pEmptyStringHeader && nullptr != hdr0 && (int)(hdr0->ref_count) > 1 )
   {
     // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
@@ -423,17 +423,17 @@ wchar_t* ON_wString::ReserveArray( size_t array_capacity )
 
   if (array_capacity > (size_t)ON_wString::MaximumStringLength)
   {
-    ON_ERROR("Requested capacity > ON_String::MaximumStringLength");
+    ON_ERROR("Requested capacity > ON_wString::MaximumStringLength");
     return nullptr;
   }
 
   const int capacity = (int)array_capacity; // for 64 bit compiler
   ON_wStringHeader* hdr0 = Header();
-  if ( hdr0 == pEmptyStringHeader || nullptr == hdr0 ) 
+  if ( hdr0 == pEmptyStringHeader || nullptr == hdr0 )
   {
 		CreateArray(capacity);
   }
-  else if ( (int)(hdr0->ref_count) > 1 ) 
+  else if ( (int)(hdr0->ref_count) > 1 )
   {
     // Calling Create() here insures hdr0 remains valid until we decrement below.
     Create();
@@ -442,7 +442,7 @@ wchar_t* ON_wString::ReserveArray( size_t array_capacity )
 		CreateArray(capacity);
     ON_wStringHeader* hdr1 = Header();
     const int size = (capacity < hdr0->string_length) ? capacity : hdr0->string_length;
-    if ( size > 0 ) 
+    if ( size > 0 )
     {
       memcpy( hdr1->string_array(), hdr0->string_array(), size*sizeof(*m_s) );
       hdr1->string_length = size;
@@ -453,7 +453,7 @@ wchar_t* ON_wString::ReserveArray( size_t array_capacity )
     // we might end up deleting hdr0.
     ON_wStringHeader_DecrementRefCountAndDeleteIfZero(hdr0);
   }
-	else if ( capacity > hdr0->string_capacity ) 
+	else if ( capacity > hdr0->string_capacity )
   {
 		hdr0 = (ON_wStringHeader*)onrealloc( hdr0, sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
     m_s = hdr0->string_array();
@@ -470,14 +470,14 @@ void ON_wString::ShrinkArray()
   {
     Create();
   }
-  else if ( hdr0 != pEmptyStringHeader ) 
+  else if ( hdr0 != pEmptyStringHeader )
   {
-    if ( hdr0->string_length < 1 ) 
+    if ( hdr0->string_length < 1 )
     {
       Destroy();
       Create();
     }
-    else if ( (int)(hdr0->ref_count) > 1 ) 
+    else if ( (int)(hdr0->ref_count) > 1 )
     {
       // Calling Create() here insures hdr0 remains valid until we decrement below.
       Create();
@@ -535,19 +535,19 @@ void ON_wString::CopyToArray( int size, const unsigned char* s )
 
 void ON_wString::CopyToArray( int size, const wchar_t* s )
 {
-  if (size > ON_String::MaximumStringLength)
+  if (size > ON_wString::MaximumStringLength)
   {
-    ON_ERROR("Requested size > ON_String::MaximumStringLength.");
+    ON_ERROR("Requested size > ON_wString::MaximumStringLength.");
     size = 0;
   }
 
-  if ( size > 0 && s && s[0] ) 
+  if ( size > 0 && s && s[0] )
   {
     ON_wStringHeader* hdr0 = Header();
     // Calling Create() here preserves hdr0 in case s is in its m_s[] buffer.
     Create();
 
-    // ReserveArray() will allocate a new header 
+    // ReserveArray() will allocate a new header
 	  ReserveArray(size);
     ON_wStringHeader* hdr1 = Header();
     if (nullptr != hdr1 && hdr1 != pEmptyStringHeader)
@@ -573,7 +573,7 @@ void ON_wString::AppendToArray( const ON_wString& s )
 
 void ON_wString::AppendToArray( int size, const char* s )
 {
-  if ( size > 0 && s && s[0] ) 
+  if ( size > 0 && s && s[0] )
   {
     if (nullptr == ReserveArray(size + Header()->string_length))
       return;
@@ -589,7 +589,7 @@ void ON_wString::AppendToArray( int size, const unsigned char* s )
 
 void ON_wString::AppendToArray( int size, const wchar_t* s )
 {
-  if ( size > 0 && s && s[0] ) 
+  if ( size > 0 && s && s[0] )
   {
     if (nullptr == ReserveArray(size + Header()->string_length))
       return;
@@ -686,7 +686,7 @@ ON_wString::ON_wString(const ON_String& src)
 ON_wString::ON_wString( const char* s )
 {
 	Create();
-  if ( s && s[0] ) 
+  if ( s && s[0] )
   {
     CopyToArray( (int)strlen(s), s ); // the (int) is for 64 bit size_t conversion
   }
@@ -764,12 +764,12 @@ ON_wString::ON_wString( const wchar_t* s, int length )
 ON_wString::ON_wString( wchar_t c, int repeat_count )
 {
   Create();
-  if (repeat_count > ON_String::MaximumStringLength)
+  if (repeat_count > ON_wString::MaximumStringLength)
   {
-    ON_ERROR("Requested size > ON_String::MaximumStringLength");
+    ON_ERROR("Requested size > ON_wString::MaximumStringLength");
     return;
   }
-  if ( repeat_count > 0 ) 
+  if ( repeat_count > 0 )
   {
     ReserveArray(repeat_count);
     for (int i=0;i<repeat_count;i++)
@@ -1309,9 +1309,9 @@ const ON_wString& ON_wString::operator+=( const wchar_t* s )
 
 wchar_t* ON_wString::SetLength(size_t string_length)
 {
-  if (string_length >= (size_t)ON_String::MaximumStringLength)
+  if (string_length > (size_t)ON_wString::MaximumStringLength)
   {
-    ON_ERROR("Requested size > ON_String::MaximumStringLength");
+    ON_ERROR("Requested size > ON_wString::MaximumStringLength");
     return nullptr;
   }
   int length = (int)string_length; // for 64 bit compilers
@@ -1319,7 +1319,7 @@ wchar_t* ON_wString::SetLength(size_t string_length)
   {
     ReserveArray(length);
   }
-  if ( length >= 0 && length <= Header()->string_capacity ) 
+  if ( length >= 0 && length <= Header()->string_capacity )
   {
     CopyArray();
     Header()->string_length = length;
@@ -1405,7 +1405,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-    
+
     if ( !pattern[0] )
       return true;
 
@@ -1428,7 +1428,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
       }
       return false;
     }
-    
+
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
@@ -1448,7 +1448,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     s++;
   }
-  
+
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -1459,12 +1459,12 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     return ( !s || !s[0] ) ? true : false;
   }
 
-  if ( *pattern == '*' ) 
+  if ( *pattern == '*' )
   {
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-    
+
     if ( !pattern[0] )
       return true;
 
@@ -1488,7 +1488,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
       }
       return false;
     }
-    
+
     if ( *pattern == '\\' )
     {
       switch( pattern[1] )
@@ -1510,7 +1510,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     s++;
   }
-  
+
   return ON_WildCardMatchNoCase(s,pattern);
 }
 
@@ -1664,7 +1664,7 @@ int ON_wString::Replace( const wchar_t* token1, const wchar_t* token2 )
         //       ReserveArray(newlen);
         //    but when newlen < len and the string had multiple
         //    references, the ReserveArray(newlen) call truncated
-        //    the input array.  
+        //    the input array.
         if (nullptr == ReserveArray((newlen < len) ? len : newlen))
           return 0;
 
@@ -2260,7 +2260,7 @@ int ON_wString::FindOneOf (const wchar_t* character_set) const
 {
   if ( nullptr == character_set || 0 == character_set[0] || IsEmpty() )
     return -1;
-  
+
   const wchar_t* s1 = character_set;
   while ( 0 != *s1 )
     s1++;
@@ -2280,8 +2280,8 @@ int ON_wString::FindOneOf (const wchar_t* character_set) const
       break;
     e.m_error_status = 0;
     int buffer_count = ON_ConvertUTF32ToWideChar(
-      false, 
-      sUTF32, 1, 
+      false,
+      sUTF32, 1,
       buffer, buffer_capacity,
       &e.m_error_status,
       e.m_error_mask,
@@ -2320,7 +2320,7 @@ int ON_wString::ReverseFind( wchar_t c ) const
   {
     // find first single character
     int i = Length();
-    while( i > 0 ) 
+    while( i > 0 )
     {
       if (c == m_s[--i])
         return i;
@@ -2356,7 +2356,7 @@ int ON_wString::ReverseFind(const wchar_t* s) const
 
 void ON_wString::MakeReverse()
 {
-  if ( IsNotEmpty() ) 
+  if ( IsNotEmpty() )
   {
   	CopyArray();
     ON_wString::Reverse(m_s,Length());
@@ -2390,7 +2390,7 @@ static void ON_String_ReverseUTF16(
     {
       // c, b0[0] is a surrogate pair
       *s1-- = *b0++;
-    }    
+    }
     *s1-- = c;
   }
 }
@@ -2620,7 +2620,7 @@ void ON_wString::SetAt( int i, wchar_t c )
 
 ON_wString ON_wString::Mid(int i, int count) const
 {
-  if ( i >= 0 && i < Length() && count > 0 ) 
+  if ( i >= 0 && i < Length() && count > 0 )
   {
     if ( count > Length() - i )
       count = Length() - i;
@@ -3068,7 +3068,7 @@ const wchar_t* ON_wString::ParseXMLCharacterEncoding(
 
   case 'g':
     if (buffer_length >= 4
-      && 't' == buffer[2] 
+      && 't' == buffer[2]
       && ON_wString::Semicolon == buffer[3]
       )
     {
@@ -3141,7 +3141,7 @@ const ON_wString ON_wString::RichTextExample(
   // Sample text
   s += ON_wString(L"{\\f0 ") + rich_text_font_name + ON_wString(L" rich text example:\\par}");
 
-  s += ON_wString(L"{\\f0 Regular"); 
+  s += ON_wString(L"{\\f0 Regular");
   if (bUnderline)
     s += ON_wString(L" }{\\f0\\ul underlined");
   s += ON_wString(L"\\par}");
@@ -3149,7 +3149,7 @@ const ON_wString ON_wString::RichTextExample(
   if (bBold)
   {
     s += ON_wString(L"{\\f0\\b Bold}");
-    if (bUnderline) 
+    if (bUnderline)
       s += ON_wString(L" }{\\f0\\b\\ul underlined");
     s += ON_wString(L"\\par}");
   }
@@ -3157,7 +3157,7 @@ const ON_wString ON_wString::RichTextExample(
   if (bItalic)
   {
     s += ON_wString(L"{\\f0\\i Italic}");
-    if (bUnderline) 
+    if (bUnderline)
       s += ON_wString(L" }{\\f0\\i\\ul underlined");
     s += ON_wString(L"\\par}");
   }
@@ -3262,7 +3262,7 @@ const ON_wString ON_wString::Example(ON_wString::ExampleType t)
     break;
 
   case ON_wString::ExampleType::XML:
-    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format 
+    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format
     /// and code points above basic latin UTF encoded.
     s = ON_wString(
       ON_wString(L"The math teacher said, &quot;It isn&apos;t true that 2")
@@ -3287,21 +3287,21 @@ const ON_wString ON_wString::Example(ON_wString::ExampleType t)
       break;
 
   case ON_wString::ExampleType::XMLalternate1:
-    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format 
+    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format
     /// and code points above basic latin encoded in the &#hhhh; format
     /// using  lower case hex digits (0123456789abcdef).
     s = ON_wString(L"The math teacher said, &quot;It isn&apos;t true that 2&#xb3;=3&#xb2; &amp; &#x3a3; &gt; 3&#xa2; &amp; &#x3a3; &lt; 2 &#x20bd; &amp; &#x3a3; &gt; &#x20ac;99.&quot; &#x1f5d1;!");
     break;
 
   case ON_wString::ExampleType::XMLalternate2:
-    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format 
+    /// The UTF string as an XML value with special characters encoded in the &amp;amp; format
     /// and code points above basic latin encoded in the hexadecimal &amp;#xhhhh; format
     /// with  upper case hex digits (0123456789ABCDEF).
     s = ON_wString(L"The math teacher said, &quot;It isn&apos;t true that 2&#xb3;=3&#xb2; &amp; &#x3A3; &gt; 3&#xA2; &amp; &#x3A3; &lt; 2 &#x20BD; &amp; &#x3A3; &gt; &#x20AC;99.&quot; &#x1F5D1;!");
     break;
 
   case ON_wString::ExampleType::XMLalternate3:
-    /// The UTF string as an XML value with special characters and code points above 
+    /// The UTF string as an XML value with special characters and code points above
     /// basic latin encoded in the decimal code point &amp;#nnnn; format.
     s = ON_wString(L"The math teacher said, &#34;It isn&#39;t true that 2&#179;=3&#178; &amp; &#931; &#62; 3&#162; &#38; &#931; &#60; 2 &#8381; &#38; &#931; &#62; &#8364;99.&#34; &#128465;!");
     break;
@@ -3448,7 +3448,7 @@ const ON_wString ON_wString::FormatToVulgarFraction(
       const ON_wString fraction = ON_wString::FromUnicodeCodePoints(cp, cp_count, ON_UnicodeCodePoint::ON_ReplacementCharacter);
       if (0 == n)
         return fraction;
-      return ON_wString::FormatToString(L"%d", n) 
+      return ON_wString::FormatToString(L"%d", n)
         + ON_wString::FromUnicodeCodePoint(proper_fraction_separator_cp)
         + fraction;
     }
@@ -3492,7 +3492,7 @@ static const ON_wString Internal_VulgarFractionXator(int updown, const ON_wStrin
     e = ON_UnicodeErrorParameters::MaskErrors;
     ON__UINT32 cp0 = ON_UnicodeCodePoint::ON_InvalidCodePoint;
     delta = ON_DecodeWideChar(s0 + i, len - i, &e, &cp0);
-    ON__UINT32 cp1 
+    ON__UINT32 cp1
       = (delta > 0 && ON_IsValidUnicodeCodePoint(cp0))
       ? (updown > 0 ? ON_UnicodeSuperscriptFromCodePoint(cp0,cp0) : ON_UnicodeSubcriptFromCodePoint(cp0,cp0))
       : ON_UnicodeCodePoint::ON_ReplacementCharacter;

@@ -1857,8 +1857,8 @@ const ON_SubDFaceParameter ON_SubDMeshFragment::VertexSubDFaceParameter(
       break;
     // corner parameters run from 0.0 to 0.5.
     const double gdelta = 0.5 / ((double)gc);
-    const double corner_s = gdelta * grid2dex_i;
-    const double corner_t = gdelta * grid2dex_j;
+    const double corner_s = 0.5 - gdelta * grid2dex_i;
+    const double corner_t = 0.5 - gdelta * grid2dex_j;
     const ON_SubDFaceCornerDex cdex(m_face_fragment_index, face_edge_count);
     const ON_SubDFaceParameter p(cdex, corner_s, corner_t);
     if (p.IsNotSet())

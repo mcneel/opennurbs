@@ -2937,15 +2937,89 @@ ON_ContentHash ON_ContentHash::CreateFromFile(
   return ON_ContentHash::Create(sha1_file_name_hash,hash_byte_count,sha1_hash,hash_time,file_contents_last_modified_time);
 }
 
+#include <unordered_map>
+
+using ContentHashMap = std::unordered_map<std::wstring, ON_ContentHash>;
+
+std::weak_ptr<ContentHashMap> g_pContentHashCache;
+
+class ON_ContentHash::Cache::Private
+{
+public:
+  std::shared_ptr<ContentHashMap> p;
+};
+
+ON_ContentHash::Cache::Cache()
+  : m_private(new Private)
+{
+  
+  m_private->p = g_pContentHashCache.lock();
+
+
+  if (!m_private->p)
+  {
+    m_private->p.reset(new ContentHashMap);
+    g_pContentHashCache = m_private->p;
+  }
+}
+
+ON_ContentHash::Cache::~Cache()
+{
+  delete m_private;
+}
+
+void ON_ContentHash::Cache::Add(const wchar_t* path, const ON_ContentHash& hash)
+{
+  auto map = g_pContentHashCache.lock();
+  if (map)
+  {
+    map->insert(std::make_pair(path, hash));
+  }
+}
+
+
+const ON_ContentHash* ON_ContentHash::Cache::FromFile(const wchar_t* path)
+{
+  auto map = g_pContentHashCache.lock();
+  if (map)
+  {
+    auto it = map->find(path);
+    if (it != map->end())
+    {
+      return &it->second;
+    }
+  }
+  return nullptr;
+}
+
+const ON_ContentHash* ON_ContentHash::Cache::FromFile(const char* p)
+{
+  ON_wString s(p);
+  return FromFile((const wchar_t*)s);
+}
+
+void ON_ContentHash::Cache::Add(const char* p, const ON_ContentHash& h)
+{
+  ON_wString s(p);
+  Add(s, h);
+}
 
 ON_ContentHash ON_ContentHash::CreateFromFile( 
   const wchar_t* filename
   )
 {
+  if (auto pHash = Cache::FromFile(filename))
+  {
+    return *pHash;
+  }
+
   ON_SHA1_Hash sha1_file_name_hash = (nullptr == filename) ? ON_SHA1_Hash::ZeroDigest : ON_SHA1_Hash::FileSystemPathHash(filename);
   FILE* fp = ON_FileStream::Open(filename, L"rb");
   ON_ContentHash hash = ON_ContentHash::CreateFromFile(sha1_file_name_hash,fp);
   ON_FileStream::Close(fp);
+
+  Cache::Add(filename, hash);
+
   return hash;
 }
 
@@ -2953,10 +3027,18 @@ ON_ContentHash ON_ContentHash::CreateFromFile(
   const char* filename
   )
 {
+  if (auto pHash = Cache::FromFile(filename))
+  {
+    return *pHash;
+  }
+
   ON_SHA1_Hash sha1_file_name_hash = (nullptr == filename) ? ON_SHA1_Hash::ZeroDigest : ON_SHA1_Hash::FileSystemPathHash(filename);
   FILE* fp = ON_FileStream::Open(filename, "rb");
   ON_ContentHash hash = ON_ContentHash::CreateFromFile(sha1_file_name_hash,fp);
   ON_FileStream::Close(fp);
+
+  Cache::Add(filename, hash);
+
   return hash;
 }
 

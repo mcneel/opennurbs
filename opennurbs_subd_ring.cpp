@@ -31,10 +31,31 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
   size_t component_ring_count,
   double* point_ring,
   size_t point_ring_stride
-  )
+)
+{
+  unsigned int subdivision_count = 0;
+  return ON_SubD::GetQuadSectorPointRing(
+    bPermitNoSubdivisions,
+    component_ring,
+    component_ring_count,
+    subdivision_count,
+    point_ring,
+    point_ring_stride
+  );
+}
+
+unsigned int ON_SubD::GetQuadSectorPointRing(
+  bool bPermitNoSubdivisions,
+  const class ON_SubDComponentPtr* component_ring,
+  size_t component_ring_count,
+  unsigned int& subdivision_count,
+  double* point_ring,
+  size_t point_ring_stride
+)
 {
   // MINIMAL VALIDATION CHECKS TO PREVENT CRASHES
   // CALLER MUST INSURE INPUT IS CORRECT
+  subdivision_count = 0;
 
   const ON_SubDVertex* vertex0 = (nullptr != component_ring) ? ON_SUBD_VERTEX_POINTER(component_ring[0].m_ptr) : nullptr;
   if (nullptr == vertex0)
@@ -57,10 +78,10 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
   if ((size_t)point_ring_count != component_ring_count)
     return ON_SUBD_RETURN_ERROR(0);
 
-  // If final subdivision_count = 0, then no subdivision is needed.
-  // If final subdivision_count = 1, then exactly 1 subdivision is needed.
-  // If final subdivision_count = 2, then at least two subdivisions are needed.
-  unsigned subdivision_count = bPermitNoSubdivisions ? 0u : 1u;
+  // If the final value of target_subdivision_count = 0, then no subdivision is needed.
+  // If the final value of target_subdivision_count = 1, then exactly 1 subdivision is needed.
+  // If the final value of target_subdivision_count = 2, then at least two subdivisions are needed.
+  unsigned target_subdivision_count = bPermitNoSubdivisions ?0u : 1u;
 
   for (unsigned eptr_dex = 1u; eptr_dex < point_ring_count; eptr_dex += 2u)
   {
@@ -79,27 +100,27 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
     const double x0 = s0.MaximumEndSharpness();
     if (x0 > 0.0)
     {
-      if (subdivision_count < 1u)
+      if (target_subdivision_count < 1u)
       {
         // at least one subdivision is required to remove sharpness
-        subdivision_count = 1u;
+        target_subdivision_count = 1u;
       }
       const double x1 = s0.Subdivided(end0).MaximumEndSharpness();
       if (x1 > 0.0)
       {
         // at least two subdivisions are required to remove sharpness.
-        subdivision_count = 2u;
+        target_subdivision_count = 2u;
         break;
       }
     }
 
-    if (subdivision_count >= 1u)
+    if (target_subdivision_count >= 1u)
       continue;
 
     if (ON_SubDEdgeTag::SmoothX == etag)
     {
       // one subdivision is reqired to handle SmoothX edges
-      subdivision_count = 1u;
+      target_subdivision_count = 1u;
     }
     else
     {
@@ -109,7 +130,7 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
       if (v1->IsDartOrCreaseOrCorner() && 0.5 != e->m_sector_coefficient[1u - end0])
       {
         // one subdivision is reqired to handle extraordinary sector coeffient at v1.
-        subdivision_count = 1u;
+        target_subdivision_count = 1u;
       }
     }
   }
@@ -139,13 +160,13 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
     vertex0_sharpness = vertex0->VertexSharpness();
     if (vertex0_sharpness > 1.0)
     {
-      if (subdivision_count < 2u)
-        subdivision_count = 2u; // put a breakpoint here to see when this test matters (use files from RH-76871).
+      if (target_subdivision_count < 2u)
+        target_subdivision_count = 2u; // put a breakpoint here to see when this test matters (use files from RH-76871).
     }
     else if (vertex0_sharpness > 0.0)
     {
-      if (subdivision_count < 1u)
-        subdivision_count = 1u; // put a breakpoint here to see when this test matters (use files from RH-76871 with constant edge sharpness = 1).
+      if (target_subdivision_count < 1u)
+        target_subdivision_count = 1u; // put a breakpoint here to see when this test matters (use files from RH-76871 with constant edge sharpness = 1).
     }
   }
   else
@@ -156,7 +177,7 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
     vertex0_sharpness = ON_DBL_QNAN;
   }
 
-  if (subdivision_count > 1u)
+  if (target_subdivision_count > 1u)
   {
     // we need to subdivide at least twice to get the point ring
 
@@ -169,7 +190,8 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
       return ON_SUBD_RETURN_ERROR(0);
     if (point_ring_count != vqs.SectorVertexCount())
       return ON_SUBD_RETURN_ERROR(0);
-    if (false == vqs.SubdivideUntilSharpnessIsZero())
+    unsigned int sharp_subdivision_count = 0;
+    if (false == vqs.SubdivideUntilSharpnessIsZero(sharp_subdivision_count))
       return ON_SUBD_RETURN_ERROR(0);
 
     // harvest the ring points from vqs.
@@ -181,10 +203,12 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
       point_ring[2] = P.z;
       point_ring += point_ring_stride;
     }
+    // subdivision_count = total number of subdivisions to get point_ring[]
+    subdivision_count = sharp_subdivision_count + 1;
     return point_ring_count;
   }
 
-  if (0u == subdivision_count)
+  if (0u == target_subdivision_count)
   {
     for (unsigned fptr_dex = 2u; fptr_dex < point_ring_count; fptr_dex += 2u)
     {
@@ -195,7 +219,7 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
         continue;
 
       // a subdivision is required to handle non-quad faces
-      subdivision_count = 1u;
+      target_subdivision_count = 1u;
       break;
     }
   }
@@ -203,13 +227,14 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
   // get ring points with 0 or 1 subdivision
   double subP[3];
   const double* Q = nullptr;
-  if (0 == subdivision_count)
+  if (0 == target_subdivision_count)
     Q = vertex0->m_P;
   else
   {
     if (false == vertex0->GetSubdivisionPoint(subP))
       return ON_SUBD_RETURN_ERROR(0);
     Q = subP;
+    subdivision_count = 1;
   }
 
   double* P = point_ring;
@@ -225,7 +250,7 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
     if (nullptr == e)
       return ON_SUBD_RETURN_ERROR(0);
 
-    if (0u == subdivision_count)
+    if (0u == target_subdivision_count)
     {
       const ON_SubDVertex* vertexQ = e->OtherEndVertex(vertex0);
       if (nullptr == vertexQ)
@@ -248,7 +273,7 @@ unsigned int ON_SubD::GetQuadSectorPointRing(
       const ON_SubDFace* f = ON_SUBD_FACE_POINTER(component_ring[eptr_dex+1u].m_ptr);
       if (nullptr == f)
         return ON_SUBD_RETURN_ERROR(0);
-      if (0u == subdivision_count)
+      if (0u == target_subdivision_count)
       {
         const ON_SubDVertex* vertexQ = f->QuadOppositeVertex(vertex0);
         if (nullptr == vertexQ)
@@ -556,6 +581,76 @@ unsigned int ON_SubD::GetSectorPointRing(
   }
   return ON_SUBD_RETURN_ERROR(0);
 }
+
+
+unsigned int ON_SubD::GetSectorPointRing(
+  const class ON_SubDSectorIterator& sit,
+  unsigned& subdivision_count,
+  double* point_ring,
+  size_t point_ring_capacity,
+  size_t point_ring_stride
+)
+{
+  const ON_SubDVertex* center_vertex = sit.CenterVertex();
+  if (nullptr == center_vertex)
+    return ON_SUBD_RETURN_ERROR(0);
+  const unsigned int center_vertex_element_count = center_vertex->m_edge_count + center_vertex->m_face_count + 1;
+
+  ON_SubDComponentPtr stack_component_ring[41];
+  unsigned int component_ring_capacity = sizeof(stack_component_ring) / sizeof(stack_component_ring[0]);
+  ON_SubDComponentPtr* component_ring = stack_component_ring;
+  if (component_ring_capacity < point_ring_capacity && component_ring_capacity < center_vertex_element_count)
+  {
+    component_ring_capacity = (unsigned int)((center_vertex_element_count < point_ring_capacity) ? center_vertex_element_count : point_ring_capacity);
+    component_ring = new(std::nothrow) ON_SubDComponentPtr[component_ring_capacity];
+    if (nullptr == component_ring)
+      return ON_SUBD_RETURN_ERROR(0);
+  }
+
+  unsigned int point_ring_count = 0;
+  unsigned int component_ring_count = ON_SubD::GetSectorComponentRing(sit, component_ring, component_ring_capacity);
+  if (component_ring_count > 0)
+  {
+    const bool bObsoleteAndIgnoredParameter = false;
+    point_ring_count = ON_SubD::GetQuadSectorPointRing(
+      false, // false means subdivisions are permitted
+      bObsoleteAndIgnoredParameter,
+      nullptr,
+      component_ring,
+      component_ring_count,
+      point_ring, point_ring_stride
+    );
+  }
+
+  if (component_ring != stack_component_ring)
+    delete[] component_ring;
+
+  return point_ring_count;
+}
+
+
+unsigned int ON_SubD::GetSectorPointRing(
+  const class ON_SubDSectorIterator& sit,
+  unsigned& subdivision_count,
+  ON_SimpleArray<ON_3dPoint>& point_ring
+)
+{
+  subdivision_count = 0;
+  point_ring.SetCount(0);
+  const ON_SubDVertex* center_vertex = sit.CenterVertex();
+  if (nullptr == center_vertex)
+    return ON_SUBD_RETURN_ERROR(0);
+  const unsigned int point_ring_capacity = (center_vertex->m_edge_count + center_vertex->m_face_count);
+  ON_3dPoint* point_ring_array = point_ring.Reserve(point_ring_capacity);
+  if (nullptr == point_ring_array)
+    return ON_SUBD_RETURN_ERROR(0);
+  unsigned int point_ring_count = GetSectorPointRing(sit, subdivision_count , &point_ring_array[0].x, point_ring_capacity, 3);
+  if (point_ring_count > 0)
+  {
+    point_ring.SetCount(point_ring_count);
+    return point_ring_count;
+  }
+  return ON_SUBD_RETURN_ERROR(0);}
 
 const ON_SubDVertex* ON_SubD::SubdivideSector(
   const ON_SubDVertex* center_vertex,

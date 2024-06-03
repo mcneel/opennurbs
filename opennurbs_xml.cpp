@@ -4708,11 +4708,11 @@ static size_t CallbackDone = 0;
 static char CallbackBuffer[1000];
 #endif
 
-static std::mutex g_mutex;
+static std::recursive_mutex g_mutex;
 
 static void ThreadFunc(wchar_t c)
 {
-  std::lock_guard<std::mutex> lg(g_mutex);
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
 
   ON_wString s = c;
   for (int i = 0; i < 100; i++)

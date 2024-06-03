@@ -3666,6 +3666,28 @@ int ON_TextureMapping::EvaluateBoxMapping(
   return side0;
 }
 
+static ON_3fVector MeshFaceNormal(const ON_Mesh & mesh, const ON_MeshFace & face)
+{
+	ON_3fVector vtFaceNormal = ON_CrossProduct(
+		mesh.m_V[face.vi[2]] - mesh.m_V[face.vi[0]],
+		mesh.m_V[face.vi[3]] - mesh.m_V[face.vi[1]]);
+
+	vtFaceNormal.Unitize();
+
+	return vtFaceNormal;
+}
+
+static ON_3fVector MeshFaceNormal(const ON_Mesh & mesh, int iFaceIndex)
+{
+	if (mesh.HasFaceNormals())
+	{
+		return mesh.m_FN[iFaceIndex];
+	}
+	else
+	{
+		return MeshFaceNormal(mesh, mesh.m_F[iFaceIndex]);
+	}
+}
 
 static bool ProjectToFaceSpace(const ON_3dPoint & ptV0, const ON_3dPoint & ptV1, const ON_3dPoint & ptV2, const ON_3dPoint & ptP, double & xOut, double & yOut)
 {
@@ -3706,6 +3728,1374 @@ static bool ProjectToFaceSpace(const ON_3dPoint & ptV0, const ON_3dPoint & ptV1,
 	}
 
 	return false;
+}
+
+
+ON_WeightedAverageHash::ON_WeightedAverageHash()
+{
+  Zero();
+}
+
+void ON_WeightedAverageHash::Zero()
+{
+  for (int i = 0; i < dim; i++)
+    m_sum[i] = ON_3dPoint::Origin;
+}
+
+bool ON_WeightedAverageHash::Write(ON_BinaryArchive& binary_archive) const
+{
+  for (int i = 0; i < dim; i++)
+  {
+    if (!binary_archive.WritePoint(m_sum[i]))
+      return false;
+  }
+  return true;
+}
+
+bool ON_WeightedAverageHash::Read(ON_BinaryArchive& binary_archive)
+{
+  for (int i = 0; i < dim; i++)
+  {
+    if (!binary_archive.ReadPoint(m_sum[i]))
+      return false;
+  }
+  return true;
+}
+
+bool ON_WeightedAverageHash::Matches(const ON_WeightedAverageHash& b, const ON_Xform& bt, double tol) const
+{
+  double maxDist = 0.0;
+  double minDist = DBL_MAX;
+  for (int i = 0; i < ON_WeightedAverageHash::dim; i++)
+  {
+    const ON_3dPoint bi = bt * b.m_sum[i];
+    const double dist = bi.DistanceTo(m_sum[i]);
+    if (maxDist < dist)
+      maxDist = dist;
+    if (minDist > dist)
+      minDist = dist;
+  }
+  if (maxDist <= tol)
+    return true;
+  else
+    return false;
+}
+
+void ON_WeightedAverageHash::Transform(const ON_Xform& xform)
+{
+  for (int i = 0; i < ON_WeightedAverageHash::dim; i++)
+  {
+    m_sum[i] = xform * m_sum[i];
+  }
+}
+ON_GeometryFingerprint::ON_GeometryFingerprint()
+{
+  Zero();
+}
+
+void ON_GeometryFingerprint::Zero()
+{
+  m_topologyCRC = 0;
+  m_pointWAH.Zero();
+  m_edgeWAH.Zero();
+}
+
+bool ON_GeometryFingerprint::Write(ON_BinaryArchive& binary_archive) const
+{
+  if (!binary_archive.WriteInt(m_topologyCRC))
+    return false;
+  if (!m_pointWAH.Write(binary_archive))
+    return false;
+  if (!m_edgeWAH.Write(binary_archive))
+    return false;
+  return true;
+}
+
+bool ON_GeometryFingerprint::Read(ON_BinaryArchive& binary_archive)
+{
+  if (!binary_archive.ReadInt(&m_topologyCRC))
+    return false;
+  if (!m_pointWAH.Read(binary_archive))
+    return false;
+  if (!m_edgeWAH.Read(binary_archive))
+    return false;
+  return true;
+}
+bool ON_GeometryFingerprint::Matches(const ON_GeometryFingerprint& b, const ON_Xform& bt, double tol) const
+{
+  if (m_topologyCRC != b.m_topologyCRC)
+    return false;
+  if (!m_pointWAH.Matches(b.m_pointWAH, bt, tol))
+    return false;
+  if (!m_edgeWAH.Matches(b.m_edgeWAH, bt, tol))
+    return false;
+  return true;
+}
+void ON_GeometryFingerprint::Transform(const ON_Xform& xform)
+{
+  m_pointWAH.Transform(xform);
+  m_edgeWAH.Transform(xform);
+}
+
+ON_MappingMeshInfo::ON_MappingMeshInfo()
+{
+}
+
+void ON_MappingMeshInfo::GenerateDerivedData()
+{
+  m_sourceIdFaceStart.Empty();
+  m_sourceIdFaceCount.Empty();
+  m_sourceIdFaceList.Empty();
+  for (int fi = 0; fi < m_faceSourceIds.Count(); fi++)
+  {
+    const int sourceId = m_faceSourceIds[fi];
+    if (sourceId >= 0)
+    {
+      while (m_sourceIdFaceCount.Count() <= sourceId)
+      {
+        m_sourceIdFaceCount.Append(0);
+      }
+      m_sourceIdFaceCount[sourceId]++;
+    }
+  }
+  int nTotal = 0;
+  for (int sid = 0; sid < m_sourceIdFaceCount.Count(); sid++)
+  {
+    m_sourceIdFaceStart.Append(nTotal);
+    nTotal += m_sourceIdFaceCount[sid];
+  }
+  m_sourceIdFaceList.SetCapacity(nTotal);
+  m_sourceIdFaceList.SetCount(nTotal);
+  m_sourceIdFaceList.MemSet(0);
+  m_sourceIdFaceCount.MemSet(0);
+  for (int fi = 0; fi < m_faceSourceIds.Count(); fi++)
+  {
+    const int sourceId = m_faceSourceIds[fi];
+    if (sourceId >= 0)
+    {
+      m_sourceIdFaceList[m_sourceIdFaceStart[sourceId] + m_sourceIdFaceCount[sourceId]] = fi;
+      m_sourceIdFaceCount[sourceId]++;
+    }
+  }
+}
+
+const int* ON_MappingMeshInfo::SourceIdFaces(const int sourceId, int& countOut) const
+{
+  countOut = 0;
+  if (sourceId < 0 || sourceId >= m_sourceIdFaceCount.Count())
+    return nullptr;
+  countOut = m_sourceIdFaceCount[sourceId];
+  return m_sourceIdFaceList.Array() + m_sourceIdFaceStart[sourceId];
+}
+
+ON_RenderMeshInfo::ON_RenderMeshInfo()
+  : m_sourceFaceId(ON_UNSET_INT_INDEX)
+{
+}
+
+
+#pragma region CTtMappingMeshInfoUserData
+
+class ON_CLASS CTtMappingMeshInfoUserData : public ON_UserData
+{
+  ON_OBJECT_DECLARE(CTtMappingMeshInfoUserData);
+public:
+  const static bool m_bArchive = true;
+  CTtMappingMeshInfoUserData()
+  {
+    m_application_uuid = ON_opennurbs_id;
+    m_userdata_uuid = ON_CLASS_ID(CTtMappingMeshInfoUserData);
+    m_userdata_copycount = 1;
+  }
+  CTtMappingMeshInfoUserData(const CTtMappingMeshInfoUserData& src)
+    : ON_UserData(src)
+  {
+    m_userdata_copycount = src.m_userdata_copycount;
+    m_info = src.m_info;
+  }
+  ~CTtMappingMeshInfoUserData()
+  {
+  }
+  CTtMappingMeshInfoUserData& operator=(const CTtMappingMeshInfoUserData& src)
+  {
+    ON_UserData::operator = (src);
+    m_info = src.m_info;
+    return *this;
+  }
+  
+#if defined(ON_COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+  virtual bool GetDescription(ON_wString& description)
+  {
+    description = L"TtMappingMeshInfoUserData";
+    return true;
+  }
+
+  virtual bool Archive() const
+  {
+    return m_bArchive;
+  }
+
+  virtual bool Write(ON_BinaryArchive& binary_archive) const
+  {
+    if (!m_bArchive)
+      return false;
+
+    const int nVersion = 1;
+
+    if (!binary_archive.WriteInt(nVersion))
+      return false;
+
+    if (!m_info.m_geometryFingerprint.Write(binary_archive))
+      return false;
+
+    if (!binary_archive.WriteInt(m_info.m_faceSourceIds.Count()))
+      return false;
+
+    for (size_t i = 0; i < m_info.m_faceSourceIds.Count(); i++)
+    {
+      if (!binary_archive.WriteInt(m_info.m_faceSourceIds[i]))
+        return false;
+    }
+
+    return true;
+  }
+
+  virtual bool Read(ON_BinaryArchive& binary_archive)
+  {
+    if (!m_bArchive)
+      return false;
+
+    int nVersion = 1;
+
+    if (!binary_archive.ReadInt(&nVersion))
+      return false;
+
+    if (1 != nVersion)
+      return false;
+
+    if (!m_info.m_geometryFingerprint.Read(binary_archive))
+      return false;
+
+    int nCount = 0;
+
+    if (!binary_archive.ReadInt(&nCount))
+      return false;
+
+    m_info.m_faceSourceIds.SetCapacity(nCount);
+    for (int i = 0; i < nCount; i++)
+    {
+      int value = -1;
+      if (!binary_archive.ReadInt(&value))
+        return false;
+      m_info.m_faceSourceIds.Append(value);
+    }
+
+    m_info.GenerateDerivedData();
+
+    return true;
+  }
+#if defined(ON_COMPILER_CLANG)
+#pragma clang diagnostic pop
+#endif
+  
+  void SetInfo(const ON_MappingMeshInfo& info)
+  {
+    m_info = info;
+    m_info.GenerateDerivedData();
+  }
+  const ON_MappingMeshInfo& Info() const
+  {
+    return m_info;
+  }
+protected:
+  ON_MappingMeshInfo m_info;
+};
+
+ON_OBJECT_IMPLEMENT(CTtMappingMeshInfoUserData, ON_UserData, "1706ADC5-52BF-4BE2-8402-4501EB2AE675");
+
+
+const ON_MappingMeshInfo* ON_Mesh::GetMappingMeshInfo() const
+{
+  CTtMappingMeshInfoUserData* pUD = CTtMappingMeshInfoUserData::Cast(GetUserData(ON_CLASS_ID(CTtMappingMeshInfoUserData)));
+  if (nullptr == pUD)
+    return nullptr;
+  return &pUD->Info();
+}
+
+
+#pragma endregion
+
+class CTtRenderMeshInfoUserData : public ON_UserData
+{
+  ON_OBJECT_DECLARE(CTtRenderMeshInfoUserData);
+public:
+  const static bool m_bArchive = true;
+  CTtRenderMeshInfoUserData()
+  {
+    m_application_uuid = ON_opennurbs_id;
+    m_userdata_uuid = ON_CLASS_ID(CTtRenderMeshInfoUserData);
+    m_userdata_copycount = 1;
+  }
+  CTtRenderMeshInfoUserData(const CTtRenderMeshInfoUserData& src)
+    : ON_UserData(src)
+  {
+    m_userdata_copycount = src.m_userdata_copycount;
+    m_info = src.m_info;
+  }
+  ~CTtRenderMeshInfoUserData()
+  {
+  }
+  CTtRenderMeshInfoUserData& operator=(const CTtRenderMeshInfoUserData& src)
+  {
+    ON_UserData::operator = (src);
+    m_info = src.m_info;
+    return *this;
+  }
+
+#if defined(ON_COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+  virtual bool GetDescription(ON_wString& description)
+  {
+    description = L"TtRenderMeshInfoUserData";
+    return true;
+  }
+
+  virtual bool Archive() const
+  {
+    return m_bArchive;
+  }
+
+  virtual bool Write(ON_BinaryArchive& binary_archive) const
+  {
+    if (!m_bArchive)
+      return false;
+    const int nVersion = 1;
+    if (!binary_archive.WriteInt(nVersion))
+      return false;
+    if (!m_info.m_geometryFingerprint.Write(binary_archive))
+      return false;
+    if (!binary_archive.WriteInt(m_info.m_sourceFaceId))
+      return false;
+    return true;
+  }
+
+  virtual bool Read(ON_BinaryArchive& binary_archive)
+  {
+    if (!m_bArchive)
+      return true;
+    int nVersion = 1;
+    if (!binary_archive.ReadInt(&nVersion))
+      return false;
+    if (1 != nVersion)
+      return false;
+    if (!m_info.m_geometryFingerprint.Read(binary_archive))
+      return false;
+    if (!binary_archive.ReadInt(&m_info.m_sourceFaceId))
+      return false;
+    return true;
+  }
+#if defined(ON_COMPILER_CLANG)
+#pragma clang diagnostic pop
+#endif
+
+  void SetInfo(const ON_RenderMeshInfo& info)
+  {
+    m_info = info;
+  }
+  const ON_RenderMeshInfo& Info() const
+  {
+    return m_info;
+  }
+  virtual bool Transform(const ON_Xform& xform) override
+  {
+    m_info.m_geometryFingerprint.Transform(xform);
+    return ON_UserData::Transform(xform);
+  }
+protected:
+  ON_RenderMeshInfo m_info;
+};
+
+ON_OBJECT_IMPLEMENT(CTtRenderMeshInfoUserData, ON_UserData, "4960A046-8201-4F0F-8F22-FCB6F91C765D");
+
+
+const ON_RenderMeshInfo* ON_Mesh::GetRenderMeshInfo() const
+{
+  CTtRenderMeshInfoUserData* pUD = CTtRenderMeshInfoUserData::Cast(GetUserData(ON_CLASS_ID(CTtRenderMeshInfoUserData)));
+  if (nullptr == pUD)
+    return nullptr;
+  return &pUD->Info();
+}
+
+// Closest point mapping interface
+class IClosestPointMapper
+{
+public:
+	virtual ~IClosestPointMapper() {}
+	virtual bool IsValid() const = 0;
+	virtual bool ClosestPointTC(const ON_3dPoint& pt, const ON_3fVector& vtNormalHint, ON_3dPoint& tcOut) const = 0;
+	virtual bool MatchFaceTC(int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut) const = 0;
+};
+
+// Closest point projection of texture coordinates for a mesh face. Samples projection close to face vertices and then extrapolates to vertices.
+static void PTCHelper(const IClosestPointMapper& mapper, const ON_Mesh & meshTo, const ON_3fVector & vtFaceNormal, const ON_3dPoint * vtx, int i0, int i1, int i2, ON_3dPoint * tOut)
+{
+	const double n = 3.0;
+	const double m = (n + 1.0) / (n - 1.0);
+	const double k = 1.0 / (n - 1.0);
+
+	ON_3dPoint sample_points[3];
+
+	sample_points[0] = n / (n + 2.0) * vtx[i0] + 1.0 / (n + 2.0) * (vtx[i1] + vtx[i2]);
+	sample_points[1] = n / (n + 2.0) * vtx[i1] + 1.0 / (n + 2.0) * (vtx[i0] + vtx[i2]);
+	sample_points[2] = n / (n + 2.0) * vtx[i2] + 1.0 / (n + 2.0) * (vtx[i0] + vtx[i1]);
+
+	ON_3dPoint sample_tcs[3] = { ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin };
+
+	for (int i = 0; i < 3; i++)
+	{
+		mapper.ClosestPointTC(sample_points[i], vtFaceNormal, sample_tcs[i]);
+	}
+
+	tOut[0] = m * sample_tcs[0] - k * (sample_tcs[1] + sample_tcs[2]);
+	tOut[1] = m * sample_tcs[1] - k * (sample_tcs[0] + sample_tcs[2]);
+	tOut[2] = m * sample_tcs[2] - k * (sample_tcs[0] + sample_tcs[1]);
+}
+
+
+static bool MatchFace(const ON_Mesh& mesh, const ON_2fPointArray& tcs, const int fi, const double maxTolerance, const int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut, double& toleranceOut)
+{
+	toleranceOut = DBL_MAX;
+	if (fi < 0 || fi >= mesh.m_F.Count())
+		return false;
+	if (count < 3 || count > 4)
+		return false;
+
+	const ON_MeshFace& mface = mesh.m_F[fi];
+
+	const int mfvc = mface.IsQuad() ? 4 : 3;
+
+	int ptvi[4] = { -1, -1, -1, -1 };
+	double tol[4] = { DBL_MAX, DBL_MAX , DBL_MAX , DBL_MAX };
+	for (int mfvi = 0; mfvi < mfvc; mfvi++)
+	{
+		const ON_3dPoint& mfvPt = mesh.Vertex(mface.vi[mfvi]);
+		for (int pti = 0; pti < count; pti++)
+		{
+			const double dist = pPts[pti].DistanceTo(mfvPt);
+			if (ptvi[pti] == -1 || dist < tol[pti])
+			{
+				ptvi[pti] = mface.vi[mfvi];
+				tol[pti] = dist;
+			}
+		}
+	}
+
+	double maxTol = 0.0;
+	for (int pti = 0; pti < count; pti++)
+	{
+		if (ptvi[pti] == -1)
+			return false;
+		if (tol[pti] > maxTol)
+			maxTol = tol[pti];
+	}
+
+	toleranceOut = maxTol;
+	if (maxTol > maxTolerance)
+		return false;
+
+	for (int pti = 0; pti < count; pti++)
+	{
+		pTcsOut[pti] = ON_3dPoint(tcs[ptvi[pti]]);
+	}
+	return true;
+}
+
+static void AddIfNotIncluded(ON_SimpleArray<int>& a, int i)
+{
+	if (a.Search(i) < 0)
+		a.Append(i);
+}
+
+#include <unordered_map>
+
+bool CreateSubMesh(const ON_Mesh& mesh, const ON_2fPointArray& tc, const int nFis, const int* pFis, ON_Mesh& subMeshOut)
+{
+  if (nFis == 0 || pFis == nullptr)
+    return false;
+  if (tc.Count() != mesh.VertexCount())
+    return false;
+
+  subMeshOut = ON_Mesh(nFis, 0, 0, 0);
+  std::unordered_map<int, int> vmap;
+  for (int i = 0; i < nFis; i++)
+  {
+    const ON_MeshFace& sourceFace = mesh.m_F[pFis[i]];
+    ON_MeshFace& targetFace = subMeshOut.m_F.AppendNew();
+    const int fvc = sourceFace.IsQuad() ? 4 : 3;
+    for (int fvi = 0; fvi < fvc; fvi++)
+    {
+      const int sourceVi = sourceFace.vi[fvi];
+      const auto vmapit = vmap.find(sourceVi);
+      if (vmapit == vmap.end())
+      {
+        const int targetVi = subMeshOut.m_V.Count();
+        targetFace.vi[fvi] = targetVi;
+        vmap[sourceVi] = targetVi;
+        subMeshOut.m_V.Append(mesh.m_V[sourceVi]);
+        if (mesh.HasDoublePrecisionVertices())
+          subMeshOut.m_dV.Append(mesh.m_dV[sourceVi]);
+        if (mesh.HasVertexNormals())
+          subMeshOut.m_N.Append(mesh.m_N[sourceVi]);
+        subMeshOut.m_T.Append(tc[sourceVi]);
+      }
+      else
+      {
+        const int targetVi = vmapit->second;
+        targetFace.vi[fvi] = targetVi;
+      }
+      if (fvc == 3)
+        targetFace.vi[3] = targetFace.vi[2];
+    }
+    if (mesh.HasFaceNormals())
+      subMeshOut.m_FN.Append(mesh.m_FN[pFis[i]]);
+  }
+  return true;
+}
+
+void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4]);
+
+#if !defined(OPENNURBS_PLUS)
+bool MeshFaceTreeClosestPointTC(const ON_Mesh& mesh, const ON_RTree& tree, const ON_3dPoint& pt, ON_3dPoint& tcOut);
+#endif
+
+
+// Closest point mapping class for mesh primitive mapping
+class CMeshClosestPointMapper : public IClosestPointMapper
+{
+public:
+	CMeshClosestPointMapper(const ON_Mesh& mesh, const ON_2fPointArray& tc, const ON_RenderMeshInfo* pRenderMeshInfo, const ON_Xform& objectXform)
+	: m_mesh(mesh),
+		m_tc(tc),
+		m_pMappingMeshInfo(mesh.GetMappingMeshInfo()),
+		m_pRenderMeshInfo(pRenderMeshInfo),
+		m_objectXform(objectXform),
+		m_pSourceCPM(nullptr),
+		m_totalMappingTol(0.0),
+		m_failedFaceMatches(0),
+		m_seamTool(mesh, tc)
+	{
+    m_pMeshFaceTree = new ON_RTree();
+    m_pMeshFaceTree->CreateMeshFaceTree(&mesh);
+		m_bMeshInfosMatch = false;
+		if (m_pMappingMeshInfo != nullptr && m_pRenderMeshInfo != nullptr)
+		{
+			if (m_pMappingMeshInfo->m_geometryFingerprint.Matches(m_pRenderMeshInfo->m_geometryFingerprint, m_objectXform, 0.001))
+			{
+				m_bMeshInfosMatch = true;
+				int nFis = 0;
+				const int* pFis = m_pMappingMeshInfo->SourceIdFaces(m_pRenderMeshInfo->m_sourceFaceId, nFis);
+				if (nFis > 0 && pFis != nullptr && nFis < m_mesh.FaceCount())
+				{
+					if (CreateSubMesh(m_mesh, m_tc, nFis, pFis, m_sourceMesh))
+					{
+						m_pSourceCPM = new CMeshClosestPointMapper(m_sourceMesh, m_sourceMesh.m_T, nullptr, objectXform);
+					}
+				}
+			}
+		}
+	}
+
+	virtual ~CMeshClosestPointMapper()
+	{
+		if (nullptr != m_pSourceCPM)
+			delete m_pSourceCPM;
+		m_pSourceCPM = nullptr;
+#if !defined(OPENNURBS_PLUS)
+    delete m_pMeshFaceTree;
+#endif
+	}
+
+	virtual bool IsValid() const
+	{
+		if (m_mesh.VertexCount() != m_tc.Count())
+			return false;
+
+
+		return true;
+	}
+
+  virtual bool ClosestPointTC(const ON_3dPoint& pt, const ON_3fVector& vtNormalHint, ON_3dPoint& tcOut) const
+  {
+    if (!IsValid())
+      return false;
+
+
+    return MeshFaceTreeClosestPointTC(m_mesh, *m_pMeshFaceTree, pt, tcOut);
+  }
+
+	static bool RTreeCallback(void* a_context, ON__INT_PTR a_id)
+	{
+		if (nullptr == a_context)
+			return false;
+		CMeshClosestPointMapper& mapper = *(CMeshClosestPointMapper*)a_context;
+
+		// Jussi, Apr 25 2024, RH-81671:
+		// Stop collecting faces. There's probably a mismatch between the mapping and the geometry.
+		if (mapper.m_resFis.Count() > 1000)
+			return false;
+
+		mapper.m_resFis.Append((int)a_id);
+
+		return true;
+	}
+
+	static bool TcContinuous(const ON_Mesh& mesh, const ON_2fPointArray& tc, const ON_MeshTopologyEdge& te)
+	{
+		if (te.m_topf_count != 2)
+			return false;
+
+		int vi[2][2] = { -1, -1, -1, -1 };
+		for (int i = 0; i < 2; i++)
+		{
+			const int fi = te.m_topfi[i];
+			const ON_MeshFace& face = mesh.m_F[fi];
+			const int fvc = face.IsQuad() ? 4 : 3;
+			for (int j = 0; j < 2; j++)
+			{
+				const int tvi = te.m_topvi[j];
+				for (int fvi = 0; fvi < fvc; fvi++)
+				{
+					if (tvi == mesh.Topology().m_topv_map[face.vi[fvi]])
+					{
+						vi[i][j] = face.vi[fvi];
+					}
+				}
+				if (vi[i][j] == -1)
+				{
+					return false;
+				}
+			}
+		}
+		if (vi[0][0] == vi[1][0] && vi[0][1] == vi[1][1])
+			return true;
+		if (tc[vi[0][0]] != tc[vi[1][0]])
+			return false;
+		if (tc[vi[0][1]] != tc[vi[1][1]])
+			return false;
+		return true;
+	}
+
+  class SeamTool
+  {
+  private:
+    class Data
+    {
+    public:
+      static const int capacity = 4;
+      int m_nSeamed;
+      int m_nSeamless;
+      int m_neighbourFis[capacity];
+      void Set(const ON_SimpleArray<int>& seamless, const ON_SimpleArray<int>& seamed)
+      {
+        if (seamless.Count() <= capacity)
+          m_nSeamless = seamless.Count();
+        else
+          m_nSeamless = capacity;
+        for (int i = 0; i < m_nSeamless; i++)
+          m_neighbourFis[i] = seamless[i];
+
+        if (m_nSeamless + seamed.Count() <= capacity)
+          m_nSeamed = seamed.Count();
+        else
+          m_nSeamed = capacity - m_nSeamless;
+        for (int i = 0; i < m_nSeamed; i++)
+          m_neighbourFis[m_nSeamless + i] = seamed[i];
+      }
+    };
+  public:
+    SeamTool(const ON_Mesh& mesh, const ON_2fPointArray& tc)
+      : m_mesh(mesh), m_tc(tc), m_bProcessed(false), m_faceData(nullptr)
+    {
+    }
+    virtual ~SeamTool()
+    {
+      delete [] m_faceData;
+      m_faceData = nullptr;
+    }
+    int SeamlessNeighbours(int fi, int*& pFisOut) const
+    {
+      if (!m_bProcessed)
+        Process();
+
+      pFisOut = m_faceData[fi].m_neighbourFis;
+      return m_faceData[fi].m_nSeamless;
+    }
+    int SeamedNeighbours(int fi, int*& pFisOut) const
+    {
+      if (!m_bProcessed)
+        Process();
+
+      pFisOut = m_faceData[fi].m_neighbourFis + m_faceData[fi].m_nSeamless;
+      return m_faceData[fi].m_nSeamed;
+    }
+  private:
+    void Process() const
+    {
+      m_faceData = new Data[m_mesh.FaceCount()];
+      for (int fi = 0; fi < m_mesh.FaceCount(); fi++)
+      {
+        ON_SimpleArray<int> seamedFis(4);
+        ON_SimpleArray<int> seamlessFis(4);
+        const ON_MeshTopologyFace& tf = m_mesh.Topology().m_topf[fi];
+        const int fec = tf.IsTriangle() ? 3 : 4;
+        for (int i = 0; i < fec; i++)
+        {
+          const ON_MeshTopologyEdge& te = m_mesh.Topology().m_tope[tf.m_topei[i]];
+          if (te.m_topf_count == 2)
+          {
+            const int ofi = te.m_topfi[0] == fi ? te.m_topfi[1] : te.m_topfi[0];
+            if (TcContinuous(m_mesh, m_tc, te))
+            {
+              seamlessFis.Append(ofi);
+            }
+            else
+            {
+              seamedFis.Append(ofi);
+            }
+          }
+          else if (te.m_topf_count > 2)
+          {
+            for (int j = 0; j < te.m_topf_count; j++)
+            {
+              if (te.m_topfi[j] != fi)
+              {
+                seamedFis.Append(te.m_topfi[j]);
+              }
+            }
+          }
+        }
+        m_faceData[fi].Set(seamlessFis, seamedFis);
+      }
+      m_bProcessed = true;
+    }
+
+    const ON_Mesh& m_mesh;
+    const ON_2fPointArray& m_tc;
+
+    mutable bool m_bProcessed;
+    mutable Data* m_faceData;
+  };
+
+	static ON_3dPoint Average(int count, const ON_3dPoint* pPts)
+	{
+		ON_3dPoint res = ON_3dPoint::Origin;
+		if (count > 0)
+		{
+			for (int i = 0; i < count; i++)
+			{
+				res += pPts[i];
+			}
+			res /= (double)count;
+		}
+		return res;
+	}
+
+  static ON_3dPoint FaceMid(const ON_Mesh& mesh, int fi)
+  {
+    const ON_MeshFace& face = mesh.m_F[fi];
+    const int fvc = face.IsQuad() ? 4 : 3;
+    ON_3dPoint ptMid = ON_3dPoint::Origin;
+    for (int fvi = 0; fvi < fvc; fvi++)
+    {
+      ptMid += mesh.Vertex(face.vi[fvi]);
+    }
+    return ptMid / (double)fvc;
+  }
+
+  class ClosestPointData
+  {
+  public:
+    int m_fi;
+    double m_t[4];
+    ON_3dPoint m_P;
+  };
+
+  class SamplePoint
+  {
+  public:
+    SamplePoint(const ON_3dPoint& pt, const ON_Mesh& mesh)
+      : m_pt(pt), m_mesh(mesh)
+    {
+    }
+    const ClosestPointData& ClosestPoint(int fi)
+    {
+      if (m_closestMeshPts.capacity() < 30)
+      {
+        m_closestMeshPts.reserve(30);
+      }
+      for (int i = 0; i < m_closestMeshPts.size(); i++)
+      {
+        if (m_closestMeshPts[i].m_fi == fi)
+        {
+          return m_closestMeshPts[i];
+        }
+      }
+      m_closestMeshPts.emplace_back();
+      ClosestPointData& q = m_closestMeshPts.back();
+      ::ClosestPtToMeshFace(&m_mesh, fi, m_pt, q.m_P, q.m_t);
+      q.m_fi = fi;
+      return q;
+    }
+    const ON_3dPoint& Point() const
+    {
+      return m_pt;
+    }
+
+  private:
+    const ON_3dPoint m_pt;
+    const ON_Mesh& m_mesh;
+    std::vector<ClosestPointData> m_closestMeshPts;
+  };
+
+  class TcSeamlessPatch
+  {
+  public:
+    TcSeamlessPatch(const ON_Mesh& mesh, const ON_2fPointArray& tc, const SeamTool& seamTool)
+      : m_mesh(mesh), m_tc(tc), m_seamTool(seamTool)
+    {
+      m_bEvaluated = false;
+    }
+    virtual ~TcSeamlessPatch()
+    {
+    }
+    void Create(int fi, int steps)
+    {
+      m_fis.reserve(25);
+      Expand(fi, 0);
+      for (int step = 1; step <= steps; step++)
+      {
+        std::vector<int> stepFis = m_nextStepFis;
+        m_nextStepFis.clear();
+        for (int nfi : stepFis)
+        {
+          Expand(nfi, step);
+        }
+      }
+    }
+
+    bool Evaluate(SamplePoint& samplePt, ClosestPointData& qOut) const
+    {
+      double smallestDist = DBL_MAX;
+      for (int fi : m_fis)
+      {
+        const ClosestPointData& q = samplePt.ClosestPoint(fi);
+        const double dist = q.m_P.DistanceTo(samplePt.Point());
+        if (dist < smallestDist)
+        {
+          qOut = q;
+          smallestDist = dist;
+        }
+      }
+      return smallestDist < DBL_MAX;
+    }
+
+    bool Evaluate(const int count, SamplePoint* pPts, double& maxDistInOut, int tcCount, ON_3dPoint* pTcsOut) const
+    {
+      if (!m_bEvaluated)
+      {
+        m_maxDist = 0.0;
+        for (int pi = 0; pi < count; pi++)
+        {
+          const ON_3dPoint pt = pPts[pi].Point();
+          if (!Evaluate(pPts[pi], m_q[pi]))
+            return false;
+          const double dist = m_q[pi].m_P.DistanceTo(pt);
+          if (dist > m_maxDist)
+            m_maxDist = dist;
+        }
+        m_bEvaluated = true;
+      }
+
+      if (m_maxDist <= maxDistInOut)
+      {
+        for (int pi = 0; pi < tcCount; pi++)
+        {
+          const int fi = m_q[pi].m_fi;
+          if (0 <= fi && fi < m_mesh.FaceCount())
+          {
+            const ON_MeshFace& face = m_mesh.m_F[fi];
+            const ON_2dPoint tc = m_q[pi].m_t[0] * m_tc[face.vi[0]] + m_q[pi].m_t[1] * m_tc[face.vi[1]] + m_q[pi].m_t[2] * m_tc[face.vi[2]] + m_q[pi].m_t[3] * m_tc[face.vi[3]];
+            pTcsOut[pi].x = tc.x;
+            pTcsOut[pi].y = tc.y;
+            pTcsOut[pi].z = 0.0;
+          }
+          else
+          {
+            return false;
+          }
+        }
+        maxDistInOut = m_maxDist;
+        return true;
+      }
+      return false;
+    }
+  protected:
+    bool HasFace(int fi)
+    {
+      for (int addedFi : m_fis)
+      {
+        if (fi == addedFi)
+          return true;
+      }
+      return false;
+    }
+    bool IsBanned(int fi)
+    {
+      for (int bannedFi : m_bannedFis)
+      {
+        if (fi == bannedFi)
+          return true;
+      }
+      return false;
+    }
+    void AddNextStepFi(int fi)
+    {
+      for (int nextStepFi : m_nextStepFis)
+      {
+        if (fi == nextStepFi)
+          return;
+      }
+      m_nextStepFis.push_back(fi);
+    }
+    void Expand(int fi, int step)
+    {
+      if (!HasFace(fi))
+      {
+        if (!IsBanned(fi))
+        {
+          m_fis.push_back(fi);
+
+          int* pSeamed = nullptr;
+          const int nSeamed = m_seamTool.SeamedNeighbours(fi, pSeamed);
+          for (int i = 0; i < nSeamed; i++)
+          {
+            if (!IsBanned(pSeamed[i]))
+            {
+              m_bannedFis.push_back(pSeamed[i]);
+            }
+          }
+
+          int* pSeamless = nullptr;
+          const int nSeamless = m_seamTool.SeamlessNeighbours(fi, pSeamless);
+          for (int i = 0; i < nSeamless; i++)
+          {
+            const int ofi = pSeamless[i];
+            if (!HasFace(ofi))
+            {
+              if (!IsBanned(ofi))
+                AddNextStepFi(ofi);
+            }
+          }
+        }
+      }
+    }
+    const ON_Mesh& m_mesh;
+    const ON_2fPointArray& m_tc;
+    const SeamTool& m_seamTool;
+    std::vector<int> m_fis;
+    std::vector<int> m_bannedFis;
+    std::vector<int> m_nextStepFis;
+
+    // Cached results assuming same set of sample points is used all the time
+    mutable bool m_bEvaluated;
+    mutable ClosestPointData m_q[5];
+    mutable double m_maxDist;
+  };
+
+  class TcSeamlessPatchCache
+  {
+  public:
+    TcSeamlessPatchCache(const ON_Mesh& mesh, const ON_2fPointArray& tc, const SeamTool& seamTool, int steps)
+      : m_mesh(mesh), m_tc(tc), m_seamTool(seamTool), m_steps(steps)
+    {
+    }
+    virtual ~TcSeamlessPatchCache()
+    {
+      for (auto& pit : m_patches)
+      {
+        delete pit.second;
+      }
+    }
+
+    const TcSeamlessPatch& Get(int fi)
+    {
+      auto pit = m_patches.find(fi);
+      if (pit != m_patches.end())
+      {
+        return *pit->second;
+      }
+      else
+      {
+        TcSeamlessPatch* pNewPatch = new TcSeamlessPatch(m_mesh, m_tc, m_seamTool);
+        m_patches[fi] = pNewPatch;
+        pNewPatch->Create(fi, m_steps);
+        return *pNewPatch;
+      }
+    }
+
+  private:
+    const ON_Mesh& m_mesh;
+    const ON_2fPointArray& m_tc;
+    const SeamTool& m_seamTool;
+    const int m_steps;
+    std::unordered_map<int, TcSeamlessPatch*> m_patches;
+  };
+
+	virtual bool MatchFaceTC(int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut) const
+	{
+		if (nullptr != m_pSourceCPM)
+			return m_pSourceCPM->MatchFaceTC(count, pPts, pTcsOut);
+
+		if (nullptr == m_pMeshFaceTree)
+			return false;
+		if (count > 4 || pPts == nullptr || pTcsOut == nullptr)
+			return false;
+
+		const double initialMappingTol = 1.1e-5;
+
+		ON_3dPoint amendedPts[5];
+		memcpy(amendedPts, pPts, sizeof(ON_3dPoint) * count);
+		amendedPts[count] = Average(count, pPts);
+		const ON_3dPoint* pAmendedPts = amendedPts;
+		const int amendedCount = count + 1;
+
+    SamplePoint samplePts[5] = {
+      SamplePoint(amendedPts[0], m_mesh),
+      SamplePoint(amendedPts[1], m_mesh),
+      SamplePoint(amendedPts[2], m_mesh),
+      SamplePoint(amendedPts[3], m_mesh),
+      SamplePoint(amendedPts[4], m_mesh)
+    };
+
+    TcSeamlessPatchCache patchCache(m_mesh, m_tc, m_seamTool, 5);
+
+		for (double mappingTol = initialMappingTol; mappingTol <= 20.0; mappingTol = mappingTol * 10.0)
+		{
+			if (AdaptedMatchFaceTC(amendedCount, pAmendedPts, samplePts, count, pTcsOut, mappingTol, mappingTol == initialMappingTol, patchCache))
+			{
+				if (m_totalMappingTol < mappingTol)
+					m_totalMappingTol = mappingTol;
+				return true;
+			}
+		}
+		m_failedFaceMatches++;
+		return false;
+	}
+
+	bool AdaptedMatchFaceTC(int count, const ON_3dPoint* pPts, SamplePoint* pSamplePts, int tcCount, ON_3dPoint* pTcsOut, double mappingTol, bool bEqualFaceCheck, TcSeamlessPatchCache& patchCache) const
+	{
+		// This code is dummy iteration through all faces to find a matching one
+		//double minTol = DBL_MAX;
+		//double matchTol = DBL_MAX;
+		//int matchFi = -1;
+		//for (int fi = 0; fi < m_mesh.m_F.Count(); fi++)
+		//{
+		//  double tol = 0.0;
+		//  if (MatchFace(m_mesh, m_tc, fi, mappingTol, count, pPts, pTcsOut, tol))
+		//  {
+		//    if (tol < matchTol)
+		//    {
+		//      matchFi = fi;
+		//      matchTol = tol;
+		//    }
+		//    //return true; // Uncomment this to return here
+		//  }
+		//  if (tol < minTol)
+		//  {
+		//    minTol = tol;
+		//  }
+		//}
+
+		ON_SimpleArray<int> commonFis;
+		ON_SimpleArray<int> allFis;
+		for (int fvi = 0; fvi < count; fvi++)
+		{
+			ON_RTreeSphere sphere;
+			sphere.m_point[0] = pPts[fvi].x;
+			sphere.m_point[1] = pPts[fvi].y;
+			sphere.m_point[2] = pPts[fvi].z;
+			sphere.m_radius = mappingTol;
+			m_resFis.SetCount(0);
+			m_pMeshFaceTree->Search(&sphere, RTreeCallback, (void*)this);
+			if (fvi == 0)
+			{
+				commonFis = m_resFis;
+			}
+			else
+			{
+				ON_SimpleArray<int> newCommonFis(commonFis.Count());
+				for (int i = 0; i < commonFis.Count(); i++)
+				{
+					if (m_resFis.Search(commonFis[i]) >= 0)
+						newCommonFis.Append(commonFis[i]);
+				}
+				commonFis = newCommonFis;
+			}
+			for (int i = 0; i < m_resFis.Count(); i++)
+				AddIfNotIncluded(allFis, m_resFis[i]);
+		}
+
+    if (bEqualFaceCheck)
+    {
+      double bestTol = DBL_MAX;
+      ON_3dPointArray bestTcs(tcCount);
+      for (int i = 0; i < commonFis.Count(); i++)
+      {
+        double tol = 0.0;
+        if (MatchFace(m_mesh, m_tc, commonFis[i], mappingTol, tcCount, pPts, pTcsOut, tol))
+        {
+          if (tol == 0.0)
+          {
+            return true;
+          }
+          else if (tol < bestTol)
+          {
+            bestTcs.SetCount(0);
+            bestTcs.Append(tcCount, pTcsOut);
+            bestTol = tol;
+          }
+        }
+      }
+      if (bestTol < mappingTol)
+      {
+        for (int pi = 0; pi < tcCount; pi++)
+        {
+          pTcsOut[pi] = bestTcs[pi];
+        }
+        return true;
+      }
+    }
+
+    if (commonFis.Count() > 0)
+    {
+      bool bSuccess = false;
+      double maxDist = mappingTol;
+      for (int i = 0; i < commonFis.Count(); i++)
+      {
+        const TcSeamlessPatch& sp = patchCache.Get(commonFis[i]);
+        if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut))
+        {
+          bSuccess = true;
+        }
+      }
+      if (bSuccess)
+        return true;
+    }
+    else
+    {
+      bool bSuccess = false;
+      double maxDist = mappingTol;
+      for (int i = 0; i < allFis.Count(); i++)
+      {
+        const TcSeamlessPatch& sp = patchCache.Get(allFis[i]);
+        if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut))
+        {
+          bSuccess = true;
+        }
+      }
+      if (bSuccess)
+        return true;
+    }
+
+
+		return false;
+	}
+
+protected:
+	const ON_Mesh& m_mesh;
+	const ON_2fPointArray& m_tc;
+	const ON_MappingMeshInfo* m_pMappingMeshInfo;
+	const ON_RenderMeshInfo* m_pRenderMeshInfo;
+  ON_RTree* m_pMeshFaceTree;
+	mutable ON_SimpleArray<int> m_resFis;
+	const ON_Xform m_objectXform;
+	bool m_bMeshInfosMatch;
+	ON_Mesh m_sourceMesh;
+	CMeshClosestPointMapper* m_pSourceCPM;
+	SeamTool m_seamTool;
+
+	// Mapping evaluation statistics
+	mutable double m_totalMappingTol;
+	mutable int m_failedFaceMatches;
+};
+
+// Closest point projection of texture coordinates for a mesh.
+// Projects first all mesh faces separately and then takes average for each vertex.
+static bool ProjectTextureCoordinates(const IClosestPointMapper& mapper, const ON_Mesh & meshTo, ON_2fPointArray & tcTo, const double* PT, const double* NT)
+{
+	if (!mapper.IsValid())
+		return false;
+
+	ON_3dPointArray tcSum(meshTo.VertexCount());
+	tcSum.SetCount(meshTo.VertexCount());
+	tcSum.MemSet(0);
+
+	ON_SimpleArray<int> tcTerms(tcSum.Count());
+	tcTerms.SetCount(tcSum.Count());
+	tcTerms.MemSet(0);
+
+	ON_3dPointArray matchedTcSum(meshTo.VertexCount());
+	matchedTcSum.SetCount(meshTo.VertexCount());
+	matchedTcSum.MemSet(0);
+
+	ON_SimpleArray<int> matchedTcTerms(matchedTcSum.Count());
+	matchedTcTerms.SetCount(matchedTcSum.Count());
+	matchedTcTerms.MemSet(0);
+
+	tcTo.Reserve(tcSum.Count());
+	tcTo.SetCount(tcSum.Count());
+	tcTo.MemSet(0);
+
+  const unsigned meshTo_vertex_count = meshTo.m_V.UnsignedCount();
+  for (int f = 0; f < meshTo.m_F.Count(); f++)
+	{
+		const ON_MeshFace & faceTo = meshTo.m_F[f];
+
+    // https://mcneel.myjetbrains.com/youtrack/issue/RH-59811
+    // This crash may have happened because faceTo.vi[] has invalid indices.
+    const unsigned* faceTo_vi = (const unsigned*)(faceTo.vi); // using unsigned so we can reduce compares from 8 to 4.
+    if (faceTo_vi[0] >= meshTo_vertex_count
+      || faceTo_vi[1] >= meshTo_vertex_count
+      || faceTo_vi[2] >= meshTo_vertex_count
+      || faceTo_vi[3] >= meshTo_vertex_count)
+    {
+      ON_ERROR("meshTo.m_F[] has invalid faces.");
+      continue;
+    }
+
+
+		ON_3fVector vtFaceNormal = MeshFaceNormal(meshTo, f);
+
+		if (nullptr != NT)
+		{
+			const double Nx = PT[0] * vtFaceNormal.x + PT[1] * vtFaceNormal.y + PT[ 2] * vtFaceNormal.z;
+			const double Ny = PT[4] * vtFaceNormal.x + PT[5] * vtFaceNormal.y + PT[ 6] * vtFaceNormal.z;
+			const double Nz = PT[8] * vtFaceNormal.x + PT[9] * vtFaceNormal.y + PT[10] * vtFaceNormal.z;
+			vtFaceNormal.Set((float)Nx, (float)Ny, (float)Nz);
+			vtFaceNormal.Unitize();
+		}
+
+		ON_3dPoint vtx[4] = { ON_3dPoint(meshTo.m_V[faceTo.vi[0]]), ON_3dPoint(meshTo.m_V[faceTo.vi[1]]), ON_3dPoint(meshTo.m_V[faceTo.vi[2]]), ON_3dPoint(meshTo.m_V[faceTo.vi[3]]) };
+
+		if (nullptr != PT)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				double w = PT[12] * vtx[i].x + PT[13] * vtx[i].y + PT[14] * vtx[i].z + PT[15];
+				w = (0.0 != w) ? 1.0/w : 1.0;
+				const double Px = w * (PT[0] * vtx[i].x + PT[1] * vtx[i].y + PT[ 2] * vtx[i].z + PT[ 3]);
+				const double Py = w * (PT[4] * vtx[i].x + PT[5] * vtx[i].y + PT[ 6] * vtx[i].z + PT[ 7]);
+				const double Pz = w * (PT[8] * vtx[i].x + PT[9] * vtx[i].y + PT[10] * vtx[i].z + PT[11]);
+				vtx[i].x = Px;
+				vtx[i].y = Py;
+				vtx[i].z = Pz;
+			}
+		}
+
+		ON_3dPoint t[4] = { ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin };
+
+		const int fvc = faceTo.IsQuad() ? 4 : 3;
+		if (mapper.MatchFaceTC(fvc, vtx, t))
+		{
+			for (int fvi = 0; fvi < fvc; fvi++)
+			{
+				tcSum[faceTo.vi[fvi]] += t[fvi];
+				tcTerms[faceTo.vi[fvi]] ++;
+				matchedTcSum[faceTo.vi[fvi]] += t[fvi];
+				matchedTcTerms[faceTo.vi[fvi]] ++;
+			}
+		}
+		else
+		{
+			if (faceTo.IsTriangle())
+			{
+				PTCHelper(mapper, meshTo, vtFaceNormal, vtx, 0, 1, 2, t);
+
+				tcSum[faceTo.vi[0]] += t[0];
+				tcSum[faceTo.vi[1]] += t[1];
+				tcSum[faceTo.vi[2]] += t[2];
+				tcTerms[faceTo.vi[0]] ++;
+				tcTerms[faceTo.vi[1]] ++;
+				tcTerms[faceTo.vi[2]] ++;
+			}
+			else
+			{
+				const ON_3dVector vtN012(ON_CrossProduct(vtx[1] - vtx[0], vtx[2] - vtx[1]));
+				const ON_3dVector vtN230(ON_CrossProduct(vtx[3] - vtx[2], vtx[0] - vtx[3]));
+
+				if (0.0 < ON_DotProduct(vtN012, vtN230))
+				{
+					// Face can be split into triangles 012 and 230
+
+					PTCHelper(mapper, meshTo, vtFaceNormal, vtx, 0, 1, 2, t);
+
+					tcSum[faceTo.vi[0]] += 0.5 * t[0];
+					tcSum[faceTo.vi[1]] += t[1];
+					tcSum[faceTo.vi[2]] += 0.5 * t[2];
+
+					PTCHelper(mapper, meshTo, vtFaceNormal, vtx, 2, 3, 0, t);
+
+					tcSum[faceTo.vi[2]] += 0.5 * t[0];
+					tcSum[faceTo.vi[3]] += t[1];
+					tcSum[faceTo.vi[0]] += 0.5 * t[2];
+				}
+				else
+				{
+					// Face can be split into triangles 013 and 123
+
+					PTCHelper(mapper, meshTo, vtFaceNormal, vtx, 0, 1, 3, t);
+
+					tcSum[faceTo.vi[0]] += t[0];
+					tcSum[faceTo.vi[1]] += 0.5 * t[1];
+					tcSum[faceTo.vi[3]] += 0.5 * t[2];
+
+					PTCHelper(mapper, meshTo, vtFaceNormal, vtx, 1, 2, 3, t);
+
+					tcSum[faceTo.vi[1]] += 0.5 * t[0];
+					tcSum[faceTo.vi[2]] += t[1];
+					tcSum[faceTo.vi[3]] += 0.5 * t[2];
+				}
+
+				tcTerms[faceTo.vi[0]] ++;
+				tcTerms[faceTo.vi[1]] ++;
+				tcTerms[faceTo.vi[2]] ++;
+				tcTerms[faceTo.vi[3]] ++;
+			}
+		}
+	}
+
+	for (int v = 0; v < tcSum.Count(); v++)
+	{
+		if (0 < matchedTcTerms[v])
+		{
+			tcTo[v] = matchedTcSum[v] / (double)matchedTcTerms[v];
+		}
+		else if (0 < tcTerms[v])
+		{
+			tcTo[v] = tcSum[v] / (double)tcTerms[v];
+		}
+		else
+		{
+			tcTo[v] = ON_3dPoint::Origin;
+		}
+	}
+
+	return true;
 }
 
 
@@ -4343,6 +5733,32 @@ bool ON_CALLBACK_CDECL MTCB(void* a_context, ON__INT_PTR a_id)
 
   return true;
 }
+
+bool MeshFaceTreeClosestPointTC(const ON_Mesh& mesh, const ON_RTree& tree, const ON_3dPoint& pt, ON_3dPoint& tcOut)
+{
+  ON__MTCBDATA data;
+  data.m_sphere.m_point[0] = pt.x;
+  data.m_sphere.m_point[1] = pt.y;
+  data.m_sphere.m_point[2] = pt.z;
+  data.m_sphere.m_radius = mesh.BoundingBox().FarPoint(pt).DistanceTo(pt);
+  data.m_pMesh = &mesh;
+  data.m_pt = pt;
+  data.m_dist = DBL_MAX;
+  do
+  {
+    tree.Search(&data.m_sphere, MTCB, (void*)&data);
+  } while (data.m_bRestart);
+  if (0 <= data.m_face_index && data.m_face_index < mesh.m_F.Count())
+  {
+    const ON_MeshFace& face = mesh.m_F[data.m_face_index];
+    tcOut =
+      data.m_t[0] * ON_3dPoint(mesh.m_T[face.vi[0]]) +
+      data.m_t[1] * ON_3dPoint(mesh.m_T[face.vi[1]]) +
+      data.m_t[2] * ON_3dPoint(mesh.m_T[face.vi[2]]) +
+      data.m_t[3] * ON_3dPoint(mesh.m_T[face.vi[3]]);
+  }
+  return true;
+}
 #endif
 
 bool ON_TextureMapping::GetTextureCoordinates(
@@ -4454,52 +5870,47 @@ bool ON_TextureMapping::GetTextureCoordinates(
       && nullptr != m_mapping_primitive)
 		{
       rc = false;
-      if (ON_TextureMapping::TYPE::mesh_mapping_primitive == m_type)
-      {
-        const ON_Xform matP = nullptr != PT ? m_Pxyz * ON_Xform(PT) : m_Pxyz;
-        const ON_Xform matN = nullptr != NT ? m_Nxyz * ON_Xform(NT) : m_Nxyz;
+			ON_2fPointArray temp_tcs;
 
-        const ON_Mesh* pMesh = CustomMappingMeshPrimitive();
-        if (nullptr != pMesh)
-        {
-          ON_RTree faceTree;
-          if (faceTree.CreateMeshFaceTree(pMesh))
-          {
-            for (int vi = 0; vi < mesh.VertexCount(); vi++)
-            {
-              T[vi] = ON_3fPoint::Origin;
+			// Jussi, 11-Nov-2010: Apply mapping primitive transformations first
 
-              const ON_3dPoint vtx(mesh.m_V[vi]);
-              const ON_3dPoint ptV = matP * vtx;
-              const ON_3fVector vtVN = mesh.HasVertexNormals() ? ON_3fVector(matN * ON_3dVector(mesh.m_N[vi])) : ON_3fVector::ZeroVector;
+			ON_Xform matP(m_Pxyz);
+			ON_Xform matN(m_Nxyz);
 
-              ON__MTCBDATA data;
-              data.m_sphere.m_point[0] = ptV.x;
-              data.m_sphere.m_point[1] = ptV.y;
-              data.m_sphere.m_point[2] = ptV.z;
-              data.m_sphere.m_radius = pMesh->BoundingBox().FarPoint(ptV).DistanceTo(ptV);
-              data.m_pMesh = pMesh;
-              data.m_pt = ptV;
-              data.m_dist = DBL_MAX;
-              do
-              {
-                faceTree.Search(&data.m_sphere, MTCB, (void*)&data);
-              } while (data.m_bRestart);
-              if (0 <= data.m_face_index && data.m_face_index < pMesh->m_F.Count())
-              {
-                const ON_MeshFace& face = pMesh->m_F[data.m_face_index];
-                const ON_3dPoint ptUV =
-                  data.m_t[0] * ON_3dPoint(pMesh->m_T[face.vi[0]]) +
-                  data.m_t[1] * ON_3dPoint(pMesh->m_T[face.vi[1]]) +
-                  data.m_t[2] * ON_3dPoint(pMesh->m_T[face.vi[2]]) +
-                  data.m_t[3] * ON_3dPoint(pMesh->m_T[face.vi[3]]);
-                const ON_3dPoint vtc = m_uvw * ptUV;
-                T[vi].Set((float)vtc.x, (float)vtc.y, 0.0f);
-              }
-            }
-          }
-        }
-      }
+			if (nullptr != PT)
+				matP = matP * ON_Xform(PT);
+
+			if (nullptr != NT)
+				matN = matN * ON_Xform(NT);
+
+			if (ON_TextureMapping::TYPE::mesh_mapping_primitive == m_type)
+			{
+				const ON_Mesh * pMesh = CustomMappingMeshPrimitive();
+				if (nullptr != pMesh)
+				{
+					CMeshClosestPointMapper meshMapper(*pMesh, pMesh->m_T, mesh.GetRenderMeshInfo(), matP);
+					rc = ProjectTextureCoordinates(meshMapper, mesh, temp_tcs, &matP.m_xform[0][0], &matN.m_xform[0][0]);
+				}
+			}
+
+      if (rc)
+			{
+				for (int i_local = 0; i_local < temp_tcs.Count(); i_local++)
+				{
+					// Jussi, 11-Nov-2010: Fix for the problem reported by Michael Fritzsche: Custom mesh mapping does not
+					// obey uvw repeat settings. Solution: multiply the 'mapping coordinate' with m_uvw to
+					// get the final texture coordinate.
+
+					ON_3dPoint ptT(temp_tcs[i_local].x, temp_tcs[i_local].y, 0.0);
+					ptT = m_uvw * ptT;
+					T[i_local].Set((float)ptT.x, (float)ptT.y, (float)ptT.z);
+				}
+
+				if (nullptr != Tsd)
+				{
+					memset(Tsd, 0, vcnt * sizeof(int));
+				}
+			}
 		}
 		else if ( mesh_N &&
           (   ON_TextureMapping::PROJECTION::ray_projection == m_projection

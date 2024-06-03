@@ -1679,6 +1679,16 @@ const ON_2dPoint ON_SubDFaceParameter::FaceCornerParameters() const
   return IsSet() ? ON_2dPoint(m_s, m_t) : ON_2dPoint::NanPoint;
 }
 
+const bool ON_SubDFaceParameter::AtVertex() const
+{
+  return IsSet() && 0.0 == m_s && 0.0 == m_t;
+}
+
+const bool ON_SubDFaceParameter::OnEdge() const
+{
+  return IsSet() && (0.0 == m_s || 0.0 == m_t);
+}
+
 const ON_2dPoint ON_SubDFaceParameter::QuadFaceParameters() const
 {
   if (IsSet() && m_cdex.IsQuadFace())
@@ -1710,6 +1720,17 @@ ON_SubDComponentParameter::ON_SubDComponentParameter(ON_SubDComponentId cid)
 ON_SubDComponentParameter::ON_SubDComponentParameter(ON_SubDComponentPtr cptr)
 {
   Internal_Init(ON_SubDComponentId(cptr));
+}
+
+ON_SubDComponentParameter::ON_SubDComponentParameter(ON_SubDComponentId vertex_id, ON_SubDComponentId active_edge_id, ON_SubDComponentId active_face_id)
+{
+  if (vertex_id.IsVertexId() && Internal_Init(vertex_id))
+  {
+    if (active_edge_id.IsEdgeId())
+      m_p0.v_active_e = active_edge_id;
+    if (active_face_id.IsFaceId())
+      m_p1.v_active_f = active_face_id;
+  }
 }
 
 ON_SubDComponentParameter::ON_SubDComponentParameter(
@@ -1758,6 +1779,16 @@ ON_SubDComponentParameter::ON_SubDComponentParameter(
   }
 }
 
+ON_SubDComponentParameter::ON_SubDComponentParameter(ON_SubDComponentId edge_id, double p, ON_SubDComponentId active_face_id)
+{
+  if (edge_id.IsEdgeId() && Internal_Init(edge_id))
+  {
+    m_p0.eptr_s = (p >= 0.0 && p <= 1.0) ? p : ON_DBL_QNAN;
+    if (active_face_id.IsFaceId())
+      m_p1.e_active_f = active_face_id;
+  }
+}
+
 ON_SubDComponentParameter::ON_SubDComponentParameter(
   const ON_SubDEdge* e,
   double edge_s,
@@ -1791,6 +1822,24 @@ ON_SubDComponentParameter::ON_SubDComponentParameter(
       {
         const unsigned efi = e->FaceArrayIndex(active_face);
         m_p1.e_active_f = e->FacePtr(efi);
+      }
+    }
+  }
+}
+
+ON_SubDComponentParameter::ON_SubDComponentParameter(ON_SubDComponentId face_id, ON_SubDFaceParameter fp)
+{
+  if (face_id.IsFaceId() && Internal_Init(face_id))
+  {
+    const ON_SubDFaceCornerDex cdex = fp.FaceCornerDex();
+    if (cdex.IsSet())
+    {
+      const ON_2dPoint p = fp.FaceCornerParameters();
+      if (p.IsValid())
+      {
+        this->m_cid = ON_SubDComponentId(face_id.FaceId(), face_id.ComponentDirection(), cdex);
+        this->m_p0.f_corner_s = p.x;
+        this->m_p1.f_corner_t = p.y;
       }
     }
   }
@@ -1918,6 +1967,69 @@ int ON_SubDComponentParameter::CompareAll(const ON_SubDComponentParameter& lhs, 
   return rc;
 }
 
+const ON_wString ON_SubDComponentParameter::ToString(bool bUnsetIsEmptyString) const
+{
+  ON_wString str;
+  const unsigned id = this->ComponentId();
+  if (id > 0)
+  {
+    switch (this->ComponentType())
+    {
+
+    case ON_SubDComponentPtr::Type::Vertex:
+    {
+      const ON_SubDComponentId edge = this->VertexEdge();
+      const unsigned eid = edge.ComponentId();
+      const unsigned fid = this->VertexFace().ComponentId();
+      if (eid > 0)
+      {
+        if (fid > 0)
+          str = ON_wString::FormatToString(L"v%u=e%u(%u)@f%u", id, eid, edge.ComponentDirection(), fid);
+        else
+          str = ON_wString::FormatToString(L"v%u=e%u(%u)", id, eid, edge.ComponentDirection());
+      }
+      else if (fid > 0)
+        str = ON_wString::FormatToString(L"v%u@f%u", id, fid);
+      else
+        str = ON_wString::FormatToString(L"v%u", id);
+    }
+    break;
+
+    case ON_SubDComponentPtr::Type::Edge:
+    {
+      const double t = this->EdgeParameter();
+      const unsigned fid = this->EdgeFace().ComponentId();
+      if (fid > 0)
+        str = ON_wString::FormatToString(L"e%u(%g)@f%u", id, t, fid);
+      else
+        str = ON_wString::FormatToString(L"e%u(%g)", id, t);
+    }
+    break;
+
+    case ON_SubDComponentPtr::Type::Face:
+    {
+      const ON_SubDFaceParameter fp = this->FaceParameter();
+      const unsigned corner_index = fp.FaceCornerDex().CornerIndex();
+      const ON_2dPoint p = fp.FaceCornerParameters();
+      const unsigned fid = this->EdgeFace().ComponentId();
+      str = ON_wString::FormatToString(L"f%u.%u(%g, %g)", id, corner_index, p.x, p.y);
+    }
+    break;
+
+    }
+  }
+
+  return 
+    str.IsNotEmpty() 
+    ? str 
+    : (bUnsetIsEmptyString ? ON_wString::EmptyString : ON_wString("unset"));
+}
+
+bool ON_SubDComponentParameter::IsSet() const
+{
+  return ComponentId() > 0;
+}
+
 const ON_SubDComponentId ON_SubDComponentParameter::ComponentIdAndType() const
 {
   return m_cid;
@@ -1938,14 +2050,29 @@ bool ON_SubDComponentParameter::IsVertexParameter() const
   return ON_SubDComponentPtr::Type::Vertex == this->ComponentType();
 }
 
+unsigned ON_SubDComponentParameter::VertexId() const
+{
+  return (ON_SubDComponentPtr::Type::Vertex == this->ComponentType()) ? this->ComponentId() : 0u;
+}
+
 bool ON_SubDComponentParameter::IsEdgeParameter() const
 {
   return ON_SubDComponentPtr::Type::Edge == this->ComponentType();
 }
 
+unsigned ON_SubDComponentParameter::EdgeId() const
+{
+  return (ON_SubDComponentPtr::Type::Edge == this->ComponentType()) ? this->ComponentId() : 0u;
+}
+
 bool ON_SubDComponentParameter::IsFaceParameter() const
 {
   return ON_SubDComponentPtr::Type::Face == this->ComponentType();
+}
+
+unsigned ON_SubDComponentParameter::FaceId() const
+{
+  return (ON_SubDComponentPtr::Type::Face == this->ComponentType()) ? this->ComponentId() : 0u;
 }
 
 const ON_SubDVertex* ON_SubDComponentParameter::Vertex(const ON_SubD* subd) const

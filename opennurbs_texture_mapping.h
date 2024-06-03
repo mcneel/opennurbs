@@ -777,6 +777,61 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_TextureMapping*>
 ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_TextureMapping>;
 #endif
 
+class ON_CLASS ON_WeightedAverageHash
+{
+public:
+  static const int dim = 5;
+  ON_WeightedAverageHash();
+  ON_3dPoint m_sum[dim];
+  void Zero();
+  bool Write(ON_BinaryArchive& binary_archive) const;
+  bool Read(ON_BinaryArchive& binary_archive);
+  bool Matches(const ON_WeightedAverageHash& b, const ON_Xform& bt, double tol) const;
+  void Transform(const ON_Xform& xform);
+private:
+  unsigned char m_reserved[32];
+};
+class ON_CLASS ON_GeometryFingerprint
+{
+public:
+  ON_GeometryFingerprint();
+  void Zero();
+  bool Write(ON_BinaryArchive& binary_archive) const;
+  bool Read(ON_BinaryArchive& binary_archive);
+  bool Matches(const ON_GeometryFingerprint& b, const ON_Xform& bt, double tol) const;
+  void Transform(const ON_Xform& xform);
+  unsigned int m_topologyCRC;
+  ON_WeightedAverageHash m_pointWAH;
+  ON_WeightedAverageHash m_edgeWAH;
+private:
+  unsigned char m_reserved[32];
+};
+class ON_CLASS ON_MappingMeshInfo
+{
+public:
+  ON_MappingMeshInfo();
+  ON_SimpleArray<int> m_faceSourceIds;
+  ON_GeometryFingerprint m_geometryFingerprint;
+
+  // Derived data
+  void GenerateDerivedData();
+  const int* SourceIdFaces(const int sourceId, int& countOut) const;
+private:
+  ON_SimpleArray<int> m_sourceIdFaceStart;
+  ON_SimpleArray<int> m_sourceIdFaceCount;
+  ON_SimpleArray<int> m_sourceIdFaceList;
+private:
+  unsigned char m_reserved[32];
+};
+class ON_CLASS ON_RenderMeshInfo
+{
+public:
+  ON_RenderMeshInfo();
+  int m_sourceFaceId;
+  ON_GeometryFingerprint m_geometryFingerprint;
+private:
+  unsigned char m_reserved[32];
+};
 
 #endif
 

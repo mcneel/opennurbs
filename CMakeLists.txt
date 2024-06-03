@@ -406,6 +406,10 @@ set( OPENNURBS_PLUS_HEADERS
     opennurbs_plus_x.h
     )
 
+if (BUILD_TESTING)
+    LIST(APPEND OPENNURBS_PLUS_HEADERS opennurbs_plus_testheader.h)
+endif(BUILD_TESTING)
+
 set( OPENNURBS_PLUS_SOURCES
     opennurbs_plus_bezier.cpp
     opennurbs_plus_brep.cpp
@@ -501,6 +505,10 @@ endif()
 
 add_definitions(-DON_CMAKE_BUILD)
 
+if (ANDROID)
+  include_directories("freetype263/include")
+endif()
+
 if( APPLE)
    find_library( CORE_GRAPHICS_LIBRARY CoreGraphics)
    message( STATUS "CORE_GRAPHICS_LIBRARY is ${CORE_GRAPHICS_LIBRARY}")
@@ -523,7 +531,7 @@ if( APPLE)
     )
     target_compile_definitions(opennurbsStatic PRIVATE ${OPENNURBS_APPLE_DEFINES})
     target_compile_definitions(OpenNURBS PRIVATE ${OPENNURBS_APPLE_DEFINES})
-    
+
     # xcode properties are the same for both static and shared libs
     set_target_properties( opennurbsStatic OpenNURBS
         PROPERTIES
@@ -574,14 +582,23 @@ target_compile_definitions(OpenNURBS PRIVATE OPENNURBS_EXPORTS Z_PREFIX MY_ZCALL
 target_include_directories(opennurbsStatic PUBLIC .)
 target_include_directories(OpenNURBS PUBLIC .)
 
-target_precompile_headers(opennurbsStatic PRIVATE opennurbs.h)
-target_precompile_headers(OpenNURBS PRIVATE opennurbs.h)
+set(PRECOMPILED_HEADERS opennurbs.h)
+if (BUILD_TESTING)
+    LIST(APPEND PRECOMPILED_HEADERS opennurbs_plus_testheader.h)
+endif(BUILD_TESTING)
+
+target_precompile_headers(opennurbsStatic PRIVATE ${PRECOMPILED_HEADERS})
+target_precompile_headers(OpenNURBS PRIVATE ${PRECOMPILED_HEADERS})
 
 install( TARGETS opennurbsStatic DESTINATION "lib")
 install( FILES ${OPENNURBS_PUBLIC_HEADERS} DESTINATION "include/opennurbsStatic")
 
 
-if (ANDROID OR LINUX)
+if (ANDROID)
+target_link_libraries( OpenNURBS zlib opennurbs_public_freetype android_uuid android)
+target_link_libraries( opennurbsStatic zlib opennurbs_public_freetype android_uuid android)
+endif()
+if (LINUX AND NOT ANDROID)
 target_link_libraries( OpenNURBS zlib opennurbs_public_freetype android_uuid)
 target_link_libraries( opennurbsStatic zlib opennurbs_public_freetype android_uuid)
 endif()

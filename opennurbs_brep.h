@@ -3867,6 +3867,17 @@ public:
 
   /*
   Description:
+    Will turn a linear polycurve into a single line if possible
+  Parameters:
+    edge_index - [in] index of the edge to simplify.
+    tolerance - [in] used in call to ON_Curve::IsLinear;
+  Returns:
+    true on success.
+  */
+  bool SimplifyEdge(int edge_index, double tolerance);
+
+  /*
+  Description:
     Removes nested polycurves from the m_C2[] and m_C3[] arrays.
   Parameters:
     bExtractSingleSegments - [in] if true, polycurves with a

@@ -2565,16 +2565,31 @@ public:
 static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
 
 {
+  //The greater tan_dot is, the more tangent the ends are.  
+  // Be sure that they have been adjusted for start meets start or end mets end.
   JoinEndCompareContext* context = (JoinEndCompareContext*)ctext;
   const CurveJoinEndData* a = (CurveJoinEndData*)aA;
   const CurveJoinEndData* b = (CurveJoinEndData*)bB;
   if (context->bUseTan){
+    //If one is real close and the other isn't,take the close one.
     if (a->dist < context->dist_tol && b->dist >= context->dist_tol) return -1;
     if (a->dist >= context->dist_tol && b->dist < context->dist_tol) return 1;
+
+    //If one is tangent and the other isn't, take the tangent one.
     if (a->tan_dot > context->dot_tol && b->tan_dot <= context->dot_tol) return -1;
     if (a->tan_dot <= context->dot_tol && b->tan_dot > context->dot_tol) return 1;
-    if (a->dist < b->dist) return -1;
-    if (a->dist > b->dist) return 1;
+
+    //If both are close, take the more tangent one
+    if (a->dist < context->dist_tol && b->dist < context->dist_tol){
+      if (a->tan_dot > b->tan_dot) return -1;
+      if (a->tan_dot < b->tan_dot) return 1;
+    }
+
+    //either both or neither are tangent. Take the closest.
+    if (a->dist < b->dist)
+      return -1;
+    if (a->dist > b->dist)
+      return 1;
     if (a->id[0] < b->id[0]) return -1;
     if (a->id[0] > b->id[0]) return 1;
     if (a->id[1] < b->id[1]) return -1;
@@ -2597,6 +2612,402 @@ static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
 ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////// end of utilities for curve joining ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//This next bunch of code is to allow V5 style curve joining.  
+// The special case line/polyline code has been removed,
+// as has the code to pick the most tangent result when 
+// multiple possibilites are present
+///////////////////////////////////////////////
+
+struct OldCurveJoinSeg {
+  int id;
+  bool bRev;
+};
+
+//distance from curve[id[0] end[end[0]] to curve[id[1]] end[end[1]] is dist.
+struct OldCurveJoinEndData {
+  int id[2];  //index into array of curves
+  int end[2]; //0 for start, 1 for end
+  double dist;
+};
+
+
+static int OldCompareEndData(const OldCurveJoinEndData* a, const OldCurveJoinEndData* b)
+
+{
+  if (a->dist < b->dist) return -1;
+  if (a->dist > b->dist) return 1;
+  return 0;
+}
+
+static void OldReverseSegs(ON_SimpleArray<OldCurveJoinSeg>& SArray)
+
+{
+  int i;
+  for (i=0; i<SArray.Count(); i++)
+    SArray[i].bRev = !SArray[i].bRev;
+  SArray.Reverse();
+  return;
+}
+
+int 
+ON_JoinCurvesOld(const ON_SimpleArray<const ON_Curve*>& InCurves,
+  ON_SimpleArray<ON_Curve*>& OutCurves,
+  double join_tol,
+  bool bPreserveDirection, // = false
+  ON_SimpleArray<int>* key //=0
+)
+
+{
+
+  int i, count = OutCurves.Count();
+  if (InCurves.Count() < 1)
+    return 0;
+
+  int dim = InCurves[0]->Dimension();
+  for (i=1; i<InCurves.Count(); i++){
+    if (InCurves[i]->Dimension() != dim) return 0;
+  }
+
+  if (key) {
+    key->Reserve(InCurves.Count());
+    for (i=0; i<InCurves.Count(); i++) key->Append(-1);
+  }
+
+  //Copy curves, take out closed curves. 
+  OutCurves.Reserve(InCurves.Count());
+  ON_SimpleArray<ON_Curve*> IC(InCurves.Count());
+  ON_SimpleArray<int> cmap(InCurves.Count());
+  for (i=0; i<InCurves.Count(); i++){
+    ON_Curve* C = InCurves[i]->DuplicateCurve();
+    if (!C) continue;
+    if (C->IsClosed()) {
+      if (key) (*key)[i] = OutCurves.Count();
+      OutCurves.Append(C);
+    }
+    else {
+      cmap.Append(i);
+      IC.Append(C);
+    }
+  }
+
+  //IC is a list of copies of all open curves.  match endpoints and join into polycurves.
+  //copy curves that are not joined.
+  ON_3dPointArray Start(IC.Count());
+  Start.SetCount(IC.Count());
+  ON_3dPointArray End(IC.Count());
+  End.SetCount(IC.Count());
+  for (i=0; i<IC.Count(); i++){
+    Start[i] = IC[i]->PointAtStart();
+    End[i] = IC[i]->PointAtEnd();
+  }
+
+  //get a list of all possible joins
+  ON_SimpleArray<OldCurveJoinEndData> EData(IC.Count());
+  for (i=0; i<IC.Count(); i++){
+    int j;
+    for (j=0; j<IC.Count(); j++){
+      if (i==j) continue;
+      double dist = Start[i].DistanceTo(End[j]);
+      if (dist <= join_tol){
+        OldCurveJoinEndData& ED = EData.AppendNew();
+        ED.id[0] = i;
+        ED.end[0] = 0;
+        ED.id[1] = j;
+        ED.end[1] = 1;
+        ED.dist = dist;
+      }
+      if (!bPreserveDirection && i<j){
+        dist = Start[i].DistanceTo(Start[j]);
+        if (dist <= join_tol){
+          OldCurveJoinEndData& ED = EData.AppendNew();
+          ED.id[0] = i;
+          ED.end[0] = 0;
+          ED.id[1] = j;
+          ED.end[1] = 0;
+          ED.dist = dist;
+        }
+        dist = End[i].DistanceTo(End[j]);
+        if (dist <= join_tol){
+          OldCurveJoinEndData& ED = EData.AppendNew();
+          ED.id[0] = i;
+          ED.end[0] = 1;
+          ED.id[1] = j;
+          ED.end[1] = 1;
+          ED.dist = dist;
+        }
+      }
+    }
+  }
+
+  //sort possiblities by distance
+  EData.QuickSort(OldCompareEndData);
+
+  int* endspace = (int*)onmalloc(2*sizeof(int)*IC.Count());
+  memset(endspace, 0, 2*sizeof(int)*IC.Count());
+  int** endarray = (int**)onmalloc(sizeof(int*)*IC.Count());
+
+  //endarray[i] is an int[2].  if endarray[i][0] > 0, then IC[i] is part of
+  //polycurve endarray[i][0] - 1, and the start of IC[i] is interior to the polycurve.
+  //if endarray[i][1] > 0, then the end of IC[i] is interior.  if both endarray[i][0] > 0
+  //and endarray[i][1] > 0, then they are equal.
+
+  for (i=0; i<IC.Count(); i++)
+    endarray[i] = &endspace[2*i];
+
+  ON_ClassArray<ON_SimpleArray<OldCurveJoinSeg> > SegsArray(IC.Count());
+
+  for (i=0; i<EData.Count(); i++){
+    const OldCurveJoinEndData& ED = EData[i];
+    if (endarray[ED.id[0]][ED.end[0]] > 0 || endarray[ED.id[1]][ED.end[1]] > 0)
+      continue; //one of these endpoints has already been join to a closer end
+    if (endarray[ED.id[0]][1 - ED.end[0]] == 0){
+      if (endarray[ED.id[1]][1 - ED.end[1]] == 0){//new curve
+        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = SegsArray.Count()+1;
+        ON_SimpleArray<OldCurveJoinSeg>& SArray = SegsArray.AppendNew();
+        SArray.Reserve(4);
+        OldCurveJoinSeg& Seg0 = SArray.AppendNew();
+        OldCurveJoinSeg& Seg1 = SArray.AppendNew();
+        if (ED.end[0]) {
+          Seg0.id = ED.id[0];
+          Seg0.bRev = false;
+          Seg1.id = ED.id[1];
+          Seg1.bRev = (ED.end[1]) ? true : false;
+        }
+        else {
+          Seg1.id = ED.id[0];
+          Seg1.bRev = false;
+          Seg0.id = ED.id[1];
+          Seg0.bRev = (ED.end[1]) ? false : true;
+        }
+      }
+
+      else {
+
+        //second curve is part of an existing sequence. Insert or append first curve.
+        ON_SimpleArray<OldCurveJoinSeg>& SArray = SegsArray[endarray[ED.id[1]][1 - ED.end[1]] - 1];
+        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+          endarray[ED.id[1]][1 - ED.end[1]];
+
+        if (SArray[0].id == ED.id[1]){
+          OldCurveJoinSeg Seg;
+          Seg.id = ED.id[0];
+          Seg.bRev = (ED.end[0]) ? false : true;
+          SArray.Insert(0, Seg);
+        }
+        else {
+          OldCurveJoinSeg& Seg = SArray.AppendNew();
+          Seg.id = ED.id[0];
+          Seg.bRev = (ED.end[0]) ? true : false;
+        }
+      }
+    }
+    else if (endarray[ED.id[1]][1 - ED.end[1]] == 0){
+      //first curve is part of an existing sequence. Insert or append second curve.
+      ON_SimpleArray<OldCurveJoinSeg>& SArray = SegsArray[endarray[ED.id[0]][1 - ED.end[0]] - 1];
+      endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+        endarray[ED.id[0]][1 - ED.end[0]];
+
+      if (SArray[0].id == ED.id[0]){
+        OldCurveJoinSeg Seg;
+        Seg.id = ED.id[1];
+        Seg.bRev = (ED.end[1]) ? false : true;
+        SArray.Insert(0, Seg);
+      }
+      else {
+        OldCurveJoinSeg& Seg = SArray.AppendNew();
+        Seg.id = ED.id[1];
+        Seg.bRev = (ED.end[1]) ? true : false;
+      }
+    }
+    else {
+      //both are in existing sequences.  join the sequences.
+      if (endarray[ED.id[0]][1 - ED.end[0]] == endarray[ED.id[1]][1 - ED.end[1]])
+        //closes off this curve
+        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+        endarray[ED.id[0]][1 - ED.end[0]];
+      else {
+        int segid0 = endarray[ED.id[0]][1 - ED.end[0]];
+        int segid1 = endarray[ED.id[1]][1 - ED.end[1]];
+        ON_SimpleArray<OldCurveJoinSeg>& SArray0 = SegsArray[segid0 - 1];
+        ON_SimpleArray<OldCurveJoinSeg>& SArray1 = SegsArray[segid1 - 1];
+        if (SArray0[0].id == ED.id[0]){
+          if (SArray1[0].id == ED.id[1]){
+            OldReverseSegs(SArray0);
+            int j;
+            for (j=0; j<SArray1.Count(); j++){
+              if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
+              if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
+              SArray0.Append(SArray1[j]);
+            }
+            endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
+            SArray1.SetCount(0);
+          }
+          else {
+            int j;
+            for (j=0; j<SArray0.Count(); j++){
+              if (endarray[SArray0[j].id][0] > 0) endarray[SArray0[j].id][0] = segid1;
+              if (endarray[SArray0[j].id][1] > 0) endarray[SArray0[j].id][1] = segid1;
+              SArray1.Append(SArray0[j]);
+            }
+            endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid1;
+            SArray0.SetCount(0);
+          }
+        }
+        else if (SArray1[0].id == ED.id[1]){
+          int j;
+          for (j=0; j<SArray1.Count(); j++){
+            if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
+            if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
+            SArray0.Append(SArray1[j]);
+          }
+          endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
+          SArray1.SetCount(0);
+        }
+        else {
+          OldReverseSegs(SArray1);
+          int j;
+          for (j=0; j<SArray1.Count(); j++) {
+            if (endarray[SArray1[j].id][0] > 0) endarray[SArray1[j].id][0] = segid0;
+            if (endarray[SArray1[j].id][1] > 0) endarray[SArray1[j].id][1] = segid0;
+            SArray0.Append(SArray1[j]);
+          }
+          endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = segid0;
+          SArray1.SetCount(0);
+        }
+      }
+    }
+  }
+
+  //make polycurves out of sequences
+
+  for (i=0; i<SegsArray.Count(); i++){
+    ON_SimpleArray<OldCurveJoinSeg>& SArray = SegsArray[i];
+    if (SArray.Count() < 2) continue;
+    if (!bPreserveDirection){//if number of reversed segs is more than half, reverse.
+      int scount= 0;
+      int j;
+      for (j=0; j<SArray.Count(); j++) {
+        if (SArray[j].bRev)
+          scount++;
+      }
+      if (2*scount > SArray.Count())
+        OldReverseSegs(SArray);
+    }
+    ON_PolyCurve* PC = new ON_PolyCurve(SArray.Count());
+    bool pc_added = false;
+    int j;
+    int min_seg = 0;
+    int min_id = -1;
+    for (j=0; j<SArray.Count(); j++){
+      if (key) 
+        (*key)[cmap[SArray[j].id]] = OutCurves.Count();
+      ON_Curve* C = IC[SArray[j].id];
+      if (min_id < 0 || SArray[j].id < min_id){
+        min_id = SArray[j].id;
+        min_seg = j;
+      }
+      if (SArray[j].bRev) C->Reverse();
+      if (PC->Count()){
+        bool bSet = true;
+        if (!ON_ForceMatchCurveEnds(*PC, 1, *C, 0)) {
+          ON_3dPoint P = PC->PointAtEnd();
+          ON_3dPoint Q = C->PointAtStart();
+          P = 0.5*(P+Q);
+          if (!PC->SetEndPoint(P) || !C->SetStartPoint(P)) {
+            ON_NurbsCurve* NC = C->NurbsCurve();
+            if (NC && NC->SetStartPoint(P)){
+              delete C;
+              C = NC;
+            }
+            else {
+              bSet = false;
+              delete NC;
+              if (PC->Count()) {
+                pc_added = true;
+                OutCurves.Append(PC);
+              }
+              if (key)
+                (*key)[cmap[SArray[j].id]]++;
+              OutCurves.Append(C);
+              int k;
+              for (k=j+1; k<SArray.Count(); k++){
+                if (key)
+                  (*key)[cmap[SArray[k].id]] = OutCurves.Count();
+                OutCurves.Append(IC[SArray[k].id]);
+              }
+              break;
+            }
+          }
+        }
+      }
+      ON_PolyCurve* pPoly = ON_PolyCurve::Cast(C);
+      if( pPoly){
+        int si;
+        for (si=0; si<pPoly->Count(); si++){
+          const ON_Curve* SC = pPoly->SegmentCurve(si);
+          ON_Curve* SCCopy = SC->DuplicateCurve();
+          if (SCCopy) PC->Append(SCCopy);
+        }
+        delete pPoly;
+      }
+      else PC->Append(C);
+    }
+    if (!PC->Count()) delete PC;
+    else if (!pc_added) {
+      if (!PC->IsClosed() && PC->IsClosable(join_tol)){
+        if (!ON_ForceMatchCurveEnds(*PC, 0, *PC, 1))
+          PC->SetEndPoint(PC->PointAtStart());
+      }
+      if (PC->IsClosed() && min_id >= 0){
+        //int sc = PC->SpanCount();
+        double t = PC->SegmentDomain(min_seg)[0];
+        PC->ChangeClosedCurveSeam(t);
+      }
+
+      // 28 October 2010 Dale Lear
+      //    I added the RemoveNesting() and SynchronizeSegmentDomains()
+      //    lines so Rhino will create higher quality geometry.
+      PC->RemoveNesting();
+      PC->SynchronizeSegmentDomains();
+
+      OutCurves.Append(PC);
+    }
+  }
+
+  //add in singletons
+  for (i=0; i<IC.Count(); i++){
+    if (endarray[i][0] == 0 && endarray[i][1] == 0){
+      if (key) (*key)[cmap[i]] = OutCurves.Count();
+      OutCurves.Append(IC[i]);
+    }
+  }
+
+  /* This was added by greg to fix big curves that are nearly, but not quite, closed.
+  It causes problems when the curve is tiny.
+  for(i=0; i<OutCurves.Count(); i++){
+  if(!OutCurves[i]->IsClosed()){
+  ON_3dPoint s= OutCurves[i]->PointAtStart();
+  ON_3dPoint e = OutCurves[i]->PointAtEnd();
+  if(s.DistanceTo(e)<join_tol)
+  OutCurves[i]->SetEndPoint( s );			
+  }
+  }
+  */
+
+  //Chuck added this, 1/16/03.
+  for(i=0; i<OutCurves.Count(); i++){
+    ON_Curve* C = OutCurves[i];
+    if (!C || C->IsClosed()) continue;
+    if (C->IsClosable(join_tol))
+      C->SetEndPoint(C->PointAtStart());
+  }
+
+  onfree((void*)endarray);
+  onfree((void*)endspace);
+
+  return OutCurves.Count() - count;
+}
 
 
 bool ON_Curve::IsClosable(double tolerance, 
@@ -2894,6 +3305,8 @@ static bool GetCurveEndData(const ON_SimpleArray<ON_Curve*>& IC,
     ED.id[0] = Pair.a->m_cid;
     ED.id[1] = Pair.b->m_cid;
     ED.tan_dot = Pair.dot;
+    if (ED.end[0] == ED.end[1])
+      ED.tan_dot *= -1.0;
   }
   return true;
 }

@@ -1652,6 +1652,20 @@ ON_SubDComponentId::ON_SubDComponentId(ON_SubDFacePtr fptr, unsigned face_corner
   }
 }
 
+ON_SubDComponentId::ON_SubDComponentId(unsigned face_id, ON__UINT_PTR face_dir, ON_SubDFaceCornerDex face_cdex)
+{
+  if (face_id > 0)
+  {
+    m_id = face_id;
+    Internal_SetType(ON_SubDComponentPtr::Type::Face);
+    Internal_SetDir(0 == face_dir ? 0u : 1u);
+    if (face_cdex.IsSet() && face_cdex.EdgeCount() < 4096u)
+    {
+      Internal_SetValueA(face_cdex.CornerIndex());
+      Internal_SetValueB(face_cdex.EdgeCount());
+    }
+  }
+}
 
 
 int ON_SubDComponentId::CompareTypeAndId(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs)
@@ -1772,6 +1786,39 @@ unsigned ON_SubDComponentId::ComponentDirection() const
   return (m_type_and_dir & ON_SubDComponentId::bits_dir_mask);
 }
 
+const ON_wString ON_SubDComponentId::ToString(bool bUnsetIsEmptyString, bool bDirectionPrefix) const
+{
+  ON_wString str;
+  const unsigned id = this->ComponentId();
+  if (id > 0)
+  {
+    const char prefix = bDirectionPrefix ? (1 == this->ComponentDirection() ? '-' : '+') : 0;
+    switch (this->ComponentType())
+    {
+
+    case ON_SubDComponentPtr::Type::Vertex:
+      str = (0 == prefix) ? ON_wString::FormatToString(L"v%u", id) : ON_wString::FormatToString(L"%cv%u", prefix, id);
+      break;
+
+    case ON_SubDComponentPtr::Type::Edge:
+      str = (0 == prefix) ? ON_wString::FormatToString(L"e%u", id) : ON_wString::FormatToString(L"%ce%u", prefix, id);
+      break;
+
+    case ON_SubDComponentPtr::Type::Face:
+    {
+      const ON_SubDFaceCornerDex cdex = this->FaceCornerDex();
+      if (cdex.IsSet())
+        str = (0 == prefix) ? ON_wString::FormatToString(L"f%u.%u", id, cdex.CornerIndex()) : ON_wString::FormatToString(L"%cf%u.%u", prefix, id, cdex.CornerIndex());
+      else
+        str = (0 == prefix) ? ON_wString::FormatToString(L"f%u", id) : ON_wString::FormatToString(L"%cf%u", prefix, id);
+    }
+    break;
+
+    }
+  }
+  return (str.IsNotEmpty() || bUnsetIsEmptyString) ? str : ON_wString("unset");
+}
+
 ON_SubDComponentPtr::Type ON_SubDComponentId::ComponentType() const
 {
   return ON_SubDComponentPtr::ComponentPtrTypeFromUnsigned(m_type_and_dir & ON_SubDComponentId::bits_type_mask);
@@ -1841,6 +1888,11 @@ const ON_SubDComponentPtr ON_SubDComponentId::ComponentPtr(const class ON_SubD& 
   return ON_SubDComponentPtr::Null;
 }
 
+unsigned ON_SubDComponentId::VertexId() const
+{
+  return this->IsVertexId() ? this->ComponentId() : 0u;
+}
+
 const ON_SubDVertex* ON_SubDComponentId::Vertex(const class ON_SubD& subd) const
 {
   return this->ComponentPtr(subd).Vertex();
@@ -1861,6 +1913,11 @@ const ON_SubDVertexPtr ON_SubDComponentId::VertexPtr(const class ON_SubD* subd) 
   return (nullptr != subd) ? this->ComponentPtr(*subd).VertexPtr() : ON_SubDVertexPtr::Null;
 }
 
+unsigned ON_SubDComponentId::EdgeId() const
+{
+  return this->IsEdgeId() ? this->ComponentId() : 0u;
+}
+
 const ON_SubDEdge* ON_SubDComponentId::Edge(const class ON_SubD& subd) const
 {
   return this->ComponentPtr(subd).Edge();
@@ -1879,6 +1936,11 @@ const ON_SubDEdge* ON_SubDComponentId::Edge(const class ON_SubD* subd) const
 const ON_SubDEdgePtr ON_SubDComponentId::EdgePtr(const class ON_SubD* subd) const
 {
   return (nullptr != subd) ? this->ComponentPtr(*subd).EdgePtr() : ON_SubDEdgePtr::Null;
+}
+
+unsigned ON_SubDComponentId::FaceId() const
+{
+  return this->IsFaceId() ? this->ComponentId() : 0u;
 }
 
 const ON_SubDFace* ON_SubDComponentId::Face(const class ON_SubD& subd) const
@@ -7324,6 +7386,31 @@ const ON_SubDEdge* ON_SubDFace::QuadOppositeEdge(
 }
 
 
+unsigned int  ON_SubDFace::GetCornerEdges(
+  const ON_SubDVertex* corner_vertex,
+  ON_SubDEdgePtr& entering_edge,
+  ON_SubDEdgePtr& leaving_edge
+) const
+{
+  for (;;)
+  {
+    const unsigned edge_count = this->EdgeCount();
+    if (edge_count < 3)
+      break;
+    if (nullptr == corner_vertex)
+      break;
+    const unsigned fvi = this->VertexIndex(corner_vertex);
+    if (fvi >= edge_count)
+      break;
+    entering_edge = this->EdgePtr((fvi + edge_count - 1) % edge_count);
+    leaving_edge = this->EdgePtr(fvi);
+    return entering_edge.IsNotNull() && leaving_edge.IsNotNull();
+  }
+  entering_edge = ON_SubDEdgePtr::Null;
+  leaving_edge = ON_SubDEdgePtr::Null;
+  return ON_UNSET_UINT_INDEX;
+}
+
 const class ON_SubDEdge* ON_SubDFace::Edge(
   unsigned int i
   ) const
@@ -11564,9 +11651,149 @@ ON_COMPONENT_INDEX ON_SubD::ComponentIndex() const
   return ON_Geometry::ComponentIndex();
 }
 
+
+bool ON_ObjRefEvaluationParameter::SetFromSubDComponentParameter(
+  const ON_SubDComponentParameter& cp
+)
+{
+  switch (cp.ComponentType())
+  {
+  case ON_SubDComponentPtr::Type::Vertex:
+  {
+    this->m_t_type = 9;
+    const ON_SubDComponentId vertex_id = cp.ComponentIdAndType();
+    const ON_SubDComponentId edge_id = cp.VertexEdge();
+    const ON_SubDComponentId face_id = cp.VertexFace();
+    this->m_t_ci.Set(ON_COMPONENT_INDEX::subd_vertex, vertex_id.ComponentId());
+    this->m_t[0] = (double)edge_id.ComponentId();
+    this->m_t[1] = (double)face_id.ComponentId();
+    this->m_t[2] = 0.0;
+    this->m_t[3] = 0.0;
+  }
+  break;
+
+  case ON_SubDComponentPtr::Type::Edge:
+  {
+    this->m_t_type = 9;
+    const ON_SubDComponentId edge_id = cp.ComponentIdAndType();
+    const ON_SubDComponentId face_id = cp.EdgeFace();
+    const double ep = cp.EdgeParameter();
+    this->m_t_ci.Set(ON_COMPONENT_INDEX::subd_edge, edge_id.ComponentId());
+    this->m_t[0] = (double)face_id.ComponentId();
+    this->m_t[1] = ep;
+    this->m_t[2] = 0.0;
+    this->m_t[3] = 0.0;
+    this->m_s[0] = ON_Interval(0.0, 1.0);
+  }
+  break;
+
+  case ON_SubDComponentPtr::Type::Face:
+  {
+    this->m_t_type = 9;
+    const ON_SubDComponentId face_id = cp.ComponentIdAndType();
+    const ON_SubDFaceParameter fp = cp.FaceParameter();
+    this->m_t_ci.Set(ON_COMPONENT_INDEX::subd_face, face_id.ComponentId());
+    this->m_t[0] = (double)fp.FaceCornerDex().CornerIndex();
+    this->m_t[1] = (double)fp.FaceCornerDex().EdgeCount();
+    this->m_t[2] = fp.FaceCornerParameters().x;
+    this->m_t[3] = fp.FaceCornerParameters().y;
+    this->m_s[0] = ON_Interval(0.0, 0.5);
+    this->m_s[1] = ON_Interval(0.0, 0.5);
+  }
+  break;
+  }
+
+  this->Default();
+  return false;
+}
+
+static bool Internal_IsValidUnsigned(double x)
+{
+  return x >= 0 && x <= ((double)0xFFFFFFFFu) && x == floor(x);
+}
+
+static const ON_SubDComponentId Internal_ComponentIdFromDouble(
+  ON_SubDComponentPtr::Type component_type,
+  double component_id_as_double
+)
+{
+  return
+    (ON_SubDComponentPtr::Type::Unset != component_type && Internal_IsValidUnsigned(component_id_as_double))
+    ? ON_SubDComponentId(component_type, (unsigned)component_id_as_double)
+    : ON_SubDComponentId::Unset;
+}
+
+
+bool ON_ObjRefEvaluationParameter::GetSubDComponentParameter(
+  ON_SubDComponentParameter& cp
+) const
+{
+  cp = ON_SubDComponentParameter::Unset;
+  if (9 == this->m_t_type)
+  {
+    switch (this->m_t_ci.m_type)
+    {
+    case ON_COMPONENT_INDEX::TYPE::subd_vertex:
+      if (false == Internal_IsValidUnsigned(this->m_t[0]))
+        break;
+      if (false == Internal_IsValidUnsigned(this->m_t[1]))
+        break;
+      if (false == (0.0 == this->m_t[2]))
+        break;
+      if (false == (0.0 == this->m_t[3]))
+        break;
+      {
+        const ON_SubDComponentId vertex_id(ON_SubDComponentPtr::Type::Vertex, this->m_t_ci.m_index);
+        cp = ON_SubDComponentParameter(
+          vertex_id, 
+          Internal_ComponentIdFromDouble(ON_SubDComponentPtr::Type::Edge, this->m_t[0]),
+          Internal_ComponentIdFromDouble(ON_SubDComponentPtr::Type::Face, this->m_t[1]));
+      }
+      break;
+    case ON_COMPONENT_INDEX::TYPE::subd_edge:
+      if (false == Internal_IsValidUnsigned(this->m_t[0]))
+        break;
+      if (false == (0.0 <= this->m_t[1] && this->m_t[1] <= 1.0))
+        break;
+      if (false == (0.0 == this->m_t[2]))
+        break;
+      if (false == (0.0 == this->m_t[3]))
+        break;
+      {
+        const ON_SubDComponentId edge_id(ON_SubDComponentPtr::Type::Edge, this->m_t_ci.m_index);
+        cp = ON_SubDComponentParameter(
+          edge_id,
+          this->m_t[1],
+          Internal_ComponentIdFromDouble(ON_SubDComponentPtr::Type::Face, this->m_t[0]));
+      }
+      break;
+    case ON_COMPONENT_INDEX::TYPE::subd_face:
+      if (false == Internal_IsValidUnsigned(this->m_t[0]))
+        break;
+      if (false == Internal_IsValidUnsigned(this->m_t[1]))
+        break;
+      if (false == (this->m_t[0] < this->m_t[1]))
+        break;
+      if (false == (0.0 <= this->m_t[2] && this->m_t[2] <= 0.5))
+        break;
+      if (false == (0.0 <= this->m_t[3] && this->m_t[3] <= 0.5))
+        break;
+      {
+        const ON_SubDComponentId face_id(ON_SubDComponentPtr::Type::Face, this->m_t_ci.m_index);
+        const ON_SubDFaceCornerDex cdex((unsigned)this->m_t[0], (unsigned)this->m_t[1]);
+        ON_SubDFaceParameter fp(cdex, this->m_t[2], this->m_t[3]);
+        cp = ON_SubDComponentParameter(face_id, fp);
+      }
+      break;
+    }
+  }
+  return cp.IsSet();
+}
+
 //virtual
 bool ON_SubD::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const
 {
+  P = ON_3dPoint::NanPoint;
   return false;
 }
 
@@ -21086,8 +21313,17 @@ bool ON_SubDVertexQuadSector::Subdivide()
 
 bool ON_SubDVertexQuadSector::SubdivideUntilSharpnessIsZero()
 {
+  unsigned int subdivision_count = 0;
+  return SubdivideUntilSharpnessIsZero(subdivision_count);
+}
+
+bool ON_SubDVertexQuadSector::SubdivideUntilSharpnessIsZero(
+  unsigned int& subdivision_count
+)
+{
   bool rc = true;
   double maxs = this->MaximumSharpness();
+  subdivision_count = 0;
   if (maxs > 0.0)
   {
     // for(i < n) used to prevent infinite looping when this content is not valid.
@@ -21095,6 +21331,8 @@ bool ON_SubDVertexQuadSector::SubdivideUntilSharpnessIsZero()
     for (unsigned i = 0; i < n && maxs > 0.0 && rc; ++i)
     {
       rc = Subdivide();
+      if (rc)
+        ++subdivision_count;
       maxs = this->MaximumSharpness();
     }
     if (rc && false == (0.0 == maxs))

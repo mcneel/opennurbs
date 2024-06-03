@@ -955,6 +955,23 @@ public:
     const char* filename
     );
 
+  class ON_CLASS Cache
+  {
+  public:
+    Cache();
+    ~Cache();
+
+    static const ON_ContentHash* FromFile(const wchar_t*);
+    static const ON_ContentHash* FromFile(const char*);
+
+    static void Add(const wchar_t*, const ON_ContentHash&);
+    static void Add(const char*, const ON_ContentHash&);
+
+  private:
+    class Private;
+    Private* m_private;
+  };
+
   /*
   Returns:
     True if the SHA-1 hash has been set.

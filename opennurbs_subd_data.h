@@ -3119,6 +3119,13 @@ public:
   ) const;
 
   ON_3dPoint PointAt(double normalized_parameter) const;
+
+  bool Evaluate(
+    double normalized_parameter,
+    int der_count,
+    int v_stride,
+    double* v
+    ) const;
   
 public:
 
@@ -3505,6 +3512,20 @@ public:
   /// If successful, true is returned. Otherwise false is returned.
   /// </returns>
   bool SubdivideUntilSharpnessIsZero();
+
+  /// <summary>
+  /// Subdivide the vertex sector until all the edges attached to the center
+  /// vertex have zero sharpness.
+  /// </summary>
+  /// <param name="subdivision_count">
+  /// The number of subdivisions is returned in subdivision_count.</param>
+  /// <returns>
+  /// If successful, true is returned. Otherwise false is returned.
+  /// </returns>
+  bool SubdivideUntilSharpnessIsZero(
+    unsigned int& subdivision_count
+  );
+
 
   const ON_SubDVertex* CenterVertex() const;
 

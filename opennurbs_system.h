@@ -614,11 +614,7 @@ typedef ON__UINT32 wchar_t;
 #if defined(ON_RUNTIME_ANDROID)
 // May work reasonably for Android versions < 8-ish as of Sep 2018.
 // Test carefully if working right is important.
-
-// We are currently not using Freetype in OpenNURBS at all.
-// Leaving this in place for testing in the future if we find that we need the
-// library again for glyph metrics.
-// #define OPENNURBS_FREETYPE_SUPPORT
+#define OPENNURBS_FREETYPE_SUPPORT
 #else
 
 // not Windows, Apple, or Android

@@ -4595,28 +4595,33 @@ bool SetCachedTextureCoordinatesFromMaterial(const ON_Mesh& mesh, std::function<
   return ON_Mesh_Private_SetCachedTextureCoordinatesFromMaterial(meshes, per_vertex_channels, mapping_ref, perform_cleanup, nullptr);
 }
 
+ON_DECL ON_TextureMapping ONX_Model_GetTextureMappingHelper(const ONX_Model& onx_model, const ON_MappingChannel* pMC)
+{
+  ON_TextureMapping mapping = ON_TextureMapping::SurfaceParameterTextureMapping;
+
+  ONX_ModelComponentIterator it(onx_model, ON_ModelComponent::Type::TextureMapping);
+
+  for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+  {
+    const ON_TextureMapping* texture_mapping = ON_TextureMapping::Cast(cr.ModelComponent());
+    if (nullptr == texture_mapping)
+      continue;
+
+    if (ON_UuidCompare(&texture_mapping->Id(), &pMC->m_mapping_id) == 0)
+    {
+      mapping = *texture_mapping;
+      break;
+    }
+  }
+
+  return mapping;
+}
+
 bool ON_Mesh::SetCachedTextureCoordinatesFromMaterial(const ONX_Model& onx_model, const ON_Material& material, const ON_MappingRef* mapping_ref) const
 {
   auto get_mapping_func = [&onx_model](const ON_MappingChannel* pMC)
   {
-    ON_TextureMapping mapping = ON_TextureMapping::SurfaceParameterTextureMapping;
-    
-    ONX_ModelComponentIterator it(onx_model, ON_ModelComponent::Type::TextureMapping);
-
-    for ( ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
-    {
-      const ON_TextureMapping* texture_mapping = ON_TextureMapping::Cast(cr.ModelComponent());
-      if (nullptr == texture_mapping)
-        continue;
-      
-      if(ON_UuidCompare(&texture_mapping->Id(), &pMC->m_mapping_id) == 0)
-      {
-        mapping = *texture_mapping;
-        break;
-      }
-    }
-    
-    return mapping;
+    return ONX_Model_GetTextureMappingHelper(onx_model, pMC);
   };
   
   ON_SimpleArray<ON_TextureMapping::TYPE> mappings_to_cache;
@@ -4664,24 +4669,7 @@ const ON_TextureCoordinates* ON_Mesh::GetCachedTextureCoordinates(const ONX_Mode
 {
   auto get_mapping_func = [&onx_model](const ON_MappingChannel* pMC)
     {
-      ON_TextureMapping mapping = ON_TextureMapping::SurfaceParameterTextureMapping;
-
-      ONX_ModelComponentIterator it(onx_model, ON_ModelComponent::Type::TextureMapping);
-
-      for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
-      {
-        const ON_TextureMapping* texture_mapping = ON_TextureMapping::Cast(cr.ModelComponent());
-        if (nullptr == texture_mapping)
-          continue;
-
-        if (ON_UuidCompare(&texture_mapping->Id(), &pMC->m_mapping_id) == 0)
-        {
-          mapping = *texture_mapping;
-          break;
-        }
-      }
-
-      return mapping;
+      return ONX_Model_GetTextureMappingHelper(onx_model, pMC);
     };
 
   return ::Internal_GetCachedTextureCoordinates(*this, get_mapping_func, texture, mapping_ref);
@@ -17845,3 +17833,314 @@ unsigned int ON_Mesh::MergeFaceSets(
   return (ngon1_count > ngon0_count) ? ngon0_count : bailout_rc;
 }
 
+static
+void ClosestPtToEdge(const ON_3dPoint& P,
+  const ON_3dPoint& A, const ON_3dPoint& B,
+  double& a, double& b)
+{
+  const double D[3] = { A.x - B.x, A.y - B.y, A.z - B.z };
+  double t = D[0] * D[0] + D[1] * D[1] + D[2] * D[2];
+  if (t <= 0.0)
+  {
+    a = 1.0;
+    b = 0.0;
+  }
+  else
+  {
+    const double P0[3] = { A.x - P.x, A.y - P.y, A.z - P.z };
+    const double P1[3] = { P.x - B.x, P.y - B.y, P.z - B.z };
+    t = 1.0 / t;
+    if (P0[0] * P0[0] + P0[1] * P0[1] + P0[2] * P0[2] <= P1[0] * P1[0] + P1[1] * P1[1] + P1[2] * P1[2])
+    {
+      // A is closest to P
+      t = (P0[0] * D[0] + P0[1] * D[1] + P0[2] * D[2]) * t;
+      if (t <= ON_ZERO_TOLERANCE)
+      {
+        a = 1.0;
+        b = 0.0;
+      }
+      else if (t >= 1.0 - ON_ZERO_TOLERANCE)
+      {
+        a = 0.0;
+        b = 1.0;
+      }
+      else
+      {
+        a = 1.0 - t;
+        b = t;
+      }
+    }
+    else
+    {
+      // B is closest to P
+      t = (P1[0] * D[0] + P1[1] * D[1] + P1[2] * D[2]) * t;
+      if (t <= ON_ZERO_TOLERANCE)
+      {
+        a = 0.0;
+        b = 1.0;
+      }
+      else if (t >= 1.0 - ON_ZERO_TOLERANCE)
+      {
+        a = 1.0;
+        b = 0.0;
+      }
+      else
+      {
+        a = t;
+        b = 1.0 - t;
+      }
+    }
+  }
+}
+
+static bool ClosestPtToTriangleHelper(const ON_3dPoint& R,
+  const ON_3dPoint& S,
+  const ON_3dPoint& T,
+  ON_3dPoint Q,
+  double* r, double* s, double* t)
+{
+  double a00, a01, a10, a11, b0, b1, ss, tt;
+
+  const ON_3dPoint V0(R.x - T.x, R.y - T.y, R.z - T.z);
+  const ON_3dPoint V1(S.x - T.x, S.y - T.y, S.z - T.z);
+
+  Q.x -= T.x;
+  Q.y -= T.y;
+  Q.z -= T.z;
+
+  a00 = V0.x * V0.x + V0.y * V0.y + V0.z * V0.z;
+  if (a00 <= 0.0)
+    return false;
+  a00 = 1.0 / a00;
+
+  a11 = V1.x * V1.x + V1.y * V1.y + V1.z * V1.z;
+  if (a11 <= 0.0)
+    return false;
+  a11 = 1.0 / a11;
+
+  a01 = V0.x * V1.x + V0.y * V1.y + V0.z * V1.z;
+  a10 = a01 * a11;
+  a01 *= a00;
+
+  b0 = (V0.x * Q.x + V0.y * Q.y + V0.z * Q.z) * a00;
+  b1 = (V1.x * Q.x + V1.y * Q.y + V1.z * Q.z) * a11;
+
+  if (a00 <= a11)
+  {
+    a11 = 1.0 - a01 * a10;
+    if (0.0 == a11)
+      return false;
+    tt = (b1 - a10 * b0) / a11;
+    ss = (b0 - a01 * tt);
+  }
+  else
+  {
+    a00 = 1.0 - a01 * a10;
+    if (0.0 == a00)
+      return false;
+    ss = (b0 - a01 * b1) / a00;
+    tt = (b1 - a10 * ss);
+  }
+
+  *r = ss;
+  *s = tt;
+  *t = 1.0 - ss - tt;
+
+  return true;
+}
+
+static void ClosestPtToTriangle(const ON_3dPoint& input, ON_3dPoint& output, const ON_3dPoint* tri, double& baryA, double& baryB, double& baryC)
+{
+  if (!ClosestPtToTriangleHelper(tri[0], tri[1], tri[2], input, &baryA, &baryB, &baryC))
+  {
+    // bogus triangle - check edges
+    double a, b, c, d;
+
+    ClosestPtToEdge(input, tri[0], tri[1], baryA, baryB);
+    baryC = 0.0;
+    d = input.DistanceTo(baryA * tri[0] + baryB * tri[1]);
+
+    ClosestPtToEdge(input, tri[1], tri[2], a, b);
+    c = input.DistanceTo(a * tri[1] + b * tri[2]);
+    if (c < d)
+    {
+      d = c;
+      baryA = 0.0;
+      baryB = a;
+      baryC = b;
+    }
+
+    ClosestPtToEdge(input, tri[2], tri[0], a, b);
+    c = input.DistanceTo(a * tri[2] + b * tri[0]);
+    if (c < d)
+    {
+      baryA = b;
+      baryB = 0.0;
+      baryC = a;
+    }
+  }
+  else
+  {
+    if (baryA <= ON_ZERO_TOLERANCE)
+      baryA = 0.0;
+
+    if (baryB <= ON_ZERO_TOLERANCE)
+      baryB = 0.0;
+
+    if (baryC <= ON_ZERO_TOLERANCE)
+      baryC = 0.0;
+
+    if (baryA == 0.0 || baryB == 0.0 || baryC == 0.0)
+    {
+      // Candidate bary-coords
+      double baryA0, baryB0, baryC0;
+      double baryA1, baryB1, baryC1;
+
+      baryA0 = baryB0 = baryC0 = -1.0;
+      baryA1 = baryB1 = baryC1 = -1.0;
+
+      bool has_second_cadidate_coords = false;
+
+      if (0.0 == baryA)
+      {
+        if (0.0 == baryB) {
+          ClosestPtToEdge(input, tri[0], tri[2], baryA0, baryC0);
+          baryB0 = 1.0 - baryA0 - baryC0;
+
+          ClosestPtToEdge(input, tri[1], tri[2], baryB1, baryC1);
+          baryA1 = 1.0 - baryB1 - baryC1;
+          has_second_cadidate_coords = true;
+        }
+        else if (0.0 == baryC) {
+          ClosestPtToEdge(input, tri[0], tri[1], baryA0, baryB0);
+          baryC0 = 1.0 - baryA0 - baryB0;
+
+          ClosestPtToEdge(input, tri[2], tri[1], baryC1, baryB1);
+          baryA1 = 1.0 - baryC1 - baryB1;
+          has_second_cadidate_coords = true;
+        }
+        else {
+          ClosestPtToEdge(input, tri[1], tri[2], baryB0, baryC0);
+          baryA0 = 1.0 - baryB0 - baryC0;
+        }
+      }
+      else if (0.0 == baryB)
+      {
+        if (0.0 == baryC) {
+          ClosestPtToEdge(input, tri[1], tri[0], baryB0, baryA0);
+          baryC0 = 1.0 - baryB0 - baryA0;
+
+          ClosestPtToEdge(input, tri[2], tri[0], baryC1, baryA1);
+          baryB1 = 1.0 - baryC1 - baryA1;
+          has_second_cadidate_coords = true;
+        }
+        else {
+          ClosestPtToEdge(input, tri[2], tri[0], baryC0, baryA0);
+          baryB0 = 1.0 - baryC0 - baryA0;
+        }
+      }
+      else if (0.0 == baryC) {
+        ClosestPtToEdge(input, tri[0], tri[1], baryA0, baryB0);
+        baryC0 = 1.0 - baryA0 - baryB0;
+      }
+
+      // Start by assuming the first bary-coords are correct
+      baryA = baryA0;
+      baryB = baryB0;
+      baryC = baryC0;
+
+      if (has_second_cadidate_coords)
+      {
+        ON_3dPoint point0 = baryA0 * tri[0] + baryB0 * tri[1] + baryC0 * tri[2];
+        ON_3dPoint point1 = baryA1 * tri[0] + baryB1 * tri[1] + baryC1 * tri[2];
+
+        // If other bary-coords are closer to point, use those instead
+        if ((point0 - input).LengthSquared() > (point1 - input).LengthSquared()) {
+          baryA = baryA1;
+          baryB = baryB1;
+          baryC = baryC1;
+        }
+      }
+
+      if (baryA <= ON_ZERO_TOLERANCE)
+        baryA = 0.0;
+
+      if (baryB <= ON_ZERO_TOLERANCE)
+        baryB = 0.0;
+
+      if (baryC <= ON_ZERO_TOLERANCE)
+        baryC = 0.0;
+    }
+  }
+
+  output = baryA * tri[0] + baryB * tri[1] + baryC * tri[2];
+}
+
+void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4])
+{
+  // no need to check input - it should be perfect - if it's not, 
+  // fix bug in tree creation code
+
+  const int* face_vi = mesh->m_F[fi].vi;
+  const ON_3fPoint* mesh_V = mesh->m_V;
+  ON_3dPoint tri[3];
+
+  if (face_vi[2] == face_vi[3])
+  {
+    tri[0] = mesh_V[face_vi[0]];
+    tri[1] = mesh_V[face_vi[1]];
+    tri[2] = mesh_V[face_vi[2]];
+    ClosestPtToTriangle(ptIn, POut, tri, tOut[0], tOut[1], tOut[2]);
+    tOut[3] = 0.0;
+  }
+  else
+  {
+    // split quad into two triangles
+    ON_3dPoint POut2;
+    double tOut2[4] = { 0.0, 0.0, 0.0, 0.0 };
+    double d0 = mesh_V[face_vi[0]].DistanceTo(mesh_V[face_vi[2]]);
+    double d1 = mesh_V[face_vi[1]].DistanceTo(mesh_V[face_vi[3]]);
+    if (d0 <= d1)
+    {
+      // diagonal from 0 to 2 is shortest, so use triangles 0,1,2 and 0,2,3
+      tri[0] = mesh_V[face_vi[0]];
+      tri[1] = mesh_V[face_vi[1]];
+      tri[2] = mesh_V[face_vi[2]];
+      ClosestPtToTriangle(ptIn, POut, tri, tOut[0], tOut[1], tOut[2]);
+      tOut[3] = 0.0;
+
+      // tri[0] = mesh_V[face_vi[0]];
+      tri[1] = tri[2]; // tri[1] = mesh_V[face_vi[2]];
+      tri[2] = mesh_V[face_vi[3]];
+      ClosestPtToTriangle(ptIn, POut2, tri, tOut2[0], tOut2[2], tOut2[3]);
+      tOut2[1] = 0.0;
+    }
+    else
+    {
+      // diagonal from 1 to 3 is shortest, so use triangles 0,1,3 and 1,2,3
+      tri[0] = mesh_V[face_vi[0]];
+      tri[1] = mesh_V[face_vi[1]];
+      tri[2] = mesh_V[face_vi[3]];
+      ClosestPtToTriangle(ptIn, POut, tri, tOut[0], tOut[1], tOut[3]);
+      tOut[2] = 0.0;
+
+      tri[0] = tri[1]; // tri[0] = mesh_V[face_vi[1]];
+      tri[1] = mesh_V[face_vi[2]];
+      //tri[2] = mesh_V[face_vi[3]];
+      ClosestPtToTriangle(ptIn, POut2, tri, tOut2[1], tOut2[2], tOut2[3]);
+      tOut2[0] = 0.0;
+    }
+
+    d0 = ptIn.DistanceTo(POut);
+    d1 = ptIn.DistanceTo(POut2);
+    if (d1 < d0)
+    {
+      // point on 2nd triangle was closer
+      POut = POut2;
+      tOut[0] = tOut2[0];
+      tOut[1] = tOut2[1];
+      tOut[2] = tOut2[2];
+      tOut[3] = tOut2[3];
+    }
+  }
+}
