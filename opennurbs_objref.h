@@ -25,6 +25,10 @@ public:
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
 
+  bool SetFromSubDComponentParameter(const class ON_SubDComponentParameter& subd_cp);
+
+  bool GetSubDComponentParameter(class ON_SubDComponentParameter& subd_cp) const;
+
 
   // If m_point != ON_3dPoint::UnsetPoint and m_t_type != 0, then
   // m_t_type, m_t, and m_t_ci record the m_geometry evaluation
@@ -83,6 +87,14 @@ public:
   //
   //  8: m_geometry points to a mesh or mesh vertex object and m_t_ci
   //     identifies a vertex on the mesh object.
+  // 
+  //  9: A SubD component parameter. 
+  //     m_t_ci identifies the SubD component.
+  //     m_t[], m_s[], are used to encode a collection of indicies and doubles
+  //     that depend on the SubD component type. 
+  //     Use the SetFromSubDComponentParameter() and GetSubDComponentParameter() 
+  //     to convert between ON_ObjRefEvaluationParameter 
+  //     and ON_SubDComponentParameter values.
   //
   int m_t_type;
 private:

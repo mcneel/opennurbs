@@ -2503,6 +2503,307 @@ bool operator!=(
   const ON_SurfaceCurvature& rhs
   );
 
+/// <summary>
+/// ON_SurfaceValues stores surface evaluation values (point, normal, curvatures, derivatives) in a single class
+/// </summary>
+class ON_WIP_CLASS ON_SurfaceValues
+{
+public:
+
+  enum : unsigned
+  {
+    /// <summary>
+    /// The maximum order of a paritial derivative that 
+    /// an ON_SurfaceValues class can possibly store is 15.
+    /// </summary>
+    MaximumDerivativeOrder = 15
+  };
+
+  /// <summary>
+  /// NOTE WELL: CreateFromLocalArray is for experts dealing with unusual situations.
+  /// Create a ON_SurfaceValues where the storage for deritave values is managed externally.
+  /// This is typically used by experts to easily get surface evaluation results stored in value_array[] when 
+  /// the evaluation function returns the results in a ON_SurfaceValues class.
+  /// The caller is responsible for ensuring that the value_array[] memory is not freed or deleted
+  /// while the returned ON_SurfaceValues class is in scope. 
+  /// Any copy of the returned values will not reference value_array[].
+  /// </summary>
+  /// <param name="derivative_order">
+  /// 0 &lt;= derivative_order &lt;= ON_SurfaceValues::MaximumDerivativeOrder
+  /// derivative_order = maximum order of a partial derivative that can be stored in value_array[].
+  /// 1 for point and 1st partial derivatives (value_array[] has at least 3*value_array_stride doubles).
+  /// 2 for point, 1st and 2nd partial derivatives (value_array[] has at least 6*value_array_stride doubles).
+  /// And so on.
+  /// </param>
+  /// <param name="value_array_stride">
+  /// value_array_stride &gt;= 3.
+  /// </param>
+  /// <param name="value_array">
+  /// An array with a capacity of at least 
+  /// value_array_stride * ((order_capacity + 1) * (order_capacity + 2) / 2) 
+  /// doubles.
+  /// </param>
+  /// <param name="values">
+  /// After the call, values will use value_array to store point and derivative evaluations.
+  /// </param>
+  /// <returns>
+  /// True if successful.
+  /// </returns>
+  static bool CreateFromLocalArrayForExperts(
+    unsigned maximum_derivative_order,
+    size_t value_array_stride,
+    double* value_array,
+    ON_SurfaceValues& values
+  );
+
+  /// <summary>
+  /// NOTE WELL: CreateFromVectorArray is for experts dealing with unusual situations.
+  /// Create a ON_SurfaceValues where the storage for the values is deritave values is managed externally.
+  /// This is typically used by experts to easily get surface evaluation results stored in value_array[] 
+  /// when the evaluation function returns the results in a ON_SurfaceValues class. 
+  /// The caller is responsible for ensuring that the value_array[] memory is not freed or deleted 
+  /// while the returned ON_SurfaceValues class is in scope. 
+  /// Any copy of the returned values will not reference value_array[].
+  /// </summary>
+  /// <param name="order_capacity">
+  /// 0 &lt;= derivative_order &lt;= ON_SurfaceValues::MaximumDerivativeOrder
+  /// derivative_order = maximum order of a partial derivative that can be stored in value_array[].
+  /// 1 for point and 1st partial derivatives (value_array[] has at least 3*value_array_stride doubles).
+  /// 2 for point, 1st and 2nd partial derivatives (value_array[] has at least 6*value_array_stride doubles).
+  /// And so on.
+  /// </param>
+  /// <param name="value_array">
+  /// The capacity and count of value_array[] will be set to ((order_capacity + 1) * (order_capacity + 2) / 2).
+  /// </param>
+  /// <param name="values">
+  /// After the call, values will use value_array to store point and derivative evaluations.
+  /// Note that if values is copied, all derivative information will be lost. 
+  /// This class is for experts dealing with unusual situations.
+  /// </param>
+  /// <returns>
+  /// True if successful.
+  /// </returns>
+  static bool CreateFromVectorArrayForExperts(
+    unsigned order_capacity,
+    ON_SimpleArray<ON_3dVector>& value_array,
+    ON_SurfaceValues& values
+  );
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="order_capacity">
+  /// 0 &lt;= derivative_order &lt;= ON_SurfaceValues::MaximumDerivativeOrder
+  /// derivative_order = maximum order of a partial derivative that can be stored in value_array[].
+  /// 1 for point and 1st partial derivatives (value_array[] has at least 3*value_array_stride doubles).
+  /// 2 for point, 1st and 2nd partial derivatives (value_array[] has at least 6*value_array_stride doubles).
+  /// And so on.
+  /// </param>
+  /// <returns>
+  /// True if the capacity to store derivatives was reserved.
+  /// </returns>
+  bool ReserveDerivativeOrderCapacity(
+    unsigned order_capacity
+  );
+
+  /// <summary>
+  /// The order of the partial derivative returned by Derivative(i, j) is i + j.
+  /// The memory to store partial derivatives can be allocated by calling
+  /// ReserveDerivativeOrderCapacity(max_order).
+  /// </summary>
+  /// <returns>
+  /// Returns the maximum order of a partial derivative 
+  /// that can be stored.
+  /// </returns>
+  unsigned DerivativeOrderCapacity() const;
+
+  ON_SurfaceValues() = default;
+  ~ON_SurfaceValues();
+  ON_SurfaceValues(const ON_SurfaceValues& src);
+  ON_SurfaceValues operator=(const ON_SurfaceValues& src);
+
+  static const ON_SurfaceValues Nan;
+
+  void SetPoint(ON_3dPoint P);
+  void ClearPoint();
+  const ON_3dPoint Point() const;
+  bool PointIsSet() const;
+
+  void SetNormal(ON_3dVector N);
+  void ClearNormal();
+  const ON_3dVector Normal() const;
+  bool NormalIsSet() const;
+
+  void SetPrincipalCurvatures(double kappa1, double kappa2);
+  void SetPrincipalCurvatures(ON_SurfaceCurvature kappa);
+  void ClearPrincipalCurvatures();
+  bool PrincipalCurvaturesSet() const;
+  const ON_SurfaceCurvature PrincipalCurvatures() const;
+
+  //void SetPrincipalVectorCurvatures(
+  //  ON_3dVector K1, 
+  //  ON_3dVector K2
+  //);
+  //void ClearPrincipalVectorCurvatures();
+  //bool PrincipalVectorCurvaturesAreSet() const;
+  //const ON_3dVector PrincipalVectorCurvature(unsigned i) const;
+
+  void SetDerivative(unsigned i, unsigned j, ON_3dVector D);
+  void ClearDerivative(unsigned i, unsigned j);
+  void ClearDerivatives();
+  bool DerivativeIsSet(unsigned i, unsigned j) const;
+  bool DerivativesAreSet(unsigned order) const;
+
+  /// <summary>
+  /// If (u,v) are the surface parameters, then
+  /// Derivatieve(0,0) = point,
+  /// Derivative(1,0) = 1st partial with respect to u (D/Du).
+  /// Derivative(0,1) = 1st partial with respect to v (D/Dv).
+  /// Derivative(2,0) = 2nd partial with respect to u (D/Du^2).
+  /// Derivative(1,1) = 2nd mixed partial (D/DuDv).
+  /// Derivative(0,2) = 2nd partial with respect to v (D/Dv^2).
+  /// Derivative(i,j) = (i+j)-th order partial D/Du^iDv^j.
+  /// </summary>
+  /// <param name="i">
+  /// Number of partial derivatives in the 1st surface parameter.
+  /// </param>
+  /// <param name="j">
+  /// Number of partial derivatives in the 2nd surface parameter.
+  /// </param>
+  /// <returns>Specified partial derivative.</returns>
+  const ON_3dVector Derivative(unsigned i, unsigned j) const;
+
+  /// <summary>
+  /// Unsets all surface evaluation values.
+  /// </summary>
+  void Clear();
+
+  /// <summary>
+  /// Used by experts when calling legacy bispan evaluation code that takes (num_der, stride, ders) parameters.
+  /// Pretend this does not exist.
+  /// </summary>
+  /// <param name="derivative_order_capacity">
+  /// The returned value is the maximum order of a partial derivative that can be stored in derivative_values.
+  /// </param>
+  /// <param name="stride">
+  /// Returns the number of doubles between successive partial derivatives.
+  /// </param>
+  /// <param name="derivative_values">
+  /// Returns a pointer to an array of stride*(derivative_order_capacity + 1)*(derivative_order_capacity + 2)/2 doubles.
+  /// </param>
+  /// <returns>
+  /// True if the returned inforamation can be passed to a legacy bispan evaluator.
+  /// </returns>
+  bool GetDerivativeArrayForExperts(
+    unsigned& derivative_order_capacity,
+    size_t& stride,
+    double*& derivative_values
+  );
+
+  /// <summary>
+  /// Used by experts when calling legacy bispan evaluation code that takes (num_der, stride, ders) parameters.
+  /// Pretend this does not exist.  
+  /// </summary>
+  /// <param name="max_derivative_order"></param>
+  /// <param name="stride"></param>
+  /// <param name="derivative_values"></param>
+  void SetDerivativeArrayForExperts(
+    unsigned max_derivative_order, 
+    size_t stride, 
+    const double* derivative_values
+  );
+
+private:
+  /// <returns>
+  /// True if this class should manage the m_values array.
+  /// </returns>
+  bool Internal_DerivativeMemoryIsManaged() const;
+
+  /// <returns>
+  /// True if and expert is managing the memory m_derivatives
+  /// pionts at and that expert has made sure the memory will
+  /// exist for the duration of this class's scope.
+  /// </returns>
+  bool Internal_DerivativeMemoryIsExternal() const;
+
+  unsigned Internal_DerivativeOrderCapacity() const;
+
+  unsigned Internal_DerivativeVectorCount() const;
+
+  unsigned Internal_DerivativeVectorCapacity() const;
+
+  /// <returns>
+  /// Number of partial derivatives with order &;t;=max_order.
+  /// (max_order+1)*(max_order+2)/2
+  /// </returns>
+  static unsigned Internal_DerivativeVectorCount(unsigned max_order);
+
+  /// </param>
+  /// <param name="derivative_order_capacity">
+  /// derivative_order_capacity = maximum derivative order that can be stored.
+  /// </param>
+  void Internal_AllocateManagedDerivativeMemory(unsigned derivative_order_capacity);
+
+  double* Internal_Derivative(unsigned i, unsigned j, bool bSet) const;
+  void Internal_CopyFrom(const ON_SurfaceValues& src);
+  void Internal_Destroy();
+
+  enum MasksAndBits : unsigned char
+  {
+    /// <summary>
+    ///  point_set bit is used in m_derivatives_count_etc
+    /// </summary>
+    point_set = 0x80u,
+
+    /// <summary>
+    ///  normal_set bit is used in m_derivatives_count_etc
+    /// </summary>
+    normal_set = 0x40u,
+
+    /// <summary>
+    ///  principal_curvatures_set bit is used in m_derivatives_count_etc
+    /// </summary>
+    principal_curvatures_set = 0x20u,
+
+    ///// <summary>
+    /////  principal_vector_curvatures_set bit is used in m_derivatives_count_etc
+    ///// </summary>
+    //principal_vector_curvatures_set = 0x10u,
+
+    /// <summary>
+    ///  derivatives_count_mask maxk is used with m_derivatives_count_etc AND m_derivatives_capacity_etc
+    /// </summary>
+    derivatives_count_mask = 0x0Fu,
+
+    /// <summary>
+    ///  derivatives_managed bit is used in m_derivatives_capacity_etc
+    /// </summary>
+    derivatives_managed = 0x10u,
+  };
+
+  // maximum derivative order set = (MasksAndBits::derivatives_count_mask & m_derivatives_count_etc);
+  unsigned char m_derivatives_count_etc = 0;
+
+  // maximum derivative order capacity = (MasksAndBits::derivatives_count_mask & m_derivatives_capacity_etc);
+  // this class manages m_derivatives = (0 != (MasksAndBits::derivatives_managed & m_derivatives_capacity_etc));
+  unsigned char m_derivatives_capacity_etc = 0;
+
+  unsigned short m_reserved = 0;
+  unsigned m_derivatives_stride = 0;
+
+  // If (0 != (MasksAndBits::derivatives_managed & m_derivatives_capacity_etc)), 
+  // then this class manages the memory m_derivatives points at.  
+  // Otherwise the memory is expertly managed outside this class.
+  // If nullptr != m_derivatives, then m_derivatives points to an array
+  // of at least m_derivatives_stride*Internal_DerivativeVectorCapacity() doubles, where N = Internal_DerivativeCapacity();
+  double* m_derivatives = nullptr;
+
+  ON_3dPoint m_P;
+  ON_3dPoint m_N;
+  // ON_3dVector m_K[2]; // principal vector curvatures
+  ON_SurfaceCurvature m_kappa; // principal scalar curvatures
+};
+
 
 #if defined(ON_DLL_TEMPLATE)
 

@@ -696,32 +696,34 @@ ON_EvNormal(int limit_dir,
   const double DuoDu = Du.LengthSquared();
   const double DuoDv = Du*Dv;
   const double DvoDv = Dv.LengthSquared();
-  if ( ON_EvJacobian(DuoDu,DuoDv,DvoDv,nullptr) ) {
-    N = ON_CrossProduct(Du,Dv);
+  if (ON_EvJacobian(DuoDu, DuoDv, DvoDv, nullptr)) 
+  {
+    N = ON_CrossProduct(Du, Dv);
   }
-  else {
+  else if (Duu.IsValid() && Duv.IsValid() && Dvv.IsValid())
+  {
     /* degenerate jacobian - try to compute normal using limit
      *
      * P,Du,Dv,Duu,Duv,Dvv = srf and partials evaluated at (u0,v0).
      * Su,Sv,Suu,Suv,Svv = partials evaluated at (u,v).
      * Assume that srf : R^2 -> R^3 is analytic near (u0,v0).
      *
-     * srf(u0+u,v0+v) = srf(u0,v0) + u*Du + v*Dv 
+     * srf(u0+u,v0+v) = srf(u0,v0) + u*Du + v*Dv
      *                  + (1/2)*u^2*Duu + u*v*Duv + (1/2)v^2*Dvv
      *                  + cubic and higher order terms.
      *
-     * Su X Sv = Du X Dv + u*(Du X Duv + Duu X Dv) + v*(Du X Dvv + Duv X Dv) 
+     * Su X Sv = Du X Dv + u*(Du X Duv + Duu X Dv) + v*(Du X Dvv + Duv X Dv)
      *           + quadratic and higher order terms
-     * 
-     * Set 
-     * (1) A = (Du X Duv + Duu X Dv), 
+     *
+     * Set
+     * (1) A = (Du X Duv + Duu X Dv),
      * (2) B = (Du X Dvv + Duv X Dv) and assume
-     * Du X Dv = 0.  Then 
+     * Du X Dv = 0.  Then
      *
      * |Su X Sv|^2 = u^2*AoA + 2uv*AoB + v^2*BoB + cubic and higher order terms
      *
      * If u = a*t, v = b*t and (a^2*AoA + 2ab*AoB + b^2*BoB) != 0, then
-     * 
+     *
      *        Su X Sv                   a*A + b*B
      * lim   ---------  =  ----------------------------------
      * t->0  |Su X Sv|      sqrt(a^2*AoA + 2ab*AoB + b^2*BoB)
@@ -729,7 +731,7 @@ ON_EvNormal(int limit_dir,
      * All I need is the direction, so I just need to compute a*A + b*B as carefully
      * as possible.  Note that
      * (3)  a*A + b*B = Du X (a*Duv + b*Dvv)  - Dv X (a*Duu + b*Duv).
-     * Formaula (3) requires fewer flops than using formulae (1) and (2) to 
+     * Formaula (3) requires fewer flops than using formulae (1) and (2) to
      * compute a*A + b*B.  In addition, when |Du| << |Dv| or |Du| >> |Dv|,
      * formula (3) reduces the number of subtractions between numbers of
      * similar size.  Since the (nearly) zero first partial is the most common
@@ -762,32 +764,34 @@ ON_EvNormal(int limit_dir,
      *
      */
 
-    double a,b;
-    ON_3dVector V, Au, Av;
+     double a, b;
+     ON_3dVector V, Au, Av;
 
-    switch(limit_dir) {
-    case  2: /* from 2nd  quadrant to point */
-      a = -1.0; b =  1.0; break;
-    case  3: /* from 3rd  quadrant to point */
-      a = -1.0; b = -1.0; break;
-    case  4: /* from 4rth quadrant to point */
-      a =  1.0; b = -1.0; break;
-    default: /* from 1rst quadrant to point */
-      a =  1.0; b =  1.0; break;
-    }
+     switch (limit_dir) {
+     case  2: /* from 2nd  quadrant to point */
+       a = -1.0; b = 1.0; break;
+     case  3: /* from 3rd  quadrant to point */
+       a = -1.0; b = -1.0; break;
+     case  4: /* from 4rth quadrant to point */
+       a = 1.0; b = -1.0; break;
+     default: /* from 1rst quadrant to point */
+       a = 1.0; b = 1.0; break;
+     }
 
-    V = a*Duv + b*Dvv;
-    Av.x = Du.y*V.z - Du.z*V.y;
-    Av.y = Du.z*V.x - Du.x*V.z;
-    Av.z = Du.x*V.y - Du.y*V.x;
+     V = a * Duv + b * Dvv;
+     Av.x = Du.y * V.z - Du.z * V.y;
+     Av.y = Du.z * V.x - Du.x * V.z;
+     Av.z = Du.x * V.y - Du.y * V.x;
 
-    V = a*Duu + b*Duv;
-    Au.x = V.y*Dv.z - V.z*Dv.y;
-    Au.y = V.z*Dv.x - V.x*Dv.z;
-    Au.z = V.x*Dv.y - V.y*Dv.x;
+     V = a * Duu + b * Duv;
+     Au.x = V.y * Dv.z - V.z * Dv.y;
+     Au.y = V.z * Dv.x - V.x * Dv.z;
+     Au.z = V.x * Dv.y - V.y * Dv.x;
 
-    N = Av + Au;
+     N = Av + Au;
   }
+  else
+    N = ON_3dVector::ZeroVector;
   
   return N.Unitize();
 }
@@ -4283,21 +4287,21 @@ bool ON_EvPrincipalCurvatures(
   const double g = Dt.x*Dt.x + Dt.y*Dt.y + Dt.z*Dt.z;
 
 
-  if (gauss) *gauss = 0.0;
-  if (mean) *mean = 0.0;
-  if (kappa1) *kappa1 = 0.0;
-  if (kappa2) *kappa2 = 0.0;
+  if (nullptr != gauss) *gauss = 0.0;
+  if (nullptr != mean) *mean = 0.0;
+  if (nullptr != kappa1) *kappa1 = 0.0;
+  if (nullptr != kappa2) *kappa2 = 0.0;
   K1.x = K1.y = K1.z = 0.0;
   K2.x = K2.y = K2.z = 0.0;
 
   const double jac = e*g - f*f;
-  if ( jac == 0.0 )
-    return false;
+  if ( false == (jac != 0.0) )
+    return false; // jac is zero or nan
   x = 1.0/jac;
   const double det   = (l*n - m*m)*x;           // = Gaussian curvature
   const double trace = (g*l - 2.0*f*m + e*n)*x; // = 2*(mean curvature)
-  if (gauss) *gauss = det;
-  if (mean) *mean = 0.5*trace;
+  if (nullptr != gauss) *gauss = det;
+  if (nullptr != mean) *mean = 0.5*trace;
 
   {
     // solve  k^2 - trace*k + det = 0 to get principal curvatures

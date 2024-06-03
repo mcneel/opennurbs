@@ -251,6 +251,12 @@ Warning	C4263	..: member function does not override any base class virtual membe
 #pragma ON_PRAGMA_WARNING_POP
 #endif
 
+#if defined(ON_RUNTIME_ANDROID)
+#include <android/font.h>
+#include <android/font_matcher.h>
+#include <android/system_fonts.h>
+#endif
+
 class ON_FontFileBuffer
 {
 public:
@@ -419,8 +425,13 @@ private:
     const LOGFONT* logfont
   );
 #endif
+
 #if defined (ON_RUNTIME_COCOA_AVAILABLE)
   static ON_FreeTypeFace* Internal_CreateFaceFromAppleFont(CTFontRef);
+#endif
+
+#if defined (ON_RUNTIME_ANDROID)
+  static ON_FreeTypeFace* Internal_CreateFaceWithAndroidNdk(const ON_Font& font);
 #endif
 };
 
@@ -1430,6 +1441,34 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromAppleFont (CTFontRef fontRe
 
 #endif    // ON_RUNTIME_APPLE
 
+#if defined(ON_RUNTIME_ANDROID)
+ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceWithAndroidNdk(const ON_Font& font)
+{
+  AFontMatcher* ndkFontMatcher = AFontMatcher_create();
+  if (nullptr == ndkFontMatcher)
+    return nullptr;
+  ON_String familyName = font.FamilyName();
+  const uint16_t* text = (const uint16_t*)"XYZ";
+  ON_FreeTypeFace* rc = nullptr;
+  AFont* ndkFont = AFontMatcher_match(ndkFontMatcher, familyName, text, 3, nullptr);
+  if (ndkFont)
+  {
+    size_t index = AFont_getCollectionIndex(ndkFont);
+    const char* path = AFont_getFontFilePath(ndkFont);
+    FT_Face ftFace;
+    FT_Error err = FT_New_Face (ON_FreeType::Library(), path, 0, &ftFace);    // get first face
+    if (0 == err)
+    {
+      rc = new ON_FreeTypeFace();
+      rc->m_face = ftFace;
+    }
+    AFont_close(ndkFont);
+  }
+  AFontMatcher_destroy(ndkFontMatcher);
+  return rc;
+}
+
+#endif
 
 ON_FreeTypeFace* ON_FreeType::CreateFace(
   const ON_Font& font
@@ -1446,10 +1485,15 @@ ON_FreeTypeFace* ON_FreeType::CreateFace(
 #if defined(ON_RUNTIME_WIN)
   LOGFONT logfont = font.WindowsLogFont(0,nullptr);
   f = ON_FreeType::Internal_CreateFaceFromWindowsFont(&logfont);
+#endif
 
-#elif defined (ON_RUNTIME_COCOA_AVAILABLE)
+#if defined (ON_RUNTIME_COCOA_AVAILABLE)
   bool bIsSubstituteFont = false;
   f = ON_FreeType::Internal_CreateFaceFromAppleFont(font.AppleCTFont(bIsSubstituteFont));
+#endif
+
+#if defined(ON_RUNTIME_ANDROID)
+  f = ON_FreeType::Internal_CreateFaceWithAndroidNdk(font);
 #endif
 
   // Create empty holder so this function doesn't repeatedly

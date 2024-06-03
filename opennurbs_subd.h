@@ -1182,6 +1182,23 @@ public:
   /// </returns>
   const ON_2dPoint QuadFaceParameters() const;
 
+  /// <summary>
+  /// An evaluation point is at a SubD vertex if IsSet() is true
+  /// and FaceCornerParameters() = (0,0, 0,0).
+  /// </summary>
+  /// <returns>
+  /// True if the evaluation point is at a SubD vertex.
+  /// </returns>
+  const bool AtVertex() const;
+
+  /// <summary>
+  /// An evaluation point is on a subD edge if IsSet() is true and
+  /// at least one of the values in FaceCornerParameters() is 0.0.
+  /// </summary>
+  /// <returns>
+  /// True if the evaluation point is on a SubD edge.
+  /// </returns>
+  const bool OnEdge() const;
 
 private:
   /// <summary>
@@ -3156,11 +3173,34 @@ public:
   ON_SubDComponentId(ON_SubDFacePtr fptr);
   ON_SubDComponentId(const class ON_SubDFace* f, unsigned face_corner_index);
   ON_SubDComponentId(ON_SubDFacePtr fptr, unsigned face_corner_index);
+  ON_SubDComponentId(unsigned face_id, ON__UINT_PTR face_dir, ON_SubDFaceCornerDex face_cdex);
 
   static int CompareTypeAndId(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs);
   static int CompareTypeAndIdAndDirection(const ON_SubDComponentId& lhs, const ON_SubDComponentId& rhs);
   static int CompareTypeAndIdFromPointer(const ON_SubDComponentId* lhs, const ON_SubDComponentId* rhs);
 
+  /// <summary>
+  /// Returns a string cN where N is ComponentId() and c is v, e or f for a vertex, edge or face component.
+  /// Examples:
+  /// If ComponentType is vertex and ComponentId() is 17, then the string will be "v17".
+  /// If ComponentType is face, ComponentId() is 49, and FaceCornerDex is not set, 
+  /// the string will be "f49".
+  /// If ComponentType is face, ComponentId() is 49, and FaceCornerDex() is ON_SubDFaceCornerDex(2,3), 
+  /// the string will be "f49.2".
+  /// </summary>
+  /// <param name="bUnsetIsEmptyString">
+  /// If bUnsetIsEmptyString is truen, then an unset component id returns the empty string.
+  /// Otherwise and unset component id returns "unset".
+  /// </param>
+  /// <param name="bOrientationPrefix">
+  /// If bDirectionPrefix is true, then the string begins with "+" when
+  /// ComponentDirection() is 0 and "-" when ComponentDirection() is 1.
+  /// </param>
+  /// <returns></returns>
+  const ON_wString ToString( 
+    bool bUnsetIsEmptyString,
+    bool bDirectionPrefix 
+  ) const;
 
   /// <returns>
   /// The type of the referenced component.
@@ -3235,16 +3275,19 @@ public:
   /// </returns>
   const ON_SubDComponentPtr ComponentPtr(const class ON_SubD* subd) const;
 
+  unsigned VertexId() const;
   const ON_SubDVertex* Vertex(const class ON_SubD& subd) const;
   const ON_SubDVertexPtr VertexPtr(const class ON_SubD& subd) const;
   const ON_SubDVertex* Vertex(const class ON_SubD* subd) const;
   const ON_SubDVertexPtr VertexPtr(const class ON_SubD* subd) const;
 
+  unsigned EdgeId() const;
   const ON_SubDEdge* Edge(const class ON_SubD& subd) const;
   const ON_SubDEdgePtr EdgePtr(const class ON_SubD& subd) const;
   const ON_SubDEdge* Edge(const class ON_SubD* subd) const;
   const ON_SubDEdgePtr EdgePtr(const class ON_SubD* subd) const;
 
+  unsigned FaceId() const;
   const ON_SubDFace* Face(const class ON_SubD& subd) const;
   const ON_SubDFacePtr FacePtr(const class ON_SubD& subd) const;
   const ON_SubDFace* Face(const class ON_SubD* subd) const;
@@ -4841,6 +4884,12 @@ public:
   ON_SubDComponentParameter(ON_SubDComponentPtr cptr);
 
   ON_SubDComponentParameter(
+    ON_SubDComponentId vertex_id,
+    ON_SubDComponentId active_edge_id,
+    ON_SubDComponentId active_face_id
+  );
+
+  ON_SubDComponentParameter(
     const class ON_SubDVertex* v,
     const class ON_SubDEdge* active_edge,
     const class ON_SubDFace* active_face
@@ -4851,6 +4900,13 @@ public:
     const class ON_SubDEdge* active_edge,
     const class ON_SubDFace* active_face
   );
+
+  ON_SubDComponentParameter(
+    ON_SubDComponentId edge_id,
+    double p,
+    ON_SubDComponentId active_face_id
+  );
+
 
   /// <summary>
   /// 
@@ -4883,6 +4939,11 @@ public:
     const ON_SubDEdgePtr eptr,
     double p,
     const class ON_SubDFace* active_face
+  );
+
+  ON_SubDComponentParameter(
+    ON_SubDComponentId face_id,
+    ON_SubDFaceParameter fp
   );
 
   ON_SubDComponentParameter(
@@ -4947,6 +5008,10 @@ public:
   /// <returns></returns>
   static int Compare(const ON_SubDComponentParameter* lhs, const ON_SubDComponentParameter* rhs);
 
+  const ON_wString ToString(bool bUnsetIsEmptyString) const;
+
+  bool IsSet() const;
+
   const ON_SubDComponentId ComponentIdAndType() const;
   unsigned ComponentId() const;
   ON_SubDComponentPtr::Type ComponentType() const;
@@ -4956,6 +5021,12 @@ public:
   /// True if the referenced component is a vertex.
   /// </returns>
   bool IsVertexParameter() const;
+
+  /// <returns>
+  /// If IsVertexParameter() is true, then the vertex's id is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  unsigned VertexId() const;
 
   /// <summary>
   /// If this parameter references a vertex and the subd has a vertex
@@ -4999,6 +5070,12 @@ public:
   /// True if the referenced component is an edge.
   /// </returns>
   bool IsEdgeParameter() const;
+
+  /// <returns>
+  /// If IsEdgeParameter() is true, then the edge's id is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  unsigned EdgeId() const;
 
   /// <summary>
   /// If this parameter references an edge and the subd has an edge
@@ -5047,6 +5124,12 @@ public:
   /// True if the referenced component is a face.
   /// </returns>
   bool IsFaceParameter() const;
+
+  /// <returns>
+  /// If IsFaceParameter() is true, then the face's id is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  unsigned FaceId() const;
 
   /// <summary>
   /// If this parameter references a face and the subd has a face
@@ -5584,18 +5667,46 @@ public:
     double* point_ring,
     size_t point_ring_capacity,
     size_t point_ring_stride
-    );
+  );
 
   static unsigned int GetSectorPointRing(
     bool bSubdivideIfNeeded,
     const class ON_SubDSectorIterator& sit,
     ON_SimpleArray<ON_3dPoint>& point_ring
-    );
+  );
+
+  static unsigned int GetSectorPointRing(
+    const class ON_SubDSectorIterator& sit,
+    unsigned& subdivision_count,
+    double* point_ring,
+    size_t point_ring_capacity,
+    size_t point_ring_stride
+  );
+
+  /// <summary>
+  /// Get a ring of points that can be used to calculate the subdivision and
+  /// limit points of sit.CenterVertex().
+  /// </summary>
+  /// <param name="sit">
+  /// Initialized sector iterator.
+  /// </param>
+  /// <param name="subdivision_count">
+  /// TNumber of subdivisions performed to get point_ring[] is returned in subdivision_count.
+  /// </param>
+  /// <param name="point_ring">
+  /// The points are returned in point_ring[]
+  /// </param>
+  /// <returns>
+  /// Number of points in point_ring[]
+  /// </returns>
+  static unsigned int GetSectorPointRing(
+    const class ON_SubDSectorIterator& sit,
+    unsigned& subdivision_count,
+    ON_SimpleArray<ON_3dPoint>& point_ring
+  );
 
   /*
   Parameters:
-    subd_type - [in]
-      A quad based subdivision algorithm.
     bPermitNoSubdivisions - [in]
       When in doubt, pass false.
       If bPermitNoSubdivisions is true and no extraordinary components
@@ -5609,10 +5720,10 @@ public:
     component_ring_count - [in]
       component_ring_count specifies the number of components in the component_ring[] array.
     component_ring[] - [in]
-      If vertex0 is null, then component_ring[0] is the central vertex,
-      component_ring[1] and subsequent components with odd indices are
-      sector edges, component_ring[2] and subsequent components with even
-      indices are sector faces, all sorted radially.
+      component_ring[0] is the central vertex,
+      component_ring[1] and subsequent components with odd indices are sector edges. sorted radially.
+      component_ring[2] and subsequent components with even indices are sector faces.
+      The edges and faces are sorted radially (component_ring[1] and component_ring[3] are edges of component_ring[2], etc).
     point_ring_stride - [in]
     point_ring - [out]
       point locations are returned here.
@@ -5634,6 +5745,48 @@ public:
     double* point_ring,
     size_t point_ring_stride
     );
+
+  /// <summary>
+  /// Get a ring of points that can be mulitplied by subdivsion and limit point matrices 
+  /// to calculate the subdivision point and limit point for the central vertex in component_ring[0].
+  /// No input validation is performed. This function will crash if the input is not valid.
+  /// Call GetSubdivisionPointRing() if you want a crash proof call.
+  /// </summary>
+  /// <param name="bPermitNoSubdivisions">
+  /// When in doubt, pass false. If bPermitNoSubdivisions is true and no extraordinary components
+  /// or sharp edges are in the ring, then locations of the input component_ring[] control net points 
+  /// are returned. Otherwise one or more subdivisions are applied to obtain the output ring points.
+  /// </param>
+  /// <param name="component_ring">
+  /// component_ring[0] is the central vertex.
+  /// component_ring[1] and subsequent components with odd indices are sector edges.
+  /// component_ring[2] and subsequent components with even indices are sector faces.
+  /// The edges and faces are sorted radially(component_ring[1] and component_ring[3] are edges of component_ring[2], etc).
+  /// </param>
+  /// <param name="component_ring_count">
+  /// Number of components in the component_ring[] array.
+  /// </param>
+  /// <param name="subdivision_count">
+  /// The number of subdivisions used to calculate point_ring[] is returned in subdivision_count.
+  /// </param>
+  /// <param name="point_ring">
+  /// The point ring points are returned in point_ring[]
+  /// </param>
+  /// <param name="point_ring_stride">
+  /// Number of doubles between subsequent points in point_ring[].
+  /// </param>
+  /// <returns>
+  /// If successful, component_ring_count is returned which is the number of points set in point_ring[].
+  /// Otherwise 0 is returned.
+  /// </returns>
+  static unsigned int GetQuadSectorPointRing(
+    bool bPermitNoSubdivisions,
+    const class ON_SubDComponentPtr* component_ring,
+    size_t component_ring_count,
+    unsigned int& subdivision_count,
+    double* point_ring,
+    size_t point_ring_stride
+  );
 
   static const class ON_SubDVertex* SubdivideSector(
     const class ON_SubDVertex* center_vertex,
@@ -16806,6 +16959,29 @@ public:
     const ON_SubDEdge* edge
     ) const;
 
+  /// <summary>
+  /// Get the edges in the face's boundary that are on either side of a face corner.
+  /// </summary>
+  /// <param name="corner_vertex">
+  /// Vertex used to identify the face corner.
+  /// </param>
+  /// <param name="entering_edge">
+  /// The face's boundary edge ending at corner_vertex is retuned here.
+  /// </param>
+  /// <param name="leaving_edge">
+  /// The face's boundary edge beginning at corner_vertex is retuned here.
+  /// </param>
+  /// <returns>
+  /// If successful, the index of the vertex in the face's vertex list is returned;
+  /// this value is &gt;=0 and &lt EdgeCount().
+  /// Otherwise ON_UNSET_UINT_INDEX is returned.
+  /// </returns>
+  unsigned int GetCornerEdges(
+    const ON_SubDVertex* corner_vertex,
+    ON_SubDEdgePtr& entering_edge,
+    ON_SubDEdgePtr& leaving_edge
+  ) const;
+
   /*
   Parameters:
     subdivision_point - [out]
@@ -18490,6 +18666,45 @@ public:
   const ON_SubDFace* IncrementToCrease(
     int increment_direction
     );
+
+  /*
+  Description:
+    Increment the iterator until it reaches a face with
+    a crease
+  Parameters:
+    increment_direction - [in]
+    > 0 advance next until CurrentEdge(1) is a crease.
+    <= 0 advance previous until CurrentEdge(0) is a crease.
+  Returns:
+    nullptr - the sector has no creases.
+    not nullptr - incremented to a crease
+  */
+
+  /// <summary>
+  /// Increment the iterator until it reaches a face with a crease on the
+  /// side indicated by increment_direction. 
+  /// </summary>
+  /// <param name="increment_direction">
+  /// &gt; 0 advance next until CurrentEdge(1) is a crease.
+  /// &lt;= 0 advance previous until CurrentEdge(0) is a crease.
+  /// </param>
+  /// <param name="increment_count">
+  /// The number of inrements it took to reach a crease.
+  /// </param>
+  /// <returns>
+  /// ON_SubDEdgeTag::Smooth:
+  ///   The sector has no creases and the iterator was not changed.
+  /// ON_SubDEdgeTag::Crease: 
+  ///   The sector has a crease edge and this-&lt;CurrentEdge(increment_direction &gt; 0 ? 1 : 0)
+  ///   is a crease.
+  /// ON_SubDEdgeTag::Unset: 
+  ///   This sector iterator is not valid. No changes.
+  /// </returns>
+  ON_SubDEdgeTag IncrementToCrease(
+    int increment_direction,
+    unsigned* increment_count
+  );
+
 
   /*
   Description:

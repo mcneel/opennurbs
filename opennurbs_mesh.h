@@ -6214,6 +6214,9 @@ private:
   bool ReadFaceArray( int, int, ON_BinaryArchive& );
   bool SwapEdge_Helper( int, bool );
 
+public:
+  const ON_MappingMeshInfo* GetMappingMeshInfo() const;
+  const ON_RenderMeshInfo* GetRenderMeshInfo() const;
 };
 
 //////////////////////////////////////////////////////////////////////////

@@ -23,7 +23,7 @@ Parameters
     Use ON::sort_algorithm::heap_sort only after doing meaningful performance
     testing using optimized release builds that demonstrate
     ON::sort_algorithm::heap_sort is significantly better.
-  index - [out] 
+  index - [out]
     Pass in an array of count integers.  The returned
     index[] is a permutation of (0,1,..,count-1)
     such that compare(B[index[i]],B[index[i+1]) <= 0
@@ -39,7 +39,7 @@ Parameters
     Comparison function a la qsort().
 */
 ON_DECL
-void ON_Sort( 
+void ON_Sort(
   ON::sort_algorithm method,
   int* index,
   const void* base,
@@ -70,7 +70,7 @@ Parameters
     Use ON::sort_algorithm::heap_sort only after doing meaningful performance
     testing using optimized release builds that demonstrate
     ON::sort_algorithm::heap_sort is significantly better.
-  index - [out] 
+  index - [out]
     Pass in an array of count integers.  The returned
     index[] is a permutation of (0,1,..,count-1)
     such that compare(B[index[i]],B[index[i+1]) <= 0
@@ -89,7 +89,7 @@ Parameters
     pointer passed as the third argument to compare().
 */
 ON_DECL
-void ON_Sort( 
+void ON_Sort(
   ON::sort_algorithm method,
   int* index,
   const void* base,
@@ -130,19 +130,19 @@ Parameters
     pointer passed as the third argument to compare().
 Remarks:
   As a rule, use quick sort unless extensive tests in your case
-  prove that heap sort is faster. 
-  
-  This implementation of quick sort is generally faster than 
+  prove that heap sort is faster.
+
+  This implementation of quick sort is generally faster than
   heap sort, even when the input arrays are nearly sorted.
   The only common case when heap sort is faster occurs when
-  the arrays are strictly "chevron" (3,2,1,2,3) or "carat" 
+  the arrays are strictly "chevron" (3,2,1,2,3) or "carat"
   (1,2,3,2,1) ordered, and in these cases heap sort is about
-  50% faster.  If the "chevron" or "caret" ordered arrays 
-  have a little randomness added, the two algorithms have 
+  50% faster.  If the "chevron" or "caret" ordered arrays
+  have a little randomness added, the two algorithms have
   the same speed.
 */
 ON_DECL
-void ON_hsort( 
+void ON_hsort(
         void* base,
         size_t count,
         size_t sizeof_element,
@@ -150,7 +150,7 @@ void ON_hsort(
         );
 
 ON_DECL
-void ON_qsort( 
+void ON_qsort(
         void* base,
         size_t count,
         size_t sizeof_element,
@@ -158,7 +158,7 @@ void ON_qsort(
         );
 
 ON_DECL
-void ON_hsort( 
+void ON_hsort(
         void* base,
         size_t count,
         size_t sizeof_element,
@@ -167,7 +167,7 @@ void ON_hsort(
         );
 
 ON_DECL
-void ON_qsort( 
+void ON_qsort(
         void* base,
         size_t count,
         size_t sizeof_element,
@@ -179,12 +179,12 @@ void ON_qsort(
 Description:
   Sort an array of doubles in increasing order in place.
 Parameters:
-  sort_algorithm - [in]  
+  sort_algorithm - [in]
     ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
     Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
-    optimized release builds and are confident heap sort is 
+    optimized release builds and are confident heap sort is
     significantly faster in your case.
-  a - [in / out] 
+  a - [in / out]
     The values in a[] are sorted so that a[i] <= a[i+1].
     a[] cannot contain NaNs.
   nel - [in]
@@ -234,12 +234,12 @@ void ON_SortDoubleArrayDecreasing(
 Description:
   Sort an array of ints in place.
 Parameters:
-  sort_algorithm - [in]  
+  sort_algorithm - [in]
     ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
     Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
-    optimized release builds and are confident heap sort is 
+    optimized release builds and are confident heap sort is
     significantly faster in your case.
-  a - [in / out] 
+  a - [in / out]
     The values in a[] are sorted so that a[i] <= a[i+1].
   nel - [in]
     length of array a[]
@@ -255,12 +255,12 @@ void ON_SortIntArray(
 Description:
   Sort an array of unsigned ints in place.
 Parameters:
-  sort_algorithm - [in]  
+  sort_algorithm - [in]
     ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
     Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
-    optimized release builds and are confident heap sort is 
+    optimized release builds and are confident heap sort is
     significantly faster in your case.
-  a - [in / out] 
+  a - [in / out]
     The values in a[] are sorted so that a[i] <= a[i+1].
   nel - [in]
     length of array a[]
@@ -276,12 +276,12 @@ void ON_SortUnsignedIntArray(
 Description:
   Sort an array of unsigned 64-bit ints in place.
 Parameters:
-  sort_algorithm - [in]  
+  sort_algorithm - [in]
     ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
     Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
-    optimized release builds and are confident heap sort is 
+    optimized release builds and are confident heap sort is
     significantly faster in your case.
-  a - [in / out] 
+  a - [in / out]
     The values in a[] are sorted so that a[i] <= a[i+1].
   nel - [in]
     length of array a[]
@@ -299,12 +299,12 @@ void ON_SortUINT64Array(
 Description:
   Sort an array of unsigned null terminated char strings in place.
 Parameters:
-  sort_algorithm - [in]  
+  sort_algorithm - [in]
     ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
     Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
-    optimized release builds and are confident heap sort is 
+    optimized release builds and are confident heap sort is
     significantly faster in your case.
-  a - [in / out] 
+  a - [in / out]
     The values in a[] are sorted so that strcmp(a[i],a[i+1]) <= 0.
   nel - [in]
     length of array a[]
@@ -317,23 +317,23 @@ void ON_SortStringArray(
         );
 
 ON_DECL
-const int* ON_BinarySearchIntArray( 
-          int key, 
-          const int* base, 
+const int* ON_BinarySearchIntArray(
+          int key,
+          const int* base,
           size_t nel
           );
 
 ON_DECL
-const unsigned int* ON_BinarySearchUnsignedIntArray( 
-          unsigned int key, 
-          const unsigned int* base, 
+const unsigned int* ON_BinarySearchUnsignedIntArray(
+          unsigned int key,
+          const unsigned int* base,
           size_t nel
           );
 
 ON_DECL
 const void* ON_BinarySearchArrayForUnsingedInt(
-  unsigned int key, 
-  const void* base, 
+  unsigned int key,
+  const void* base,
   size_t count,
   size_t sizeof_element,
   size_t key_offset
@@ -359,9 +359,9 @@ const void* ON_BinarySearchArrayFirst2udex(
 
 
 ON_DECL
-const double* ON_BinarySearchDoubleArray( 
-          double key, 
-          const double* base, 
+const double* ON_BinarySearchDoubleArray(
+          double key,
+          const double* base,
           size_t nel
           );
 
@@ -393,16 +393,16 @@ public:
   Description:
     Set check sum values for a buffer
   Parameters:
-    size - [in] 
+    size - [in]
       number of bytes in buffer
-    buffer - [in]  
+    buffer - [in]
     time - [in]
       last modified time in seconds since Jan 1, 1970, UCT
   Returns:
     True if checksum is set.
   */
-  bool SetBufferCheckSum( 
-    size_t size, 
+  bool SetBufferCheckSum(
+    size_t size,
     const void* buffer,
     time_t time
    );
@@ -415,7 +415,7 @@ public:
   Returns:
     True if checksum is set.
   */
-  bool SetFileCheckSum( 
+  bool SetFileCheckSum(
     FILE* fp
    );
 
@@ -427,7 +427,7 @@ public:
   Returns:
     True if checksum is set.
   */
-  bool SetFileCheckSum( 
+  bool SetFileCheckSum(
     const wchar_t* filename
    );
 
@@ -440,8 +440,8 @@ public:
   Returns:
     True if the buffer has a matching checksum.
   */
-  bool CheckBuffer( 
-    size_t size, 
+  bool CheckBuffer(
+    size_t size,
     const void* buffer
     ) const;
 
@@ -455,7 +455,7 @@ public:
   Returns:
     True if the file has a matching checksum.
   */
-  bool CheckFile( 
+  bool CheckFile(
     FILE* fp,
     bool bSkipTimeCheck = false
     ) const;
@@ -470,7 +470,7 @@ public:
   Returns:
     True if the file has a matching checksum.
   */
-  bool CheckFile( 
+  bool CheckFile(
     const wchar_t* filename,
     bool bSkipTimeCheck = false
     ) const;
@@ -639,7 +639,7 @@ Parameters:
     If element_count2 >= 0, then that number of elements are compared in string2[].
   bOrdinalIgnoreCase - [in]
     If bOrdinalIgnoreCase, then letters with a capital and small codepoint value <= 127
-    are compared using the smallest codepoint value.  This amounts to converting the 
+    are compared using the smallest codepoint value.  This amounts to converting the
     letters a-z to A-Z before comparing.
 Returns:
   0: the strings are the same
@@ -678,7 +678,7 @@ Parameters:
     If element_count2 >= 0, then that number of elements are compared in string2[].
   bOrdinalIgnoreCase - [in]
     If bOrdinalIgnoreCase, then letters with a capital and small codepoint value <= 127
-    are compared using the smallest codepoint value.  This amounts to converting the 
+    are compared using the smallest codepoint value.  This amounts to converting the
     letters a-z to A-Z before comparing.
 Returns:
   0: the strings are the same
@@ -717,7 +717,7 @@ Parameters:
     If element_count2 >= 0, then that number of elements are compared in string2[].
   bOrdinalIgnoreCase - [in]
     If bOrdinalIgnoreCase, then letters with a capital and small codepoint value <= 127
-    are compared using the smallest codepoint value.  This amounts to converting the 
+    are compared using the smallest codepoint value.  This amounts to converting the
     letters a-z to A-Z before comparing.
 Returns:
   0: the strings are the same
@@ -755,7 +755,7 @@ Parameters:
     If element_count2 >= 0, then that number of elements are compared in string2[].
   bOrdinalIgnoreCase - [in]
     If bOrdinalIgnoreCase, then letters with a capital and small codepoint value <= 127
-    are compared using the smallest codepoint value.  This amounts to converting the 
+    are compared using the smallest codepoint value.  This amounts to converting the
     letters a-z to A-Z before comparing.
 Returns:
   0: the strings are the same
@@ -781,7 +781,7 @@ int ON_StringCompareOrdinalWideChar(
   );
 
 /////////////////////////////////////////////////////////////////////////////
-// 
+//
 // ON_String is a UTF-8 char string on all platforms
 // ON_wString is a UTF-16 encoded wchar_t string on Windows platforms
 // ON_wString is a UTF-32 encoded wchar_t string on Windows platforms
@@ -891,7 +891,7 @@ const ON_SHA1_Hash ON_StringContentHash(
 );
 
 /// <summary>
-/// A char string. 
+/// A char string.
 /// Any multibyte encoding can be used. If the encoding is unknown, assume it is UTF-8.
 /// </summary>
 class ON_CLASS ON_String
@@ -902,20 +902,14 @@ public:
 	ON_String() ON_NOEXCEPT;
 	ON_String( const ON_String& );
 
-  enum : int
+  enum : size_t
   {
     /// <summary>
-    /// This ON_String::MaximumStringLength value of 100,000,000
-    /// is used for string length sanity checking in both ON_String and
-    /// ON_wString.
-    /// The design of the ON_String and ON_wString classes could support 
-    /// string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
-    /// a cap of 100 million seems generous enough for current usage
-    /// and is small enough to detect many corrupt memory
-    /// situations.
+    /// The design of the ON_String and ON_wString classes supports
+    /// string lengths up to 0xFFFFFFFEU = 4,294,967,294
     /// This value is used for both ON_String and ON_wString.
     /// </summary>
-    MaximumStringLength = 100000000
+    MaximumStringLength = 4294967294
   };
 
   /// <summary>
@@ -925,12 +919,12 @@ public:
   static const ON_String EmptyString;
 
   /// <summary>
-  /// Even though a char string has endian independent byte order, 
-  /// it is valid for UTF-8 encoded text to begin with the UTF-8 encoding of U+FEFF. 
+  /// Even though a char string has endian independent byte order,
+  /// it is valid for UTF-8 encoded text to begin with the UTF-8 encoding of U+FEFF.
   /// A UTF-8 BOM is sometimes used to mark a char string as UTF-8 encoded.
-  /// A UTF-8 BOM can occur when UTF-16 and UTF-32 encoded text with a byte 
+  /// A UTF-8 BOM can occur when UTF-16 and UTF-32 encoded text with a byte
   /// order mark is converted to UTF-8 encoded text. Conversely a UTF-8 BOM
-  /// is sometimes used when UTF-8 encode text will be converted to UTF-16/UTF-32 
+  /// is sometimes used when UTF-8 encode text will be converted to UTF-16/UTF-32
   /// encoded text and a BOM is desired in the result.
   /// </summary>
   static const ON_String ByteOrderMark;
@@ -1035,7 +1029,7 @@ public:
     True if c is '0', '1', ..., or '9'.
   */
   static bool IsDecimalDigit(char c);
-   
+
   /*
   Description:
     Decode this char string using the encoding specified by windows_code_page
@@ -1051,7 +1045,7 @@ public:
   const ON_wString MultiByteDecode(int windows_code_page) const;
 
 private:
-  // Use IsEmpty() or IsNotEmpty() when you want a bool 
+  // Use IsEmpty() or IsNotEmpty() when you want a bool
   // to test for the empty string.
   explicit operator bool() const { return IsNotEmpty(); }
 public:
@@ -1066,12 +1060,12 @@ public:
 
 	ON_String( const char* );
 	ON_String( const char*, int /*length*/ );        // from substring
-	ON_String( char, int = 1 /* repeat count */ );   
+	ON_String( char, int = 1 /* repeat count */ );
 
 	ON_String( const unsigned char* );
 	ON_String( const unsigned char*, int /*length*/ );        // from substring
-	ON_String( unsigned char, int = 1 /* repeat count */ ); 
-  
+	ON_String( unsigned char, int = 1 /* repeat count */ );
+
   // construct a UTF-8 string string from a UTF-16 string.
 	ON_String( const wchar_t* src );  // src = UTF-16 string
 	ON_String( const wchar_t* src, int length ); // from a UTF-16 substring
@@ -1082,13 +1076,13 @@ public:
 	bool LoadResourceString( HINSTANCE, UINT); // load from Windows string resource
 										                         // 2047 chars max
 #endif
-  
+
 #if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
   ON_String(CFStringRef);
-  
+
   CFStringRef ToAppleCFString() const;
 #endif
-  
+
   /*
   Parameters:
     bLengthTest - [in]
@@ -1165,7 +1159,7 @@ public:
     const char* string
   );
 
-  bool IsEmpty() const; // returns true if length == 0 
+  bool IsEmpty() const; // returns true if length == 0
   bool IsNotEmpty() const; // returns true if length > 0
   void Empty();   // sets length to zero - if possible, memory is retained
 
@@ -1244,7 +1238,7 @@ public:
 
   /*
   Description:
-    Compare this string and other_string by normalizing (NFC) 
+    Compare this string and other_string by normalizing (NFC)
     and using invariant culture ordering.
   Parameters:
     other_string - [in]
@@ -1252,19 +1246,19 @@ public:
   Remarks:
     1) Ordinal compares are the fastest.
     2) Equal(...) is faster than  Compare(...)
-  */  
+  */
   int Compare(
     const ON_String& other_string,
     const class ON_Locale& locale,
     bool bIgnoreCase
     ) const;
- 
+
   int Compare(
     const char* other_string,
     const class ON_Locale& locale,
     bool bIgnoreCase
     ) const;
- 
+
   /*
   Description:
     Compare string1 and string2 by normalizing (NFC) and using invariant culture ordering.
@@ -1275,7 +1269,7 @@ public:
   Remarks:
     1) Ordinal compares are the fastest.
     2) Equal(...) is faster than  Compare(...)
-  */  
+  */
   static int Compare(
     const char* string1,
     const char* string2,
@@ -1352,17 +1346,17 @@ public:
     3) If locale, linguistic issues, UTF-8 encoding issues or unicode normalization
     or collation issues need to be considered, then CompareOrdinal() is
     the wrong function to use.
-  */  
+  */
   int CompareOrdinal(
      const ON_String& other_string,
      bool bIgnoreCase
      ) const;
- 
+
   int CompareOrdinal(
      const char* other_string,
      bool bIgnoreCase
      ) const;
- 
+
   /*
   Description:
     Compare string1 and string2 unsigned byte by unsigned byte.
@@ -1425,7 +1419,7 @@ public:
   /*
   Description:
     Compare this string and other_path as file system paths using
-    appropriate tests for the current operating system. 
+    appropriate tests for the current operating system.
   Parameters:
     other_path - [in]
   Remarks:
@@ -1504,9 +1498,9 @@ public:
 
   /*
   Description:
-    Compare this string and other_name as a name attribute of an object 
+    Compare this string and other_name as a name attribute of an object
     like ON_3dmObjectAttributes.m_name, ON_Layer.m_name, and so on.
-    These comparisons ignore case and use appropriate string normalization.    
+    These comparisons ignore case and use appropriate string normalization.
   Parameters:
     other_name - [in]
       null terminated string
@@ -1520,9 +1514,9 @@ public:
 
   /*
   Description:
-    Compare this string and other_name as a name attribute of an object 
+    Compare this string and other_name as a name attribute of an object
     like ON_3dmObjectAttributes.m_name, ON_Layer.m_name, and so on.
-    These comparisons ignore case and use appropriate string normalization.    
+    These comparisons ignore case and use appropriate string normalization.
   Parameters:
     name1 - [in]
       null terminated string
@@ -1601,7 +1595,7 @@ public:
     c - [in]
       If c is in the range A to Z or a to z, the map specified
       by map_type is applied.  All other values of c are
-      unchanged.   
+      unchanged.
   Remarks:
     MapCharacterOrdinal is not appropriate for general string mapping.
   */
@@ -1630,7 +1624,7 @@ public:
     map_type - [in]
   Returns:
     Number of mapped_string[] elements that were mapped from string[].
-    
+
     When the number of string[] input elements is >= mapped_string_capacity,
     mapped_string_capacity mapped_string[] elements are set and
     mapped_string_capacity is returned.
@@ -1665,8 +1659,8 @@ public:
   Parameters:
     locale - [in]
       Locale to use when converting case. It is common to pass one of
-      the preset locales ON_Locale::Ordinal, ON_Locale::InvariantCulture, 
-      or ON_Locale::m_CurrentCulture. 
+      the preset locales ON_Locale::Ordinal, ON_Locale::InvariantCulture,
+      or ON_Locale::m_CurrentCulture.
 
     map_type - [in]
       selects the mapping
@@ -1676,9 +1670,9 @@ public:
 
     element_count - [in]
       The number of char elements to map from input string[].
-      
+
       If element_count < 1, then string[] must be null terminated and
-      ON_wString::Length(string)+1 elements are mapped. 
+      ON_wString::Length(string)+1 elements are mapped.
       The +1 insures the output is null terminated.
 
     mapped_string - [out]
@@ -1691,7 +1685,7 @@ public:
 
   Returns:
     If mapped_string_capacity > 0, then the number elements set in mapped_string[]
-    is returned.  
+    is returned.
 
     If mapped_string_capacity == 0, then the number elements required to perform
     the mapping is returned.
@@ -1824,10 +1818,10 @@ public:
       false: Use 0-9, a - b
       true: Use 0-9, A - F
     bReverse - [in]
-      false: 
+      false:
         The digits in the string will be in the order
         bytes[0], bytes[1], ..., bytes[byte_count-1].
-      true: 
+      true:
         The digits in the string will be in the order
         bytes[byte_count-1], ..., bytes[1], bytes[0].
   */
@@ -1836,12 +1830,12 @@ public:
     size_t byte_count,
     bool bCapitalDigits,
     bool bReverse
-    ); 
+    );
 
   /*
   Parameters:
     format - [in]
-      Format control.  
+      Format control.
       Positional parameters of the form %N$x where N >= 1 and x
       is the standard format specification are supported.
       Avoid using %S (capital S).  See the Remarks for details.
@@ -1891,7 +1885,7 @@ public:
     );
 
   bool FormatVargs(
-    const char* format, 
+    const char* format,
     va_list args
     );
 
@@ -1902,11 +1896,11 @@ public:
 
   /*
   Description:
-    A platform independent, secure, culture invariant way to format a char string. 
-    This function is provide to be used when it is critical that 
+    A platform independent, secure, culture invariant way to format a char string.
+    This function is provide to be used when it is critical that
     the formatting be platform independent, secure and culture invariant.
   Parameters:
-    buffer - [out] 
+    buffer - [out]
       not null
     buffer_capacity - [in]
       > 0
@@ -1915,7 +1909,7 @@ public:
       Avoid using %S (capital S).  See the Remarks for details.
     ... - [in]
   Returns:
-    >= 0: 
+    >= 0:
       The number of char elements written to buffer[], not including the null terminator.
       A null terminator is always added (buffer[returned value] = 0).
       The last element of buffer[] is always set to zero (buffer[buffer_capacity-1] = 0).
@@ -1924,8 +1918,8 @@ public:
   Remarks:
     The way Windows handles the %S (capital S) format parameter depends on locale
     and code page settings.  It is strongly recommended that you never use %S to
-    include any string that may possibly contain elements with values > 127.  
-    The following examples illustrate a way to predictably use UTF-8 and wchar_t 
+    include any string that may possibly contain elements with values > 127.
+    The following examples illustrate a way to predictably use UTF-8 and wchar_t
     parameters in buffers of the other element type.
 
          const char* utf8_string = ...;
@@ -1941,7 +1935,7 @@ public:
          ON_String::Format(char_buffer, char_buffer_capacity, "%s", ON_String(wide_string));
   */
   static int ON_VARGS_FUNC_CDECL FormatIntoBuffer(
-    char* buffer, 
+    char* buffer,
     size_t buffer_capacity,
     const char* format,
     ...
@@ -1968,7 +1962,7 @@ public:
 
   /*
   Returns:
-    >= 0: 
+    >= 0:
       Number of char elements in the formatted string, not including the null terminator.
     < 0:
       Invalid input
@@ -2079,7 +2073,7 @@ public:
     double* value
     );
 
-  
+
   // Low level access to string contents as character array
 	char* ReserveArray(size_t); // make sure internal array has at least
                           // the requested capacity.
@@ -2107,7 +2101,7 @@ public:
   /*
   OBSOLETE - use ON_FileSystemPath::SplitPath
   */
-  static void SplitPath( 
+  static void SplitPath(
     const char* path,
     ON_String* drive,
     ON_String* dir,
@@ -2141,16 +2135,16 @@ public:
     UTF8 = 3,
 
     /// <summary>
-    /// The sequence of byte values could be a UTF-8 encoding with oversized 
+    /// The sequence of byte values could be a UTF-8 encoding with oversized
     /// encodings or surrogate pair code points.
     /// </summary>
     SloppyUTF8 = 4,
 
     /// <summary>
     /// The sequence of byte values could be a BIG5 encode string
-    /// that may also contain single byte ASCII code points. 
+    /// that may also contain single byte ASCII code points.
     /// BIG5  is a double byte encoding and the first byte
-    /// always has the high bit set. 
+    /// always has the high bit set.
     /// </summary>
     BIG5andASCII = 5,
   };
@@ -2255,14 +2249,14 @@ protected:
 
 /*
 Returns:
-  True if lhs and rhs are identical as arrays of char elements.  
+  True if lhs and rhs are identical as arrays of char elements.
 */
 ON_DECL
 bool operator==( const ON_String& lhs, const ON_String& rhs );
 
 /*
 Returns:
-  True if lhs and rhs are not identical as arrays of char elements.  
+  True if lhs and rhs are not identical as arrays of char elements.
 */
 ON_DECL
 bool operator!=(const ON_String& lhs, const ON_String& rhs);
@@ -2297,14 +2291,14 @@ bool operator>=(const ON_String& lhs, const ON_String& rhs);
 
 /*
 Returns:
-  True if lhs and rhs are identical as arrays of char elements.  
+  True if lhs and rhs are identical as arrays of char elements.
 */
 ON_DECL
 bool operator==( const ON_String& lhs, const char* rhs );
 
 /*
 Returns:
-  True if lhs and rhs are not identical as arrays of char elements.  
+  True if lhs and rhs are not identical as arrays of char elements.
 */
 ON_DECL
 bool operator!=(const ON_String& lhs, const char* rhs);
@@ -2339,14 +2333,14 @@ bool operator>=(const ON_String& lhs, const char* rhs);
 
 /*
 Returns:
-  True if lhs and rhs are identical as arrays of char elements.  
+  True if lhs and rhs are identical as arrays of char elements.
 */
 ON_DECL
 bool operator==( const char* lhs, const ON_String& rhs );
 
 /*
 Returns:
-  True if lhs and rhs are not identical as arrays of char elements.  
+  True if lhs and rhs are not identical as arrays of char elements.
 */
 ON_DECL
 bool operator!=(const char* lhs, const ON_String& rhs);
@@ -2380,9 +2374,9 @@ ON_DECL
 bool operator>=(const char* lhs, const ON_String& rhs);
 
 /// <summary>
-/// A wide character string. 
-/// The default encoding is the encoding the compiler uses for wchar_t* s = L&quot;...&quot;; strings. 
-/// This is typically 2 byte wchar_t UTF-16 on Windows and 4 byte wchar_t UTF-32 on MacOS. 
+/// A wide character string.
+/// The default encoding is the encoding the compiler uses for wchar_t* s = L&quot;...&quot;; strings.
+/// This is typically 2 byte wchar_t UTF-16 on Windows and 4 byte wchar_t UTF-32 on MacOS.
 /// However, some MacOS SDK functions return 4 byte wchar_t UTF-16 strings.
 /// </summary>
 class ON_CLASS ON_wString
@@ -2446,27 +2440,27 @@ public:
     RichText = 90,
 
     /// <summary>
-    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format 
+    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format
     /// and code points above basic latin UTF-16 encoded.
     /// </summary>
     XML = 101,
 
     /// <summary>
-    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format 
+    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format
     /// and code points above basic latin encoded in the &#hhhh; format
     /// using  lower case hex digits (0123456789abcdef).
     /// </summary>
     XMLalternate1 = 102,
 
     /// <summary>
-    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format 
+    /// The WideChar string as an XML value with special characters encoded in the &amp;amp; format
     /// and code points above basic latin encoded in the hexadecimal &amp;#xhhhh; format
     /// with  upper case hex digits (0123456789ABCDEF).
     /// </summary>
     XMLalternate2 = 103,
 
     /// <summary>
-    /// The WideChar string as an XML value with special characters and code points above 
+    /// The WideChar string as an XML value with special characters and code points above
     /// basic latin encoded in the decimal code point &amp;#nnnn; format.
     /// </summary>
     XMLalternate3 = 104,
@@ -2481,9 +2475,9 @@ public:
   /// <summary>
   /// Get a rich text example.
   /// </summary>
-  /// <param name="rich_text_face_name"> 
-  /// The rich text font name. 
-  /// This name is not well defined and the best choice can be platform specific. 
+  /// <param name="rich_text_face_name">
+  /// The rich text font name.
+  /// This name is not well defined and the best choice can be platform specific.
   /// For Windows use the LOGFONT always works.
   /// For Mac OS the font family name generally works.
   /// If you have an ON_Font, then ON_Font.RichTextFontName() or ON_Font.FontQuartet().QuartetName() are good choices.
@@ -2493,7 +2487,7 @@ public:
   /// <param name="bBoldItalic">Pass true to include a rich text bold-italic face line.</param>
   /// <param name="bUnderline">Pass true to include both plain and underline in the sample.</param>
   /// <returns>
-  /// A rich text example using the specified face and the specified 
+  /// A rich text example using the specified face and the specified
   /// </returns>
   static const ON_wString RichTextExample(
     ON_wString rich_text_font_name,
@@ -2506,7 +2500,7 @@ public:
   /// <summary>
   /// Get a rich text example.
   /// </summary>
-  /// <param name="font"> 
+  /// <param name="font">
   /// Every rich text face supported by font will be in the sample.
   /// </param>
   /// <returns>
@@ -2519,7 +2513,7 @@ public:
   /// <summary>
   /// Get a rich text example.
   /// </summary>
-  /// <param name="quartet"> 
+  /// <param name="quartet">
   /// Every rich text face supported by the font quartet will be in the sample.
   /// </param>
   /// <returns>
@@ -2642,10 +2636,10 @@ public:
 
   /// <summary>DEGREE SIGN U+00B0 (X&#xb0;) (Rhino annotation degree symbol)</summary>
   static const wchar_t  DegreeSymbol = (wchar_t)ON_UnicodeCodePoint::ON_DegreeSymbol;
-  
+
   /// <summary>Place of interest sign/looped square. (Used to indicate the command key on Mac)</summary>
   static const wchar_t PlaceOfInterestSign = (wchar_t)ON_UnicodeCodePoint::ON_PlaceOfInterestSign;
-  
+
   /// <summary>PLUS-MINUS SIGN U+00B1 (&#xb1;) (Rhino annotation plus/minus symbol)</summary>
   static const wchar_t  PlusMinusSymbol = (wchar_t)ON_UnicodeCodePoint::ON_PlusMinusSymbol;
 
@@ -2796,7 +2790,7 @@ public:
   );
 
   static unsigned DecimalDigitFromWideChar(
-    wchar_t c, 
+    wchar_t c,
     bool bAcceptOrdinaryDigit,
     bool bAcceptSuperscriptDigit,
     bool bAcceptSubscriptDigit,
@@ -2904,17 +2898,13 @@ public:
   ON_wString() ON_NOEXCEPT;
   ON_wString( const ON_wString& );
 
-  enum : int
+  enum : size_t
   {
-    // This ON_String::MaximumStringLength value of 100,000,000
-    // is used for string length sanity checking in both ON_String and
-    // ON_wString.
-    // The design of the ON_String and ON_wString classes could support
-    // string lengths up to 0xFFFFFFFEU = 4,294,967,294 but
-    // a cap of 100 million seems generous enough for current usage
-    // and is small enough to detect many corrupt memory
-    // situations.
-    // This value is used for both ON_String and ON_wString.
+    /// <summary>
+    /// The design of the ON_String and ON_wString classes supports
+    /// string lengths up to 0xFFFFFFFEU = 4,294,967,294
+    /// This value is used for both ON_String and ON_wString.
+    /// </summary>
     MaximumStringLength = ON_String::MaximumStringLength
   };
 
@@ -2961,7 +2951,7 @@ public:
     True - this is valid.
     False
       There is a serious memory corruption bug in your code.
-      This was not valid and converted to ON_wString::EmptyString to prevent future crashes.     
+      This was not valid and converted to ON_wString::EmptyString to prevent future crashes.
   */
   bool IsValid(
     bool bLengthTest
@@ -3138,7 +3128,7 @@ public:
   Remarks:
     1) Ordinal compares are the fastest.
     2) Equal(...) is faster than  Compare(...)
-  */  
+  */
   int Compare(
     const ON_wString& other_string,
     const class ON_Locale& locale,
@@ -3150,7 +3140,7 @@ public:
     const class ON_Locale& locale,
     bool bIgnoreCase
     ) const;
- 
+
   /*
   Description:
     Compare string1 and string2 by normalizing (NFC) and using invariant culture ordering.
@@ -3161,7 +3151,7 @@ public:
   Remarks:
     1) Ordinal compares are the fastest.
     2) Equal(...) is faster than  Compare(...)
-  */  
+  */
   static int Compare(
     const wchar_t* string1,
     const wchar_t* string2,
@@ -3197,12 +3187,12 @@ public:
     const class ON_Locale& locale,
     bool bIgnoreCase
     );
-  
+
   bool EqualOrdinal(
     const ON_wString& other_string,
     bool bOrdinalIgnoreCase
     ) const;
-  
+
   bool EqualOrdinal(
     const wchar_t* other_string,
     bool bOrdinalIgnoreCase
@@ -3239,17 +3229,17 @@ public:
     3) If locale, linguistic issues, UTF-8 encoding issues or unicode normalization
     or collation issues need to be considered, then CompareOrdinal() is
     the wrong function to use.
-  */  
+  */
   int CompareOrdinal(
      const ON_wString& other_string,
      bool bOrdinalIgnoreCase
      ) const;
- 
+
   int CompareOrdinal(
      const wchar_t* other_string,
      bool bOrdinalIgnoreCase
      ) const;
- 
+
   /*
   Description:
     Compare this string1 and string2 wchar_t element by wchar_t element.
@@ -3377,9 +3367,9 @@ public:
 
   /*
   Description:
-    Compare this string and other_name as a name attribute of an object 
+    Compare this string and other_name as a name attribute of an object
     like ON_3dmObjectAttributes.m_name, ON_Layer.m_name, and so on.
-    These comparisons ignore case and use appropriate string normalization.    
+    These comparisons ignore case and use appropriate string normalization.
   Parameters:
     other_name - [in]
       null terminated string
@@ -3393,9 +3383,9 @@ public:
 
   /*
   Description:
-    Compare this string and other_name as a name attribute of an object 
+    Compare this string and other_name as a name attribute of an object
     like ON_3dmObjectAttributes.m_name, ON_Layer.m_name, and so on.
-    These comparisons ignore case and use appropriate string normalization.    
+    These comparisons ignore case and use appropriate string normalization.
   Parameters:
     name1 - [in]
       null terminated string
@@ -3460,7 +3450,7 @@ public:
   Description:
     Replaces all %xx where xx a two digit hexadecimal number,
     with a single character. Returns false if the original
-    string contained 
+    string contained
   */
   bool UrlDecode();
 
@@ -3472,7 +3462,7 @@ public:
   Parameters:
     token - [in]
     whitespace - [in] if not null, this is a 0 terminated
-      string that lists the characters considered to be 
+      string that lists the characters considered to be
       white space. If null, then (1,2,...,32,127) is used.
   Returns:
     Number of whitespace characters replaced.
@@ -3486,7 +3476,7 @@ public:
     Removes all whitespace characters from the string.
   Parameters:
     whitespace - [in] if not null, this is a zero-terminated
-      string that lists the characters considered to be 
+      string that lists the characters considered to be
       white space. If null, then (1,2,...,32,127) is used.
   Returns:
     Number of whitespace characters removed.
@@ -3496,14 +3486,14 @@ public:
   int RemoveWhiteSpace( const wchar_t* whitespace = 0 );
 
   /*
-  Parameters: 
+  Parameters:
     prefix - [in]
     locale - [in]
       When no local is available, pass ON_Locale::Ordinal.
     bIgnoreCase - [in]
       true to ignore case.
   Returns:
-    If the string begins with prefix, the returned string has prefix removed. 
+    If the string begins with prefix, the returned string has prefix removed.
     Otherwise the returned string is identical to the string.
   */
   const ON_wString RemovePrefix(
@@ -3513,14 +3503,14 @@ public:
   ) const;
 
   /*
-  Parameters: 
+  Parameters:
     suffix - [in]
     locale - [in]
       When no local is available, pass ON_Locale::Ordinal.
     bIgnoreCase - [in]
       true to ignore case.
   Returns:
-    If the string ends with suffix, the returned string has suffix removed. 
+    If the string ends with suffix, the returned string has suffix removed.
     Otherwise the returned string is identical to the string.
   */
   const ON_wString RemoveSuffix(
@@ -3557,7 +3547,7 @@ public:
   Parameters:
     c - [in]
       If sizeof(wchar_t) >= 2 and c is not a value used int surrogate pairs,
-      the map specified by map_type is applied.  If c is a value used in 
+      the map specified by map_type is applied.  If c is a value used in
       surrogate pairs, the value is not changed.
   Remarks:
     1) MapCharacterOrdinal is not appropriate for general string mapping
@@ -3586,7 +3576,7 @@ public:
     mapped_string - [out]
     mapped_string_capacity - [in]
       number of available elements in mapped_string[].
-      mapped_string_capacity must be >= mapped_element_count where 
+      mapped_string_capacity must be >= mapped_element_count where
       mapped_element_count = (element_count >= 0) element_count ? ON_wString::Length(string).
     map_type - [in]
   Returns:
@@ -3621,8 +3611,8 @@ public:
   Parameters:
     locale - [in]
       Locale to use when converting case. It is common to pass one of
-      the preset locales ON_Locale::Ordinal, ON_Locale::InvariantCulture, 
-      or ON_Locale::m_CurrentCulture. 
+      the preset locales ON_Locale::Ordinal, ON_Locale::InvariantCulture,
+      or ON_Locale::m_CurrentCulture.
 
     map_type - [in]
       selects the mapping
@@ -3632,9 +3622,9 @@ public:
 
     element_count - [in]
       The number of wchar_t elements to map from input string[].
-      
+
       If element_count < 1, then string[] must be null terminated and
-      ON_wString::Length(string)+1 elements are mapped. 
+      ON_wString::Length(string)+1 elements are mapped.
       The +1 insures the output is null terminated.
 
     mapped_string - [out]
@@ -3647,7 +3637,7 @@ public:
 
   Returns:
     If mapped_string_capacity > 0, then the number elements set in mapped_string[]
-    is returned.  
+    is returned.
 
     If mapped_string_capacity == 0, then the number elements required to perform
     the mapping is returned.
@@ -3677,7 +3667,7 @@ public:
 	// upper/lower/reverse conversion
 	/*ON_DEPRECATED */ void MakeUpper();
 	/*ON_DEPRECATED */ void MakeLower();
-  
+
   ON_wString Reverse() const;
 
   /*
@@ -3690,7 +3680,7 @@ public:
     ' (apostrophe or single quote) is replaced with &apos;
     " (double-quote) is replaced with &quot;
 
-    Optionally, unocode code points U+hhhh where hhhh >= 0x80 are replaced 
+    Optionally, unocode code points U+hhhh where hhhh >= 0x80 are replaced
     with &#xhhhh; using the minimal number of hex digits.
   Parameters:
     bUseUnicodeCodePointsForSpecialCharacters - [in]
@@ -3703,7 +3693,7 @@ public:
       high quality XML reader, pass false. (The XMLspecification supports text
       files that are UTF=8, UTF-18, or UTF-32 encoded.)
   Returns:
-    A string with every instance of an xml special character replaced 
+    A string with every instance of an xml special character replaced
     with its xml encoding and, optionally, every code point > 127 replaced
     with &xhhhh;.
   */
@@ -3772,7 +3762,7 @@ public:
     &#xhhhh; (hhhh = any muber of hexadecimal digits)
   Parameters:
     buffer - [in]
-      buffer to parse. 
+      buffer to parse.
       The first character of buffer[] must be the leading ampersand.
       The second character of buffer[] must be the number sign.
       The buffer must include the terminating semicolon.
@@ -3941,9 +3931,9 @@ public:
   Parameters:
     c - [in]
       utf8_single_byte_ct must have a value between 0 and 0x7F.
-      When w is a 2 byte UTF-16 wchar_t value (like Microsoft's wchar_t), 
+      When w is a 2 byte UTF-16 wchar_t value (like Microsoft's wchar_t),
       it must be in the range 0 to 0xD7FF or 0xE000 to 0xFFFF.
-      When w is a 4 byte UTF-32 wchar_t value (like Apple's wchar_t), 
+      When w is a 4 byte UTF-32 wchar_t value (like Apple's wchar_t),
       it must be in the range 0 to 0xD7FF or 0xE000 to 0x10FFFF.
       Returns:
     Number of characters removed.
@@ -4126,7 +4116,7 @@ public:
       If 0, then : (colon) is used.
   Returns:
     A string value for the current coordinated universal time (UTC).
-  */  
+  */
   static const ON_wString FromCurrentCoordinatedUniversalTime(
     ON_DateFormat date_format,
     ON_TimeFormat time_format,
@@ -4162,7 +4152,7 @@ public:
     wchar_t date_time_separator,
     wchar_t time_separator
   );
-  
+
   /*
   Description:
     Get the Gregorian calendar date and time as a string.
@@ -4295,7 +4285,7 @@ public:
   Returns:
     A wide string encoding of the Unicode code points.
   Remarks:
-    If more control over the conversion process is required, 
+    If more control over the conversion process is required,
     then use ON_ConvertUTF32ToWideChar().
   */
   static const ON_wString FromUnicodeCodePoints(
@@ -4320,10 +4310,10 @@ public:
       false: Use 0-9, a - b
       true: Use 0-9, A - F
     bReverse - [in]
-      false: 
+      false:
         The digits in the string will be in the order
         bytes[0], bytes[1], ..., bytes[byte_count-1].
-      true: 
+      true:
         The digits in the string will be in the order
         bytes[byte_count-1], ..., bytes[1], bytes[0].
   */
@@ -4391,10 +4381,10 @@ public:
   Description:
     A platform independent, secure, culture invariant way to format a wchar_t string
     with support for positional format parameters.
-    This function is designed to be used when it is critical that 
+    This function is designed to be used when it is critical that
     the formatting be platform independent, secure and culture invariant.
   Parameters:
-    buffer - [out] 
+    buffer - [out]
       not null
     buffer_capacity - [in]
       > 0
@@ -4403,7 +4393,7 @@ public:
       Avoid using %S (capital S).  See the Remarks for details.
     ... - [in]
   Returns:
-    >= 0: 
+    >= 0:
       The number of wchar_t elements written to buffer[], not including the null terminator.
       A null terminator is always added (buffer[returned value] = 0).
       The last element of buffer[] is always set to zero (buffer[buffer_capacity-1] = 0).
@@ -4429,7 +4419,7 @@ public:
          ON_String::Format(char_buffer, char_buffer_capacity, "%s", ON_String(wide_string));
   */
   static int ON_VARGS_FUNC_CDECL FormatIntoBuffer(
-    wchar_t* buffer, 
+    wchar_t* buffer,
     size_t buffer_capacity,
     const wchar_t* format,
     ...
@@ -4483,7 +4473,7 @@ public:
   bProper - [in]
     When in doubt, pass true.
     If true, then proper fractions will be returned when abs(numerator)>=abs(denominator).
-    For example, if bProper is true, then 4/3 is converted to 1-1/3. 
+    For example, if bProper is true, then 4/3 is converted to 1-1/3.
     The symbol between the whole number and the proper fraction is specified by
     mixed_fraction_separator_code_point.
   proper_fraction_separator_cp - [in]
@@ -4546,12 +4536,12 @@ public:
     A string (digits, signs, parenthesis).
   bUseVulgarFractionCodePoints - [in]
     If true and if Unicode code point exists for the fraction (halves, thirds, fourths, fifths, sixths, eights, ...),
-    that code point will be used;    
+    that code point will be used;
   Returns:
     A Unicode encoding of the fraction numerator/denominator.
   */
   static const ON_wString FormatToVulgarFraction(
-    const ON_wString numerator, 
+    const ON_wString numerator,
     const ON_wString denominator
   );
 
@@ -4850,14 +4840,14 @@ protected:
 
 /*
 Returns:
-  True if lhs and rhs are identical as arrays of wchar_t elements.  
+  True if lhs and rhs are identical as arrays of wchar_t elements.
 */
 ON_DECL
 bool operator==( const ON_wString& lhs, const ON_wString& rhs );
 
 /*
 Returns:
-  True if lhs and rhs are not identical as arrays of wchar_t elements.  
+  True if lhs and rhs are not identical as arrays of wchar_t elements.
 */
 ON_DECL
 bool operator!=(const ON_wString& lhs, const ON_wString& rhs);
@@ -4892,14 +4882,14 @@ bool operator>=(const ON_wString& lhs, const ON_wString& rhs);
 
 /*
 Returns:
-  True if lhs and rhs are identical as arrays of wchar_t elements.  
+  True if lhs and rhs are identical as arrays of wchar_t elements.
 */
 ON_DECL
 bool operator==( const ON_wString& lhs, const wchar_t* rhs );
 
 /*
 Returns:
-  True if lhs and rhs are not identical as arrays of wchar_t elements.  
+  True if lhs and rhs are not identical as arrays of wchar_t elements.
 */
 ON_DECL
 bool operator!=(const ON_wString& lhs, const wchar_t* rhs);
@@ -4934,14 +4924,14 @@ bool operator>=(const ON_wString& lhs, const wchar_t* rhs);
 
 /*
 Returns:
-  True if lhs and rhs are identical as arrays of wchar_t elements.  
+  True if lhs and rhs are identical as arrays of wchar_t elements.
 */
 ON_DECL
 bool operator==( const wchar_t* lhs, const ON_wString& rhs );
 
 /*
 Returns:
-  True if lhs and rhs are not identical as arrays of wchar_t elements.  
+  True if lhs and rhs are not identical as arrays of wchar_t elements.
 */
 ON_DECL
 bool operator!=(const wchar_t* lhs, const ON_wString& rhs);
@@ -4986,10 +4976,10 @@ Description:
     bool bEqualNameHash = ON_NameHash::Create(parent_id1,name1) == ON_NameHash::Create(parent_id2,name2);
     bool bEqualParentId = (parent_id1 == parent_id2)
     bool bEqualAttributeName = ON_String::EqualAttributeName(name1,name2);
-  
+
   If (bEqualParentId && bEqualAttributeName) is true, then bEqualNameHash is true.
   If bEqualParentId is false, then bEqualNameHash is false.
-  With probability 1-epsilon, if bEqualAttributeName is false, then bEqualNameHash is false, 
+  With probability 1-epsilon, if bEqualAttributeName is false, then bEqualNameHash is false,
   where epsilon is an extremely tiny number.
 */
 class ON_CLASS ON_NameHash
@@ -5063,7 +5053,7 @@ public:
     );
 
   static ON_NameHash Create(
-    const ON_UUID& parent_id, 
+    const ON_UUID& parent_id,
     const ON_wString& name
     );
   static ON_NameHash Create(
@@ -5116,7 +5106,7 @@ public:
     bool bIgnoreCase
     );
   static ON_NameHash Create(
-    const ON_UUID& parent_id, 
+    const ON_UUID& parent_id,
     const ON_wString& name,
     bool bIgnoreCase
     );
@@ -5223,7 +5213,7 @@ public:
   ON__UINT32 NameCRC(ON__UINT32 current_remainder) const;
 
   ON_UUID ParentId() const;
-  
+
 private:
 
   enum : unsigned int
@@ -5241,7 +5231,7 @@ private:
   // m_sha1_hash = SHA-1 hash of ordinal minimum mapped unicode (UTF-32) code points
   // If the name is empty, m_length = 0 and m_sha1_hash = ON_SHA1_Hash::EmptyContentHash.
   // If the name is not valid, m_length = 0 and m_sha1_hash = ON_SHA1_Hash::ZeroDigest.
-  ON_SHA1_Hash m_sha1_hash = ON_SHA1_Hash::ZeroDigest; 
+  ON_SHA1_Hash m_sha1_hash = ON_SHA1_Hash::ZeroDigest;
 
   // When names appear in a tree structure, m_parent_id identifies the
   // parent node.
@@ -5251,7 +5241,7 @@ public:
   /*
   Description:
     Internal_CreateFromDotNet() is public for technical reasons. It is used
-    in Rhino Common p-invoke code that provides a .NET interface to the 
+    in Rhino Common p-invoke code that provides a .NET interface to the
     services ON_NameHash provided by the ON_NameHash class.
     This function should be ignored and never called from ordinary C++ code.
     If you choose to ignore the preceding admonition, you will have to read
@@ -5323,7 +5313,7 @@ bool operator>=(
 class ON_CLASS ON_UnitSystem
 {
 public:
-  // Default construction sets this to ON_UnitSystem::Meters 
+  // Default construction sets this to ON_UnitSystem::Meters
   ON_UnitSystem() = default;
 
   ~ON_UnitSystem() = default;
@@ -5344,7 +5334,7 @@ public:
     custom_unit_name - [in]
       length unit name (no spaces)
     meters_per_custom_unit - [in]
-      a positive number 
+      a positive number
   Example:
       // 1 League = 5556 meters
       const ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 1.0/5556.0);
@@ -5403,14 +5393,14 @@ public:
   bool operator!=(const ON_UnitSystem&) const;
 
   /*
-  Returns 
+  Returns
     False if UnitSystem() is ON::LengthUnitSystem::Unset.
     False if UnitSystem() is ON::LengthUnitSystem::CustomUnits and MetersPerUnits() is not positive.
     True if UnitSystem() is ON::LengthUnitSystem::None.
     True otherwise.
   See Also:
     IsSet()
-  */  
+  */
   bool IsValid() const;
 
   bool Read( class ON_BinaryArchive& );
@@ -5443,7 +5433,7 @@ public:
     custom_unit_name - [in]
       length unit name (no spaces)
     meters_per_custom_unit - [in]
-      a positive number 
+      a positive number
   Example:
       // 1 League = 5556 meters
       ON_UnitSystem Leagues;
@@ -5533,7 +5523,7 @@ private:
   ON::LengthUnitSystem m_unit_system = ON::LengthUnitSystem::Meters;
   unsigned int m_reserved = 0;
 
-  // The m_meters_per_custom_unit and m_custom_unit_name values apply when 
+  // The m_meters_per_custom_unit and m_custom_unit_name values apply when
   // m_unit_system = ON::LengthUnitSystem::CustomUnits.
   // In all other cases they should be ignored.
   double m_meters_per_custom_unit = 1.0;  // 1 meter = m_meters_per_custom_unit custom units

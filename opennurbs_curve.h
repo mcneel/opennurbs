@@ -1367,6 +1367,35 @@ int ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
                   ON_SimpleArray<int>* key = 0
                  );
 
+/*
+Description:
+Join all contiguous curves of an array of ON_Curves using an older sort algorithm.
+Unless this loder version is necessary, use ON_JoinCurves instead. 
+Parameters:
+  InCurves - [in] Array of curves to be joined (not modified)
+  OutCurves - [out] Resulting joined curves and copies of curves that were not joined to anything
+are appended.
+  join_tol - [in] Distance tolerance used to decide if endpoints are close enough
+  bPreserveDirection - [in] If true, curve endpoints will be compared to curve startpoints.
+    If false, all start and endpoints will be compared, and copies of input 
+    curves may be reversed in output.
+  key     -  [out] if key is not null, InCurves[i] was joined into OutCurves[key[i]].
+Returns:
+  Number of curves added to Outcurves
+Remarks:
+  Closed curves are copied to OutCurves. 
+  Curves that cannot be joined to others are copied to OutCurves.  When curves are joined, the results
+  are ON_PolyCurves. All members of InCurves must have same dimension, at most 3.
+*/
+ON_DECL
+int ON_JoinCurvesOld(const ON_SimpleArray<const ON_Curve*>& InCurves,
+  ON_SimpleArray<ON_Curve*>& OutCurves,
+  double join_tol,
+  bool bPreserveDirection, // = false
+  ON_SimpleArray<int>* key //=0
+);
+
+
 
 /*
 Description:
