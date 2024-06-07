@@ -591,6 +591,7 @@ unsigned int ON_SubD::GetSectorPointRing(
   size_t point_ring_stride
 )
 {
+  subdivision_count = 0;
   const ON_SubDVertex* center_vertex = sit.CenterVertex();
   if (nullptr == center_vertex)
     return ON_SUBD_RETURN_ERROR(0);
@@ -611,14 +612,13 @@ unsigned int ON_SubD::GetSectorPointRing(
   unsigned int component_ring_count = ON_SubD::GetSectorComponentRing(sit, component_ring, component_ring_capacity);
   if (component_ring_count > 0)
   {
-    const bool bObsoleteAndIgnoredParameter = false;
     point_ring_count = ON_SubD::GetQuadSectorPointRing(
       false, // false means subdivisions are permitted
-      bObsoleteAndIgnoredParameter,
-      nullptr,
       component_ring,
       component_ring_count,
-      point_ring, point_ring_stride
+      subdivision_count,
+      point_ring,
+      point_ring_stride
     );
   }
 
