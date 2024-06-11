@@ -67,7 +67,7 @@
 #if defined(OPENNURBS_EXPORTS)
 /* compiling opennurbs as some type of dynamic linking library */
 
-#if defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
 /* Linux defaults to exporting all functions*/
 #define ON_CLASS
 #define ON_DECL
@@ -108,7 +108,7 @@
 #define ON_DECL __attribute__ ((visibility ("default")))
 #define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
 
-#elif defined(ON_RUNTIME_LINUX)
+#elif defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
 /* Linux defaults to exporting all functions*/
 #define ON_CLASS
 #define ON_DECL
@@ -1244,7 +1244,11 @@ public:
     ///<summary>
     /// ON::RuntimeEnvironment::Linux indicates some version of Linux.
     ///</summary>
-    Linux = 5
+    Linux = 5,
+    ///<summary>
+    /// ON::RuntimeEnvironment::WebAssembly indicates some version of WASM / WebAssembly.
+    ///</summary>
+    WebAssembly = 6
   };
 #pragma endregion
 

@@ -43,7 +43,7 @@
 #define ON_RUNTIME_WIN
 #endif
 
-#elif defined(__ANDROID__) || defined(__EMSCRIPTEN__) || defined(ANDROID)
+#elif defined(__ANDROID__) || defined(ANDROID)
 // __EMSCRIPTEN__ is for a web assembly compile which currently compiles with the
 // same settings as an android build. We will need to add an ON_RUNTIME_WASM once
 // the __EMSCRIPTEN__ compile stabilizes
@@ -56,10 +56,15 @@
 #define ON_RUNTIME_LINUX
 #endif
 
+#elif defined(__EMSCRIPTEN__)
+#if !defined(ON_RUNTIME_WASM)
+#define ON_RUNTIME_WASM
+#endif
+
 #endif
 /*
 //
-// END - ON_RUNTIME_APPLE / ON_RUNTIME_WIN / ON_RUNTIME_ANDROID defines
+// END - ON_RUNTIME_APPLE / ON_RUNTIME_WIN / ON_RUNTIME_ANDROID / ON_RUNTIME_WASM defines
 //
 ////////////////////////////////////////////////////////////
 */
@@ -146,7 +151,7 @@
 #define ON_RUNTIME_LINUX
 #endif
 
-#if defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
 
 #if !defined(ON_SIZEOF_WCHAR_T)
 #define ON_SIZEOF_WCHAR_T 4

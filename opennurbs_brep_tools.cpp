@@ -2528,12 +2528,19 @@ bool ON_Brep::MatchTrimEnds(ON_BrepTrim& T0,
   if (!nc0->SetEndPoint(ON_3dPoint(p)))
     return false;
 
+  ON_BrepLoop* pLoop = T0.Loop();
+  if (pLoop && pLoop != T1.Loop())
+    pLoop = nullptr;
+
   // clean up T1 flags and cached information
   if(xiso0 && p0.x != p.x) T0.m_iso = ON_Surface::not_iso;
   if(yiso0 && p0.y != p.y) T0.m_iso = ON_Surface::not_iso;
   T0.m_pline.Destroy();
-  if ( T0.m_pbox.IsValid() )
+  if ( T0.m_pbox.IsValid() ){
     T0.m_pbox.Set( ON_3dPoint(p), true );
+    if (pLoop)
+      pLoop->m_pbox.Set( ON_3dPoint(p), true );
+  }
   T0.DestroyCurveTree();
 
   if (!nc1->SetStartPoint(ON_3dPoint(p)))
@@ -2543,8 +2550,11 @@ bool ON_Brep::MatchTrimEnds(ON_BrepTrim& T0,
   if(xiso1 && p1.x != p.x) T1.m_iso = ON_Surface::not_iso;
   if(yiso1 && p1.y != p.y) T1.m_iso = ON_Surface::not_iso;
   T1.m_pline.Destroy();
-  if ( T1.m_pbox.IsValid() )
+  if ( T1.m_pbox.IsValid() ){
     T1.m_pbox.Set( ON_3dPoint(p), true );
+    if (pLoop)
+      pLoop->m_pbox.Set( ON_3dPoint(p), true );
+  }
   T1.DestroyCurveTree();
 
   return true;
