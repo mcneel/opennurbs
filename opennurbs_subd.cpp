@@ -1795,7 +1795,6 @@ const ON_wString ON_SubDComponentId::ToString(bool bUnsetIsEmptyString, bool bDi
     const char prefix = bDirectionPrefix ? (1 == this->ComponentDirection() ? '-' : '+') : 0;
     switch (this->ComponentType())
     {
-
     case ON_SubDComponentPtr::Type::Vertex:
       str = (0 == prefix) ? ON_wString::FormatToString(L"v%u", id) : ON_wString::FormatToString(L"%cv%u", prefix, id);
       break;
@@ -1814,6 +1813,8 @@ const ON_wString ON_SubDComponentId::ToString(bool bUnsetIsEmptyString, bool bDi
     }
     break;
 
+    case ON_SubDComponentPtr::Type::Unset:
+      break;
     }
   }
   return (str.IsNotEmpty() || bUnsetIsEmptyString) ? str : ON_wString("unset");
@@ -11701,6 +11702,9 @@ bool ON_ObjRefEvaluationParameter::SetFromSubDComponentParameter(
     this->m_s[1] = ON_Interval(0.0, 0.5);
   }
   break;
+      
+  case ON_SubDComponentPtr::Type::Unset:
+    break;
   }
 
   this->Default();
@@ -11784,6 +11788,8 @@ bool ON_ObjRefEvaluationParameter::GetSubDComponentParameter(
         ON_SubDFaceParameter fp(cdex, this->m_t[2], this->m_t[3]);
         cp = ON_SubDComponentParameter(face_id, fp);
       }
+      break;
+    default:
       break;
     }
   }

@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////
 
 #include "opennurbs.h"
-#if defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
 #include "android_uuid/uuid.h"
 #endif
 #if !defined(ON_COMPILING_OPENNURBS)
@@ -221,7 +221,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   return true;
 #else
 
-#if defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
   uuid_generate((unsigned char*)&new_uuid);
   return true;
 #else

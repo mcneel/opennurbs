@@ -1359,7 +1359,7 @@ bool ON_SubDMeshImpl::Transform(
   const ON_Xform& xformColors
   )
 {
-  const bool bIsometry = (1 == xform.IsRigid());
+  //const bool bIsometry = (1 == xform.IsRigid()); // silence unused variable warning
   m_bbox = ON_BoundingBox::EmptyBoundingBox;
   ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
   for ( const ON_SubDMeshFragment* fragment = m_first_fragment; nullptr != fragment; fragment = fragment->m_next_fragment)
