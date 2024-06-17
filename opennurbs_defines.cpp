@@ -495,7 +495,7 @@ int ON::CloseAllFiles()
   // returns number of files closed or EOF for error
 #if defined(ON_COMPILER_MSC)
   return _fcloseall(); // ANSI C name
-#elif defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_ANDROID)
+#elif defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_WASM)
   //fcloseall is not supported on mac/ios or android
   return EOF;
 #else
@@ -550,6 +550,7 @@ ON::RuntimeEnvironment ON::RuntimeEnvironmentFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Apple);
   ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Android);
   ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::Linux);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON::RuntimeEnvironment::WebAssembly);
   }
   ON_ERROR("Invalid runtime_environment_as_unsigned parameter value.");
   return (ON::RuntimeEnvironment::Unset);
@@ -565,6 +566,8 @@ ON::RuntimeEnvironment ON::CurrentRuntimeEnvironment()
   return ON::RuntimeEnvironment::Android;
 #elif defined (ON_RUNTIME_LINUX)
   return ON::RuntimeEnvironment::Linux;
+#elif defined (ON_RUNTIME_WASM)
+  return ON::RuntimeEnvironment::WebAssembly;
 #else
   ON_ERROR("ON_RUNTIME_... not defined.");
   return ON::RuntimeEnvironment::Unset;
