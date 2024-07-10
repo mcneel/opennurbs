@@ -31,24 +31,24 @@
  * - Add comments on op field in inftrees.h
  * - Fix bug in reuse of allocated window after inflateReset()
  * - Remove bit fields--back to byte structure for speed
- * - Remove distance extra == 0 check in inflate_fast()--only helps for lengths
- * - Change post-increments to pre-increments in inflate_fast(), PPC biased?
+ * - Remove distance extra == 0 check in zinflate_fast()--only helps for lengths
+ * - Change post-increments to pre-increments in zinflate_fast(), PPC biased?
  * - Add compile time option, POSTINC, to use post-increments instead (Intel?)
- * - Make MATCH copy in inflate() much faster for when inflate_fast() not used
+ * - Make MATCH copy in inflate() much faster for when zinflate_fast() not used
  * - Use local copies of stream next and avail values, as well as local bit
- *   buffer and bit count in inflate()--for speed when inflate_fast() not used
+ *   buffer and bit count in inflate()--for speed when zinflate_fast() not used
  *
  * 1.2.beta4    1 Jan 2003
  * - Split ptr - 257 statements in inflate_table() to avoid compiler warnings
  * - Move a comment on output buffer sizes from inffast.c to inflate.c
- * - Add comments in inffast.c to introduce the inflate_fast() routine
- * - Rearrange window copies in inflate_fast() for speed and simplification
- * - Unroll last copy for window match in inflate_fast()
- * - Use local copies of window variables in inflate_fast() for speed
- * - Pull out common write == 0 case for speed in inflate_fast()
- * - Make op and len in inflate_fast() unsigned for consistency
- * - Add FAR to lcode and dcode declarations in inflate_fast()
- * - Simplified bad distance check in inflate_fast()
+ * - Add comments in inffast.c to introduce the zinflate_fast() routine
+ * - Rearrange window copies in zinflate_fast() for speed and simplification
+ * - Unroll last copy for window match in zinflate_fast()
+ * - Use local copies of window variables in zinflate_fast() for speed
+ * - Pull out common write == 0 case for speed in zinflate_fast()
+ * - Make op and len in zinflate_fast() unsigned for consistency
+ * - Add FAR to lcode and dcode declarations in zinflate_fast()
+ * - Simplified bad distance check in zinflate_fast()
  * - Added inflateBackInit(), inflateBack(), and inflateBackEnd() in new
  *   source file infback.c to provide a call-back interface to inflate for
  *   programs like gzip and unzip -- uses window as output buffer to avoid
@@ -950,7 +950,7 @@ int flush;
         case LEN:
             if (have >= 6 && left >= 258) {
                 RESTORE();
-                inflate_fast(strm, out);
+                zinflate_fast(strm, out);
                 LOAD();
                 break;
             }

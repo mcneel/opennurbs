@@ -60,11 +60,11 @@
       checking for available input while decoding.
 
     - The maximum bytes that a single length/distance pair can output is 258
-      bytes, which is the maximum length that can be coded.  inflate_fast()
+      bytes, which is the maximum length that can be coded.  zinflate_fast()
       requires strm->avail_out >= 258 for each loop to avoid checking for
       output space.
  */
-void inflate_fast(strm, start)
+void zinflate_fast(strm, start)
 z_streamp strm;
 unsigned start;         /* inflate()'s starting value for strm->avail_out */
 {
@@ -302,7 +302,7 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
 }
 
 /*
-   inflate_fast() speedups that turned out slower (on a PowerPC G3 750CXe):
+   zinflate_fast() speedups that turned out slower (on a PowerPC G3 750CXe):
    - Using bit fields for code structure
    - Different op definition to avoid & for extra bits (do & for table bits)
    - Three separate decoding do-loops for direct, window, and write == 0

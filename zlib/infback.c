@@ -7,7 +7,7 @@
    This code is largely copied from inflate.c.  Normally either infback.o or
    inflate.o would be linked into an application--not both.  The interface
    with inffast.c is retained so that optimized assembler-coded versions of
-   inflate_fast() can be used with either inflate.c or infback.c.
+   zinflate_fast() can be used with either inflate.c or infback.c.
  */
 
 #include "zutil.h"
@@ -115,7 +115,7 @@ struct inflate_state FAR *state;
 
 /* Macros for inflateBack(): */
 
-/* Load returned state from inflate_fast() */
+/* Load returned state from zinflate_fast() */
 #define LOAD() \
     do { \
         put = strm->next_out; \
@@ -126,7 +126,7 @@ struct inflate_state FAR *state;
         bits = state->bits; \
     } while (0)
 
-/* Set state from registers for inflate_fast() */
+/* Set state from registers for zinflate_fast() */
 #define RESTORE() \
     do { \
         strm->next_out = put; \
@@ -462,12 +462,12 @@ void FAR *out_desc;
             state->mode = LEN;
 
         case LEN:
-            /* use inflate_fast() if we have enough input and output */
+            /* use zinflate_fast() if we have enough input and output */
             if (have >= 6 && left >= 258) {
                 RESTORE();
                 if (state->whave < state->wsize)
                     state->whave = state->wsize - left;
-                inflate_fast(strm, state->wsize);
+                zinflate_fast(strm, state->wsize);
                 LOAD();
                 break;
             }
