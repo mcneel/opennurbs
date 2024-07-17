@@ -380,6 +380,14 @@ public:
   */
   void SetArray(T*, int, int);
 
+  /* Support range based for loops */
+  T* begin();
+  T* end();
+  T const* cbegin();
+  T* cend();
+  T const* begin() const;
+  T const* end() const;
+
 protected:
   // implementation //////////////////////////////////////////////////////
   void Move( int /* dest index*/, int /* src index */, int /* element count*/ );
@@ -732,6 +740,14 @@ public:
        each element of the array.  
   */
   void SetArray(T*, int, int);
+
+  /* Support range based for loops */
+  T* begin();
+  T* end();
+  T const* cbegin();
+  T* cend();
+  T const* begin() const;
+  T const* end() const;
 
 protected:
   // implementation //////////////////////////////////////////////////////

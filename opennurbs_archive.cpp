@@ -40,6 +40,7 @@ const ON_String Internal_RuntimeEnvironmentToString(
   ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Apple);
   ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Android);
   ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::Linux);
+  ON_ENUM_TO_STRING_CASE(ON::RuntimeEnvironment::WebAssembly);
   }
 
   ON_ERROR("Invalid runtime_environment parameter value.");
@@ -7828,6 +7829,8 @@ static ON::RuntimeEnvironment Internal_RuntimeEnvironmentFromString(
   const ON_String runtime_windows(Internal_RuntimeEnvironmentToString(ON::RuntimeEnvironment::Windows));
   const ON_String runtime_android(Internal_RuntimeEnvironmentToString(ON::RuntimeEnvironment::Android));
   const ON_String runtime_apple(Internal_RuntimeEnvironmentToString(ON::RuntimeEnvironment::Apple));
+  const ON_String runtime_linux(Internal_RuntimeEnvironmentToString(ON::RuntimeEnvironment::Linux));
+  const ON_String runtime_wasm(Internal_RuntimeEnvironmentToString(ON::RuntimeEnvironment::WebAssembly));
   const char* sRuntimeWindows[]
     = {
     static_cast<const char*>(runtime_windows),
@@ -7845,13 +7848,23 @@ static ON::RuntimeEnvironment Internal_RuntimeEnvironmentFromString(
     "mac rhinoceros",
     nullptr
   };
+  const char* sRuntimeLinux[] = {
+    static_cast<const char*>(runtime_linux),
+    "linux",
+    nullptr
+  };
+  const char* sRuntimeWebAssembly[] = {
+    static_cast<const char*>(runtime_wasm),
+    "wasm",
+    nullptr
+  };
 
   const char capA = (char)'A';
   const char capZ = (char)'Z';
   const char toLowerAZ = (char)('a' - 'A');
   for ( int i0 = 0; i0 < 2; i0++)
   {
-    for (int pass = 0; pass < 3; pass++)
+    for (int pass = 0; pass < 5; pass++)
     {
       const char** tokens = nullptr;
       ON::RuntimeEnvironment r = ON::RuntimeEnvironment::Unset;
@@ -7868,6 +7881,14 @@ static ON::RuntimeEnvironment Internal_RuntimeEnvironmentFromString(
       case 2:
         tokens = sRuntimeApple;
         r = ON::RuntimeEnvironment::Apple;
+        break;
+      case 3:
+        tokens = sRuntimeLinux;
+        r = ON::RuntimeEnvironment::Linux;
+        break;
+      case 4:
+        tokens = sRuntimeWebAssembly;
+        r = ON::RuntimeEnvironment::WebAssembly;
         break;
       }
       for (int i = i0; nullptr != tokens[i]; i++)

@@ -63,7 +63,7 @@ ON_qsort( void *base, size_t nel, size_t width, int (*compar)(void*,const void *
   // find pivots, that calculation must be thread safe.
 #if defined(ON_COMPILER_MSC)
   qsort_s(base,nel,width,compar,context);
-#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
   ON_hsort(base, nel, width, compar, context);
 #elif defined(ON_COMPILER_CLANG)
   qsort_r(base,nel,width,context,compar);

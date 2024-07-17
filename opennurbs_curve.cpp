@@ -2561,6 +2561,20 @@ public:
   double dot_tol;
   bool bUseTan;
 };
+static bool CJEDIsMatch(const CurveJoinEndData* a, const CurveJoinEndData* b)
+
+//Do these represent a pair of possible joins in the same location?
+
+{
+  for (int i=0; i<2; i++){
+    for (int j=0; j<2; j++){
+      if (a->id[i] == b->id[j] && a->end[i] == b->end[j])
+        return true;
+    }
+  }
+  return false;
+}
+
 
 static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
 
@@ -2570,6 +2584,15 @@ static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
   JoinEndCompareContext* context = (JoinEndCompareContext*)ctext;
   const CurveJoinEndData* a = (CurveJoinEndData*)aA;
   const CurveJoinEndData* b = (CurveJoinEndData*)bB;
+
+  //If not comparing two matches at the same end of a curve, sort by id.
+  if (!CJEDIsMatch(a, b)){
+    if (a->id[0] < b->id[0]) return -1;
+    if (a->id[0] > b->id[0]) return 1;
+    if (a->id[1] < b->id[1]) return -1;
+    if (a->id[1] > b->id[1]) return 1;
+    return 0;
+  }
   if (context->bUseTan){
     //If one is real close and the other isn't,take the close one.
     if (a->dist < context->dist_tol && b->dist >= context->dist_tol) return -1;
@@ -3204,6 +3227,7 @@ public:
 };
 
 JoinCurveEndArray::JoinCurveEndArray()
+  :m_CurveCount(0)
 
 {
   m_Ends[0] = m_Ends[1] = 0;
@@ -3311,15 +3335,15 @@ static bool GetCurveEndData(const ON_SimpleArray<ON_Curve*>& IC,
   return true;
 }
 
-
-
 static bool GetCurveEndData(int count, 
                        const ON_3dPoint* StartPoints, const ON_3dPoint* EndPoints,//size count
                        const ON_3dVector* StartTans, const ON_3dVector* EndTans,//nullptr or size count 
                        double join_tol, double dot_tol,
                        bool bUseTanAngle,
                        bool bPreserveDirection,
-                       ON_SimpleArray<CurveJoinEndData>& EData)
+                       ON_SimpleArray<CurveJoinEndData>& EData
+                      
+)
 
 {
   join_tol = join_tol * join_tol;
@@ -3561,7 +3585,6 @@ static bool SortEnds(int count,
                      ON_ClassArray<ON_SimpleArray<CurveJoinSeg> >& SegsArray,
                      ON_SimpleArray<int>& Singles
                      )
-
 {
   if (!StartPoints || !EndPoints)
     return false;
