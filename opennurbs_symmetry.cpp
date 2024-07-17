@@ -222,6 +222,8 @@ ON_Symmetry::Region ON_Symmetry::PointRegion(ON_3dPoint point, bool bUseCleanupT
     default:
       break;
     }
+
+    break;
   }
 
   // When the point is not valid, the symmetry is not set, or an evaluaton produces nans, then return ON_Symmetry::Region::Unset.

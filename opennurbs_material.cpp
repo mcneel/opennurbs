@@ -3956,7 +3956,11 @@ public:
 
     for (size_t i = 0; i < m_info.m_faceSourceIds.Count(); i++)
     {
+#if defined(ON_RUNTIME_WASM)
+      if (!binary_archive.WriteInt(m_info.m_faceSourceIds[(int)i]))
+#else
       if (!binary_archive.WriteInt(m_info.m_faceSourceIds[i]))
+#endif
         return false;
     }
 

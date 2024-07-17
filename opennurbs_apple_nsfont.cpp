@@ -59,6 +59,7 @@ void ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(
   if (nullptr == availableFontArray)
     return;
   const CFIndex count = CFArrayGetCount(availableFontArray);
+  platform_font_list.Reserve((int)count);
   for ( CFIndex idx = 0; idx < count; idx++)
   {
     CTFontDescriptorRef descriptor = (CTFontDescriptorRef)CFArrayGetValueAtIndex(availableFontArray, idx);
@@ -89,6 +90,8 @@ void ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(
       delete platform_font;
       continue;
     }
+
+    CFRelease(font);
     platform_font->SetPointSize(0);
     platform_font_list.Append(platform_font);
   }
@@ -712,6 +715,8 @@ void ON_AppleFontGetFontMetrics(
     const double underscore_position = pointSizeToUPM*((double)CTFontGetUnderlinePosition(appleFont));
     const double underscore_thickness = pointSizeToUPM*((double)CTFontGetUnderlineThickness(appleFont));
     
+    CFRelease(appleFont);
+    
     font_metrics = ON_FontMetrics::Unset;
     font_metrics.SetHeights(
       ascent,
@@ -1029,9 +1034,13 @@ unsigned int ON_AppleFontGetGlyphMetrics(
 
   const unsigned int glyph_index = ON_AppleFontGlyphIndex(appleFont, glyph->CodePoint());
   if (0 == glyph_index)
+  {
+    CFRelease(appleFont);
     return 0;
+  }
   
   ON_AppleFontGetGlyphMetrics(appleFont, glyph_index, glyph_metrics);
+  CFRelease(appleFont);
 
   return glyph_index;
 }
@@ -1104,6 +1113,8 @@ bool ON_AppleFontGetGlyphOutline(
     figure_type,
     outline
   );
+  
+  CFRelease(appleFont);
 
   return rc;
 }

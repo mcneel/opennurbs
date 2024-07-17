@@ -2011,11 +2011,13 @@ const ON_wString ON_SubDComponentParameter::ToString(bool bUnsetIsEmptyString) c
       const ON_SubDFaceParameter fp = this->FaceParameter();
       const unsigned corner_index = fp.FaceCornerDex().CornerIndex();
       const ON_2dPoint p = fp.FaceCornerParameters();
-      const unsigned fid = this->EdgeFace().ComponentId();
+      //const unsigned fid = this->EdgeFace().ComponentId(); // silence unused variable warning
       str = ON_wString::FormatToString(L"f%u.%u(%g, %g)", id, corner_index, p.x, p.y);
     }
     break;
 
+    case ON_SubDComponentPtr::Type::Unset:
+      break;
     }
   }
 

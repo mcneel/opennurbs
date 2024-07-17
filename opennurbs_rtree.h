@@ -522,6 +522,10 @@ public:
   Remarks:
     If you are using a Search() that uses a resultCallback() function,
     then return true to keep searching and false to terminate the search.
+    Do not modify the tree while a Search() is in progress. Doing so can
+    have unintended consequences, including corruption and crashes. If you
+    need to modify the tree, collect the results during the search and modify
+    the tree once the search is completed.
   */
   bool Search( 
     ON_RTreeSphere* a_sphere,
