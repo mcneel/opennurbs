@@ -316,4 +316,74 @@ public:
   virtual ON_RenderContent* NewRenderContent(void) const override;
 };
 
+// Universal render engine id. Set as ON_Material plug-in id when using ON_RenderContentType_*
+// ids in ON_Material::SetRdkMaterialInstanceId().
+extern ON_DECL ON_UUID ON_UniversalRenderEngineId;
+
+// Render materials.
+extern ON_DECL ON_UUID ON_RenderContentType_BlendMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_BlendMaterial_V8;
+extern ON_DECL ON_UUID ON_RenderContentType_CompositeMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_CustomMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_DefaultMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_DisplayAttributeMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_DoubleSidedMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_EmissionMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_GemMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_GlassMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_MetalMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_PaintMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_PhysicallyBasedMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_PictureMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_PlasterMaterial;
+extern ON_DECL ON_UUID ON_RenderContentType_PlasticMaterial;
+
+// Display material used to support front and back materials for realtime rendering in the viewport.
+extern ON_DECL ON_UUID ON_RenderContentType_RealtimeDisplayMaterial;
+
+// Render environments.
+extern ON_DECL ON_UUID ON_RenderContentType_BasicEnvironment;
+extern ON_DECL ON_UUID ON_RenderContentType_DefaultEnvironment;
+
+// Render textures.
+extern ON_DECL ON_UUID ON_RenderContentType_2DCheckerTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_3DCheckerTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_AddTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_AdvancedDotTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_BitmapTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_BlendTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_CubeMapTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_ExposureTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_FBmTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_GradientTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_GraniteTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_GridTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_HDRTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_MarbleTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_MaskTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_MultiplyTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_NoiseTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_PerlinMarbleTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_PerturbingTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_PhysicalSkyTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_ProjectionChangerTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_ResampleTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_SimpleBitmapTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_SingleColorTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_StuccoTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_TextureAdjustmentTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_TileTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_TurbulenceTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_WavesTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_WoodTexture;
+
+// Simple bump textures.
+extern ON_DECL ON_UUID ON_RenderContentType_CrossHatchBumpTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_DotBumpTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_GritBumpTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_HatchBumpTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_LeatherBumpTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_SpeckleBumpTexture;
+extern ON_DECL ON_UUID ON_RenderContentType_WoodBumpTexture;
+
 #endif

@@ -124,7 +124,7 @@ public:
     Determine if a polyline is convex.
   Parameters:
     bStrictlyConvex - [in]
-      If false, colinear segments are considered convex.  
+      If false, collinear segments are considered convex.
   Returns
     True if the polyline is a closed, convex loop.
   */

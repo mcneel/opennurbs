@@ -361,12 +361,12 @@ public:
 
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature 
+    Search for a derivative, tangent, or curvature
     discontinuity.
   Parameters:
     dir - [in] If 0, then "u" parameter is checked.  If 1, then
                the "v" parameter is checked.
-    c - [in] type of continity to test for.
+    c - [in] type of continuity to test for.
     t0 - [in] Search begins at t0. If there is a discontinuity
               at t0, it will be ignored.  This makes it 
               possible to repeatedly call GetNextDiscontinuity
@@ -716,7 +716,7 @@ public:
     Pointer to control vertex.
   Remarks:
     If the NURBS surface is rational, the format of the 
-    returned array is a homogeneos rational point with
+    returned array is a homogeneous rational point with
     length m_dim+1.  If the NURBS surface is not rational, 
     the format of the returned array is a nonrational 
     euclidean point with length m_dim.
@@ -1077,7 +1077,7 @@ public:
    GridPoints - [in] Grid of points to interpolate. 
    u_Tangents - [in]  Grid of Tangent directions ( actually first derivatives) to interpolate.
    v_Tangents - [in]  Grid of Tangent directions ( actually first derivatives) to interpolate.
-   TwistVectors - [in]  Grid of twist vectors (mixed second partial derovative) to interpolate.
+   TwistVectors - [in]  Grid of twist vectors (mixed second partial derivative) to interpolate.
 
    hermite_surface -[in]  optional existing ON_NurbsSurface returned here.
   Returns:
@@ -1561,7 +1561,7 @@ public:
 
   /*
   Description:
-    Evaluates bezer volume map.
+    Evaluates bezier volume map.
   Parameters:
     rst - [in]
   Returns:
@@ -1591,7 +1591,7 @@ public:
 
   /*
   Description:
-    Evaluates bezer volume map.
+    Evaluates bezier volume map.
   Parameters:
     rst - [in]
   Returns:
@@ -1648,7 +1648,7 @@ public:
     Pointer to control vertex.
   Remarks:
     If the Nurbs surface is rational, the format of the 
-    returned array is a homogeneos rational point with
+    returned array is a homogeneous rational point with
     length m_dim+1.  If the Nurbs surface is not rational, 
     the format of the returned array is a nonrational 
     euclidean point with length m_dim.

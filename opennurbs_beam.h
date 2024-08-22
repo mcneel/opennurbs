@@ -365,7 +365,7 @@ public:
       If mt is ON::default_mesh or ON::any_mesh, then 
       the first non null mesh is returned.
   Returns:
-    A pointer to a mesh on the ON_Extusion object.  
+    A pointer to a mesh on the ON_Extrusion object.
     This mesh will be deleted by ~ON_Extrusion().
     If a mesh of the requested type is not available,
     then null is returned.
@@ -491,7 +491,7 @@ public:
   /*
   Returns:
     0: no caps
-    1: exrusion has either a top cap or a bottom cap
+    1: extrusion has either a top cap or a bottom cap
     2: both ends are capped.
   See Also:
     ON_Extrusion::ProfileCount()
@@ -613,7 +613,7 @@ public:
     If the extrusion already has a profile, the set will
     fail.
   Remarks:
-    If needed, innter_profile will be converted to a 2d
+    If needed, inner_profile will be converted to a 2d
     curve. If inner_profile is not correctly oriented, it
     will be reversed so it has a clockwise orientation.
   */
@@ -675,7 +675,7 @@ public:
       0 <= profile_index < ProfileCount().
       The outer profile has index 0.
     s - [in] ( 0.0 <= s <= 1.0 )
-      A relative parameter controlling which priofile
+      A relative parameter controlling which profile
       is returned. s = 0.0 returns the bottom profile
       and s = 1.0 returns the top profile.
   Returns:
@@ -874,7 +874,7 @@ public:
 
   /*
   Description:
-    Get an ON_Exrusion form of a cylinder.
+    Get an ON_Extrusion form of a cylinder.
   Parameters:
     cylinder - [in] cylinder.IsFinite() must be true
     bCapBottom - [in] if true, the end at cylinder.m_height[0] will be capped
@@ -885,7 +885,7 @@ public:
       If the input pointer is not null, this extrusion will be used and the same
       pointer will be returned, provided the input is valid.
   Returns:
-    If the input is valid, a pointer to an ON_Exrusion form of the cylinder.
+    If the input is valid, a pointer to an ON_Extrusion form of the cylinder.
     If the input is not valid, then null, even when the input extrusion
     object is not null.
   Example:
@@ -914,7 +914,7 @@ public:
 
   /*
   Description:
-    Get an ON_Exrusion form of a pipe.
+    Get an ON_Extrusion form of a pipe.
   Parameters:
     cylinder - [in] cylinder.IsFinite() must be true
       The cylinder can be either the inner or outer wall of the pipe.
@@ -930,7 +930,7 @@ public:
       If the input pointer is not null, this extrusion will be used and the same
       pointer will be returned, provided the input is valid.
   Returns:
-    If the input is valid, a pointer to an ON_Exrusion form of the pipe.
+    If the input is valid, a pointer to an ON_Extrusion form of the pipe.
     If the input is not valid, then null, even when the input extrusion
     object is not null.
   Example:
@@ -961,7 +961,7 @@ public:
 
   /*
   Description:
-    Create an ON_Exrusion from a 3d curve, a plane and a height.
+    Create an ON_Extrusion from a 3d curve, a plane and a height.
   Parameters:
     curve - [in] 
       A continuous 3d curve.
@@ -983,7 +983,7 @@ public:
       If the input pointer is not null, this extrusion will be used and the same
       pointer will be returned, provided the input is valid.
   Returns:
-    If the input is valid, a pointer to an ON_Exrusion form of the pipe.
+    If the input is valid, a pointer to an ON_Extrusion form of the pipe.
     If the input is not valid, then null, even when the input extrusion
     object is not null.
   */

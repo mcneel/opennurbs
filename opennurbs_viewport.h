@@ -209,7 +209,7 @@ public:
     projection - [in]
   See Also:
     ON_Viewport::SetParallelProjection
-    ON_Viewport::SetPerpectiveProjection
+    ON_Viewport::SetPerspectiveProjection
     ON_Viewport::SetTwoPointPerspectiveProjection    
   */
   bool SetProjection( ON::view_projection projection );
@@ -217,7 +217,7 @@ public:
   /*
   Description:
     Use this function to change projections of valid viewports
-    from persective to parallel.  It will make common additional
+    from perspective to parallel.  It will make common additional
     adjustments to the frustum so the resulting views are similar.
     The camera location and direction will not be changed.
   Parameters:
@@ -385,7 +385,7 @@ public:
 
   bool GetCameraExtents( 
       // returns bounding box in camera coordinates - this is useful information
-      // for setting view frustrums to include the point list
+      // for setting view frustums to include the point list
       int,           // count = number of 3d points
       int,           // stride = number of doubles to skip between points (>=3)
       const double*, // 3d points in world coordinates
@@ -395,7 +395,7 @@ public:
 
   bool GetCameraExtents( 
       // returns bounding box in camera coordinates - this is useful information
-      // for setting view frustrums to include the point list
+      // for setting view frustums to include the point list
       const ON_BoundingBox&, // world coordinate bounding box
       ON_BoundingBox& cambbox, // bounding box in camera coordinates
       int bGrowBox = false   // set to true if you want to enlarge an existing camera coordinate box
@@ -403,7 +403,7 @@ public:
 
   bool GetCameraExtents( 
       // returns bounding box in camera coordinates - this is useful information
-      // for setting view frustrums to include the point list
+      // for setting view frustums to include the point list
       ON_3dPoint&,     // world coordinate bounding sphere center
       double,          // world coordinate bounding sphere radius
       ON_BoundingBox& cambox, // bounding box in camera coordinates
@@ -554,7 +554,7 @@ public:
   Returns:
     True if the point is ing the view frustum and
     near_dist/far_dist were set.
-    False if the bounding box does not intesect the
+    False if the bounding box does not intersect the
     view frustum.
   */
   bool GetPointDepth(       
@@ -579,7 +579,7 @@ public:
   Returns:
     True if the point is ing the view frustum and
     near_dist/far_dist were set.
-    False if the bounding box does not intesect the
+    False if the bounding box does not intersect the
     view frustum.
   */
   bool GetPointDepth(       
@@ -608,14 +608,14 @@ public:
   Returns:
     True if the bounding box intersects the view frustum and
     near_dist/far_dist were set.
-    False if the bounding box does not intesect the view frustum.
+    False if the bounding box does not intersect the view frustum.
   Remarks:
     This function ignores the current value of the viewport's 
     near and far settings. If the viewport is a perspective
     projection, the it intersects the semi infinite frustum
     volume with the bounding box and returns the near and far
     distances of the intersection.  If the viewport is a parallel
-    projection, it instersects the infinite view region with the
+    projection, it intersects the infinite view region with the
     bounding box and returns the near and far distances of the
     projection.
   */
@@ -649,7 +649,7 @@ public:
       are not ON_UNSET_VALUE, the near_dist and far_dist
       are enlarged to include bbox.
   Returns:
-    0: The bounding box does not intersectthe view frustum.
+    0: The bounding box does not intersect the view frustum.
     1: A proper subset of the bounding box is inside the view frustum
        and near_dist/far_dist were set.
     2: The entire bounding box is inside the view frustum 
@@ -660,7 +660,7 @@ public:
     projection, the it intersects the semi infinite frustum
     volume with the bounding box and returns the near and far
     distances of the intersection.  If the viewport is a parallel
-    projection, it instersects the infinite view region with the
+    projection, it intersects the infinite view region with the
     bounding box and returns the near and far distances of the
     projection.
   */
@@ -725,7 +725,7 @@ public:
   Returns:
     True if the sphere intersects the view frustum and
     near_dist/far_dist were set.
-    False if the sphere does not intesect the view frustum.
+    False if the sphere does not intersect the view frustum.
   */
   bool GetSphereDepth( 
          ON_Sphere sphere,
@@ -834,7 +834,7 @@ public:
       Positive distances are in front of the camera and
       negative distances are behind the camera.
       A value of FrustumNear() will return the frustum's
-      near plane and a valud of FrustumFar() will return
+      near plane and a valid of FrustumFar() will return
       the frustum's far plane.
     view_plane - [out]
       View plane
@@ -862,7 +862,7 @@ public:
       frustum left side clipping plane.  The normal points
       into the visible region of the frustum.  If the projection
       is perspective, the origin is at the camera location,
-      otherwise the origin isthe point on the plane that is
+      otherwise the origin is the point on the plane that is
       closest to the camera location.
   Returns:
     True if camera and frustum are valid and plane was set.
@@ -883,7 +883,7 @@ public:
       frustum right side clipping plane.  The normal points
       into the visible region of the frustum.  If the projection
       is perspective, the origin is at the camera location,
-      otherwise the origin isthe point on the plane that is
+      otherwise the origin is the point on the plane that is
       closest to the camera location.
   Returns:
     True if camera and frustum are valid and plane was set.
@@ -904,7 +904,7 @@ public:
       frustum bottom side clipping plane.  The normal points
       into the visible region of the frustum.  If the projection
       is perspective, the origin is at the camera location,
-      otherwise the origin isthe point on the plane that is
+      otherwise the origin is the point on the plane that is
       closest to the camera location.
   Returns:
     True if camera and frustum are valid and plane was set.
@@ -924,7 +924,7 @@ public:
       frustum top side clipping plane.  The normal points
       into the visible region of the frustum.  If the projection
       is perspective, the origin is at the camera location,
-      otherwise the origin isthe point on the plane that is
+      otherwise the origin is the point on the plane that is
       closest to the camera location.
   Returns:
     True if camera and frustum are valid and plane was set.
@@ -984,7 +984,7 @@ public:
       Positive distances are in front of the camera and
       negative distances are behind the camera.
       A value of FrustumNear() will return the frustum's
-      near rectangle and a valud of FrustumFar() will return
+      near rectangle and a value of FrustumFar() will return
       the frustum's far rectangle.
     left_bottom - [out]
     right_bottom - [out]
@@ -1088,7 +1088,7 @@ public:
   // is not 36/24.  (35mm film is 36mm wide and 24mm high.)
   //
   // The SetCamera35mmLensLength() preserves camera location,
-  // changes the frustum, but maintains the frsutrum's aspect.
+  // changes the frustum, but maintains the frustum's aspect.
   bool GetCamera35mmLensLength( 
     double* lens_length 
     ) const;
@@ -1188,7 +1188,7 @@ public:
          ) const;
 
   // Use Extents() as a quick way to set a viewport to so that bounding
-  // volume is inside of a viewports frusmtrum.
+  // volume is inside of a viewports frustum.
   // The view angle is used to determine the position of the camera.
   bool Extents( 
          double half_view_angle,        // 1/2 smallest subtended view angle
@@ -1297,7 +1297,7 @@ public:
       point to the camera plane will be target_distance. Note that
       if the frustum is not symmetric, the distance from the
       returned point to the camera location will be larger than
-      target_distanct.
+      target_distance.
       If target_distance == ON_UNSET_VALUE and the frustum
       is valid with near > 0.0, then 0.5*(near + far) will be used
       as the target_distance.
@@ -1401,7 +1401,7 @@ public:
     For perspective views, this bias is largest in the vicinity
     of the frustum's near clipping plane and smallest in the
     vicinity of the frustum's far clipping plane.
-    For orthographic projectsions, this bias is constant.
+    For orthographic projections, this bias is constant.
   */
   double ClipCoordDepthBias(
     double relative_depth_bias,
@@ -1434,7 +1434,7 @@ public:
 
   Returns:
     True if the function worked.  False if the frustum settings
-    are not valild, in which cate the identity matrix is returned.
+    are not valid, in which cate the identity matrix is returned.
 
   Remarks:
     The inverse of the transformations returned by 
@@ -1694,7 +1694,7 @@ protected:
   // The location of this point has no impact on the 
   // view projection. It is simply a suggestion for a 
   // fixed point when views are rotated or the isometric 
-  // depth when perpsective views are dollied.  The default
+  // depth when perspective views are dollied.  The default
   // is ON_3dPoint::UnsetPoint.
   ON_3dPoint m_target_point = ON_3dPoint::UnsetPoint;
 

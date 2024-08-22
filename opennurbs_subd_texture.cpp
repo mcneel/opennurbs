@@ -34,13 +34,13 @@ unsigned char ON_SubD::ObsoleteTextureDomainTypeFromTextureCoordinateType(ON_Sub
     Unset = 0,
 
     ///<summary>
-    /// Each face texture domain is a unique rectangle of normlized texture space.
+    /// Each face texture domain is a unique rectangle of normalized texture space.
     ///</summary>
     PerFace = 1,
 
     ///<summary>
-    /// Each face texture domain is a unique rectangle of normlized texture space.
-    /// When possible, faces are partitioned into quad groups. Adjactent members
+    /// Each face texture domain is a unique rectangle of normalized texture space.
+    /// When possible, faces are partitioned into quad groups. Adjacent members
     /// of the group are assigned adjacent rectangles in texture space.
     ///</summary>
     Packed = 2,
@@ -111,13 +111,13 @@ ON_SubDTextureCoordinateType ON_SubD::TextureCoordinateTypeFromObsoleteTextureDo
     Unset = 0,
 
     ///<summary>
-    /// Each face texture domain is a unique rectangle of normlized texture space.
+    /// Each face texture domain is a unique rectangle of normalized texture space.
     ///</summary>
     PerFace = 1,
 
     ///<summary>
-    /// Each face texture domain is a unique rectangle of normlized texture space.
-    /// When possible, faces are partitioned into quad groups. Adjactent members
+    /// Each face texture domain is a unique rectangle of normalized texture space.
+    /// When possible, faces are partitioned into quad groups. Adjacent members
     /// of the group are assigned adjacent rectangles in texture space.
     ///</summary>
     Packed = 2,
@@ -447,7 +447,7 @@ const ON_2udex ON_SubDFace::GetNgonSubPackRectSizeAndDelta(
   // it is critical that TextureImageSuggestedMinimumSize be a 
   // constant and context independent value.
   // 
-  // The portion of the image assgned to the ngon face pack rect
+  // The portion of the image assigned to the ngon face pack rect
   // is rect_image_width X rect_image_height pixels.
   // All variables ending in "size" have pixels as units.
   const double subd_image_size = ON_SubD::TextureImageSuggestedMinimumSize;
@@ -1278,7 +1278,7 @@ void ON_SubDMeshFragment::SetQuadOr3gonFaceFragmentTextureCoordinateCorners(
     }
     else
     {
-      // n-gon with n >= 5 or ininitialized m_face_fragment_count.
+      // n-gon with n >= 5 or initialized m_face_fragment_count.
       // If m_face_fragment_count >= 5, then you should be calling SetNgonFaceFragmentTextureCoordinateCorners().
       ON_SUBD_ERROR("Invalid m_face_fragment_count value");
       fragment_corners[0] = ON_3dPoint::NanPoint;
@@ -1545,7 +1545,7 @@ void ON_SubDMeshFragment::SetQuadOr3gonFaceFragmentPackRectCorners(
     }
     else
     {
-      // n-gon with n >= 5 or ininitialized m_face_fragment_count.
+      // n-gon with n >= 5 or initialized m_face_fragment_count.
       // If m_face_fragment_count >= 5, then you should be calling SetNgonFaceFragmentPackRectCorners().
       ON_SUBD_ERROR("Invalid m_face_fragment_count value");
       fragment_corners[0] = ON_2dPoint::NanPoint;

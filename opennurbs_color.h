@@ -28,14 +28,14 @@ public:
 
   static const ON_Color UnsetColor;       // 0xFFFFFFFFu
   static const ON_Color Black;            // 0x00000000u
-  static const ON_Color White;            // 0x00FFFFFFu on little endan, 0xFFFFFF00u on big endian
-  static const ON_Color SaturatedRed;     // 0x000000FFu on little endan, 0xFF000000u on big endian
-  static const ON_Color SaturatedGreen;   // 0x0000FF00u on little endan, 0x00FF0000u on big endian
-  static const ON_Color SaturatedBlue;    // 0x00FF0000u on little endan, 0x0000FF00u on big endian
-  static const ON_Color SaturatedYellow;  // 0x0000FFFFu on little endan, 0xFFFF0000u on big endian
-  static const ON_Color SaturatedCyan;    // 0x00FFFF00u on little endan, 0x00FFFF00u on big endian
-  static const ON_Color SaturatedMagenta; // 0x00FF00FFu on little endan, 0xFF00FF00u on big endian
-  static const ON_Color SaturatedGold;    // 0x0000BFFFu on little endan, 0xFFBF0000u on big endian
+  static const ON_Color White;            // 0x00FFFFFFu on little endian, 0xFFFFFF00u on big endian
+  static const ON_Color SaturatedRed;     // 0x000000FFu on little endian, 0xFF000000u on big endian
+  static const ON_Color SaturatedGreen;   // 0x0000FF00u on little endian, 0x00FF0000u on big endian
+  static const ON_Color SaturatedBlue;    // 0x00FF0000u on little endian, 0x0000FF00u on big endian
+  static const ON_Color SaturatedYellow;  // 0x0000FFFFu on little endian, 0xFFFF0000u on big endian
+  static const ON_Color SaturatedCyan;    // 0x00FFFF00u on little endian, 0x00FFFF00u on big endian
+  static const ON_Color SaturatedMagenta; // 0x00FF00FFu on little endian, 0xFF00FF00u on big endian
+  static const ON_Color SaturatedGold;    // 0x0000BFFFu on little endian, 0xFFBF0000u on big endian
   static const ON_Color Gray105;          // R = G = B = 105 (medium dark)
   static const ON_Color Gray126;          // R = G = B = 128 (medium)
   static const ON_Color Gray160;          // R = G = B = 160 (medium light)
@@ -138,7 +138,7 @@ public:
   );
 
   // If you need to use shifting to convert RGBA components to and from
-  // an unsigned int ON_COlor value and you want your code to work 
+  // an unsigned int ON_Color value and you want your code to work
   // on both little and big endian computers, use the RGBA_shift enum.
   //
   // unsigned int u = 0;
@@ -367,7 +367,7 @@ public:
   Parameters:
     format - [in]
     separator - [in]
-      Separarates the values. 
+      Separates the values.
       0 to use UNICODE comma.
       (Ignored when the format is HashRGB*.)
     character to separate numbers (unicode code point - UTF-16 surrogate pairs not supported)
@@ -420,14 +420,14 @@ private:
     // On little endian computers, m_color = 0xaabbggrr as an unsigned int value.
     // On big endian computers, m_color = 0xrrggbbaa as an unsigned int value
     //  rr = red component 0-255
-    //  gg = grean component 0-255
+    //  gg = green component 0-255
     //  bb = blue component 0-255
     //  aa = alpha 0-255. 0 means opaque, 255 means transparent.
     unsigned int m_color = 0;
 
     // m_colorComponent is a 4 unsigned byte array in RGBA order
     // red component = m_RGBA[ON_Color::RGBA_byte::kRed]
-    // grean component = m_RGBA[ON_Color::RGBA_byte::kGreen]
+    // green component = m_RGBA[ON_Color::RGBA_byte::kGreen]
     // blue component = m_RGBA[ON_Color::RGBA_byte::kBlue]
     // alpha component = m_RGBA[ON_Color::RGBA_byte::kAlpha]
     unsigned char m_RGBA[4];

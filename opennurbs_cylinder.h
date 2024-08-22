@@ -115,7 +115,7 @@ public:
         const ON_3dVector&
         );
 
-  // parameterization of NURBS surface does not match cylinder's transcendental paramaterization
+  // parameterization of NURBS surface does not match cylinder's transcendental parameterization
   int GetNurbForm( ON_NurbsSurface& ) const; // returns 0=failure, 2=success
 
   /*

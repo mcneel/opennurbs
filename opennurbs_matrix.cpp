@@ -1593,7 +1593,7 @@ unsigned int ON_RowReduce(
       }
     }
 
-    // swap columns M[jj] and M[rank] to maximum coefficeint is in M[rank][rank]
+    // swap columns M[jj] and M[rank] to maximum coefficient is in M[rank][rank]
     xx = -a[jj];
     a[jj] = a[rank];
     //a[rank] = -xx; // DEBUG
@@ -1834,7 +1834,7 @@ unsigned int ON_GetEigenvectors(
 
     if (bLastTry)
     {
-      // For an explaination, see the code below where bLastTry is set to true.
+      // For an explanation, see the code below where bLastTry is set to true.
       break;
     }
 
@@ -1922,7 +1922,7 @@ unsigned int ON_GetEigenvectors(
     // with respect to pivot[0], from the point of view of a
     // double and addition.  If the entries in the matrix
     // are numerically reasonable for double precision
-    // calcualatons, then pivot[1] is a reasonable choice for
+    // calculations, then pivot[1] is a reasonable choice for
     // a zero tolerance.
     if (!(r1 <= tols[0]))
     {
@@ -1930,7 +1930,7 @@ unsigned int ON_GetEigenvectors(
 
       // If r1 < tols[0](1.0e-3), there are at least 3 orders of
       // magnitude between the maximum pivot and pivot[1].
-      // If d1 > tols[2](1.0e4) *pivots[1], pivot[1] is substantually closer to
+      // If d1 > tols[2](1.0e4) *pivots[1], pivot[1] is substantially closer to
       // zero than it is to pivot[0].
       if (!(r1 <= tols[1] && d1 > tols[2]*pivots[1]))
       {

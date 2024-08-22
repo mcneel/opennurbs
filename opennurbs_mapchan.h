@@ -39,7 +39,7 @@ public:
 
   ON_UUID m_mapping_id;  // Identifies an ON_TextureMapping
 
-  // RUNTIME textrure mapping table index.
+  // RUNTIME texture mapping table index.
   // If -1, it needs to be set.  This value is not saved int files.
   int m_mapping_index;
 
@@ -75,7 +75,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_MappingChannel>;
 //   use.  This allows different rendering plug-ins to have different 
 //   materials on the same object.  The values of
 //   ON_3dmObjectAttributes.m_material_index and 
-//   ON_3dmObjectAttributes.m_matrial_source reflect the settings
+//   ON_3dmObjectAttributes.m_material_source reflect the settings
 //   of the renderer that is currently active.
 //
 
@@ -119,7 +119,7 @@ public:
     mapping_id - [in]
       ON_TextureMapping id
   Returns:
-    True if the mapping channel was added or a pefect
+    True if the mapping channel was added or a perfect
     match already existed.  False if a mapping channel 
     with a different mapping_id already exists for this
     plug-in and channel.

@@ -32,12 +32,12 @@ bool ON_IsGregorianLeapYear(
   // the Gregorian calendar was introduced 24, February 1582, in 
   // the Papal States, Spain, Portugal, the Polish-Lithuanian
   // Commonwealth, and most of Italy.  However the Julian leap
-  // day was omitted for the first 10 occurances to correct
+  // day was omitted for the first 10 occurrences to correct
   // for the "vernal equinox drift" the Julian calendar had
   // introduced from  AD 325 to 1582.  The goal was to have
   // March 21 be the date of the vernal equinox.
-  // As a result, the first Gregorian calendary leap day
-  // leap day in the Gregorian calendar occured on Feb 29, 1624.
+  // As a result, the first Gregorian calendar leap day
+  // leap day in the Gregorian calendar occurred on Feb 29, 1624.
   return ( year >= 1624 && 0 == (year %4) && (0 == (year%400) || 0 != (year%100)) );
 }
 

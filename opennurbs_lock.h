@@ -16,7 +16,7 @@
 
 /*
 Description:
-  ON_Lock is a thread safe lock semephore. It is implemented using
+  ON_Lock is a thread safe lock semaphore. It is implemented using
   platform specific compare and set functions.
 */
 class ON_CLASS ON_Lock
@@ -63,7 +63,7 @@ public:
   Description:
     Calls ReturnLock(ON_Lock::DefaultLockedValue);
   Returns:
-    True if the lock state was locked with a locak value = ON_Lock::DefaultLockedValue
+    True if the lock state was locked with a lock value = ON_Lock::DefaultLockedValue
     and the current lock value was changed from ON_Lock::DefaultLockedValue to ON_Lock::UnlockedValue.
     False otherwise.
   */

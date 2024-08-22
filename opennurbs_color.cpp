@@ -62,7 +62,7 @@ const ON_Color ON_Color::RandomColor(
 )
 {
   ON_RandomNumberGenerator rg;
-  rg.Seed(seed + 1U); // the +1 is so the colors for seeds (0,1,2,3,4,5 are more vistually distinct)
+  rg.Seed(seed + 1U); // the +1 is so the colors for seeds (0,1,2,3,4,5 are more visually distinct)
   const double h = hue_range.IsSingleton() ? hue_range.m_t[0] : rg.RandomDouble(hue_range);
   double s = saturation_range.IsSingleton() ? saturation_range.m_t[0] : rg.RandomDouble(saturation_range);
   if (s > ON_UNSET_VALUE && s < ON_UNSET_POSITIVE_VALUE)
@@ -306,7 +306,7 @@ double ON_Color::Value() const
 
 void ON_Color::SetHSV(
        double hue,         // hue in radians
-       double saturation, // satuation 0.0 = gray, 1.0 = saturated
+       double saturation, // saturation 0.0 = gray, 1.0 = saturated
        double value       // value
        )
 {

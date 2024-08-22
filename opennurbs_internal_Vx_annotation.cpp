@@ -26,7 +26,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // This file contains code that translates current annotation object
-// defintions to and from obsolete V2 and V5 annotation object definitions.
+// definitions to and from obsolete V2 and V5 annotation object definitions.
 // This code is used to read and write old file formats.
 
 

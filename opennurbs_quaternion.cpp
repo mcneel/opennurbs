@@ -453,7 +453,7 @@ double ON_Quaternion::Length() const
   //     For small denormalized doubles (positive but smaller
   //     than DBL_MIN), some compilers/FPUs set 1.0/fa to +INF.
   //     Without the ON_DBL_MIN test we end up with
-  //     microscopic quaternions that have infinte norm!
+  //     microscopic quaternions that have infinite norm!
   //
   //     This code is absolutely necessary.  It is a critical
   //     part of the bug fix for RR 11217.

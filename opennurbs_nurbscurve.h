@@ -298,7 +298,7 @@ public:
   // Returns:
   //   Number of nonempty smooth (c-infinity) spans.
   // Remarks:
-  //   A nonempty span is bracked by knots m_knot[i] < m_knot[i+1]
+  //   A nonempty span is bracketed by knots m_knot[i] < m_knot[i+1]
   //   with m_order-2 <= i < m_cv_count-1.
   int SpanCount() const override;
 
@@ -397,9 +397,9 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature discontinuity.
+    Search for a derivative, tangent, or curvature discontinuity.
   Parameters:
-    c - [in] type of continity to test for.  If ON::continuity::C1_continuous
+    c - [in] type of continuity to test for.  If ON::continuity::C1_continuous
     t0 - [in] search begins at t0
     t1 - [in] (t0 < t1) search ends at t1
     t - [out] if a discontinuity is found, the *t reports the
@@ -528,7 +528,7 @@ public:
 
   // Description:
   //   virtual ON_Curve::Reverse override.
-  //   Reverse parameterizatrion by negating all knots
+  //   Reverse parameterization by negating all knots
   //   and reversing the order of the control vertices.
   // Remarks:
   //   Domain changes from [a,b] to [-b,-a]
@@ -560,7 +560,7 @@ public:
       distance tolerance to use when checking control points
       between the span ends
   Returns 
-    true if the span is a non-degenrate line.  This means:
+    true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
     - There are full multiplicity knots at each end of the span.
     - The length of the the line segment from the span's initial 
@@ -587,12 +587,12 @@ public:
   /*
   Description:
     Looks for problems caused by knots that are close together
-    or have mulitplicity >= order. If bRepair is true, the problems
+    or have multiplicity >= order. If bRepair is true, the problems
     are fixed.  Does not change the domain.
   Parameters:
     knot_tolerance - [in] >= 0  When in doubt, use zero.
     bRepair - [in] If true, then problems are repaired.
-      Otherwise this function looks for problemsn that
+      Otherwise this function looks for problems that
       can be repaired, but does not modify the curve.
   Returns:
     True if bad knots were found and can be repaired.
@@ -649,7 +649,7 @@ public:
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the curve's to wthe desired accuracy
+                   //            matches the curve's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the curve's to the desired accuracy but, on
                    //            the interior of the curve's domain, the 
@@ -666,7 +666,7 @@ public:
   int HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the curve's to wthe desired accuracy
+                   //            matches the curve's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the curve's to the desired accuracy but, on
                    //            the interior of the curve's domain, the 
@@ -764,7 +764,7 @@ public:
     Pointer to control vertex.
   Remarks:
     If the NURBS curve is rational, the format of the 
-    returned array is a homogeneos rational point with
+    returned array is a homogeneous rational point with
     length m_dim+1.  If the NURBS curve is not rational, 
     the format of the returned array is a nonrational 
     euclidean point with length m_dim.
@@ -1127,8 +1127,8 @@ public:
     True if the span was successfully removed.
   Remarks:
     The NURBS curve must have 2 or more spans (m_cv_count > m_order).
-    Set m0 = mulitiplicity of the knot at m_knot[span_index+m_order-2]
-    and m1 = mulitiplicity of the knot at m_knot[span_index+m_order-1].
+    Set m0 = multiplicity of the knot at m_knot[span_index+m_order-2]
+    and m1 = multiplicity of the knot at m_knot[span_index+m_order-1].
     If (m0 + m1) < degree, then the degree-(m0+m1) cvs will be added
     to the NURBS curve. If (m0+m1) > degree, then (m0+m1)-degree cvs will
     be removed from the curve.

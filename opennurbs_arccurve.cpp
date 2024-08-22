@@ -553,9 +553,9 @@ bool ON_ArcCurve::Evaluate( // returns false if unable to evaluate
 
     // This test turned out to be too crude.  The bug RH-26341
     // is one example.  The issue is that the trig function with the
-    // largest derivative has more pecise sensitivity to changes in
-    // angle and in orger to get as precise an evaluation as possible,
-    // it is inportant to allow non-zero values of one trig function
+    // largest derivative has more precise sensitivity to changes in
+    // angle and in order to get as precise an evaluation as possible,
+    // it is important to allow non-zero values of one trig function
     // even when the other is being rounded to +1 or -1.
     //
     ////if ( fabs(c) < ON_EPSILON || fabs(s) > 1.0-ON_EPSILON )
@@ -913,7 +913,7 @@ bool ON_Arc::GetRadianFromNurbFormParameter(double NurbParameter, double* Radian
 {
 	//  TRR#53994.
 	// 16-Sept-09  Replaced this code so we dont use LocalClosestPoint.
-	// In addition to being slower than neccessary the old method suffered from getting the
+	// In addition to being slower than necessary the old method suffered from getting the
 	// wrong answer at the seam of a full circle,  This probably only happened with large 
 	// coordinates where many digits of precision get lost.
 

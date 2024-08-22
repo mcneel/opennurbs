@@ -124,7 +124,7 @@ public:
   Parameters:
     archive - [in]
       The archive being written to. Typically, you will test
-      archive.Archive3dmVersion() to deterime if your userdata
+      archive.Archive3dmVersion() to determine if your userdata
       should be saved.
     parent_object - [in]
       The object managing this userdata.
@@ -346,7 +346,7 @@ public:
 };
 
 // Do not export this class
-// It is used internally to read and write 3dm achives with versions < 60.
+// It is used internally to read and write 3dm archives with versions < 60.
 class ON_RdkMaterialInstanceIdObsoleteUserData : public ON_ObsoleteUserData
 {
   // NO ON_OBJECT_DECLARE() for classes derived from ON_ObsoleteUserData

@@ -1035,7 +1035,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
 				if (!bFirstPass)
 					GJK.AddVertex(W, wA, wB);
 
-        // The key to the implemetation of this algorithm is contained in Simplex::GetClosestPointToOrigin()
+        // The key to the implementation of this algorithm is contained in Simplex::GetClosestPointToOrigin()
 				if (GJK.Simp.GetClosestPointToOrigin(GJK.Bary))
 				{
 					bFirstPass = false;
@@ -1052,7 +1052,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
           }
           else
           {
-            /* this is error recovery code. it is currenly DISABLED
+            /* this is error recovery code. it is currently DISABLED
             // The last step resulted in crap lets undo it and set done
             int n = GJK.Simp.Count() - 1;
             GJK.RemoveVertex(n);
@@ -1065,7 +1065,7 @@ bool ON_ConvexPoly::GetClosestPointSeeded(const ON_ConvexPoly& B,
 				}
 				else
 				{
-					// In this case I am going to terminte the iteration.  If this was a FirstPass with user supplied initial guess
+					// In this case I am going to terminate the iteration.  If this was a FirstPass with user supplied initial guess
 					// then we restart the algorithm without the initial guess.
 					break;
 				}

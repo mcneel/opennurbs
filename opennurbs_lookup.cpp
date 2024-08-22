@@ -187,7 +187,7 @@ void ON_SN_BLOCK::CullBlockHelper()
   // value is zero and remove them from the array.
   //
   // This is a high speed helper function.  
-  // The calling function must verfy m_purged > 0.
+  // The calling function must verify m_purged > 0.
   //
   // This function removes all m_sn[] elements
   // that have 0 == m_sn_active.
@@ -574,7 +574,7 @@ struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FindElementHelper(ON_
     {
       // m_sn_block0.m_sn[] needs to be sorted
       //
-      // This is a rare occurance.  It only happens
+      // This is a rare occurrence.  It only happens
       // when commands add new objects in an order that
       // is different from that in which the CRhinoObject
       // class constructor was called.  In testing,
@@ -1100,7 +1100,7 @@ ON_SerialNumberMap::RemoveSerialNumberAndId(ON__UINT64 sn)
       if ( m_e_blk == &m_sn_block0 )
       {
         // Every element in m_sn_block0 is purged.
-        // Empyt m_sn_block0.
+        // Empty m_sn_block0.
         m_sn_count -= m_sn_block0.m_count;
         m_sn_purged -= m_sn_block0.m_count;
         m_sn_block0.EmptyBlock();
@@ -1357,7 +1357,7 @@ ON__UINT64 ON_SerialNumberMap::GarbageCollectMoveHelper(ON_SN_BLOCK* dst,ON_SN_B
 {
   // This helper is used by GarbageCollectHelper and moves
   // as many entries as possible from src to dst.  
-  // Returns: the number of entries transfered.
+  // Returns: the number of entries transferred.
   ON__UINT32 i,j,n;
   if ( src && dst )
   {
@@ -1736,7 +1736,7 @@ struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::AddSerialNumberAndId(
     if (IdIsEqual(&m_inactive_id, &id))
     {
       // This id was recently removed and is now being added back
-      // (which turns out to be a common occurance - go figure).
+      // (which turns out to be a common occurrence - go figure).
       // No need to check for duplicates.
       m_inactive_id = ON_nil_uuid;
     }

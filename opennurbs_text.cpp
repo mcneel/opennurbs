@@ -2071,7 +2071,7 @@ bool ON_TextContent::MeasureTextRunArray(
           line_height = run->TextHeight();   // Increase height if this is highest run so far in this line
         double lfh = ON_TextContent::GetLinefeedHeight(*run);
         if (line_start || lfh > linefeed_height)
-          linefeed_height = lfh;         // Increase linefeed height if this is the higest so far in this line
+          linefeed_height = lfh;         // Increase linefeed height if this is the highest so far in this line
         line_start = false;
         line_end = false;
         last_text_run = run;

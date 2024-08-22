@@ -411,7 +411,7 @@ void  ON_SubDAggregates::UpdateTopologicalAttributes(
           break;
         }
         R -= B;
-        // ON_TripleProduct(P, Q, R) = 6x signed volume of tetrahedron with trangle base (P,Q,R) and apex B.
+        // ON_TripleProduct(P, Q, R) = 6x signed volume of tetrahedron with triangle base (P,Q,R) and apex B.
         vol += ON_TripleProduct(P, Q, R);
       }
     }
@@ -664,7 +664,7 @@ bool ON_SubDVertex::Transform(
     //     and the corner sector(s) contains interior smooth edges,
     //     and the transformation changes the angle between a corner sector's crease boundary, 
     //   then the sector's interior smooth edge's m_sector_coefficient[] could change
-    //   and invalidate the subdivison points and limit points.
+    //   and invalidate the subdivision points and limit points.
     //   This is only possible for uncommon (in practice) transformations
     //   and corner sectors and will require a fair bit of testing for 
     //   now it's easier to simply set bTransformationSavedSubdivisionPoint to false
@@ -704,7 +704,7 @@ bool ON_SubDVertex::Transform(
     //     and the corner sector(s) contains interior smooth edges,
     //     and the transformation changes the angle between a corner sector's crease boundary, 
     //   then the sector's interior smooth edge's m_sector_coefficient[] could change
-    //   and invalidate the subdivison points and limit points.
+    //   and invalidate the subdivision points and limit points.
     //   This is only possible for uncommon (in practice) transformations
     //   and corner sectors and will require a fair bit of testing for 
     //   now it's easier to simply set bTransformationSavedSubdivisionPoint to false
@@ -730,7 +730,7 @@ void ON_SubDVertex::UnsetControlNetPoint()
   m_P[2] = ON_DBL_QNAN;
   ClearSavedSubdivisionPoints();
   // With a nan control net point, there is no need for an expensive unset 
-  // of the neighborhod because the caller will either later pass
+  // of the neighborhood because the caller will either later pass
   // bClearNeighborhoodCache=true to ON_SubDVertex::SetControlNetPoint(...,bClearNeighborhoodCache) 
   // or deal with cleaning up the cached evaluations in some other way.
 }
@@ -890,11 +890,16 @@ bool ON_SubDFace::Transform(
   )
 {
   ON_Xform xformNormals{ ON_Xform::IdentityTransformation };
-  const double det{ xform.GetSurfaceNormalXform(xformNormals) };
+  const double det{ xform.GetSurfaceNormalXformKeepLengthAndOrientation(xformNormals) };
   ON_Xform xformCurvatures{ ON_Xform::IdentityTransformation };
-  if (abs(det) > ON_EPSILON) {
-    xformNormals = xformNormals * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
-    xformCurvatures = xformCurvatures * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+  if (abs(det) > 0) {
+    if (abs(abs(det) - 1) > ON_SQRT_EPSILON)
+    {
+      xformCurvatures = ON_Xform::DiagonalTransformation(pow(det, -1. / 3.));
+    }
+  }
+  else {
+    return ON_SUBD_RETURN_ERROR(false);
   }
   const bool bKeepCurvatures{ xform.IsSimilarity() != 0 };
   const bool bKeepTextures{ true };
@@ -949,11 +954,13 @@ bool ON_SubDLevel::Transform(
 {
   bool rc = true;
   ON_Xform xformNormals{ ON_Xform::IdentityTransformation };
-  const double det{ xform.GetSurfaceNormalXform(xformNormals) };
+  const double det{ xform.GetSurfaceNormalXformKeepLengthAndOrientation(xformNormals) };
   ON_Xform xformCurvatures{ ON_Xform::IdentityTransformation };
-  if (abs(det) > ON_EPSILON) {
-    xformNormals = xformNormals * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
-    xformCurvatures = xformCurvatures * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+  if (abs(det) > 0) {
+    if (abs(abs(det) - 1) > ON_SQRT_EPSILON)
+    {
+      xformCurvatures = ON_Xform::DiagonalTransformation(pow(det, -1. / 3.));
+    }
   }
   else {
     rc = false;
@@ -1158,7 +1165,7 @@ bool ON_SubDimple::Transform(
       }
       else
       {
-        // object moved with respect to symmetry contstraints
+        // object moved with respect to symmetry constraints
         // DO NOTHING HERE - the serial number and hashes on m_symmetry will inform downstream processes
         // that the object no longer has the symmetry property specified by m_symmetry.
         // It will get updated when appropriate - typically in replace object.
@@ -1198,11 +1205,13 @@ bool ON_SubDMeshFragment::Transform(
 )
 {
   ON_Xform xformNormals{ON_Xform::IdentityTransformation};
-  const double det{xform.GetSurfaceNormalXform(xformNormals)};
+  const double det{ xform.GetSurfaceNormalXformKeepLengthAndOrientation(xformNormals) };
   ON_Xform xformCurvatures{ON_Xform::IdentityTransformation};
-  if (abs(det) > ON_EPSILON) {
-    xformNormals = xformNormals * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
-    xformCurvatures = xformCurvatures * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, 1. / det);
+  if (abs(det) > 0) {
+    if (abs(abs(det) - 1) > ON_SQRT_EPSILON)
+    {
+      xformCurvatures = ON_Xform::DiagonalTransformation(pow(det, -1. / 3.));
+    }
   }
   else {
     return ON_SUBD_RETURN_ERROR(false);

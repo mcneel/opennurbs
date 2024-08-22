@@ -323,7 +323,7 @@ bool ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
               if ( V.Unitize() )
               {
                 // Could not find a seed value for dbrent, 
-                // but V and T are orthoganal, so t0 is 
+                // but V and T are orthogonal, so t0 is
                 // pretty close.
                 if ( fabs(V*T) <= 0.087155742747658173558064270837474 )
                   return true;

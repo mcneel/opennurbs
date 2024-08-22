@@ -442,44 +442,6 @@ const T* ON_SimpleArray<T>::Last() const
   return (m_count > 0) ? m_a+(m_count-1) : 0;
 }
 
-// range-based iteration support
-
-template <class T>
-T* ON_SimpleArray<T>::begin()
-{
-  return m_a ? &m_a[0] : nullptr;
-}
-
-template <class T>
-T* ON_SimpleArray<T>::end()
-{
-  return m_a ? m_a + m_count : nullptr;
-}
-
-template <class T>
-T const* ON_SimpleArray<T>::cbegin()
-{
-  return m_a ? &m_a[0] : nullptr;
-}
-
-template <class T>
-T* ON_SimpleArray<T>::cend()
-{
-  return m_a ? m_a + m_count : nullptr;
-}
-
-template <class T>
-T const* ON_SimpleArray<T>::begin() const
-{
-    return m_a ? &m_a[0] : nullptr;
-}
-
-template <class T>
-T const* ON_SimpleArray<T>::end() const
-{
-  return m_a ? m_a + m_count : nullptr;
-}
-
 // array operations ////////////////////////////////////////////////////
 
 template <class T>
@@ -1680,45 +1642,6 @@ const T* ON_ClassArray<T>::Last() const
 {
   return (m_count > 0) ? m_a+(m_count-1) : 0;
 }
-
-// range-based iteration support
-
-template <class T>
-T* ON_ClassArray<T>::begin()
-{
-  return m_a ? &m_a[0] : nullptr;
-}
-
-template <class T>
-T* ON_ClassArray<T>::end()
-{
-  return m_a ? m_a + m_count : nullptr;
-}
-
-template <class T>
-T const* ON_ClassArray<T>::cbegin()
-{
-  return m_a ? &m_a[0] : nullptr;
-}
-
-template <class T>
-T* ON_ClassArray<T>::cend()
-{
-  return m_a ? m_a + m_count : nullptr;
-}
-
-template <class T>
-T const* ON_ClassArray<T>::begin() const
-{
-  return m_a ? &m_a[0] : nullptr;
-}
-
-template <class T>
-T const* ON_ClassArray<T>::end() const
-{
-  return m_a ? m_a + m_count : nullptr;
-}
-
 
 // array operations ////////////////////////////////////////////////////
 

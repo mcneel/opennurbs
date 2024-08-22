@@ -193,7 +193,7 @@ public:
   void SetStackedOff();
 
   // Set or get the WCS model unit height of the text
-  // not including any annotatition scaling
+  // not including any annotation scaling
   double TextHeight() const;
 
   void SetTextHeight(double h);

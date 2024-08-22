@@ -550,7 +550,7 @@ ON_EvJacobian( double ds_o_ds, double ds_o_dt, double dt_o_dt,
   /* NOTE: a = |Du|^2 * |Dv|^2  and b = (Du o Dv)^2 are always >= 0 */
   det = a - b;
   if (ds_o_ds <= dt_o_dt* ON_EPSILON || dt_o_dt <= ds_o_ds* ON_EPSILON) {
-    /* one of the paritals is (numerically) zero with respect
+    /* one of the partials is (numerically) zero with respect
      * to the other partial - value of det is unreliable
      */
     rc = false;
@@ -731,7 +731,7 @@ ON_EvNormal(int limit_dir,
      * All I need is the direction, so I just need to compute a*A + b*B as carefully
      * as possible.  Note that
      * (3)  a*A + b*B = Du X (a*Duv + b*Dvv)  - Dv X (a*Duu + b*Duv).
-     * Formaula (3) requires fewer flops than using formulae (1) and (2) to
+     * Formula (3) requires fewer flops than using formulae (1) and (2) to
      * compute a*A + b*B.  In addition, when |Du| << |Dv| or |Du| >> |Dv|,
      * formula (3) reduces the number of subtractions between numbers of
      * similar size.  Since the (nearly) zero first partial is the most common
@@ -810,7 +810,7 @@ bool ON_EvTangent(
 
   if (d1 == 0.0) 
   {
-    // Use L'hopital's rule to show that if the unit tanget
+    // Use L'hopital's rule to show that if the unit tangent
     // exists and the 1rst derivative is zero and the 2nd derivative is
     // nonzero, then the unit tangent is equal to +/-the unitized 
     // 2nd derivative.  The sign is equal to the sign of D1(s) o D2(s)
@@ -853,7 +853,7 @@ ON_EvCurvature(
 
   if (d1 == 0.0) 
   {
-    // Use L'hopital's rule to show that if the unit tanget
+    // Use L'hopital's rule to show that if the unit tangent
     // exists and the 1rst derivative is zero and the 2nd derivative is
     // nonzero, then the unit tangent is equal to +/-the unitized 
     // 2nd derivative.  The sign is equal to the sign of D1(s) o D2(s)
@@ -2044,7 +2044,7 @@ ON_SolveQuadraticEquation(
  *   is numerical noise and is assumed to be zero.
  *
  *   If it is really important to have the best possible answer,
- *   you sould probably tune up the returned roots using
+ *   you should probably tune up the returned roots using
  *   Brent's algorithm.
  *
  * REFERENCE:
@@ -2278,7 +2278,7 @@ COMMENTS:
   The computation is performed in such a way that the output
   "X" pointer can be equal to the input "d" pointer; i.e., if the
   d array will not be used after the call to ON_SolveTriDiagonal(), then
-  it is not necessary to allocate seperate space for X and d.
+  it is not necessary to allocate separate space for X and d.
 EXAMPLE:
 REFERENCE:
   NRC, section 2.6
@@ -5068,7 +5068,7 @@ bool ON_Sym3x3EigenSolver(double A, double B, double C,
 		&ee2, EE2,
 		&ee3, EE3);
 
-	/* Step 3. Apply rotation to express results in orignal coordinate system  */
+	/* Step 3. Apply rotation to express results in original coordinate system  */
 	E1.Set(cos_phi*EE1.x + sin_phi * EE1.z, EE1.y, -sin_phi * EE1.x + cos_phi * EE1.z);
 	E2.Set(cos_phi*EE2.x + sin_phi * EE2.z, EE2.y, -sin_phi * EE2.x + cos_phi * EE2.z);
 	E3.Set(cos_phi*EE3.x + sin_phi * EE3.z, EE3.y, -sin_phi * EE3.x + cos_phi * EE3.z);
@@ -5152,17 +5152,17 @@ bool ON_SymTriDiag3x3EigenSolver(double A, double B, double C,
 
 /*
 Description:
-	QL Algorithm with implict shifts, to determine the eigenvalues and eigenvectors of a
+	QL Algorithm with implicit shifts, to determine the eigenvalues and eigenvectors of a
 	symmetric, tridiagonal matrix.
 
-Parametrers:
+Parameters:
 	d - [in/out]	On input d[0] to d[n-1] are the diagonal entries of the matrix.
 								As output d[0] to d[n-1] are the eigenvalues.
 	e - [in/out]  On Input e[0] to e[n-1] are the off-diagonal entries of the matrix.
 								with e[n-1] not used, but must be allocated.
 								on output e is unpredictable.
 n - [in]      matrix is n by n
-pV - [out]		If not nullptr the it should be an n by n matix.
+pV - [out]		If not nullptr the it should be an n by n matrix.
 							The kth column will be a normalized eigenvector of d[k]
 */
 bool ON_TriDiagonalQLImplicit(double* d, double* e, int n, ON_Matrix* pV)

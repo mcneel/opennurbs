@@ -893,7 +893,7 @@ double ON_Material::FresnelReflectionCoefficient(
     g = fresnel_index_of_refraction*fresnel_index_of_refraction + c*c - 1.0;
     g = (g > 0.0) ? sqrt(g) : 0.0;
 
-    // unsafe (potiential divide by zero, overflow, ...) and inefficient
+    // unsafe (potential divide by zero, overflow, ...) and inefficient
     // return ( ((g-c)*(g-c))/(2*(g+c)*(g+c)) ) * (1.0f + ( ((c*(g+c)-1.0)*(c*(g+c)-1.0))/((c*(g+c)+1.0)*(c*(g+c)+1.0)) ) );
 
     x = g+c;
@@ -922,7 +922,7 @@ double ON_Material::FresnelReflectionCoefficient(
     return x; // x is
   }
 
-  return 1.0; // error occured
+  return 1.0; // error occurred
 }
 
 double  ON_Material::FresnelReflectionCoefficient(
@@ -1615,15 +1615,10 @@ int ON_Material::CompareAppearance( const ON_Material& a, const ON_Material& b )
   // around that.
   if (0 == rc)
   {
-    static const ON_UUID uuidUniversal =
-    {
-      // {99999999-9999-9999-9999-999999999999}
-      0x99999999, 0x9999, 0x9999, { 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99 }
-    };
     if (
-      0 != ON_UuidCompare(&uuidUniversal, &a.m_plugin_id)
+      0 != ON_UuidCompare(&ON_UniversalRenderEngineId, &a.m_plugin_id)
       &&
-      0 != ON_UuidCompare(&uuidUniversal, &b.m_plugin_id)
+      0 != ON_UuidCompare(&ON_UniversalRenderEngineId, &b.m_plugin_id)
       )
     {
       rc = ON_UuidCompare(&a.m_plugin_id, &b.m_plugin_id);
@@ -2975,7 +2970,7 @@ ON_Xform ON_Texture::GetPictureShrinkSurfaceTransformation(
     return *error_return;
 
   // The new brep has a smaller surface.
-  // Adust the texture transform to use the proper subset of the old picture image texture.
+  // Adjust the texture transform to use the proper subset of the old picture image texture.
   ON_Xform x
     = ON_Xform::TranslationTransformation(p0 - ON_3dPoint::Origin)
     * ON_Xform::ScaleTransformation(ON_3dPoint::Origin, sx, sy, 1.0);
@@ -3427,7 +3422,7 @@ int ON_TextureMapping::EvaluateCylinderMapping(
     else if ( r <= 1.001 )
     {
       // The point is inside the capped cylinder.
-      // Use normal to dermine which surface to use
+      // Use normal to determine which surface to use
       // for closest point test.
 		  ON_3dVector n(m_Nxyz*N);
       if (  ( fabs(n.z) > fabs(n.x) && fabs(n.z) > fabs(n.y) ) )
@@ -4648,6 +4643,10 @@ public:
       }
       return false;
     }
+    const ON_BoundingBox& BBox() const
+    {
+      return m_bbox;
+    }
   protected:
     bool HasFace(int fi)
     {
@@ -4683,6 +4682,7 @@ public:
         if (!IsBanned(fi))
         {
           m_fis.push_back(fi);
+          GrowBoundingBox(fi);
 
           int* pSeamed = nullptr;
           const int nSeamed = m_seamTool.SeamedNeighbours(fi, pSeamed);
@@ -4708,12 +4708,22 @@ public:
         }
       }
     }
+    void GrowBoundingBox(int fi)
+    {
+      const ON_MeshFace& face = m_mesh.m_F[fi];
+      const int fcc = face.IsQuad() ? 4 : 3;
+      for (int fci = 0; fci < fcc; fci++)
+      {
+        m_bbox.Set(m_mesh.Vertex(face.vi[fci]), 1);
+      }
+    }
     const ON_Mesh& m_mesh;
     const ON_2fPointArray& m_tc;
     const SeamTool& m_seamTool;
     std::vector<int> m_fis;
     std::vector<int> m_bannedFis;
     std::vector<int> m_nextStepFis;
+    ON_BoundingBox m_bbox;
 
     // Cached results assuming same set of sample points is used all the time
     mutable bool m_bEvaluated;
@@ -4825,10 +4835,12 @@ public:
 		//  }
 		//}
 
+		ON_BoundingBox samplePointBbox;
 		ON_SimpleArray<int> commonFis;
 		ON_SimpleArray<int> allFis;
 		for (int fvi = 0; fvi < count; fvi++)
 		{
+			samplePointBbox.Set(pPts[fvi], 1);
 			ON_RTreeSphere sphere;
 			sphere.m_point[0] = pPts[fvi].x;
 			sphere.m_point[1] = pPts[fvi].y;
@@ -4907,9 +4919,14 @@ public:
       for (int i = 0; i < allFis.Count(); i++)
       {
         const TcSeamlessPatch& sp = patchCache.Get(allFis[i]);
-        if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut))
+        ON_BoundingBox patchMaxDistBb(sp.BBox());
+        patchMaxDistBb.Expand(ON_3dVector(maxDist, maxDist, maxDist));
+        if (patchMaxDistBb.Includes(samplePointBbox))
         {
-          bSuccess = true;
+          if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut))
+          {
+            bSuccess = true;
+          }
         }
       }
       if (bSuccess)
@@ -6229,7 +6246,7 @@ ON__CChangeTextureCoordinateHelper::ON__CChangeTextureCoordinateHelper(
 
   // It is critical to reserve enough room in the arrays
   // before duplication starts.  Otherwise, during duplication,
-  // a dyanamic array can be reallocated, which will make
+  // a dynamic array can be reallocated, which will make
   // saved array base pointers will be invalid, and you crash
   // the next time they are used.
 
@@ -6848,7 +6865,7 @@ void AdjustMeshPeriodicTextureCoordinatesHelper(
 {
   // This helper adjusts texture coordinates on faces that
   // span the seam on mapping spheres and cylinders and
-  // resolves the mulitiple valued problem that
+  // resolves the multiple valued problem that
   // exists at the poles of sphere mappings.
 
   const int vcnt = mesh.m_V.Count();
@@ -7497,7 +7514,7 @@ ON_MappingRef::ON_MappingRef()
 void ON_MaterialRef::Default()
 {
   memset(this,0,sizeof(*this));
-  // runtme index value of -1 means not set
+  // runtime index value of -1 means not set
   m_material_index          = -1;
   m_material_backface_index = -1;
   m_material_source = ON::material_from_layer;
@@ -7842,7 +7859,7 @@ const ON_MappingRef* ON_ObjectRenderingAttributes::MappingRef(
 
   //ALB 2013.12.03
   //Fixes http://mcneel.myjetbrains.com/youtrack/issue/RH-5730
-  //I'm sick of this bug being considered irrelavent, and since I've decided to go out of my way to
+  //I'm sick of this bug being considered irrelevant, and since I've decided to go out of my way to
   //Sort out as many mapping problems as I can, I'm fixing this one like this.
   if (m_mappings.Count() > 0)
   {

@@ -849,7 +849,7 @@ int ON_DecodeUTF8(
     i0 = 1;
     if ( ON_IsValidUnicodeCodePoint(e->m_error_code_point) )
     {
-      // skip to next UTF-8 start elemement
+      // skip to next UTF-8 start element
       for ( /*empty for initializer*/; i0 < sUTF8_count; i0++ )
       {
         // Search for the next element of sUTF8[] that is the
@@ -918,7 +918,7 @@ int ON_DecodeUTF8(
 
 int ON_EncodeUTF16( ON__UINT32 unicode_code_point, ON__UINT16 sUTF16[2] )
 {
-  // put the most comman case first
+  // put the most common case first
   if ( unicode_code_point < 0xD800 )
   {
     // code point values U+0000 ... U+D7FF
@@ -2028,7 +2028,7 @@ int ON_DecodeUTF32(
   }
 
   *unicode_code_point = e->m_error_code_point;
-  return 1; // error masked and e->m_error_code_point returnred.
+  return 1; // error masked and e->m_error_code_point returned.
 }
 
 int ON_DecodeSwapByteUTF32(
@@ -3583,7 +3583,7 @@ unsigned ON_UnicodeSuperscriptFromCodePoint(
       0x1D3A, // N
       0x1D3C, // O
       0x1D3E, // P
-      0, // Q NOT AVIALABLE
+      0, // Q NOT AVAILABLE
       0x1D3F, // R
       0, // S NOT AVAILABLE
       0x1D40, // T
@@ -3619,7 +3619,7 @@ unsigned ON_UnicodeSuperscriptFromCodePoint(
     }
   }
 
-  // either cp is already a superscript or none is avilable.
+  // either cp is already a superscript or none is available.
   return no_superscript_cp;
 }
 
@@ -3696,7 +3696,7 @@ unsigned ON_UnicodeSubcriptFromCodePoint(
     }
   }
 
-  // either cp is already a subscript or none is avilable.
+  // either cp is already a subscript or none is available.
   return cp;
 }
 
@@ -4262,13 +4262,13 @@ const ON_SimpleArray< ON_Big5UnicodePair >& ON_Big5UnicodePair::Big5ToUnicode()
 {
   // The pair[][2] array was created by combining information from 
   // http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/OTHER/BIG5.TXT, retrieved: May 17, 2021,
-  // and WIndows 10 MultiByteToWideChar() using code page 950.
+  // and Windows 10 MultiByteToWideChar() using code page 950.
   //
   // pairs[][2] = {...{BIG5 code point, Unicode code point}...}
   // sorted by BIG5 code point. All Unicode code points must be valid and < 0xFFFF.
   //
   // The primary use of this code is to convert legacy BIG5 encoded information into
-  // Unicode encoded information and modificiations to the original sources 
+  // Unicode encoded information and modifications to the original sources
   // (marked with [MODyyymmdd]) were made to make thos conversions as robust as possible.
   //
 
@@ -4601,7 +4601,7 @@ const ON_SimpleArray< ON_Big5UnicodePair >& ON_Big5UnicodePair::Big5ToUnicode()
   {0xA34B,0x0398}, // GREEK CAPITAL LETTER THETA
   {0xA34C,0x0399}, // GREEK CAPITAL LETTER IOTA
   {0xA34D,0x039a}, // GREEK CAPITAL LETTER KAPPA
-  {0xA34E,0x039b}, // GREEK CAPITAL LETTER LAMDA
+  {0xA34E,0x039b}, // GREEK CAPITAL LETTER LAMBDA
   {0xA34F,0x039c}, // GREEK CAPITAL LETTER MU
   {0xA350,0x039d}, // GREEK CAPITAL LETTER NU
   {0xA351,0x039e}, // GREEK CAPITAL LETTER XI
@@ -4625,7 +4625,7 @@ const ON_SimpleArray< ON_Big5UnicodePair >& ON_Big5UnicodePair::Big5ToUnicode()
   {0xA363,0x03b8}, // GREEK SMALL LETTER THETA
   {0xA364,0x03b9}, // GREEK SMALL LETTER IOTA
   {0xA365,0x03ba}, // GREEK SMALL LETTER KAPPA
-  {0xA366,0x03bb}, // GREEK SMALL LETTER LAMDA
+  {0xA366,0x03bb}, // GREEK SMALL LETTER LAMBDA
   {0xA367,0x03bc}, // GREEK SMALL LETTER MU
   {0xA368,0x03bd}, // GREEK SMALL LETTER NU
   {0xA369,0x03be}, // GREEK SMALL LETTER XI
@@ -18079,7 +18079,7 @@ const ON_SimpleArray< ON_Big5UnicodePair >& ON_Big5UnicodePair::UnicodeToBig5()
   unicode_to_big5.Reserve(count0 + ((int)(sizeof(u_big5_pair_add)/sizeof(u_big5_pair_add[0]))));
   unicode_to_big5.Append(count0, big5_to_unicode.Array());
 
-  // Dictionary sort unicode_to_big5[] by Uniocode then BIG5 code point.
+  // Dictionary sort unicode_to_big5[] by Unicode then BIG5 code point.
   // (There are typically duplicate Unicode code points.)
   unicode_to_big5.QuickSortAndRemoveDuplicates(ON_Big5UnicodePair::CompareUnicodeAndBig5CodePoints);
   if (count0 != unicode_to_big5.Count())

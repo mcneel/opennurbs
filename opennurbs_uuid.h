@@ -64,7 +64,7 @@ extern ON_EXTERN_DECL const ON_UUID ON_rhino7_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino8_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino_id;
 
-// Application ids for usedata written by versions
+// Application ids for userdata written by versions
 // of opennurbs before userdata had application ids.
 extern ON_EXTERN_DECL const ON_UUID ON_v2_userdata_id;
 extern ON_EXTERN_DECL const ON_UUID ON_v3_userdata_id;
@@ -487,7 +487,7 @@ ON_UUID ON_UuidFromString( const wchar_t* s );
 
 /*
 Description:
-  Converts a uuid to a null termintated ASCII string like 
+  Converts a uuid to a null terminated ASCII string like
      "85a08515-f383-11d3-bfe7-0010830122f0". 
 Parameters:
   uuid - [in]
@@ -503,7 +503,7 @@ char* ON_UuidToString( const ON_UUID& uuid, char* s );
 
 /*
 Description:
-  Converts a uuid to a null termintated UNICODE string like 
+  Converts a uuid to a null terminated UNICODE string like
      "85a08515-f383-11d3-bfe7-0010830122f0". 
 Parameters:
   uuid - [in]
@@ -544,7 +544,7 @@ class ON_String;
 
 /*
 Description:
-  Converts a uuid to a null termintated string like 
+  Converts a uuid to a null terminated string like
      "85a08515-f383-11d3-bfe7-0010830122f0". 
 Parameters:
   uuid - [in]
@@ -559,7 +559,7 @@ class ON_wString;
 
 /*
 Description:
-  Converts a uuid to a null termintated string like 
+  Converts a uuid to a null terminated string like
      "85a08515-f383-11d3-bfe7-0010830122f0". 
 Parameters:
   uuid - [in]

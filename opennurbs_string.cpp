@@ -104,7 +104,7 @@ bool ON_String::IsValid(
     return true;
   for (;;)
   {
-    // These checks attempt to detect cases when the memory used for the header informtion
+    // These checks attempt to detect cases when the memory used for the header information
     // no longer contains valid settings.
     const char* s = m_s;
     if (nullptr == s)
@@ -165,7 +165,7 @@ bool ON_String::IsValid(
     {
       // Because the ON_wString m_s[] array can have internal null elements,
       // the length test has to be enabled in situations where it is certain
-      // that we are in the common situation where m_s[] is a single null teminated 
+      // that we are in the common situation where m_s[] is a single null terminated
       // sting and hdr->string_length is the m_s[] index of the null terminator.
       while (s < s1 && 0 != *s)
         s++;
@@ -551,7 +551,7 @@ ON_String::ON_String( char c, int repeat_count )
     return;
   }
 
-  if ( repeat_count > 0 ) 
+  if ( repeat_count > 0 && c != 0)
   {
     ReserveArray(repeat_count);
     memset( m_s, c, repeat_count*sizeof(*m_s) );
@@ -586,7 +586,7 @@ ON_String::ON_String( unsigned char c, int repeat_count )
     ON_ERROR("Requested size > ON_String::MaximumStringLength");
     return;
   }
-  if ( repeat_count > 0 ) 
+  if ( repeat_count > 0 && c != 0)
   {
     ReserveArray(repeat_count);
     memset( m_s, c, repeat_count*sizeof(*m_s) );
@@ -1487,7 +1487,7 @@ char* ON_String::Reverse(
       continue;
     }
 
-    // code points with multi char element encodeings need to be handled
+    // code points with multi char element encodings need to be handled
     ON_String_ReverseUTF8(string+i,j-i+1);
     break;
   }
@@ -2331,7 +2331,7 @@ bool ON::IsDirectory( const char* utf8pathname )
       rc = true;
     }
 #else
-    // this works on Apple and gcc implentations.
+    // this works on Apple and gcc implementations.
     struct stat buf;
     memset(&buf,0,sizeof(buf));
     int stat_errno = stat( utf8pathname, &buf );

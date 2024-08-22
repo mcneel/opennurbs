@@ -13,7 +13,7 @@
 
 ////////////////////////////////////////////////////////////////
 //
-//   virtual base class for all geomtric objects
+//   virtual base class for all geometric objects
 //
 ////////////////////////////////////////////////////////////////
 
@@ -158,7 +158,7 @@ public:
     );
 
   // Description:
-  //   Scales the object by the specified facotor.  The scale is
+  //   Scales the object by the specified factor.  The scale is
   //   centered at the origin.
   // Parameters:
   //   scale_factor - [in] scale factor

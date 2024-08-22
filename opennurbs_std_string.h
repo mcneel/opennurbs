@@ -118,7 +118,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -249,7 +249,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -366,7 +366,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -488,7 +488,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -623,7 +623,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -746,7 +746,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -882,7 +882,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -1004,7 +1004,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -1126,7 +1126,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point
@@ -1262,7 +1262,7 @@ Parameters:
           decoded, the value of the resulting unicode code point
           is used, and parsing continues.
        8: An overlong UTF-8 encoding sequence was encountered and 
-          the value of the overlong sUTF-8 equence was a valid
+          the value of the overlong sUTF-8 sequence was a valid
           unicode code point.           
           This error is masked if 0 != (8 & m_error_mask).
           If the error is masked, then the unicode code point

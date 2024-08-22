@@ -351,7 +351,7 @@ static bool Internal_UseHatchReadV5(
     )
   {
     // new hatch IO code pushed to master branch on Feb 26, 2016.
-    // THis clunky test has to be used on files writting with the Feb 26, 2016 version of opennurbs source code.
+    // THis clunky test has to be used on files written with the Feb 26, 2016 version of opennurbs source code.
     ON__UINT32 tcode = 0;
     ON__INT64 big_value = 0;
     archive.PeekAt3dmBigChunkType(&tcode, &big_value);
@@ -690,7 +690,7 @@ bool ON_HatchPattern::IsValid( ON_TextLog* text_log) const
     if( count < 1)
     {
       if( text_log)
-        text_log->Print( "Line type patetern with no lines.\n");
+        text_log->Print( "Line type pattern with no lines.\n");
       return false;
     }
     for( int i = 0; i < count; i++)
@@ -913,7 +913,7 @@ bool ON_HatchPattern::ReadV5( ON_BinaryArchive& ar)
     }
   }
   if (rc && IdIsNil())
-    SetId(); // modern hatch patterns require a uniquie id.
+    SetId(); // modern hatch patterns require a unique id.
   return rc;
 }
 

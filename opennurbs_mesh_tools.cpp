@@ -537,7 +537,7 @@ bool ON_Mesh::CollapseEdge( int topei )
   // Change values in mesh m_V[], m_N[] and m_T[] arrays.
   for ( mei = 0; mei < me_list_count; mei++ )
   {
-    // We need to set the vertex location of all mesh vertices associated with the toplogical
+    // We need to set the vertex location of all mesh vertices associated with the topological
     // edge or we risk "tearing apart" vertexes at corners where there are more than 2 mesh vertexes
     // associated with the topological vertex.  Don't to this for anything but the location.
     int i;
@@ -1423,6 +1423,17 @@ int ON_Mesh::GetConnectedComponents( bool bUseVertexConnections,
     ON_Mesh* pNewMesh = new ON_Mesh();
     if (0 == pNewMesh)
       continue;
+
+    // Jussi, July 16 2024, RH-82825:
+    // Copy packed texture information so that surface paramater mapping
+    // can be reapplied without changing texture appearance.
+    pNewMesh->m_packed_tex_domain[0] = m_packed_tex_domain[0];
+    pNewMesh->m_packed_tex_domain[1] = m_packed_tex_domain[1];
+    pNewMesh->m_packed_tex_rotate = m_packed_tex_rotate;
+    pNewMesh->m_srf_domain[0] = m_srf_domain[0];
+    pNewMesh->m_srf_domain[1] = m_srf_domain[1];
+    pNewMesh->m_srf_scale[0] = m_srf_scale[0];
+    pNewMesh->m_srf_scale[1] = m_srf_scale[1];
 
     ON_3dPointArray& pNewMesh_D = ( 0 != pMesh_D )
                        ? pNewMesh->DoublePrecisionVertices()

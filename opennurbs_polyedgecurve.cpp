@@ -276,7 +276,7 @@ bool ON_PolyEdgeCurve::ChangeClosedCurveSeam( double t )
         s += 1.0;
       if ( fabs(s) <= ON_SQRT_EPSILON || fabs(1.0-s) <= ON_SQRT_EPSILON )
       {
-        // split parameter is at start/end of this segemnt
+        // split parameter is at start/end of this segment
         if ( t != crvd[0] )
         {
           DestroyRuntimeCache();
@@ -431,8 +431,8 @@ bool ON_PolyEdgeCurve::IsClosed(void) const
   if ( !rc && SegmentCount() > 1 )
   {
     // Since the segments that make up a ON_PolyEdgeCurve
-    // cannot have their ends matched (becuase the curves
-    // belong to objects alread in the rhino model), 
+    // cannot have their ends matched (because the curves
+    // belong to objects already in the rhino model),
     // the IsClosed() test has to tolerate larger gaps
     // in brep topology.
     //
@@ -451,7 +451,7 @@ bool ON_PolyEdgeCurve::IsClosed(void) const
       //
       // Do NOT add a test for sloppy geometric closure here.
       // If the edges are in the same brep and they don't 
-      // meet topologicially, then there is something in the
+      // meet topologically, then there is something in the
       // brep that is separating the edges.
       int evi0 = seg0->ReversedEdgeDir() ? 1 : 0;
       int evi1 = seg1->ReversedEdgeDir() ? 0 : 1;

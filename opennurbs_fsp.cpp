@@ -11,7 +11,7 @@
 ON_FixedSizePool::ON_FixedSizePool()
 {
   ////const size_t sz = sizeof(*this);
-  ////ON_TextLog::Null.Print("L%d", sz); // supress compile errors.
+  ////ON_TextLog::Null.Print("L%d", sz); // suppress compile errors.
   // sz = 72 bytes before step 2 fixes for https://mcneel.myjetbrains.com/youtrack/issue/RH-49375
   //
   // private data members will be rearranged but the size cannot change so that the

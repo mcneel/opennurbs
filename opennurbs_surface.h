@@ -422,12 +422,12 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature 
+    Search for a derivative, tangent, or curvature
     discontinuity.
   Parameters:
     dir - [in] If 0, then "u" parameter is checked.  If 1, then
                the "v" parameter is checked.
-    c - [in] type of continity to test for.
+    c - [in] type of continuity to test for.
     t0 - [in] Search begins at t0. If there is a discontinuity
               at t0, it will be ignored.  This makes it 
               possible to repeatedly call GetNextDiscontinuity
@@ -524,7 +524,7 @@ public:
     ) const;
 
   virtual 
-  bool Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
+  bool Reverse(  // reverse parameterization, Domain changes from [a,b] to [-b,-a]
     int // dir  0 = "s", 1 = "t"
     ) = 0;
 
@@ -765,7 +765,7 @@ public:
     0   unable to create NURBS representation
         with desired accuracy.
     1   success - returned NURBS parameterization
-        matches the surface's to wthe desired accuracy
+        matches the surface's to the desired accuracy
     2   success - returned NURBS point locus matches
         the surface's to the desired accuracy and the
         domain of the NURBS surface is correct.  On
@@ -773,7 +773,7 @@ public:
         the NURBS surface parameterization may not 
         match to the desired accuracy.  This situation
         happens when getting NURBS representations of
-        surfaces that have a transendental parameterization
+        surfaces that have a transcendental parameterization
         like spheres, cylinders, and cones.
   Remarks:
     This is a low-level virtual function.  If you do not need
@@ -805,7 +805,7 @@ public:
         the NURBS surface parameterization may not 
         match.  This situation
         happens when getting NURBS representations of
-        surfaces that have a transendental parameterization
+        surfaces that have a transcendental parameterization
         like spheres, cylinders, and cones.
   Remarks:
     This is a low-level virtual function. 

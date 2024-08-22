@@ -274,12 +274,12 @@ double ON_UnitSystem::MetersPerUnit() const
   //   For standard units, this function returns the WRONG value (inverse of the correct value).
   //   The reason is the Rhino 6 VRay plug-in assumes the incorrect value is returned
   //   and V6 VRay does not work correctly in Rhino 7 if the correct value is returned.
-  //   After some discussion (see the bug above), we will leave the invers bug in
+  //   After some discussion (see the bug above), we will leave the inverse bug in
   //   ON_UnitSystem::MetersPerUnit(), deprecate ON_UnitSystem::MetersPerUnit(),
   //   and add a new function that returns the correct answer.
   if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
   {
-    // correct answer for custome units - V6 behavior.
+    // correct answer for custom units - V6 behavior.
     return m_meters_per_custom_unit; //
   }
 
@@ -614,6 +614,22 @@ void ON_UnitSystem::Dump( ON_TextLog& dump ) const
 {
   const ON_wString sUnitSystem(ToString());
   dump.Print("Unit system: %ls\n",static_cast<const wchar_t*>(sUnitSystem));
+}
+
+bool ON_3dmUnitsAndTolerances::operator==(const ON_3dmUnitsAndTolerances& other) const
+{
+  bool equal = m_unit_system == other.m_unit_system
+    && m_absolute_tolerance == other.m_absolute_tolerance
+    && m_angle_tolerance == other.m_angle_tolerance
+    && m_relative_tolerance == other.m_relative_tolerance
+    && m_distance_display_mode == other.m_distance_display_mode
+    && m_distance_display_precision == other.m_distance_display_precision;
+  return equal;
+}
+
+bool ON_3dmUnitsAndTolerances::operator!=(const ON_3dmUnitsAndTolerances& other) const
+{
+  return !(*this == other);
 }
 
 bool ON_3dmUnitsAndTolerances::Write( ON_BinaryArchive& file ) const
@@ -3352,7 +3368,7 @@ void ON_3dmView::SetSectionBehavior(ON::ViewSectionBehavior behavior)
 
 ON_3dPoint ON_3dmView::TargetPoint() const
 {
-  // This function must return the valud saved on m_vp.m_target_point.
+  // This function must return the valid saved on m_vp.m_target_point.
   // Do not modify that value here.
   return m_vp.TargetPoint();
 }
@@ -3919,7 +3935,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
             }
           }
 
-          // Add new inforamation here - ask Dale Lear for help.
+          // Add new information here - ask Dale Lear for help.
 
           break;
         }

@@ -195,7 +195,7 @@ public:
 
   /*
   Description:
-    Print a formatted INICODE string of up to 2000 characters.
+    Print a formatted UNICODE string of up to 2000 characters.
   Parameters:
     format - [in] nullptr terminated format control string 
   Remarks:
@@ -315,7 +315,7 @@ public:
     int,               // count
     int,               // stride
     const double*,     // point[] array
-    const char* = nullptr // optional preabmle
+    const char* = nullptr // optional preamble
     );
 
   void PrintPointGrid( 
@@ -324,7 +324,7 @@ public:
     int, int,          // point_count0, point_count1
     int, int,          // point_stride0, point_stride1
     const double*,     // point[] array
-    const char* = nullptr // optional preabmle
+    const char* = nullptr // optional preamble
     );
     
   void PrintKnotVector( 

@@ -1088,7 +1088,7 @@ bool ON_Viewport::SetCameraFrame()
   if ( !CamX.Unitize() )
     return false; // happens when up and dir are temporaily parallel.
 
-  // Gaurd against garbage resulting from nearly parallel 
+  // Guard against garbage resulting from nearly parallel
   // and/or ultra short short dir and up.
   if ( !ON__IsCameraFrameUnitVectorHelper(CamX) )
     return Internal_SetCameraFameFailed();
@@ -2188,7 +2188,7 @@ INPUT:
   //
   //   target, angle1, angle2, angle3, viewsize, and cameradist.
   //
-  // The width, height and zbuffer_depth arguments are used to determing the
+  // The width, height and zbuffer_depth arguments are used to determine the
   // clipping to screen transformation.
 
   ON_Xform R1, R2, R3, RhinoRot;
@@ -2241,7 +2241,7 @@ INPUT:
   // Rhino 1.0 didn't have a far clipping plane in wire frame (which explains
   // why you can get perspective views reversed through the origin by using 
   // the SetCameraTarget() command.  It's near clipping plane is set to 
-  // a miniscule value.  For mesh rendering, it must come up with some
+  // a minuscule value.  For mesh rendering, it must come up with some
   // sort of reasonable near and far clipping planes because the zbuffer
   // is used correctly.  When time permits, I'll dig through the rendering
   // code and determine what values are being used.
@@ -2758,7 +2758,7 @@ bool ON_Viewport::SetFrustumNearFar(
 bool ON_Viewport::SetFrustumNearFar( double n, double f )
 {
   // This is a bare bones setter.  
-  // Except for the 0 < n < f < ON_NONSENSE_WORLD_COORDINATE_VALU
+  // Except for the 0 < n < f < ON_NONSENSE_WORLD_COORDINATE_VALUE
   // requirement, do not add checking here.
   //
   // Use the ON_Viewport::SetFrustumNearFar( near_dist, 
@@ -2815,10 +2815,10 @@ bool ON_Viewport::ChangeToSymmetricFrustum(
     )
 {
   if ( bLeftRightSymmetric && m_frus_left == -m_frus_right )
-    bLeftRightSymmetric = false; // no left/right chnages required.
+    bLeftRightSymmetric = false; // no left/right changes required.
 
   if ( bTopBottomSymmetric && m_frus_bottom == -m_frus_top )
-    bTopBottomSymmetric = false; // no top/bottom chagnes required.
+    bTopBottomSymmetric = false; // no top/bottom changes required.
 
   if ( !bLeftRightSymmetric && !bTopBottomSymmetric )
     return true; // no changes required
@@ -3500,7 +3500,7 @@ int ON_Viewport::GetBoundingBoxDepth(
       Pin |= k;
       if ( (1|2|4|8|16) == k )
       {
-        // C[i] is inside the infinte frustum
+        // C[i] is inside the infinite frustum
         P[Pcount++] = C[i];
       }
     }
@@ -3508,7 +3508,7 @@ int ON_Viewport::GetBoundingBoxDepth(
     if ( Pcount < 8 )
     {
       bTrimmed = true;
-      // some portion of bbox is outside the infinte frustum
+      // some portion of bbox is outside the infinite frustum
       if ( (1|2|4|8|16) != Pin )
       {
         // bbox does not intersect the infinite frustum.
@@ -3648,7 +3648,7 @@ int ON_Viewport::GetBoundingBoxDepth(
     break;
   }
 
-  // 0 = out, 1 = partially in infinte frustum, 2 = all in infinte frustum
+  // 0 = out, 1 = partially in infinite frustum, 2 = all in infinite frustum
   return (rc) ? (bTrimmed ? 1 : 2) : 0;
 }
 
@@ -4117,7 +4117,7 @@ bool ON_Viewport::SetFrustumNearFar(
   bool rc = SetFrustumNearFar( near_dist, far_dist );
 
   // if depth bias will be applied, then make an attempt
-  // to adust the frustum's near plane to prevent
+  // to adjust the frustum's near plane to prevent
   // clipping biased objects.  This post-adjustment
   // fixes display bugs like # 87514.
   if ( rc 
@@ -4165,7 +4165,7 @@ bool ON_Viewport::SetFrustumNearFar(
       else
       {
         // call this function again with relative_depth_bias = 0.0
-        // to get cameral location positioned correctly when near1 
+        // to get camera location positioned correctly when near1
         // is too small or negative.
         rc = SetFrustumNearFar( 
           near1, far0,
@@ -4457,7 +4457,7 @@ bool ON_Viewport::SetViewScale( double x, double y, double z)
   //   frustum left/right top/bottom but I was stupid and added a clipmodxform 
   //   that is more trouble than it is worth.
   //   Someday I will fix this.  In the mean time, I want all scaling requests
-  //   to flow through SetViewScale/GetViewScale so I can easly find and fix
+  //   to flow through SetViewScale/GetViewScale so I can easily find and fix
   //   things when I have time to do it right.
   // 04 November 2011 S. Baer (RR93636)
   //   This function is used for printer calibration and it is commonly possible
@@ -4865,7 +4865,7 @@ bool ON_IntersectViewFrustumPlane(
   }
 
   // sort points by the angle (ppt_list[i].m_Q = ppt_list[0].m_Q) makes
-  // with the positve x axis.  This is the same as sorting them by
+  // with the positive x axis.  This is the same as sorting them by
   // -cot(angle) = -deltax/deltay.
   ppt_list[0].m_negcotangle = -ON_DBL_MAX; // -cot(0) = - infinity
   for ( i = 1; i < ppt_count; i++ )
@@ -4951,7 +4951,7 @@ void ON_Viewport::GetPerspectiveClippingPlaneConstraints(
     //   generating clipping artifacts in the perspective
     //   view in bug report 88216.  Changing to
     //   to the code below gets rid of those
-    //   artifacts at the risk of having a meaninless
+    //   artifacts at the risk of having a meaningless
     //   view to clip transform if the transformation is
     //   calculated with single precision numbers.
     //   If these values require further tuning, please
@@ -5081,7 +5081,7 @@ bool ON_DollyExtents(
   else
     dy = dx / aspect;
 
-  // Pad depths a bit so clippling plane are not coplanar with displayed geometry
+  // Pad depths a bit so clipping plane are not coplanar with displayed geometry
   // zmax is on frustum near and zmin is on frustum far
   double zmin = camcoord_bbox.m_min.z;
   double zmax = camcoord_bbox.m_max.z;

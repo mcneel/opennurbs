@@ -4266,9 +4266,13 @@ bool ON_BinaryArchive::ShouldSerializeUserDataItem(
   if (application_id == ON_nil_uuid)
     return false;
 
-  unsigned int i = m_user_data_filter.UnsignedCount();
-  if (i <= 0)
-    return true;
+  if (m_user_data_filter.Count() <= 0)  //ALB - Retaining the less-than from previous code although it seems spurious.
+    return true;                        //Empty filter, always serialize. See docs for m_user_data_filter
+  
+  //Validate the assumptions on the docs for m_user_data_filter.
+  ON_ASSERT(m_user_data_filter[0].m_application_id == ON_nil_uuid);
+  ON_ASSERT(m_user_data_filter[0].m_item_id == ON_nil_uuid);
+  ON_ASSERT(m_user_data_filter[0].m_precedence == 0);
 
   // {31F55AA3-71FB-49f5-A975-757584D937FF}
   static const ON_UUID ON_V4V5_MeshNgonUserData_ID =
@@ -4283,7 +4287,6 @@ bool ON_BinaryArchive::ShouldSerializeUserDataItem(
   // a core opennurbs data structure, usually because it was the
   // only way to add information to core opennurbs data structure
   // and not break the public C++ SDK.
-
 
   unsigned int opennurbs_userdata_application_version = ON_IsOpennurbsApplicationId(application_id);
   if (opennurbs_userdata_application_version >= 4)
@@ -4317,48 +4320,37 @@ bool ON_BinaryArchive::ShouldSerializeUserDataItem(
     }
   }
 
-  const ON_UserDataItemFilter *f = m_user_data_filter.Array();
+  //See the previous version of this code.
+  const bool bReturnNilItemIdImmediately = (m_3dm_version > 0);
 
-  if (m_3dm_version > 0)
+  bool bSerialize = m_user_data_filter[0].m_bSerialize;
+  bool bFoundNilItemId  = false;
+
+  const int last = m_user_data_filter.Count() - 1;
+
+  for (int i = last; i > 0; i--)  //ALB: Backwards.  The first element of the table is special and should not be considered.
   {
-    // After SortUserDataFilter(), m_user_data_filter items go from
-    // lowest precedence to highest precedence.
-    for (i--; i > 0; i--)
+    const ON_UserDataItemFilter& filter_item = m_user_data_filter[i];
+
+    if (application_id == filter_item.m_application_id)
     {
-      if (application_id == f[i].m_application_id)
+      const bool bNilId = item_id == ON_nil_uuid;
+
+      if (item_id == filter_item.m_item_id || (bNilId && bReturnNilItemIdImmediately))
       {
-        for (;;)
-        {
-          if (ON_nil_uuid == f[i].m_item_id || item_id == f[i].m_item_id)
-            return f[i].m_bSerialize;
-          if (0 == --i)
-            break;
-          if (!(application_id == f[i].m_application_id))
-            break;
-        }
+        bSerialize = filter_item.m_bSerialize;
+        break;
       }
-    }
-    return f[0].m_bSerialize;
-  }
-  
-  // called before reading/writing has started and items are not sorted.
-  bool rc = f[0].m_bSerialize;
-  bool bFoundNilItemId = false;
-  for (i--; i > 0; i--)
-  {
-    if (application_id == f[i].m_application_id)
-    {
-      if (item_id == f[i].m_item_id)
-        return f[i].m_bSerialize;
-      if (false == bFoundNilItemId && ON_nil_uuid == f[i].m_item_id)
+
+      if (bNilId && !bFoundNilItemId)
       {
         bFoundNilItemId = true;
-        rc = f[i].m_bSerialize;
+        bSerialize = filter_item.m_bSerialize;
       }
     }
   }
-  return rc;
-  
+
+  return bSerialize;
 }
 
 bool ON_BinaryArchive::ShouldSerializeUserDataDefault() const

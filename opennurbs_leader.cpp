@@ -1069,7 +1069,7 @@ bool ON_Leader::UpdateTextPosition(
   ON_2dPoint attachpt(ON_2dPoint::Origin);
   ON_2dPoint from(ON_2dPoint::Origin);
   ON_Line ll;
-  if (LandingLine2d(dimstyle, leaderscale, ll)) // from ponit is end of landing line
+  if (LandingLine2d(dimstyle, leaderscale, ll)) // from point is end of landing line
   {
     text_dir = ll.Direction();
     if (text_dir.Unitize())

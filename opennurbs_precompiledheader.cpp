@@ -1,7 +1,4 @@
-/* $NoKeywords: $ */
-/*
-//
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2024 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -12,7 +9,6 @@
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
-*/
 
 // CHECK SETTINGS BEFORE ANYTHING IS INCLUDED
 
@@ -80,7 +76,7 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-// CHECK SETTINGS AFTER EVERTHING IS INCLUDED
+// CHECK SETTINGS AFTER EVERYTHING IS INCLUDED
 
 #if defined(_MSC_VER)
 

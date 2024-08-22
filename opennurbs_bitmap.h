@@ -116,7 +116,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_Bitmap*>;
 // Windows sizeof(ON_WindowsRGBQUAD) = 4.
 struct ON_WindowsRGBQUAD {
   // Mimics Windows RGBQUAD structure.
-  // For details searh for "RGBQUAD" at http://msdn.microsoft.com/default.asp 
+  // For details search for "RGBQUAD" at http://msdn.microsoft.com/default.asp
   unsigned char rgbBlue;      // BYTE
   unsigned char rgbGreen;     // BYTE
   unsigned char rgbRed;       // BYTE
@@ -135,7 +135,7 @@ struct ON_WindowsBITMAPFILEHEADER {
 #pragma pack(pop)
 
 // Mimics Windows BITMAPINFOHEADER structure.
-// For details searh for "BITMAPINFOHEADER" at http://msdn.microsoft.com/default.asp 
+// For details search for "BITMAPINFOHEADER" at http://msdn.microsoft.com/default.asp
 // Windows sizeof(BITMAPINFOHEADER) = 80.
 struct ON_WindowsBITMAPINFOHEADER
 {
@@ -172,7 +172,7 @@ struct ON_WindowsBITMAPINFOHEADER
                                   //           biColors[0] = red mask (0x00FF0000), 
                                   //           biColors[1] = green mask (0x0000FF00), and
                                   //           biColors[2] = blue mask (0x000000FF),
-                                  //           then tese masks are used with each 4-byte
+                                  //           then these masks are used with each 4-byte
                                   //           DWORD in the bitmap array to determine
                                   //           the pixel's relative intensities.                                 //           
                                   //           For other possibilities, see
@@ -203,7 +203,7 @@ struct ON_WindowsBITMAPINFOHEADER
 struct ON_WindowsBITMAPINFO
 {
   // Mimics Windows BITMAPINFO structure.
-  // For details searh for "BITMAPINFO" at http://msdn.microsoft.com/default.asp 
+  // For details search for "BITMAPINFO" at http://msdn.microsoft.com/default.asp
   ON_WindowsBITMAPINFOHEADER bmiHeader;
   ON_WindowsRGBQUAD bmiColors[1]; // The "[1]" is for the compiler.  In
                                   // practice this array commonly has

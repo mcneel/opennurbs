@@ -691,7 +691,7 @@ bool ON_NurbsCurve::IsValid( ON_TextLog* text_log ) const
     {
       // fix for RR 21239
       // 16 November 2010 Chuck and Dale Lear added m_dim <= 3
-      // so the 3d checking does not interfer with applications
+      // so the 3d checking does not interfere with applications
       // that use high dimension curves where the start and end
       // points can be arbitrary.
       ON_3dPoint P0 = PointAtStart();
@@ -1583,10 +1583,10 @@ ON_NurbsCurve::Evaluate( // returns false if unable to evaluate
   if ( -2 == side || 2 == side )
   {
     // 9 November 2010 Dale Lear - ON_TuneupEvaluationParameter fix
-    //   When evluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
+    //   When evaluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
     //   and the original side parameter was -1 or +1, it is changed to -2 or +2
-    //   to indicate that if t is numerically closed to an end paramter, then
-    //   it should be tuned up to be at the end paramter.
+    //   to indicate that if t is numerically closed to an end parameter, then
+    //   it should be tuned up to be at the end parameter.
     double a = t;
     if ( ON_TuneupEvaluationParameter( side, m_knot[span_index+m_order-2], m_knot[span_index+m_order-1], &a) )
     {
@@ -1691,7 +1691,7 @@ bool ON_IsG2CurvatureContinuous(
     }
     else
     {
-      cos_Kangle_tolerance = 2.0*cos_Kangle_tolerance*cos_Kangle_tolerance - 1.0; // = cos(2*tangent_angle_tolerace)
+      cos_Kangle_tolerance = 2.0*cos_Kangle_tolerance*cos_Kangle_tolerance - 1.0; // = cos(2*tangent_angle_tolerance)
       if ( cos_angle_tolerance >= 0.0 && cos_Kangle_tolerance < 0.0 )
         cos_Kangle_tolerance = 0.0;
     }
@@ -2964,7 +2964,7 @@ bool TweakSplitTrimParameter(double k0, double k1, double& t )
     //
     // 2014-July-7 Dale Lear
     //  Fix RH-21610 (k0 = 5e6, k1 = k0 + 1, t = k1 - 0.2)
-    //  I changed the test Lowell referes to above.  Lowell's 4.0*ON_SQRT_EPSILON 
+    //  I changed the test Lowell refers to above.  Lowell's 4.0*ON_SQRT_EPSILON
     //  is now 8.0*ON_EPSILON in the ktol2 initialization value.
     //  I added ktol1 base on the span length.  
     //  If you modify this code in the future, please reference a bug with sample 
@@ -2999,7 +2999,7 @@ bool ON_NurbsCurve::Trim( const ON_Interval& in )
   int ki, side, i0, i1, i1_max, new_cv_count;
 
 	//Greg Arden 28 April 2003.  Do not change any curve that is trimmed to its entire domain.
-	//             This is especiallly important for periodic curves.
+	//             This is especially important for periodic curves.
 	if(in==Domain())
 	  return true;
 
@@ -3601,7 +3601,7 @@ double ON_NurbsSurface::GetCubicBezierApproximation(
 
   // uv[4] = {{1/3,1/3}, {2/3,1/3}, {1/3,2/3}, {2/3,2/3} }
   // K[n] = (27*27)*bezCV(uv[n])
-  // P[n] = this(domain.ParamaterAt(uv[n]));
+  // P[n] = this(domain.ParameterAt(uv[n]));
   // 36* M * Transpose[C11,C21,C12,C22] = [X0,X1,X2,X3]
   // uv[4] = {{1/3,1/3{, {2/3,1/3}, {1/3,2/3}, {2/3,2/3} }
   // X0 = nurbs_srf(1/3,1/3) - K[0]/(27*27)
@@ -4106,12 +4106,6 @@ bool ON_ChangeRationalNurbsCurveEndWeights(
   cv[cvstride*(cv_count-1)+dim] = w1;
 
   return true;
-}
-
-double ON_Fuzz( double x, double absolute_tolerance )
-{
-  double fuzz = fabs(x)*ON_RELATIVE_TOLERANCE;
-  return(fuzz > absolute_tolerance) ? fuzz : absolute_tolerance;
 }
 
 bool ON_NurbsCurve::SpanIsSingular( 

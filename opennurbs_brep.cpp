@@ -11961,47 +11961,127 @@ static bool AdjustCurve(ON_Curve& crv,
 }
 
 static void AdjustEdgeEnds(ON_BrepEdge& edge)
-
 {
   ON_Brep* pB = edge.Brep();
   if (!pB)
+  {
     return;
+  }
+
   ON_Curve* c3 = const_cast<ON_Curve*>(edge.EdgeCurveOf());
-  if( c3 )
+  if(c3)
   {
     ON_3dPoint A0 = c3->PointAtStart();
     ON_3dPoint P0 = A0;
-    if (edge.m_vi[0] >= 0){
+
+    if (edge.m_vi[0] >= 0)
+    {
       ON_BrepVertex& V = pB->m_V[edge.m_vi[0]];
       if (V.IsValid())
+      {
         P0 = V.Point();
+      }
     }
     ON_3dPoint A1 = c3->PointAtEnd();
     ON_3dPoint P1 = A1;
-    if (edge.m_vi[1] >= 0){
+
+    if (edge.m_vi[1] >= 0)
+    {
       ON_BrepVertex& V = pB->m_V[edge.m_vi[1]];
       if (V.IsValid())
+      {
         P1 = V.Point();
+      }
     }
 
     bool bQuit = true;
-    if (P0 != A0 && edge.m_vi[0] >= 0){
+    if (P0 != A0 && edge.m_vi[0] >= 0)
+    {
       ON_BrepVertex& V = pB->m_V[edge.m_vi[0]];
       V.m_tolerance = ON_UNSET_VALUE;
       bQuit = false;
     }
-    if (P1 != A1 && edge.m_vi[1] >= 0){
+
+    if (P1 != A1 && edge.m_vi[1] >= 0)
+    {
       ON_BrepVertex& V = pB->m_V[edge.m_vi[1]];
       V.m_tolerance = ON_UNSET_VALUE;
       bQuit = false;
     }
+
     if (bQuit)
+    {
       return;
+    }
+
+    std::shared_ptr<ON_ArcCurve> pDup;
+    if (const ON_ArcCurve* pArcCurve = ON_ArcCurve::Cast(c3))
+    {
+      pDup = std::make_shared<ON_ArcCurve>(*pArcCurve);
+    }
 
     if (AdjustCurve(*c3, P0, P1))
+    {
       edge.m_tolerance = ON_UNSET_VALUE;
+
+      //https://mcneel.myjetbrains.com/youtrack/issue/RH-81878
+      //Moving the start/ends of arcs can create some funky edges.
+      if (pDup)
+      {
+        ON_Interval domain = pDup->Domain();
+
+        //So check the center third of the arc since that shouldn't really change
+        //to see if we still have a decent match to the old edge curve
+        ON_Interval checkDomain;
+        checkDomain[0] = domain.ParameterAt(1.0 / 3.0);
+        checkDomain[1] = domain.ParameterAt(2.0 / 3.0);
+
+        const int iChecks = 9;
+
+        bool bGoodAdjust = true;
+        for (int i = 0; i < iChecks; i++)
+        {
+          double dNormalizedT = (double)i / (double)iChecks;
+          double dT = checkDomain.ParameterAt(dNormalizedT);
+          
+          const ON_3dPoint ptOriginal = pDup->PointAt(dT);
+          const ON_3dPoint ptNew = c3->PointAt(dT);
+
+          const double dDistance = ptOriginal.DistanceTo(ptNew);
+
+          //This is still a pretty tight tolerance
+          //But this function is tolerance free and we don't have access to edge tolerance calculations in OpenNurbs
+          if (dDistance > ON_SQRT_EPSILON)
+          {
+            bGoodAdjust = false;
+            break;
+          }
+        }
+
+        //If the adjustment was bad
+        //Replace the edge with the NURBS form of the arc if it can be adjusted correctly
+        if (!bGoodAdjust)
+        {
+          ON_NurbsCurve* pNC = pDup->NurbsCurve();
+          if (pNC)
+          {
+            if (AdjustCurve(*pNC, P0, P1))
+            {
+              int c3Idx = pB->AddEdgeCurve(pNC);
+
+              edge.m_c3i = c3Idx;
+              edge.SetProxyCurve(pNC);
+            }
+            else
+            {
+              delete pNC;
+              pNC = nullptr;
+            }
+          }
+        }
+      }
+    }
   }
-  return;
 }
 
 bool ON_Brep::StandardizeEdgeCurve( int edge_index, bool bAdjustEnds )

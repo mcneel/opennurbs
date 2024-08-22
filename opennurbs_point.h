@@ -164,16 +164,16 @@ public:
   /// </summary>
   /// <param name="interval_parameter">
   /// interval_parameter may have any value but it is clamped
-  /// to be in the intervaly before the normalized parameter is evaluated.
+  /// to be in the interval before the normalized parameter is evaluated.
   /// </param>
   /// <returns>
   /// Set a = the value at the beginning of this interval and
   /// b = the value at the end of this interval.
   /// If a, b or interval_parameter is unset or nan, ON_DBL_QNAN is returned. 
-  /// If interval_parameter is in this interval, the correxponding normalized
+  /// If interval_parameter is in this interval, the corresponding normalized
   /// parameter is returned.
-  /// If interval_parameter is outside the interval, the normalized paramter for 
-  /// the end closest to interval_parameter is retuend.
+  /// If interval_parameter is outside the interval, the normalized parameter for
+  /// the end closest to interval_parameter is returned.
   /// </returns>
   double ClampedNormalizedParameterAt(
     double interval_parameter
@@ -255,7 +255,7 @@ public:
     this->Min() <= other.Min() and other.Max() <= this->Max().
     If bProperSubSet is true, then the result is true when
     this->Min() <= other.Min() and other.Max() <= this->Max()
-    and at least one of the inequalites is strict.
+    and at least one of the inequalities is strict.
   */
   bool Includes( 
     const ON_Interval& other,
@@ -562,12 +562,12 @@ public:
         const ON_Xform&
         );
 
-  void Rotate( // rotatation in XY plane
+  void Rotate( // rotation in XY plane
         double angle,              // angle in radians
         const ON_2dPoint& center   // center of rotation
         );
 
-  void Rotate( // rotatation in XY plane
+  void Rotate( // rotation in XY plane
         double sin_angle,          // sin(angle)
         double cos_angle,          // cos(angle)
         const ON_2dPoint& center   // center of rotation
@@ -1180,7 +1180,7 @@ public:
   double LengthSquared() const;
   double Length() const;
 
-	// Signed area of the parallelagram.  The volume element.
+	// Signed area of the parallelogram.  The volume element.
 	// returns x*B.y - y*B.x
 	double WedgeProduct(const ON_2dVector& B) const;
 
@@ -1325,7 +1325,7 @@ ON_CrossProduct(
 
 ON_DECL
 double			 
-ON_WedgeProduct(		// signed area of the parallelagram.  Volume element.
+ON_WedgeProduct(		// signed area of the parallelogram.  Volume element.
     const ON_2dVector& A, // returns A.x * B.y - A.y * B.x 
     const ON_2dVector& B 
     );
@@ -1700,7 +1700,7 @@ public:
 
   /*
   Returns:
-    If the three points are valid and not colinear, a unitized plane equation is returned.
+    If the three points are valid and not collinear, a unitized plane equation is returned.
     Otherwise ON_PlaneEquation::NanPlaneEquation is returned.
   */
   static const ON_PlaneEquation CreateFromThreePoints(
@@ -1948,7 +1948,7 @@ public:
     This function has to invert xform.  If you have apply the
     same transformation to a bunch of planes, then it will be
     more efficient to calculate xform's inverse transpose
-    and apply the resultingt transformation to the equation's
+    and apply the resulting transformation to the equation's
     coefficients as if they were 4d point coordinates.
   */
   bool Transform( const ON_Xform& xform );
@@ -2272,7 +2272,7 @@ public:
 
 
   /// <summary>
-  /// Create an ON_SurfaceCurvature from a gaussian and mean curvature values using the relationsip
+  /// Create an ON_SurfaceCurvature from a gaussian and mean curvature values using the relationship
   /// between the principal curvatures, gaussian and mean.
   /// k1 = mean + sqrt(mean*mean - gaussian)
   /// k2 = mean - sqrt(mean*mean - gaussian)
@@ -2428,7 +2428,7 @@ public:
 
   /// <summary>
   /// The minimum radius of curvature is 1/max(fabs(k1),fabs(k2)).
-  /// Infinte radius values are returned as ON_SurfaceCurvature::InfinteRadius.
+  /// Infinite radius values are returned as ON_SurfaceCurvature::InfiniteRadius.
   /// </summary>
   /// <returns>
   /// Minimum radius of curvature up to a maximum of 1e300. 
@@ -2440,7 +2440,7 @@ public:
   /// If a principal curvature value is zero 
   /// or the principal curvatures have opposite signs,
   /// then the maximum radius of curvature is infinite 
-  /// and ON_SurfaceCurvature::InfinteRadius is returned.
+  /// and ON_SurfaceCurvature::InfiniteRadius is returned.
   /// Otherwise the maximum radius of curvature is 1/min(fabs(k1),fabs(k2)).
   /// </summary>
   /// <returns>
@@ -2462,7 +2462,7 @@ public:
   /// <returns>
   /// If kappa_style and the principal curvatures are valid, the specified
   /// type of curvature value is returned. 
-  /// Infinte radii are returned as ON_SurfaceCurvature::InfinteRadius.
+  /// Infinite radii are returned as ON_SurfaceCurvature::InfiniteRadius.
   /// Otherwise ON_DBL_QNAN is returned.
   /// </returns>
   double KappaValue(ON::curvature_style kappa_style) const;
@@ -2485,7 +2485,7 @@ ON_DECL
 /// <param name="rhs"></param>
 /// <returns>
 /// Returns (lhs.k1==rhs.k1 && lhs.k2==rhs.k2)
-/// Note that if any princial curvature is a nan, then false is returned.
+/// Note that if any principal curvature is a nan, then false is returned.
 /// </returns>
 bool operator==(
   const ON_SurfaceCurvature& lhs,
@@ -2513,7 +2513,7 @@ public:
   enum : unsigned
   {
     /// <summary>
-    /// The maximum order of a paritial derivative that 
+    /// The maximum order of a partial derivative that
     /// an ON_SurfaceValues class can possibly store is 15.
     /// </summary>
     MaximumDerivativeOrder = 15
@@ -2521,7 +2521,7 @@ public:
 
   /// <summary>
   /// NOTE WELL: CreateFromLocalArray is for experts dealing with unusual situations.
-  /// Create a ON_SurfaceValues where the storage for deritave values is managed externally.
+  /// Create a ON_SurfaceValues where the storage for derivative values is managed externally.
   /// This is typically used by experts to easily get surface evaluation results stored in value_array[] when 
   /// the evaluation function returns the results in a ON_SurfaceValues class.
   /// The caller is responsible for ensuring that the value_array[] memory is not freed or deleted
@@ -2558,7 +2558,7 @@ public:
 
   /// <summary>
   /// NOTE WELL: CreateFromVectorArray is for experts dealing with unusual situations.
-  /// Create a ON_SurfaceValues where the storage for the values is deritave values is managed externally.
+  /// Create a ON_SurfaceValues where the storage for the values is derivative values is managed externally.
   /// This is typically used by experts to easily get surface evaluation results stored in value_array[] 
   /// when the evaluation function returns the results in a ON_SurfaceValues class. 
   /// The caller is responsible for ensuring that the value_array[] memory is not freed or deleted 
@@ -2656,7 +2656,7 @@ public:
 
   /// <summary>
   /// If (u,v) are the surface parameters, then
-  /// Derivatieve(0,0) = point,
+  /// Derivative(0,0) = point,
   /// Derivative(1,0) = 1st partial with respect to u (D/Du).
   /// Derivative(0,1) = 1st partial with respect to v (D/Dv).
   /// Derivative(2,0) = 2nd partial with respect to u (D/Du^2).
@@ -2692,7 +2692,7 @@ public:
   /// Returns a pointer to an array of stride*(derivative_order_capacity + 1)*(derivative_order_capacity + 2)/2 doubles.
   /// </param>
   /// <returns>
-  /// True if the returned inforamation can be passed to a legacy bispan evaluator.
+  /// True if the returned information can be passed to a legacy bispan evaluator.
   /// </returns>
   bool GetDerivativeArrayForExperts(
     unsigned& derivative_order_capacity,
@@ -2721,7 +2721,7 @@ private:
 
   /// <returns>
   /// True if and expert is managing the memory m_derivatives
-  /// pionts at and that expert has made sure the memory will
+  /// points at and that expert has made sure the memory will
   /// exist for the duration of this class's scope.
   /// </returns>
   bool Internal_DerivativeMemoryIsExternal() const;
@@ -3311,13 +3311,13 @@ public:
 
   /*
   Returns:
-    A copy of the refenced points in an ON_SimpleArray<ON_3dPoint>.
+    A copy of the referenced points in an ON_SimpleArray<ON_3dPoint>.
   */
   ON_SimpleArray<ON_3dPoint> To3dPointArray() const;
 
   /*
   Returns:
-    A copy of the refenced points in an ON_SimpleArray<ON_3fPoint>.
+    A copy of the referenced points in an ON_SimpleArray<ON_3fPoint>.
   */
   ON_SimpleArray<ON_3fPoint> To3fPointArray() const;
 
@@ -4189,7 +4189,7 @@ private:
   // Number of boundary segments in the polyline
   ON__UINT32 m_boundary_segment_count = 0;
 
-  // In the comments below, H is the horizontal line throught the winding point
+  // In the comments below, H is the horizontal line through the winding point
   // and V is the vertical line through the winding point.
 
   // signed net number of times polyline crosses H to the left of the winding point.

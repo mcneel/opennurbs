@@ -210,7 +210,7 @@ public:
   //   true if successful
   // Remarks:
   //   The result has order = points.Count() and the loft uses the 
-  //   uniform parameterizaton curve( i/(points.Count()-1) ) = points[i].
+  //   uniform parameterization curve( i/(points.Count()-1) ) = points[i].
   bool Loft( 
     const ON_3dPointArray& points
     );
@@ -228,7 +228,7 @@ public:
   //   true if successful
   // Remarks:
   //   The result has order = points.Count() and the loft uses the 
-  //   parameterizaton curve( t[i] ) = points[i].
+  //   parameterization curve( t[i] ) = points[i].
   bool Loft(
     int pt_dim,
     int pt_count,
@@ -581,7 +581,7 @@ public:
     Pointer to control vertex.
   Remarks:
     If the Bezier curve is rational, the format of the 
-    returned array is a homogeneos rational point with
+    returned array is a homogeneous rational point with
     length m_dim+1.  If the Bezier curve is not rational, 
     the format of the returned array is a nonrational 
     euclidean point with length m_dim.
@@ -697,7 +697,7 @@ public:
   //   cv_index - [in] control vertex index (0 <= cv_index < m_order)
   //   point - [in] control vertex value.  If the bezier
   //      is not rational, the euclidean location of
-  //      homogenoeous point will be used.
+  //      homogeneous point will be used.
   // Returns:
   //   true if successful.
   // See Also:

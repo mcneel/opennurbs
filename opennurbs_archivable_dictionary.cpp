@@ -167,7 +167,7 @@ public:
   unsigned int m_version = 0;
   ON_wString m_name = ON_wString::EmptyString;
 
-  // std::less<void> is important to enable ON_wString-wchar_t* comparsion without an implicit copy.
+  // std::less<void> is important to enable ON_wString-wchar_t* comparison without an implicit copy.
   std::map<ON_wString, std::unique_ptr<DictionaryEntry>, std::less<void>> m_map;
 
   template <typename V>

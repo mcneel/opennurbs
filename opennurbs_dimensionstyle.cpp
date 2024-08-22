@@ -3806,7 +3806,7 @@ double ON_DimStyle::TextAdvanceOfCodePoint(unsigned unicode_code_point) const
 
 double ON_DimStyle::TextWidthOfEmSpace() const
 {
-  // This is the fundemental WidthOfXSpace() function. 
+  // This is the fundamental WidthOfXSpace() function.
   // Other WidthOfXSpace() functions call TextWidthOfEmSpace() when TextAdvanceOfCodePoint(obvious code point) fails.
   // This function may only call TextAdvanceOfCodePoint() and TextHeight().
   double w = TextAdvanceOfCodePoint(ON_UnicodeCodePoint::ON_EmSpace);
@@ -4688,9 +4688,9 @@ ON::LengthUnitSystem ON_DimStyle::UnitSystem() const
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
 
   // It is critical that this function never return Unset or CustomUnits.
   // returning None insures unknown scal values are 1 instead of ON_DBL_QNAN
@@ -4712,14 +4712,14 @@ void ON_DimStyle::SetUnitSystem(ON::LengthUnitSystem us)
   ///   
   /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
   /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
-  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// model units = meters, page units = millimeters, and DimScale() = 1, then
   /// text created in model space will be 3.5 meters high and
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
   if (ON::LengthUnitSystem::CustomUnits == us || ON::LengthUnitSystem::Unset == us)
   {
     ON_ERROR("Annotation styles cannot have unset or custom length units.");
@@ -4751,14 +4751,14 @@ void ON_DimStyle::SetUnitSystemFromContext(
   ///   
   /// From a user's perspective, in Rhino 6 and Rhino 7 ON_DimStyle lengths like TextHeight(), ArrowSize(), ... 
   /// are with respect to the context the annotation resides in. For example, if TextHeight() = 3.5,
-  /// model units = meters, page units = millimters, and DimScale() = 1, then 
+  /// model units = meters, page units = millimeters, and DimScale() = 1, then
   /// text created in model space will be 3.5 meters high and
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
-  /// to those instance defintions would display predictably in both model space and page space.
+  /// to those instance definitions would display predictably in both model space and page space.
 
 
   ON::LengthUnitSystem dim_style_units = ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(UnitSystem()));
@@ -5204,7 +5204,7 @@ ON__UINT32* ON_DimStyle::Internal_GetOverrideParentBit(ON_DimStyle::field field_
     // because these cannot be inherited from parent.
     // false is returned instead of the more accurate true
     // because that's the way this code has worked for years
-    // and being accuruate would cause bugs at this point.
+    // and being accurate would cause bugs at this point.
     return nullptr; 
   }
 
@@ -5734,7 +5734,7 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
       break;
     case ON_DimStyle::field::TextMask:
       // SPECIAL CASE
-      // The TextMask values are all modifed individually by the cases for
+      // The TextMask values are all modified individually by the cases for
       // ON_DimStyle::field::DrawMask:
       // ON_DimStyle::field::MaskColorSource:
       // ON_DimStyle::field::MaskColor:

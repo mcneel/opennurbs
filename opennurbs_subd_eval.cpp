@@ -985,7 +985,7 @@ bool ON_SubDVertex::SetSavedSurfacePoint(
       // first limit point location wins
       ON_SubDMeshFragment::SealPoints(true, m_limit_point.m_limitP, lp->m_limitP);
 
-      // it is expected that the limit normal and tangents will be substantually different.
+      // it is expected that the limit normal and tangents will be substantially different.
       lp->m_next_sector_limit_point = nullptr;
 
       // append the point to the vertex's linked list.
@@ -1128,8 +1128,8 @@ const ON_SubDMeshFragment * ON_SubDFace::MeshFragments() const
 {
   // NOTE:
   // Clearing the ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit bit
-  // on m_saved_points_flags is used to mark mesh fragmants as dirty. 
-  // They need to be regerated before being used.
+  // on m_saved_points_flags is used to mark mesh fragments as dirty.
+  // They need to be regenerated before being used.
   return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_points_flags)) ? m_mesh_fragments : nullptr;
 }
 
@@ -1253,7 +1253,7 @@ const ON_3dVector ON_SubDFace::ControlNetCenterNormal() const
   {
     A = B;
     B = ControlNetPoint(fvi) - C;
-    N += ON_CrossProduct(A, B); // do not untize this and then the code works for non-convex faces too.
+    N += ON_CrossProduct(A, B); // do not unitize this and then the code works for non-convex faces too.
   }
 
   return N.UnitVector();

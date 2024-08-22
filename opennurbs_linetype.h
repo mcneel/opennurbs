@@ -241,7 +241,7 @@ public:
     Description:
       Units used to define the linetype width
       None = width is defined in pixels (default)
-      Unset = width is the same as the document's unitsystem
+      Unset = width is the same as the document's unit system
   */
   ON::LengthUnitSystem WidthUnits() const;
 
@@ -249,7 +249,7 @@ public:
     Description:
       Set the units used to define the linetype width
       None = width is defined in pixels (default)
-      Unset = width is the same as the document's unitsystem
+      Unset = width is the same as the document's unit system
   */
   void SetWidthUnits(ON::LengthUnitSystem units);
 

@@ -302,9 +302,9 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature discontinuity.
+    Search for a derivative, tangent, or curvature discontinuity.
   Parameters:
-    c - [in] type of continity to test for.  If ON::continuity::C1_continuous
+    c - [in] type of continuity to test for.  If ON::continuity::C1_continuous
     t0 - [in] search begins at t0
     t1 - [in] (t0 < t1) search ends at t1
     t - [out] if a discontinuity is found, the *t reports the
@@ -391,7 +391,7 @@ public:
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const override;
 
-  bool Reverse() override;       // reverse parameterizatrion
+  bool Reverse() override;       // reverse parameterization
                         // Domain changes from [a,b] to [-b,-a]
 
   bool Evaluate( // returns false if unable to evaluate

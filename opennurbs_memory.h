@@ -66,7 +66,7 @@ public:
       The constructor saves the current state of memory allocation tracking
       and then enables/disables memory allocation tracking.
     Otherwise:
-      Does nothting.
+      Does nothing.
   */
   ON_MemoryAllocationTracking(
     bool bEnableAllocationTracking
@@ -77,7 +77,7 @@ public:
     Windows Debug Builds:
       The destructor restores the saved state of memory allocation tracking.
     Otherwise:
-      Does nothting.
+      Does nothing.
   */
   ~ON_MemoryAllocationTracking();
 

@@ -1319,6 +1319,37 @@ const ON_3dPoint ON_SubDComponentPtr::ControlNetCenterPoint() const
   return ON_3dPoint::NanPoint;
 }
 
+const ON_3dPoint ON_SubDComponentPtr::SubdivisionPoint() const
+{
+  switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
+  {
+  case ON_SUBD_COMPONENT_TYPE_VERTEX:
+  {
+    const ON_SubDVertex* v = Vertex();
+    if (nullptr != v)
+      return v->SubdivisionPoint();
+  }
+  break;
+  case ON_SUBD_COMPONENT_TYPE_EDGE:
+  {
+    const ON_SubDEdge* e = Edge();
+    if (nullptr != e)
+      return e->SubdivisionPoint();
+  }
+  break;
+  case ON_SUBD_COMPONENT_TYPE_FACE:
+  {
+    const ON_SubDFace* f = Face();
+    if (nullptr != f)
+      return f->SubdivisionPoint();
+  }
+  break;
+  }
+  return ON_3dPoint::NanPoint;
+}
+
+
+
 const ON_BoundingBox ON_SubDComponentPtr::ControlNetBoundingBox() const
 {
   switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
@@ -1740,7 +1771,7 @@ void ON_SubDComponentId::Internal_SetType(ON_SubDComponentPtr::Type type)
 
 void ON_SubDComponentId::Internal_SetDir(unsigned dir)
 {
-  // invalid dir is treaded as 0
+  // invalid dir is treated as 0
   if (1 == dir)
     m_type_and_dir |= ((unsigned char)ON_SubDComponentId::bits_dir_mask);
   else
@@ -2315,7 +2346,7 @@ class ON_SubDComponentBase* ON_SubDComponentPtr::ComponentBase() const
     // This is in a controlled setting inside functions like ON_SubDArchiveIdMap::ConvertArchiveIdToRuntimeSymmetrySetNextPtr().
     // All public level SDK code can safely assume the returned value is a true pointer.
     // It does mean that you cannot "validate" the value returned here
-    // using some contraint on what you feel is a reasonable true pointer value.
+    // using some constraint on what you feel is a reasonable true pointer value.
     return ((class ON_SubDComponentBase*)ON_SUBD_COMPONENT_POINTER(m_ptr));
     break;
   }
@@ -2930,7 +2961,7 @@ const ON_SubDComponentPoint ON_SubDComponentPoint::BestPickPoint(
 )
 {
   // If you're working on a bug where somebody isn't able to pick the SubD component
-  // they thinked they clicked on, then you're in the right place.
+  // they thought they clicked on, then you're in the right place.
   // Mikko has done lots of work in this area and be sure to retest RH-52172 and RH-52173 (fixed 3 May 2019).
   // Also, retest RH-59666 (fixed August 2020).
   //
@@ -2963,7 +2994,7 @@ const ON_SubDComponentPoint ON_SubDComponentPoint::BestPickPoint(
     && ((type_bias >= 0) ? Internal_FirstIsPartOfSecond(A, B) : Internal_FirstIsPartOfSecond(B, A))
     )
   {
-    // A point pick is occuring and best is a vertex on an edge/face or best is an edge on a face.
+    // A point pick is occurring and best is a vertex on an edge/face or best is an edge on a face.
     // Bias towards the vertex/edge.
     // Users can pick the middle of an edge/face if they want the "bigger" component.
     ON_SubDComponentPoint best = (type_bias >= 0) ? A : B;
@@ -4889,6 +4920,9 @@ double ON_SubDEdgeSharpness::Sanitize(
 
 const ON_SubDEdgeSharpness ON_SubDEdgeSharpness::Subdivided(int end_index) const
 {
+  if (this->IsCrease())
+    return ON_SubDEdgeSharpness::Crease;
+
   if (end_index >= 0 && end_index <= 1)
   {
     const double s[2] = { 
@@ -4978,7 +5012,7 @@ double ON_SubDEdgeSharpness::VertexSharpness(
 )
 {
   // NOTE WELL:
-  // For edge chains with a contant sharpness, this agrees with DKT SIGGRAPH 1998.
+  // For edge chains with a constant sharpness, this agrees with DKT SIGGRAPH 1998.
   // For edge chains with variable sharpness, having a sharpness interval on the
   // edge with end values matching at shared vertices gives nicer looking results
   // than assigning a constant sharpness to edges and Chaikin's subdivision rule
@@ -5251,7 +5285,7 @@ void ON_SubDVertex::Internal_SetInteriorCreaseVertexSharpnessForExperts(
     {
       // This is a 2 sector crease vertex and is exactly
       // the case where m_crease_sector_vertex_sharpness is useful.
-      // If the sectors have different maximum edge end shaprnesses at this
+      // If the sectors have different maximum edge end sharpnesses at this
       // vertex, then this value is critical. The sector with the smaller
       // maximum edge end sharpness must use this value when the
       // vertex subdivision point is calculated so the subdivision
@@ -5282,10 +5316,10 @@ void ON_SubDVertex::Internal_SetInteriorCreaseVertexSharpnessForExperts(
         // during low level evaluation where a copy of 1 side of a 2 sector crease
         // is being created so limit surface information can be calculated.
         // 
-        // Each case is separated out so it's posible to surgically debug with simple breakpoints.
+        // Each case is separated out so it's possible to surgically debug with simple breakpoints.
         if (bOneSector)
         {
-          // One sector of a level 0 bertex is being copied and the expert caller 
+          // One sector of a level 0 vertex is being copied and the expert caller
           // set bSkipEdgeCountTest=true to inform us this is a special case.
           // One place this happens is in
           // ON_SubDVertexQuadSector::Initialize(ON_SubDVertexTag center_vertex_tag, double center_vertex_sharpness, ...).
@@ -5293,7 +5327,7 @@ void ON_SubDVertex::Internal_SetInteriorCreaseVertexSharpnessForExperts(
         }
         else if (0 == m_edge_count && 0 == m_face_count)
         {
-          // A vertex is being bopied, the edges and faces have not been attached yet,
+          // A vertex is being copied, the edges and faces have not been attached yet,
           // and the expert caller set bSkipEdgeCountTest=true to inform us this is a
           // special case.
           // One place this happens is in
@@ -5329,13 +5363,13 @@ void ON_SubDVertex::Internal_ClearInteriorCreaseVertexSharpnessForExperts() cons
 static double Internal_VertexSharpnessCalculationHelper(
   const ON_SubDVertex* v, // caller insures v is not nullptr
   unsigned int sharp_edge_count, // caller insures sharp_edge_count is valid 
-  double max_end_sharpeness // caller insures max_end_sharpeness is valid 
+  double max_end_sharpeness // caller insures max_end_sharpness is valid
 )
 {
-  // In low level evluation code, interior crease vertices
-  // only have informtion from one sector and we need the value
+  // In low level evaluation code, interior crease vertices
+  // only have information from one sector and we need the value
   // calculated from both sectors. In all other cases, the
-  // value of max_end_sharpeness calculated above is the
+  // value of max_end_sharpness calculated above is the
   // correct value to use.
   const bool bIsOneSectorCrease = v->IsOneSectorCrease();
   const double two_sector_crease_vertex_sharpness
@@ -5410,7 +5444,7 @@ double ON_SubDVertex::VertexSharpness() const
   }
   
 
-  // DEBUG TEST to make sure the condtion descried in the comment above is satisfied.
+  // DEBUG TEST to make sure the condition descried in the comment above is satisfied.
   // DO NOT COMMIT THIS CODE - IT IS FOR TESTING WHILE DEVELOPING
   //  ON_3dPoint sharp_subdivision_point;
   //  const double check = GetSharpSubdivisionPoint(sharp_subdivision_point);
@@ -5441,7 +5475,7 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(ON_3dPoint& sharp_subdivision_poi
     case 2:
       sharp_subdivision_point 
         = c[0] * v[0]->ControlNetPoint() 
-        + c[1]*v[1]->ControlNetPoint();
+        + c[1] * v[1]->ControlNetPoint();
       break;
     case 3:
       sharp_subdivision_point 
@@ -5473,7 +5507,7 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
   // and a nonzero sharpness at the end attached to this vertex.
   // This definition of vertex sharpness is from DeRose, Kass, Truong 1998.
   // - If the vertex is smooth and adjacent to zero or one sharp edges, 
-  //   then the ordindary vertex subdivision rule is used, 
+  //   then the ordinary vertex subdivision rule is used,
   //   sharp_subdivision_point is set to NanPoint,
   //   and 0.0 is returned.
   // - If the vertex is adjacent to 3 or more sharp edges and crease edges, 
@@ -5484,7 +5518,7 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
   //   then sharp_subdivision_point = crease vertex subdivision point, 
   //   and the average of the edge sharpnesses is returned.
   // 
-  // The returned vertex sharpenss is awasy >= 0.
+  // The returned vertex sharpens is always >= 0.
   // When the returned vertex sharpness is > 0, the vertex subdivision point
   // (1-s)*(ordinary subdivision point) + s*sharp_subdivision_point,
   // where s = min(returned vertex sharpness, 1).
@@ -5492,7 +5526,7 @@ double ON_SubDVertex::GetSharpSubdivisionPoint(
 
   // NOTE WELL:
   // The double returned by ON_SubDVertex::VertexSharpness() must
-  // always be identical to the double returned by this funciton.
+  // always be identical to the double returned by this function.
   //
   //  ALWAYS CHANGE THE CODE IN ON_SubDVertex::GetSharpSubdivisionPoint() first
   //  and then update ON_SubDVertex::VertexSharpness() as needed.
@@ -6096,7 +6130,7 @@ bool ON_SubDVertex::IsStandard() const
     return false;
   }
 
-  // The standard subdivison matrix will correctly calculate
+  // The standard subdivision matrix will correctly calculate
   // the subdivision location for this vertex.
   return true;
 }
@@ -7637,7 +7671,7 @@ ON_SubDVertexTag ON_SubDVertex::SuggestedVertexTag(
       return ON_SubDVertexTag::Smooth;
     if (bReturnBestGuessWhenInvalid)
     {
-      // can occure when there is a nullptr edge
+      // can occur when there is a nullptr edge
       best_guess_tag = ON_SubDVertexTag::Smooth;
     }
     break;
@@ -8124,7 +8158,7 @@ const ON_SubDHash ON_SubDimple::SubDHash(
   if (0 == vertex_count)
     return ON_SubDHash::Empty;
 
-  // m_subd_toplologyX_hash, m_subd_toplology_and_edge_crease_hash, and m_subd_geometry_hash
+  // m_subd_topologyX_hash, m_subd_topology_and_edge_crease_hash, and m_subd_geometry_hash
   // are mutable and use lazy evaluation to stay updated.
   // subd.GeometryContentSerialNumber() is used to detect stale values.
   ON_SubDHash* h;
@@ -8162,7 +8196,7 @@ const ON_SubDHash ON_SubDimple::SubDHash(
     && face_count == h->FaceCount()
     )
   {
-    // The chache hash values are up to date (or should be).
+    // The cache hash values are up to date (or should be).
     // If h is out of date, something somewhere modified the SubD components and 
     // failed to change the GeometryContentSerialNumber(). 
     // All C++ SDK opennurbs code changes gsn after modifying SubD geometry (or it's a bug that should be fixed).
@@ -9062,7 +9096,7 @@ bool ON_SubDimple::IsValidLevel(
   if ( e_id_range[1] > MaximumEdgeId() )
     return ON_SubDIsNotValid(bSilentError);
    
-  // As of NOvember 12, 2019 
+  // As of November 12, 2019
   // Wire edges are permitted. THey exist in subds being edited.
   ////// currently, wire edges are not permitted
   ////if (wire_edge_count > 0)
@@ -9508,7 +9542,7 @@ unsigned int ON_SubD::DumpTopology(
     subd_texture_settings_hash.Dump(text_log);
     text_log.PrintNewLine();
 
-    // runtime settings most recentltly used to set fragmant texture coordinates.
+    // runtime settings most recently used to set fragment texture coordinates.
     const ON_SHA1_Hash frament_texture_settings_hash = this->FragmentTextureCoordinatesTextureSettingsHash();
     text_log.Print(L"FragmentTextureCoordinatesTextureSettingsHash() = ");
     if (subd_texture_settings_hash == frament_texture_settings_hash)
@@ -11900,6 +11934,22 @@ class ON_SubDLevel* ON_SubD::ActiveLevelPointer()
   return (nullptr != subdimple) ? subdimple->ActiveLevelPointer() : nullptr;
 }
 
+const class ON_SubDLevel& ON_SubD::LevelForExperts(unsigned int level_index) const
+{
+  for (;;)
+  {
+    ON_SubDimple* subdimple = m_subdimple_sp.get();
+    if (nullptr == subdimple)
+      break;
+    ON_SubDLevelIterator lit = subdimple->LevelIterator();
+    for (ON_SubDLevel* level = lit.First(); nullptr != level; level = lit.Next())
+    {
+      if (level_index == level->m_level_index)
+        return *level;
+    }
+  }
+  return ON_SubDLevel::Empty;
+}
 
 ON_SubDimple* ON_SubD::SubDimple(bool bCreateIfNeeded)
 {
@@ -13288,6 +13338,13 @@ const ON_3dPoint ON_SubDFace::SubdivisionPoint() const
   return (GetSubdivisionPoint(&S.x) && S.IsValid()) ? S : ON_3dPoint::NanPoint;
 }
 
+const ON_3dPoint ON_SubDFacePtr::SubdivisionPoint() const
+{
+  const ON_SubDFace* f = this->Face();
+  return (nullptr != f) ? f->SubdivisionPoint() : ON_3dPoint::NanPoint;
+}
+
+
 bool ON_SubDFace::GetSubdivisionPoint(
   double subdivision_point[3]
 ) const
@@ -13326,7 +13383,7 @@ bool ON_SubDFace::EvaluateCatmullClarkSubdivisionPoint(double subdivision_point[
   // Use faster code for the case when the face is a quad.
   // Since this is a Catmull-Clark subdivision scheme, this
   // case is the most common by far and code that gives quads
-  // special treatment will run noticably faster.
+  // special treatment will run noticeably faster.
   e_ptr = edge_ptr[0].m_ptr;
   e = ON_SUBD_EDGE_POINTER(e_ptr);
   if ( nullptr == e || nullptr == e->m_vertex[0] || nullptr == e->m_vertex[1] )
@@ -14366,6 +14423,7 @@ const ON_3dPoint ON_SubDEdge::SubdivisionPoint() const
   return (GetSubdivisionPoint(&S.x) && S.IsValid()) ? S : ON_3dPoint::NanPoint;
 }
 
+
 bool ON_SubDEdge::GetSubdivisionPoint(
   double subdivision_point[3]
 ) const
@@ -15188,6 +15246,8 @@ const ON_3dPoint ON_SubDVertex::SubdivisionPoint() const
   return (GetSubdivisionPoint(&S.x) && S.IsValid()) ? S : ON_3dPoint::NanPoint;
 }
 
+
+
 bool ON_SubDVertex::GetSubdivisionPoint(
   double subdivision_point[3]
 ) const
@@ -15545,7 +15605,7 @@ bool ON_SubDimple::LocalSubdivide(
   ON_SimpleArray<ON_SubDFace*> faces(face_count);
   ON_SimpleArray<ON_3dPoint> face_points(face_count);
 
-  // this subd is being modifed.
+  // this subd is being modified.
   ChangeGeometryContentSerialNumber( false);
 
   for (const ON_SubDFace* f0 = level0.m_face[0]; nullptr != f0; f0 = f0->m_next_face)
@@ -15605,7 +15665,7 @@ bool ON_SubDimple::LocalSubdivide(
     // as opposed to a global subdivision level operation. It will be common
     // for the input to include some but not all sharp edges.
     // Dale Lear's best guess on Nov 9, 2022 is that
-    // reusing the orginal sharpness is the best way to maximize overall
+    // reusing the original sharpness is the best way to maximize overall
     // user happiness. This makes some sense because the level of the edges
     // is not changing in a LOCAL subdivide. 
     // It is a near certainty that some users will not like this in some cases. 
@@ -15917,11 +15977,11 @@ static bool Internal_SubdivideFacePacking(
     // those rectangle are assigned the original pack id. This works because neighboring
     // quad faces that belong to the same pack will also be subdivided into 4 quads
     // and the requirement that multi-face pack MUST be a set of quads that form a 
-    // rectangular topological grid will be satisified in the globally subdivided SubD.
+    // rectangular topological grid will be satisfied in the globally subdivided SubD.
     //
     // When f0 is a triangle, f0 necessarily is the on face with its pack id (because it cannot
     // possibly be grouped with other quads - see NOTE WELL above).
-    // In addition, for tiranglular faces, packed textures are assigned to the trianglular face
+    // In addition, for triangular faces, packed textures are assigned to the triangular face
     // in a way that the first two sub quads can become a single two quad pack and can reuse the f0->PackId(). 
     // The third subquad gets a new pack id.
 
@@ -16192,7 +16252,7 @@ unsigned int ON_SubDimple::Internal_GlobalQuadSubdivideFace(
     // sub_quads != nullptr if and only if f0 has texture packing information
     // that needs to be subdivided.
     // 
-    // The existing pack rect needs to be subdivided and assinged to the subdivided faces
+    // The existing pack rect needs to be subdivided and assigned to the subdivided faces
     if (f0_edge_count == f1_count)
       Internal_SubdivideFacePacking(f0, f0_edge_count, f0_pack_id, next_pack_id, sub_quads );
 
@@ -16535,14 +16595,14 @@ static bool Internal_EdgesAreConsecutive(
     const double miniscule_distance_tolerance = ON_ZERO_TOLERANCE;
     if (h <= miniscule_distance_tolerance && !(distance_tolerance >= 0.0 && distance_tolerance < miniscule_distance_tolerance))
     {
-      // skip parameter tests for miniscule h.
+      // skip parameter tests for minuscule h.
       return true;
     }
 
     const double miniscule_maximum_aspect = 1e-4;
     if (h <= miniscule_maximum_aspect * d && !(maximum_aspect >= 0.0 && maximum_aspect < miniscule_maximum_aspect))
     {
-      // skip parameter tests for miniscule h/d.
+      // skip parameter tests for minuscule h/d.
       return true;
     }
 
@@ -17515,7 +17575,7 @@ const ON_SubDEdge* ON_SubDimple::SplitFace(
     new_edge_count[0] = fvi0 - fvi1 + 1;
     new_edge_count[1] = (edge_count + 2) - new_edge_count[0];
   }
-  // make sure each side is at least a triangle and no overflows occured
+  // make sure each side is at least a triangle and no overflows occurred
   if (new_edge_count[0] < 3 || new_edge_count[0] >= edge_count)
     return ON_SUBD_RETURN_ERROR(nullptr);
   if (new_edge_count[1] < 3 || new_edge_count[1] >= edge_count)
@@ -18687,7 +18747,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
   const unsigned src_level_index = src.m_level_index;
 
   // It is critical to use the this_vit/src_vit iterators so we got through the vertices in id order.
-  // When a copy of an editied subd is made, it is frequently the case that the vertex linked lists
+  // When a copy of an edited subd is made, it is frequently the case that the vertex linked lists
   // are in different order. 
   ON_SubDVertexIdIterator this_vit;
   ON_SubDVertexIdIterator src_vit;
@@ -18744,7 +18804,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
     return ON_SUBD_RETURN_ERROR(false);
 
   // It is critical to use the this_eit/src_eit iterators so we got through the edges in id order.
-  // When a copy of an editied subd is made, it is frequently the case that the edge linked lists
+  // When a copy of an edited subd is made, it is frequently the case that the edge linked lists
   // are in different order. 
   ON_SubDEdgeIdIterator this_eit;
   ON_SubDEdgeIdIterator src_eit;
@@ -18807,7 +18867,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
     return ON_SUBD_RETURN_ERROR(false);
 
   // It is critical to use the this_fit/src_fit iterators so we got through the faces in id order.
-  // When a copy of an editied subd is made, it is frequently the case that the face linked lists
+  // When a copy of an edited subd is made, it is frequently the case that the face linked lists
   // are in different order. 
   ON_SubDFaceIdIterator this_fit;
   ON_SubDFaceIdIterator src_fit;
@@ -18857,13 +18917,13 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
   if (false == bCopyVertexCache && false == bCopyEdgeCache && false == bCopyFaceCache)
     return false;
 
-  // this and src subd have identical geometry - copy evluation cache
+  // this and src subd have identical geometry - copy evaluation cache
 
   double subdivision_point[3];
   if (bCopyVertexCache)
   {
     // It is critical to use the this_vit/src_vit iterators so we got through the vertices in id order.
-    // When a copy of an editied subd is made, it is frequently the case that the vertex linked lists
+    // When a copy of an edited subd is made, it is frequently the case that the vertex linked lists
     // are in different order. 
     ON_SubDSectorSurfacePoint this_limit_point;
     for (
@@ -18900,7 +18960,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
   if (bCopyEdgeCache)
   {    
     // It is critical to use the this_eit/src_eit iterators so we got through the edges in id order.
-    // When a copy of an editied subd is made, it is frequently the case that the edge linked lists
+    // When a copy of an edited subd is made, it is frequently the case that the edge linked lists
     // are in different order. 
     ON_SimpleArray<ON_3dPoint> edge_curve_cvs(ON_SubDEdgeSurfaceCurve::MaximumControlPointCapacity);
     for (
@@ -18921,7 +18981,7 @@ bool ON_SubDLevel::CopyEvaluationCacheForExperts( ON_SubDHeap& this_heap, const 
   if (bCopyFaceCache)
   {
     // It is critical to use the this_fit/src_fit iterators so we got through the faces in id order.
-    // When a copy of an editied subd is made, it is frequently the case that the face linked lists
+    // When a copy of an edited subd is made, it is frequently the case that the face linked lists
     // are in different order. 
     for (
       this_face = const_cast<ON_SubDFace*>(this_fit.FirstFaceOnLevel(this_level_index)), src_face = src_fit.FirstFaceOnLevel(src_level_index);
@@ -19103,7 +19163,7 @@ bool ON_SubD::DeleteComponentsForExperts(
       cptr.ClearStates(ON_ComponentStatus::Damaged);
   }
 
-  // Set the status of every compoent in cptr_list[] to ON_ComponentStatus::AllSet.
+  // Set the status of every component in cptr_list[] to ON_ComponentStatus::AllSet.
   // If that component is a vertex, set the status of every edge and face that
   // touch the vertex to ON_ComponentStatus::AllSet.
   // If that component is an edge, set the status of every face that
@@ -21672,11 +21732,11 @@ static unsigned int Internal_MarkExtrudeComponents(
     list_face_count
   );
 
-  // It appears the best "hurestic" is to require the user to pick edges and faces.
+  // It appears the best "heuristic" is to require the user to pick edges and faces.
   // isolated vertices will be ignored and no attempts to guess if a user wants to
   // extrude the boundary of a face (all its edges) or the face itself.
 
-  // lots of delete "hurestic" code here :)
+  // lots of delete "heuristic" code here :)
 
   return marked_vertex_count;
 }
@@ -22762,7 +22822,7 @@ static bool Internal_SetSideGroupIds(ON_SimpleArray<ON_Internal_ExtrudedEdge>& n
     if (false == new_sides[i].SetSideGroupId(side_group_id))
       continue;
 
-    // propogate side_group_id through all touching components
+    // propagate side_group_id through all touching components
     unsigned j0 = i + 1;
     for (bool bContinue = true; bContinue; /*empty iterator*/)
     {      
@@ -23008,7 +23068,7 @@ unsigned int ON_SubD::Internal_ExtrudeComponents(
       }
 
       // Partially setting the topology connections here reduces the number of binary searches by about half.
-      // The scecond paramter is false because the sorting of extruded_vertices[] will change the memory
+      // The second parameter is false because the sorting of extruded_vertices[] will change the memory
       // location where extruded_vertex is stored.
       if (false == extruded_vertex.AddExtrudedEdgeReference(&extruded_edge, false))
         return 0;
@@ -23150,7 +23210,7 @@ unsigned int ON_SubD::Internal_ExtrudeComponents(
     }
   }
 
-  // For the original boundary vertrex, move unmarked edges to use the new vertex.
+  // For the original boundary vertex, move unmarked edges to use the new vertex.
   for (unsigned int i = 0; i < extruded_vertices.UnsignedCount(); i++)
     Internal_SetEdgeVertices(*this, extruded_vertices[i]);
 
@@ -23377,7 +23437,7 @@ unsigned int ON_SubD::SetVertexTags(
         }
         else
         {
-          // dont' attempt change - further refinement may be needed here
+          // don't attempt change - further refinement may be needed here
           continue;
         }
       }
@@ -23426,7 +23486,7 @@ unsigned int ON_SubD::SetVertexTags(
   // This for loop is used when new vertex_tag is ON_SubDVertexTag::Crease.
   for (int pass = 0; pass < 2 && false == bUpdateTags; pass++)
   {
-    // More careful analysis is neeeded to accurately mark smooth edges that will become creases
+    // More careful analysis is needed to accurately mark smooth edges that will become creases
     ON_SubDEdgeIterator eit(*this);
     for (const ON_SubDEdge* edge = eit.FirstEdge(); nullptr != edge; edge = eit.NextEdge())
     {
@@ -24391,7 +24451,7 @@ bool ON_SubDEdgeChain::GetSideComponents(
       )
     {
       // rearrange side_components[] so it begins with first_side_components_eptr.
-      // This elimnates the complexity of having to begin/end a SubD fillet
+      // This eliminates the complexity of having to begin/end a SubD fillet
       // at a ... f,v,f ... location.
       const ON_SubDFace* f = side_components[0].Face();
       if (nullptr == f)
@@ -25509,9 +25569,9 @@ static unsigned Internal_MuchImprovedSortEdgesIntoChains(
     if (nullptr == seed_edge || 1 != seed_edge->MarkBits())
       continue; // seed_edge is invalid or already assigned to an edge chain
 
-    // this edge pointer direcion will be reversed when the for loop evi = 1.
+    // this edge pointer direction will be reversed when the for loop evi = 1.
     chain.SetCount(0);
-    chain.Append(ON_SubDEdgePtr::Create(seed_edge, 1)); // dir=1 is correct. The direcion will be reversed in the for loop below when evi = 1.
+    chain.Append(ON_SubDEdgePtr::Create(seed_edge, 1)); // dir=1 is correct. The direction will be reversed in the for loop below when evi = 1.
     seed_edge->ClearMarkBits(); // seed_edge is now in a chain
 
     for (unsigned evi = 0; evi < 2; ++evi)
@@ -26290,7 +26350,7 @@ bool ON_SubDEdgeChain::IsSingleEdgeChain(
     );
 
     if (1U != chain_count)
-      break; // edges[] is not a contiguouse set of edges or it self intersects.
+      break; // edges[] is not a contiguous set of edges or it self intersects.
     if (count + 1U != sorted_edges.UnsignedCount())
       break; // edges[] contained null edges
 
@@ -26299,7 +26359,7 @@ bool ON_SubDEdgeChain::IsSingleEdgeChain(
       bIsClosed = true;
 
     // Determine edges[] is was already sorted.
-    // Note that this test does not detect self interections and that's
+    // Note that this test does not detect self intersections and that's
     // why ON_SubDEdgeChain::SortEdgesIntoEdgeChains() is called above.
     const ON_SubDVertex* v0 = edges[0].RelativeVertex(0);
     if (nullptr != v0)
@@ -26824,7 +26884,7 @@ unsigned int ON_SubDEdgeChain::SortEdgesIntoEdgeChains(
     );
   }
 
-  // Sort links[] by m_index valut to restore links[] to its original order.
+  // Sort links[] by m_index value to restore links[] to its original order.
   links.QuickSort(ON_SubDEdgePtrLink::CompareIndex);
   ON_SubDEdgePtrLink* links_array = links.Array();
 
@@ -28002,7 +28062,7 @@ ON_SubDFace* ON_SubD::FindOrAddFace(
     return ON_SUBD_RETURN_ERROR(nullptr);
 
 
-  // Mkae sure v[] has vertex_count unique non-null vertices.
+  // Make sure v[] has vertex_count unique non-null vertices.
   for (unsigned i = 0; i < vertex_count; ++i)
   {
     if (nullptr == face_vertices[i])

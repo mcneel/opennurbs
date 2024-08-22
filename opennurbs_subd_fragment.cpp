@@ -119,7 +119,7 @@ void ON_SubDMeshFragment::Internal_LayoutArrays(
     ? (bInterlaced ? (ON_SubDMeshFragment::DoublesPerVertex * sizeof(double)) / sizeof(m_K[0]) : 1)
     : 0;
 
-  // offset_K = offset bewteen m_K and m_C
+  // offset_K = offset between m_K and m_C
   const size_t offset_K
     = (nullptr != PNTKC_array)
     ? (bInterlaced ? 1 : vertex_capacity)
@@ -698,7 +698,7 @@ bool ON_SubD::HasFragmentColors() const
       if (0 == frag->ColorCount())
         return false;
       // NOTE WELL: 
-      // All fragments need to be tested as lasy updates of the 
+      // All fragments need to be tested as lazy updates of the
       // surface mesh cache result in the update fragments having
       // no colors while the preexisting fragments have colors.
       bHasColors = true; // fragments with colors exist
@@ -1387,7 +1387,7 @@ void ON_SubDManagedMeshFragment::CopyHelper(const ON_SubDMeshFragment& src)
   size_t src_k_stride;
   if (K_count > 0)
   {
-    // copy curvarure
+    // copy curvature
     src_k = src.m_K;
     src_k_stride = src.m_K_stride;
     SetCurvaturesExistForExperts(true);
@@ -2272,7 +2272,7 @@ unsigned int ON_SubDMeshFragmentGrid::SidePointCount() const
 
 unsigned int ON_SubDMeshFragmentGrid::GridFaceCount() const
 {
-  // TODO: Suport tri fragments
+  // TODO: Support tri fragments
   unsigned int side_segment_count = SideSegmentCount();
   return side_segment_count * side_segment_count;
 }
@@ -2280,7 +2280,7 @@ unsigned int ON_SubDMeshFragmentGrid::GridFaceCount() const
 
 unsigned int ON_SubDMeshFragmentGrid::GridPointCount() const
 {
-  // TODO: Suport tri fragments
+  // TODO: Support tri fragments
   unsigned int side_segment_count = SideSegmentCount();
   return (side_segment_count > 0U) ? ((side_segment_count + 1U)*(side_segment_count + 1U)) : 0U;
 }
@@ -2525,7 +2525,7 @@ ON_SubDMeshFragmentGrid ON_SubDMeshFragmentGrid::QuadGridFromDisplayDensity(
     }
 
     // Do not initialize grid_cache[i] until entire linked list is ready to be used.
-    // This way if the lock is stolen for some unforseen reason, we risk leaking memory
+    // This way if the lock is stolen for some unforeseen reason, we risk leaking memory
     // but we will not crash.
     grid_cache[i] = first_lod;
   }
@@ -3166,7 +3166,7 @@ public:
           m_bits |= (0==edge_dir) ? Bits::FirstHalf : Bits::SecondHalf;
         else
         {
-          // this is an inteior edge of a partial fragment and it
+          // this is an interior edge of a partial fragment and it
           // is always sealed with its neighbor when it is created.
           break;
         }
@@ -3210,7 +3210,7 @@ public:
     // Critical to ignore the EdgeDir bit because we need
     // the identical sections of edges to be sorted together.
     // When an edge has 2 N-gons (N != 4) attached, we need
-    // the pairs for the first half and 2nd half sorted toether
+    // the pairs for the first half and 2nd half sorted together
     const unsigned char lhs_bits = (lhs->m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::IgnoreEdgeDirMask);
     const unsigned char rhs_bits = (rhs->m_bits & ON_SubDLimitMeshSealEdgeInfo::Bits::IgnoreEdgeDirMask);
     if (lhs_bits < rhs_bits)
@@ -3293,12 +3293,12 @@ bool ON_SubDLimitMeshSealEdgeInfo::Seal(
         // only copy half of src_fragment side
         if (0 == src_dir)
         {
-          i1 -= dst_side_segment_count; // copy first half of src_framgent side
+          i1 -= dst_side_segment_count; // copy first half of src_fragment side
           ////vid[1] = 0;
         }
         else
         {
-          i0 += dst_side_segment_count; // copy 2nd half of src_framgent side
+          i0 += dst_side_segment_count; // copy 2nd half of src_fragment side
           ////vid[0] = 0;
         }
       }
@@ -3307,12 +3307,12 @@ bool ON_SubDLimitMeshSealEdgeInfo::Seal(
         // only copy half of src_fragment side
         if (0 == src_dir)
         {
-          i0 += dst_side_segment_count; // copy 2nd half of src_framgent side
+          i0 += dst_side_segment_count; // copy 2nd half of src_fragment side
           ////vid[0] = 0;
         }
         else
         {
-          i1 -= dst_side_segment_count; // copy first half of src_framgent side
+          i1 -= dst_side_segment_count; // copy first half of src_fragment side
           ////vid[1] = 0;
         }
       }
@@ -3846,7 +3846,7 @@ unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(
   // NURBS curve forms of SubD edge curves in that begin/end at an
   // extraordinary vertex. This is done in
   // ON_SubDEdge::GetEdgeSurfaceCurveControlPoints().
-  // When there is a better way to get NURBS approsimations of edges that end
+  // When there is a better way to get NURBS approximations of edges that end
   // at extraordinary vertices, we can reduce min_display_density to 1.
   // 
   // 2022-06-08. Pierre, RH-62025. I have no idea why this is set to 1 when

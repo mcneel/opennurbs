@@ -251,12 +251,12 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature 
+    Search for a derivative, tangent, or curvature
     discontinuity.
   Parameters:
     dir - [in] If 0, then "u" parameter is checked.  If 1, then
                the "v" parameter is checked.
-    c - [in] type of continity to test for.
+    c - [in] type of continuity to test for.
     t0 - [in] Search begins at t0. If there is a discontinuity
               at t0, it will be ignored.  This makes it 
               possible to repeatedly call GetNextDiscontinuity
@@ -384,7 +384,7 @@ public:
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the surface's to wthe desired accuracy
+                   //            matches the surface's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
                    //            the interior of the surface's domain, the 
@@ -398,7 +398,7 @@ public:
   int HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the surface's to wthe desired accuracy
+                   //            matches the surface's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
                    //            the interior of the surface's domain, the 

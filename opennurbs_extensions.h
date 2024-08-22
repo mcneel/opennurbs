@@ -188,7 +188,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ONX_Model_UserData*>;
 
 /*
 Description:
-  Pedegodgical example of all the things in an OpenNURBS 3dm archive.
+  Pedagogical example of all the things in an OpenNURBS 3dm archive.
   The openNURBS examples use ONX_Model to store the information
   read from 3dm archives.  Please study example_read.cpp for
   details.

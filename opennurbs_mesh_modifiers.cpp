@@ -1756,7 +1756,6 @@ public:
   ~CImpl();
 
   void LoadFromXML(const ON_XMLRootNode& root);
-  void SaveToXML(ON_XMLRootNode& root) const;
 
   void DeleteAll(void);
 

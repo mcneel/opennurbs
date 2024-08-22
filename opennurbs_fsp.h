@@ -85,7 +85,7 @@ public:
       then pass the number of elements per block here.  When
       block_element_capacity > 0 and element_count_estimate > 0, the first
       block will have a capacity of at least element_count_estimate; in this
-      case do not ask for extraordinarly large amounts of contiguous heap.
+      case do not ask for extraordinarily large amounts of contiguous heap.
 
   Remarks:
     You must call Create() on an unused ON_FixedSizePool or call Destroy()
@@ -470,7 +470,7 @@ public:
       element_index parameter, then the iteration begins at
       that element.
   Example:
-    The loop will iteratate through all the elements returned from
+    The loop will iterate through all the elements returned from
     AllocateElement(), including any that have be returned to the pool
     using ReturnElement().
 
@@ -497,7 +497,7 @@ public:
     identified and skipped.
 
     Do not make any calls to FirstBlock() or NextBlock() when using
-    FirstElement() and NextElement() to iteratate through elements.
+    FirstElement() and NextElement() to iterate through elements.
   */
   void* FirstElement();
   void* FirstElement( size_t element_index );
@@ -518,7 +518,7 @@ public:
     identified and skipped.
 
     Do not make any calls to FirstBlock() or NextBlock() when using
-    FirstElement() and NextElement() to iteratate through elements.
+    FirstElement() and NextElement() to iterate through elements.
   */
   void* NextElement();
 
@@ -528,7 +528,7 @@ public:
     or NextElement().
   Remarks:
     Do not make any calls to FirstBlock() or NextBlock() when using
-    FirstElement() and NextElement() to iteratate through elements.
+    FirstElement() and NextElement() to iterate through elements.
   */
   void* CurrentElement() const;
 
@@ -554,7 +554,7 @@ public:
       Note that if you have used ReturnElement(), some
       of these elements may have been returned.
   Example:
-    The loop will iteratate through all the blocks.
+    The loop will iterate through all the blocks.
 
           // iterate through all blocks in the pool
           size_t block_element_count = 0;
@@ -581,7 +581,7 @@ public:
     to iterate through the list of blocks.
 
     Do not make any calls to FirstElement() or NextElement() when using
-    FirstBlock() and NextBlock() to iteratate through blocks.
+    FirstBlock() and NextBlock() to iterate through blocks.
   */
   void* FirstBlock( size_t* block_element_count );
 
@@ -600,7 +600,7 @@ public:
     The next block when iterating through the blocks.
   Remarks:
     Do not make any calls to FirstElement() or NextElement() when using
-    FirstBlock() and NextBlock() to iteratate through blocks.
+    FirstBlock() and NextBlock() to iterate through blocks.
   */
   void* NextBlock( size_t* block_element_count );
 
@@ -634,7 +634,7 @@ public:
       of elements per block here.  When block_element_count > 0 and
       element_count_estimate > 0, the first block will be large enough
       element_count_estimate*sizeof(T) bytes; in this case do not
-      ask for extraordinarly large amounts of contiguous heap.
+      ask for extraordinarily large amounts of contiguous heap.
   Remarks:
     You must call Create() on an unused ON_FixedSizePool or call Destroy()
     before calling create.
@@ -770,7 +770,7 @@ public:
       element_index parameter, then the iteration begins at
       that element.
   Example:
-    The loop will iteratate through all the elements returned from
+    The loop will iterate through all the elements returned from
     AllocateElement(), including any that have be returned to the pool
     using ReturnElement().
 
@@ -797,7 +797,7 @@ public:
     identified and skipped.
 
     Do not make any calls to FirstBlock() or NextBlock() when using
-    FirstElement() and NextElement() to iteratate through elements.
+    FirstElement() and NextElement() to iterate through elements.
   */
   T* FirstElement();
   T* FirstElement( size_t element_index );
@@ -818,7 +818,7 @@ public:
     identified and skipped.
 
     Do not make any calls to FirstBlock() or NextBlock() when using
-    FirstElement() and NextElement() to iteratate through elements.
+    FirstElement() and NextElement() to iterate through elements.
   */
   T* NextElement();
 
@@ -828,7 +828,7 @@ public:
     or NextElement().
   Remarks:
     Do not make any calls to FirstBlock() or NextBlock() when using
-    FirstElement() and NextElement() to iteratate through elements.
+    FirstElement() and NextElement() to iterate through elements.
   */
   T* CurrentElement();
 
@@ -854,7 +854,7 @@ public:
       Note that if you have used ReturnElement(), some
       of these elements may have been returned.
   Example:
-    The loop will iteratate through all the blocks.
+    The loop will iterate through all the blocks.
 
           // iterate through all blocks in the pool
           size_t block_element_count = 0;
@@ -881,7 +881,7 @@ public:
     to iterate through the list of blocks.
 
     Do not make any calls to FirstElement() or NextElement() when using
-    FirstBlock() and NextBlock() to iteratate through blocks.
+    FirstBlock() and NextBlock() to iterate through blocks.
   */
   T* FirstBlock( size_t* block_element_count );
 
@@ -900,7 +900,7 @@ public:
     The next block when iterating through the blocks.
   Remarks:
     Do not make any calls to FirstElement() or NextElement() when using
-    FirstBlock() and NextBlock() to iteratate through blocks.
+    FirstBlock() and NextBlock() to iterate through blocks.
   */
   T* NextBlock( size_t* block_element_count );
 

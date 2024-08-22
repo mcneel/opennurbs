@@ -220,7 +220,7 @@ int ON_NurbsSpanIndex(
     j = len-2;
   else if (side < 0) {
     // if user wants limit from below and t = an internal knot,
-    // back up to prevous span
+    // back up to previous span
     while(j > 0 && t == knot[j]) 
       j--;
   }

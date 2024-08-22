@@ -79,7 +79,7 @@ public:
   }
 
 
-  unsigned int m_sud_face_id; // likely ON_SubDFace.m_id value (unless invlalid input causes some to be skipped)
+  unsigned int m_sud_face_id; // likely ON_SubDFace.m_id value (unless invalid input causes some to be skipped)
   unsigned int m_mesh_Vi; // ON_Mesh vertex index
   unsigned int m_mesh_Vj; // ON_Mesh vertex index
 
@@ -87,7 +87,7 @@ private:
   unsigned char m_u_status; // 0 = u is unset, 1 = m_u.mesh_edge_topology_id is set, 2 = m_u.subd_edgeptr is set
   union
   {
-    ON_2udex mesh_edge_topology_id; // uniquely identifies mesh edge toplogically - independent of vertex order
+    ON_2udex mesh_edge_topology_id; // uniquely identifies mesh edge topologically - independent of vertex order
     ON_SubDEdgePtr subd_edgeptr;
   } m_u;
 
@@ -384,7 +384,7 @@ class ON_NgonBoundaryChecker
 {
 public:
   /*
-  Parametes:
+  Parameters:
     ngon  - [in]
       ngon to test
     mesh [in]
@@ -481,7 +481,7 @@ static double Internal_FaceCornerAngleRadians(const ON_SubDVertex* v, const ON_S
     if (false == f->IsConvex())
       break;
 
-    // We could remove the f->IsConvex() test, but it might make make a bad situaton worse.
+    // We could remove the f->IsConvex() test, but it might make make a bad situation worse.
     // As of May 2020, nobody has complained about this approach.
     // the code below assumes the face is convex
 
@@ -788,7 +788,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   //
 
   // mesh_edge_map[] is used to sort the sort mesh_edges[] into groups that correspond to the same SubD edge.
-  // The order of mesh_edges[] cannot be changed because the current order is neede to efficiently create the SubD faces.
+  // The order of mesh_edges[] cannot be changed because the current order is needed to efficiently create the SubD faces.
   unsigned int* mesh_edge_map = (unsigned int*)ws.GetMemory(mesh_edges.UnsignedCount() * sizeof(mesh_edge_map[0]));
   ON_Sort(
     ON::sort_algorithm::quick_sort,

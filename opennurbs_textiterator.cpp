@@ -93,7 +93,7 @@ static const wchar_t* tagField               = L"field";
 
 static const wchar_t* tagUniCpCount          = L"uc";     // #bytes used following \uN for codepage code of equivalenet char
 
-static const wchar_t* tagUniCharDec          = L"u";      // UNOCODE UTF-16 encoded value as a signed short (0x8...) will be -....
+static const wchar_t* tagUniCharDec          = L"u";      // UNICODE UTF-16 encoded value as a signed short (0x8...) will be -....
                                                           // NOTE WELL: When a single UNICODE code point requires a UTF-16
                                                           // surrogate pair encoding, there will be TWO \uXXXX? values for that code point.
                                                           // For example, the single UNICODE code point 
@@ -102,7 +102,7 @@ static const wchar_t* tagUniCharDec          = L"u";      // UNOCODE UTF-16 enco
                                                           // value in RTF looks like ...{\ltrch \u-10179?\u-8751?}...
                                                           // -10179 as a signed 2 byte short has the same bits as unsigned short 0xD83D.
                                                           // -8751 as a signed 2 byte short has the same bits as unsigned short 0xDDD1.
-                                                          // Many "emoji glyphs" UNOCODE code points require UTF-16 surrogate pair encodings.
+                                                          // Many "emoji glyphs" UNICODE code points require UTF-16 surrogate pair encodings.
 
 static const wchar_t* tagUniTwoDest          = L"upr";    // two embedded unicode destinations
 
@@ -484,7 +484,7 @@ void ON_TextBuilder::CharSet(const wchar_t* value)  // \fcharsetN
     if(ReadingFontDefinition())
     {
       // This is a charset specification in a font definition in the font table
-      // the value is convertable to a codepage to use for interpreting the text chars
+      // the value is convertible to a codepage to use for interpreting the text chars
       // using this font into unicode points
       m_current_props.SetCharSet(charset, true);
     }
@@ -2559,13 +2559,6 @@ ON_RtfParser::ON_RtfParser(ON_TextIterator& iter, ON_TextBuilder& builder)
 {
 }
 
-
-ON_Color ParseColor(const wchar_t* value)
-{
-  ON_Color color;
-  return color;
-}
-
 bool ON_RtfParser::ProcessTag(const wchar_t* name, const wchar_t* value, bool optional)
 {
   ON_wString tagname(name);
@@ -2684,7 +2677,7 @@ rc = false;
 // '\\tagname<value> ...  ;' follows optional tag.
 // optional tags can be skipped, and terminate with ';'
 // the first tagname following '\\*\\' is the name of the optional tag and
-// additional tags and tokens can follow, up to a terminiating ';'
+// additional tags and tokens can follow, up to a terminating ';'
 // tags can contain up to 32 chars in the name optionally followed by a number
 bool ON_RtfParser::ReadOptionalTag()
 {
@@ -2850,7 +2843,7 @@ bool ON_RtfParser::Parse()
             break;
 
           case '\'':
-            // This case sould never occur - it is handled by 
+            // This case should never occur - it is handled by
             // Internal_ParseMBCSString at the beginning of this while statement.
             ON_ERROR("Bug in RTF parsing code.");
             break;
@@ -2882,7 +2875,7 @@ bool ON_RtfParser::Parse()
             // Tag names are always low ascii alphabetic
             m_ti.Back();
             ReadTag(false);
-            //// Breaks reading unocode text like A<\u26085?\u26412?\u12398?\u12469?\u12452?>
+            //// Breaks reading unicode text like A<\u26085?\u26412?\u12398?\u12469?\u12452?>
             //// m_builder.m_current_codepoints.Empty();
             optional_tag = false;
           }
@@ -3046,7 +3039,7 @@ static bool GetRunText(ON_TextRun* run, ON_wString& text_out, bool& foundunicode
 
       if (code_point > 0x80 || 1 != utf16_count || code_point != (ON__UINT32)utf16[0])
       {
-        // When we write RTF, we do not specify what encodding is used for values in the range 0x80 - 0xFF.
+        // When we write RTF, we do not specify what encoding is used for values in the range 0x80 - 0xFF.
         // 
         // The ON_wString temp should to have UTF-16 encoding on Windows platforms
         // and UTF-32 encoding on Apple platforms.
@@ -3055,19 +3048,19 @@ static bool GetRunText(ON_TextRun* run, ON_wString& text_out, bool& foundunicode
         // and UNICODE maps the value to a control that typically has no printable glyph.
         // These "tricky values" are all in the range 0x80 ... 0x9F.
         // An example is the Euro sign (Windows-1252 0x80 = Euro sign, UNICODE U+0080 = xxx control,
-        // UNOCODE U+20AC = Euro sign).
+        // UNICODE U+20AC = Euro sign).
         //
         // The RTF we get from Windows controls, like the "Text" command dialog box,
         // typically specifies it is using Windows-1252 and encodes the Euro sign as \`80.
         // So, if we have one of these "euro like" values, we will explicitly write it as a UNICODE value
-        // to avoid the possiblity of something defaulting to using Windows-1252.
+        // to avoid the possibility of something defaulting to using Windows-1252.
         // https://mcneel.myjetbrains.com/youtrack/issue/RH-38205
         //
         // See ON_DecodeWindowsCodePage1252Value() for more details.
         //
-        // UNOCODE code points that require UTF-16 surrogate pair encodings have
+        // UNICODE code points that require UTF-16 surrogate pair encodings have
         // two RTF values TWO \uN?\uN? values. 
-        // For example, UNOCODE code point U+1F5D1 has UTF-16 encodeing (0xD83D, 0xDDD1)
+        // For example, UNICODE code point U+1F5D1 has UTF-16 encodeing (0xD83D, 0xDDD1)
         // and the RTF looks like ...{\ltrch \u-10179?\u-8751?}.
         for (int utf16i = 0; utf16i < utf16_count; utf16i++)
         {

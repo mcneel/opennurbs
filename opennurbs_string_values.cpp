@@ -207,7 +207,7 @@ double ON_CleanValueTolerance(
   if (clean_value_tolerance > 1.0 / 512.0)
     clean_value_tolerance = 1.0 / 512.0;
   const double a = fabs(value);
-  // The relative tolerance 256.0*ON_EPSILON*a is reqired in order for all (1+/- ON_EPSILON)*value where
+  // The relative tolerance 256.0*ON_EPSILON*a is required in order for all (1+/- ON_EPSILON)*value where
   // value is one of the rational numbers with denominators
   // 2,3,4,8,10,16,32,64,128 and numerators from 1 to 2*denominator to be "cleaned up}
   // to numerator/denominator.

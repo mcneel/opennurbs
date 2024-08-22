@@ -74,7 +74,7 @@ public:
     Inversion = 4,
 
     /// <summary>
-    /// General case cyclic symmtry (order >= 2)
+    /// General case cyclic symmetry (order >= 2)
     /// (cyclic transformation)^N = identity. 
     /// When N is 2 or odd, Det(cyclic transformation) = 1.
     /// When N is even and greater than 2, Det(cyclic transformation) = 1 or -1.
@@ -439,7 +439,7 @@ private:
       object or world.
   Remarks:
     If inversion_transform is a reflection, consider using CreateReflectSymmetry() instead.
-    When Det(transformation) = 1 and transformtion^2 = identity, use CreateCyclicSymmetry() instead.
+    When Det(transformation) = 1 and transformation^2 = identity, use CreateCyclicSymmetry() instead.
   */
   static const ON_Symmetry Internal_CreateInversionSymmetry(
     ON_UUID symmetry_id,
@@ -553,7 +553,7 @@ public:
 
   /*
   Returns:
-    True if SymmetryType() is ON_Symmetry::Type::ReflectAndRotage
+    True if SymmetryType() is ON_Symmetry::Type::ReflectAndRotate
   */
   bool IsReflectAndRotate() const;
 
@@ -576,13 +576,13 @@ public:
   void Clear();
 
   /*
-  Rturns:
+  Returns:
     True if this instance is set to a symmetry.
   */
   bool IsSet() const;
 
   /*
-  Rturns:
+  Returns:
     True if this instance is not set.
   */
   bool IsUnset() const;
@@ -609,7 +609,7 @@ public:
   Returns:
     0: unset symmetry
     1: the cyclic transformation is the identity.
-    N >= 2: CyclicTransformation()^N = idenity and CyclicTransform()^i != idenity when 0 < i < N.
+    N >= 2: CyclicTransformation()^N = identity and CyclicTransform()^i != identity when 0 < i < N.
   Remarks:
     In common cases, CyclicTransformation() is either the identity or a rotation.
   */
@@ -635,7 +635,7 @@ public:
   Parameters:
     bIncludeIdentity - [in]
       If true, then motif_transformations[0] = identity and MotifCount() transformations are returned.
-      Otherwise, motif_transformations[0] = MotifeTransformation(1) and (MotifCount() -1) transformations are returned.
+      Otherwise, motif_transformations[0] = MotifTransformation(1) and (MotifCount() -1) transformations are returned.
     motif_transformations[] - out
       motif transformations are returned here.
   Returns:
@@ -655,7 +655,7 @@ public:
   Remarks:
     NOTE: A symmetry with SymmetryOrder() = 2 and transformation S can be represented
     as either InversionTransformation() = S and CyclicTransformation() = identity or
-    or CyclicTransformation() = S and InversionTransformation() = idenity.
+    or CyclicTransformation() = S and InversionTransformation() = identity.
     The convention is to use the cyclic transforms when S is a 180 rotations
     and inversion transforms otherwise.
   */
@@ -670,7 +670,7 @@ public:
   Remarks:
     NOTE: A symmetry with SymmetryOrder() = 2 and transformation S can be represented
     as either InversionTransformation() = S and CyclicTransformation() = identity or
-    or CyclicTransformation() = S and InversionTransformation() = idenity.
+    or CyclicTransformation() = S and InversionTransformation() = identity.
     The convention is to use the cyclic transforms when S is a 180 rotations
     and inversion transforms otherwise.
   */
@@ -932,7 +932,7 @@ public:
   /*
   Description:
     Cleanup tolerance is a 3d world unt length used to preprocess input when creating
-    symmetric objects. For example, in a relfect symmetry, cleanup tolerance would be
+    symmetric objects. For example, in a reflect symmetry, cleanup tolerance would be
     used to move vertices near the reflection plane to be on the reflection plane.
     This tolerance is context sensitive. In the same model it could vary between two
     different input objects. The value is saved with the symmetry so calculations driven
@@ -949,7 +949,7 @@ public:
   /*
   Description:
     Cleanup tolerance is a 3d world unt length used to preprocess input when creating
-    symmetric objects. For example, in a relfect symmetry, cleanup tolerance would be
+    symmetric objects. For example, in a reflect symmetry, cleanup tolerance would be
     used to move vertices near the reflection plane to be on the reflection plane.
     This tolerance is context sensitive. In the same model it could vary between two
     different input objects. The value is saved with the symmetry so calculations driven

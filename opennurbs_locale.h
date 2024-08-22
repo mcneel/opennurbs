@@ -200,7 +200,7 @@ public:
 
   Remarks:
     ON_Locale::InvariantCulture.BCP47LanguageName() = "";
-    ON_Locale::Oridnal.BCP47LanguageName() = "";
+    ON_Locale::Ordinal.BCP47LanguageName() = "";
   */
   const char* BCP47LanguageTag() const;
 

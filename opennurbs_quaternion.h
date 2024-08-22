@@ -207,7 +207,7 @@ public:
   static ON_Quaternion RotationZYZ(double alpha, double beta, double gamma);
 
   /*
-  Descriptin:
+  Description:
     Sets the quaternion to the unit quaternion which rotates
     plane0.xaxis to plane1.xaxis,
     plane0.yaxis to plane1.yaxis, and 

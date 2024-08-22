@@ -2,12 +2,28 @@
 #
 # Gnu tools makefile
 #
-# gnumake, gcc, g++
+# gnumake, gcc, g++, clang, clang++
 #
-# (Tested with gcc 4.2.1 on OSX 10.8.1)
+# Warning:
+# The officially supported way to build opennurbs on Linux is CMake.
+# This makefile is kept here for users who prefer
+# a makefile and are prepared to modify it to suit their needs.
+# It might or might not be kept up-to-date - but we try.
+# Use "at your own pleasure" only!
 #
-# If you want to use other versions of make or other compilers,
-# then you will have to modify this file.
+# Any new combination of operating system, compiler,
+# and build configuration might require some modification to this file.
+#
+# Tested on Linux Debian 12 with g++ 12.2.0
+# TODO: test on Mac
+#
+# Usage: In the simplest case, the command
+#
+# make all
+# 
+# will build a debug build of the static archive libopennurbs_public.a and all examples.
+# Thus, this makefile is only for use within the public opennurbs repository, even though it also exists in the upstream repository.
+#
 #
 
 RM = /bin/rm
@@ -15,7 +31,7 @@ RM = /bin/rm
 # asks too many questions, then uncomment the next line.
 # RM = /bin/rm -f
 
-AR = ar qvl
+AR = ar rcsv
 
 # If your system doesn't use ranlib, uncomment the "echo" define.
 RANLIB = ranlib
@@ -36,7 +52,6 @@ ON_GNU_WARNING_FLAGS = -Wall \
 	-Wno-switch \
 	-Wno-unknown-pragmas \
 	-Wno-unused-private-field
-	
 #	-Wno-inconsistent-missing-override \
 
 
@@ -64,6 +79,9 @@ LINKFLAGS =
 #LINKFLAGS = -luuid
 
 ###############################################################
+
+.c.o :
+	$(CC) $(CFLAGS) -c $*.c -o $*.o
 
 .cpp.o :
 	$(CCC) $(CCFLAGS) -c $*.cpp -o $*.o
@@ -429,196 +447,7 @@ ON_SRC = opennurbs_3dm_attributes.cpp \
 	opennurbs_zlib.cpp \
 	opennurbs_zlib_memory.cpp
 
-ON_OBJ = opennurbs_3dm_attributes.o \
-	opennurbs_3dm_properties.o \
-	opennurbs_3dm_settings.o \
-	opennurbs_annotationbase.o \
-	opennurbs_arc.o \
-	opennurbs_arccurve.o \
-	opennurbs_archivable_dictionary.o \
-	opennurbs_archive.o \
-	opennurbs_archive_manifest.o \
-	opennurbs_array.o \
-	opennurbs_base32.o \
-	opennurbs_base64.o \
-	opennurbs_beam.o \
-	opennurbs_bezier.o \
-	opennurbs_beziervolume.o \
-	opennurbs_bitmap.o \
-	opennurbs_bounding_box.o \
-	opennurbs_box.o \
-	opennurbs_brep.o \
-	opennurbs_brep_extrude.o \
-	opennurbs_brep_io.o \
-	opennurbs_brep_isvalid.o \
-	opennurbs_brep_region.o \
-	opennurbs_brep_tools.o \
-	opennurbs_brep_v2valid.o \
-	opennurbs_calculator.o \
-	opennurbs_circle.o \
-	opennurbs_color.o \
-	opennurbs_compress.o \
-	opennurbs_compstat.o \
-	opennurbs_cone.o \
-	opennurbs_crc.o \
-	opennurbs_curve.o \
-	opennurbs_curveonsurface.o \
-	opennurbs_curveproxy.o \
-	opennurbs_cylinder.o \
-	opennurbs_date.o \
-	opennurbs_decals.o \
-	opennurbs_defines.o \
-	opennurbs_detail.o \
-	opennurbs_dimension.o \
-	opennurbs_dimensionformat.o \
-	opennurbs_dimensionstyle.o \
-	opennurbs_dithering.o \
-	opennurbs_ellipse.o \
-	opennurbs_embedded_file.o \
-	opennurbs_error.o \
-	opennurbs_error_message.o \
-	opennurbs_evaluate_nurbs.o \
-	opennurbs_extensions.o \
-	opennurbs_file_utilities.o \
-	opennurbs_font.o \
-	opennurbs_freetype.o \
-	opennurbs_fsp.o \
-	opennurbs_function_list.o \
-	opennurbs_geometry.o \
-	opennurbs_glyph_outline.o \
-	opennurbs_ground_plane.o \
-	opennurbs_group.o \
-	opennurbs_hash_table.o \
-	opennurbs_hatch.o \
-	opennurbs_instance.o \
-	opennurbs_internal_V2_annotation.o \
-	opennurbs_internal_V5_annotation.o \
-	opennurbs_internal_V5_dimstyle.o \
-	opennurbs_internal_Vx_annotation.o \
-	opennurbs_intersect.o \
-	opennurbs_ipoint.o \
-	opennurbs_knot.o \
-	opennurbs_layer.o \
-	opennurbs_leader.o \
-	opennurbs_light.o \
-	opennurbs_line.o \
-	opennurbs_linear_workflow.o \
-	opennurbs_linecurve.o \
-	opennurbs_linetype.o \
-	opennurbs_locale.o \
-	opennurbs_lock.o \
-	opennurbs_lookup.o \
-	opennurbs_material.o \
-	opennurbs_math.o \
-	opennurbs_matrix.o \
-	opennurbs_md5.o \
-	opennurbs_memory_util.o \
-	opennurbs_mesh_modifiers.o \
-	opennurbs_mesh.o \
-	opennurbs_mesh_ngon.o \
-	opennurbs_mesh_tools.o \
-	opennurbs_mesh_topology.o \
-	opennurbs_model_component.o \
-	opennurbs_model_geometry.o \
-	opennurbs_morph.o \
-	opennurbs_nurbscurve.o \
-	opennurbs_nurbssurface.o \
-	opennurbs_nurbsvolume.o \
-	opennurbs_object.o \
-	opennurbs_object_history.o \
-	opennurbs_objref.o \
-	opennurbs_offsetsurface.o \
-	opennurbs_optimize.o \
-	opennurbs_parse_angle.o \
-	opennurbs_parse_length.o \
-	opennurbs_parse_number.o \
-	opennurbs_parse_point.o \
-	opennurbs_parse_settings.o \
-	opennurbs_photogrammetry.o \
-	opennurbs_plane.o \
-	opennurbs_planesurface.o \
-	opennurbs_pluginlist.o \
-	opennurbs_point.o \
-	opennurbs_pointcloud.o \
-	opennurbs_pointgeometry.o \
-	opennurbs_pointgrid.o \
-	opennurbs_polycurve.o \
-	opennurbs_polyedgecurve.o \
-	opennurbs_polyline.o \
-	opennurbs_polylinecurve.o \
-	opennurbs_post_effects.o \
-	opennurbs_precompiledheader.o \
-	opennurbs_progress_reporter.o \
-	opennurbs_public_memory.o \
-	opennurbs_quaternion.o \
-	opennurbs_rand.o \
-	opennurbs_render_channels.o \
-	opennurbs_render_content.o \
-	opennurbs_revsurface.o \
-	opennurbs_rtree.o \
-	opennurbs_safe_frame.o \
-	opennurbs_sectionstyle.o \
-	opennurbs_sha1.o \
-	opennurbs_skylight.o \
-	opennurbs_sleeplock.o \
-	opennurbs_sort.o \
-	opennurbs_sphere.o \
-	opennurbs_statics.o \
-	opennurbs_std_string_format.o \
-	opennurbs_std_string_utf.o \
-	opennurbs_string.o \
-	opennurbs_string_compare.o \
-	opennurbs_string_format.o \
-	opennurbs_string_scan.o \
-	opennurbs_string_values.o \
-	opennurbs_subd.o \
-	opennurbs_subd_archive.o \
-	opennurbs_subd_copy.o \
-	opennurbs_subd_data.o \
-	opennurbs_subd_eval.o \
-	opennurbs_subd_fragment.o \
-	opennurbs_subd_frommesh.o \
-	opennurbs_subd_heap.o \
-	opennurbs_subd_iter.o \
-	opennurbs_subd_limit.o \
-	opennurbs_subd_matrix.o \
-	opennurbs_subd_mesh.o \
-	opennurbs_subd_ref.o \
-	opennurbs_subd_ring.o \
-	opennurbs_subd_sector.o \
-	opennurbs_subd_texture.o \
-	opennurbs_sum.o \
-	opennurbs_sumsurface.o \
-	opennurbs_sun.o \
-	opennurbs_surface.o \
-	opennurbs_surfaceproxy.o \
-	opennurbs_symmetry.o \
-	opennurbs_terminator.o \
-	opennurbs_text.o \
-	opennurbs_text_style.o \
-	opennurbs_textcontext.o \
-	opennurbs_textglyph.o \
-	opennurbs_textiterator.o \
-	opennurbs_textlog.o \
-	opennurbs_textobject.o \
-	opennurbs_textrun.o \
-	opennurbs_topology.o \
-	opennurbs_torus.o \
-	opennurbs_unicode.o \
-	opennurbs_unicode_cpsb.o \
-	opennurbs_units.o \
-	opennurbs_userdata.o \
-	opennurbs_userdata_obsolete.o \
-	opennurbs_uuid.o \
-	opennurbs_version.o \
-	opennurbs_version_number.o \
-	opennurbs_viewport.o \
-	opennurbs_workspace.o \
-	opennurbs_wstring.o \
-	opennurbs_xform.o \
-	opennurbs_xml.o \
-	opennurbs_zlib.o \
-	opennurbs_zlib_memory.o
+ON_OBJ = $(ON_SRC:.cpp=.o)
 
 ZLIB_INC = zlib/crc32.h \
 		zlib/deflate.h \
@@ -643,17 +472,34 @@ ZLIB_SRC = zlib/adler32.c \
 		zlib/uncompr.c \
 		zlib/zutil.c
 
-ZLIB_OBJ = zlib/adler32.o \
-		zlib/compress.o \
-		zlib/crc32.o \
-		zlib/deflate.o \
-		zlib/infback.o \
-		zlib/inffast.o \
-		zlib/inflate.o \
-		zlib/inftrees.o \
-		zlib/trees.o \
-		zlib/uncompr.o \
-		zlib/zutil.o
+ZLIB_OBJ = $(ZLIB_SRC:.c=.o)
+
+UUID_INC = android_uuid/isnull.h \
+        android_uuid/pack.h \
+        android_uuid/parse.h \
+        android_uuid/unpack.h \
+        android_uuid/unparse.h \
+        android_uuid/uuid_time.h \
+        android_uuid/clear.h \
+        android_uuid/compare.h \
+        android_uuid/copy.h \
+        android_uuid/gen_uuid.h
+
+
+UUID_SRC = android_uuid/isnull.c \
+        android_uuid/pack.c \
+        android_uuid/parse.c \
+        android_uuid/unpack.c \
+        android_uuid/unparse.c \
+        android_uuid/uuid_time.c \
+        android_uuid/clear.c \
+        android_uuid/compare.c \
+        android_uuid/copy.c \
+        android_uuid/gen_uuid.c
+
+UUID_OBJ = $(UUID_SRC:.c=.o)
+
+
 
 FREETYPE_INC= freetype263/include/ft2build.h \
 	freetype263/include/freetype/config/ftconfig.h \
@@ -784,44 +630,7 @@ FREETYPE_SRC = freetype263/src/autofit/autofit.c \
 	freetype263/src/winfonts/winfnt.c \
 	freetype263/src/cache/ftcache.c
 
-FREETYPE_OBJ = freetype263/src/autofit/autofit.o \
-	freetype263/src/bdf/bdf.o \
-	freetype263/src/cff/cff.o \
-	freetype263/src/base/ftbase.o \
-	freetype263/src/base/ftbitmap.o \
-	freetype263/src/base/ftfstype.o \
-	freetype263/src/base/ftgasp.o \
-	freetype263/src/base/ftglyph.o \
-	freetype263/src/gzip/ftgzip.o \
-	freetype263/src/base/ftinit.o \
-	freetype263/src/lzw/ftlzw.o \
-	freetype263/src/base/ftstroke.o \
-	freetype263/src/base/ftsystem.o \
-	freetype263/src/smooth/smooth.o \
-	freetype263/src/base/ftbbox.o \
-	freetype263/src/base/ftfntfmt.o \
-	freetype263/src/base/ftgxval.o \
-	freetype263/src/base/ftlcdfil.o \
-	freetype263/src/base/ftmm.o \
-	freetype263/src/base/ftotval.o \
-	freetype263/src/base/ftpatent.o \
-	freetype263/src/base/ftpfr.o \
-	freetype263/src/base/ftsynth.o \
-	freetype263/src/base/fttype1.o \
-	freetype263/src/base/ftwinfnt.o \
-	freetype263/src/pcf/pcf.o \
-	freetype263/src/pfr/pfr.o \
-	freetype263/src/psaux/psaux.o \
-	freetype263/src/pshinter/pshinter.o \
-	freetype263/src/psnames/psmodule.o \
-	freetype263/src/raster/raster.o \
-	freetype263/src/sfnt/sfnt.o \
-	freetype263/src/truetype/truetype.o \
-	freetype263/src/type1/type1.o \
-	freetype263/src/cid/type1cid.o \
-	freetype263/src/type42/type42.o \
-	freetype263/src/winfonts/winfnt.o \
-	freetype263/src/cache/ftcache.o
+FREETYPE_OBJ = $(FREETYPE_SRC:.c=.o)
 
 EXAMPLE_INC = examples.h \
 		example_userdata/example_ud.h
@@ -855,22 +664,28 @@ $(ZLIB_OBJ) : $(ZLIB_INC)
 ##
 ## opennurbs without freetype
 ##
-ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS
+ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS -DOPENNURBS_PUBLIC
 $(ON_OBJ) : CFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
 $(ON_OBJ) : CCFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
 $(ON_OBJ) : $(ON_INC)
 
-$(OPENNURBS_LIB_FILE) : $(ON_OBJ) $(ZLIB_OBJ)
+opennurbs_objects : $(ON_OBJ)
+uuid_objects : $(UUID_OBJ)
+zlib_objects : $(ZLIB_OBJ)
+
+
+$(OPENNURBS_LIB_FILE) : opennurbs_objects zlib_objects uuid_objects
 	-$(RM) $@
-	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ)
+	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ) $(UUID_OBJ)
 	$(RANLIB) $@
 
 ########################################################
 ##
 ## opennurbs with freetype
 ##
+## freetype_objects : $(FREETYPE_OBJ)
 ### opennurbs_freetype.h requires -I./freetype263/include
-##ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS -I./freetype263/include
+##ON_OBJ_EXTRA_FLAGS = -DON_COMPILING_OPENNURBS -DOPENNURBS_PUBLIC -I./freetype263/include
 ##$(ON_OBJ) : CFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
 ##$(ON_OBJ) : CCFLAGS+=$(ON_OBJ_EXTRA_FLAGS)
 ##$(ON_OBJ) : $(ON_INC)
@@ -879,9 +694,9 @@ $(OPENNURBS_LIB_FILE) : $(ON_OBJ) $(ZLIB_OBJ)
 ##$(FREETYPE_OBJ) : CFLAGS+=$(FREETYPE_OBJ_EXTRA_FLAGS)
 ##$(FREETYPE_OBJ) : $(FREETYPE_INC)
 ##
-##$(OPENNURBS_LIB_FILE) : $(ON_OBJ) $(ZLIB_OBJ) $(FREETYPE_OBJ)
+##$(OPENNURBS_LIB_FILE) : opennurbs_objects zlib_objects uuid_objects freetype_objects
 ##	-$(RM) $@
-##	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ)  $(FREETYPE_OBJ) 
+##	$(AR) $@ $(ON_OBJ) $(ZLIB_OBJ) $(UUID_OBJ) $(FREETYPE_OBJ) 
 ##	$(RANLIB) $@
 
 example_read/example_read : example_read/example_read.o example_userdata/example_ud.o $(OPENNURBS_LIB_FILE)
@@ -905,6 +720,7 @@ example_userdata/example_userdata : example_userdata/example_userdata.o $(OPENNU
 clean :
 	-$(RM) $(OPENNURBS_LIB_FILE)
 	-$(RM) $(ON_OBJ)
+	-$(RM) $(UUID_OBJ)
 	-$(RM) $(ZLIB_OBJ)
 	-$(RM) $(FREETYPE_OBJ)
 	-$(RM) $(EXAMPLE_OBJ)

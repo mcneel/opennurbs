@@ -237,7 +237,7 @@ public:
 
   /*
   Description:
-    Make one or more calls to AccumulateBytes() as the sequenence of bytes is available.
+    Make one or more calls to AccumulateBytes() as the sequence of bytes is available.
   Parameters:
     buffer - [in]
     sizeof_buffer - [in]
@@ -261,8 +261,8 @@ public:
 
   /*
   Returns:
-    MD5 hash value of the sequenence of ByteCount() bytes that have been
-    passed to this ON_MD5 classe's Update() function since construction
+    MD5 hash value of the sequence of ByteCount() bytes that have been
+    passed to this ON_MD5 class's Update() function since construction
     or the last call to Reset().
   Remarks:
     You may use Hash() to compute intermediate MD5 hash values. 

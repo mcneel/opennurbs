@@ -169,7 +169,7 @@ INPUT:
   der_count - [in]
     1 <= der_count < order
     Number of derivatives. 
-    Note all B-spline basis derivatives with der_coutn >= order are identically zero.
+    Note all B-spline basis derivatives with der_count >= order are identically zero.
 
   N - [in]
     The input value of N[] should be the results of the call

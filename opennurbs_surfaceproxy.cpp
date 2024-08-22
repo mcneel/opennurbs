@@ -251,7 +251,7 @@ ON_SurfaceProxy::IsIsoparametric( // returns isoparametric status of 2d curve
         const ON_Interval* subdomain
         ) const
 {
-  // this is a virtual overide of an ON_Surface::IsIsoparametric
+  // this is a virtual override of an ON_Surface::IsIsoparametric
 
   const ON_Curve* pC = &crv;
 	ON_Curve* pTranC = nullptr;
@@ -301,7 +301,7 @@ ON_SurfaceProxy::IsIsoparametric( // returns isoparametric status based on bound
         const ON_BoundingBox& box
         ) const
 {	
-  // this is a virtual overide of an ON_Surface::IsIsoparametric
+  // this is a virtual override of an ON_Surface::IsIsoparametric
 	const ON_BoundingBox* pbox = &box;
 	ON_BoundingBox Tbox(	ON_3dPoint( box.m_min[1],box.m_min[0],0.0),
 												ON_3dPoint( box.m_max[1],box.m_max[0],0.0) );
@@ -502,7 +502,7 @@ ON_Curve* ON_SurfaceProxy::IsoCurve(
 int ON_SurfaceProxy::GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the surface's to wthe desired accuracy
+                   //            matches the surface's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
                    //            the interior of the surface's domain, the 
@@ -525,7 +525,7 @@ int
 ON_SurfaceProxy::HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the surface's to wthe desired accuracy
+                   //            matches the surface's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
                    //            the interior of the surface's domain, the 

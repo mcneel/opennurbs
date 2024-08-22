@@ -2066,11 +2066,6 @@ ON_Color ONX_Model::WireframeColorFromAttributes(
   return color;
 }
 
-void ONX_DumpView( ON_TextLog& dump, const ON_3dmView& view )
-{
-  view.Dump(dump);
-}
-
 void ONX_Model::DumpSummary( ON_TextLog& dump ) const
 {
   dump.Print("File version: %u\n",m_3dm_file_version);
@@ -2731,19 +2726,19 @@ bool ONX_Model::IncrementalReadModelGeometry(
     if (static_cast<unsigned int>(previous_table) >= static_cast<unsigned int>(ON_3dmArchiveTableType::object_table))
     {
       // Yokel either read or skipped reading the geometry table.
-      ON_ERROR("Too late to read the geoemtry table.");
+      ON_ERROR("Too late to read the geometry table.");
       return false;
     }
 
     if (false == archive.BeginRead3dmObjectTable())
     {
-      ON_ERROR("Geoemtry table cannot be read from archive.");
+      ON_ERROR("Geometry table cannot be read from archive.");
       return false;
     }
     active_table = archive.Active3dmTable();
     if (active_table != ON_3dmArchiveTableType::object_table)
     {
-      ON_ERROR("Catestrophic geoemtry table reading error.");
+      ON_ERROR("Catastrophic geometry table reading error.");
       return false;
     }
   }  
@@ -2757,7 +2752,7 @@ bool ONX_Model::IncrementalReadModelGeometry(
   ON_3dmArchiveTableStatus object_table_status = archive.Archive3dmTableStatus(ON_3dmArchiveTableType::object_table);
   if (ON_3dmArchiveTableType::object_table != object_table_status.m_table_type)
   {
-    ON_ERROR("Catestrophic geoemtry table reading error.");
+    ON_ERROR("Catastrophic geometry table reading error.");
     return false;
   }
 
@@ -3803,7 +3798,7 @@ ON_ModelComponentWeakReference ONX_ModelComponentIterator::LastComponentWeakRefe
 
 ON_ModelComponentWeakReference ONX_ModelComponentIterator::CurrentComponentWeakReference() const
 {
-  // unchanged ModelContentVersionNumber() means that m_link is safe to dreference.
+  // unchanged ModelContentVersionNumber() means that m_link is safe to dereference.
   // Otherwise use sn for safe reset.
   if (m_model_content_version != m_model->ModelContentVersionNumber() )
     Internal_SetLink(m_model->Internal_ModelComponentLinkFromSerialNumber(m_current_component_sn));
@@ -3820,7 +3815,7 @@ ON_ModelComponentWeakReference ONX_ModelComponentIterator::NextComponentWeakRefe
 
   if (m_model_content_version == m_model->ModelContentVersionNumber() && nullptr != m_link )
   {
-    // unchanged ModelContentVersionNumber() means that m_link is safe to dreference.
+    // unchanged ModelContentVersionNumber() means that m_link is safe to dereference.
     m_link = m_link->m_next;
     if (nullptr == m_link)
     {

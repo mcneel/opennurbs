@@ -216,9 +216,9 @@ private:
 
 private:
   // When a component (layer, material, ...) from a linked file is inserted in the 
-  // active model and a component id collision occures, the active model id of the 
+  // active model and a component id collision occurs, the active model id of the
   // component has to be changed. This list keeps track of the changes so we can 
-  // determine which runtime component correspondes to a component in the linked file. 
+  // determine which runtime component corresponds to a component in the linked file.
   // The first id in the pair is component id in the linked reference file.
   // The second id in the pair is the component id in the runtime model.
   //
@@ -600,7 +600,7 @@ void ON_ReferencedComponentSettingsImpl::BeforeLinkedDefinitionWriteImpl(
 
     ON_Layer* ref_model_layer_copy = new ON_Layer(*model_layer);
     // The runtime index and id commonly change every time the file is read,
-    // so saving this varaible runtime identification information
+    // so saving this variable runtime identification information
     // leads to confusion.
     ref_model_layer_copy->ClearName();
     ref_model_layer_copy->ClearIndex();
@@ -746,7 +746,7 @@ bool ON_ReferencedComponentSettingsImpl::Internal_UpdateLayer(
   // Dale Lear August 2017 - RH-39457
   // Saved PerViewport settings need to be applied to model_layer
   //
-  // Per view settings from the reference file have no meatning because the
+  // Per view settings from the reference file have no meaning because the
   // views they apply to are in the reference file and those views are
   // not merge into the active model.  
   // The per view settings are simply copied from previous_model_layer to model_layer

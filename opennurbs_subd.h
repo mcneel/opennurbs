@@ -96,7 +96,7 @@ enum class ON_SubDTextureCoordinateType : unsigned char
 /// <summary>
 /// ON_SubDVertexTag identifies the type of subdivision vertex.  Different tags use
 /// different subdivision algorithms to determine where the subdivision point and
-/// limit point are located.  There are toplological constraints that restrict which
+/// limit point are located.  There are topological constraints that restrict which
 /// tags can be assigned.
 /// </summary>
 enum class ON_SubDVertexTag : unsigned char
@@ -340,7 +340,7 @@ public:
   /// <summary>
   /// ON_SubDEdgeSharpness::SmoothValue = 0.0.
   /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
-  /// Smooth edges have a sharpeness property of ON_SubDEdgeSharpness::Smooth.
+  /// Smooth edges have a sharpness property of ON_SubDEdgeSharpness::Smooth.
   /// </summary>
   static const double SmoothValue;
 
@@ -349,7 +349,7 @@ public:
   /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
   /// This value is used when it is convenient to use and ON_SubDEdgeSharpness to
   /// indicate an edge has a crease tag. Edges with crease tags always have a 
-  /// sharpeness property of ON_SubDEdgeSharpness::Smooth.
+  /// sharpness property of ON_SubDEdgeSharpness::Smooth.
   /// </summary>
   static const double CreaseValue;
 
@@ -361,13 +361,13 @@ public:
   static const double Tolerance;
 
   /// <summary>
-  /// An edge sharpness with contant value 0.0.
+  /// An edge sharpness with constant value 0.0.
   /// </summary>
   static const ON_SubDEdgeSharpness Smooth;
 
 
   /// <summary>
-  /// An edge sharpness with contant value ON_SubDEdgeSharpness::MaximumValue.
+  /// An edge sharpness with constant value ON_SubDEdgeSharpness::MaximumValue.
   /// This is the maximum sharpness that can be applied to an edge.
   /// </summary>
   static const ON_SubDEdgeSharpness Maximum;
@@ -376,7 +376,7 @@ public:
   /// An edge sharpness with both end values = ON_SubDEdgeSharpness::CreaseValue.
   /// This value is not a valid sharpness value for a sharp edge 
   /// (A sharp edge a smooth edge with nonzero sharpness).
-  /// When working with edges, it is sometimes convienient to have 
+  /// When working with edges, it is sometimes convenient to have
   /// an ON_SubDEdgeSharpness value that indicated the edge is a crease. 
   /// ON_SubDEdgeSharpness::Crease is used for this purpose.
   /// </summary>
@@ -404,8 +404,8 @@ public:
 
   /// <summary>
   /// Create a text string describing the sharpness as a percentage.
-  /// This is useful in user interface code that experesses sharpness in percentages.
-  /// If 0 &lt;= sharpenss &lt;= ON_SubDEdgeSharpness::MaximumValue,
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue,
   /// valid, a number followed by a percent sign is returned.
   /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, "crease" is returned.
   /// If the sharpness is not valid, a warning sign is returned.
@@ -2087,6 +2087,8 @@ public:
   /// <returns>Catmull-Clark edge subdivision point.</returns>
   const ON_3dPoint SubdivisionPoint() const;
 
+
+
   void ClearSavedSubdivisionPoints() const;
 
   /*
@@ -2390,6 +2392,12 @@ public:
     bool bClearNeighborhood
   ) const;
 
+  ///<summary>
+  /// The SubD face Catmull-Clark subdivision point.
+  ///</summary>
+  const ON_3dPoint SubdivisionPoint() const;
+
+
 };
 
 ON_DECL
@@ -2574,6 +2582,7 @@ public:
 
   const ON_3dPoint ControlNetCenterPoint() const;
   const ON_BoundingBox ControlNetBoundingBox() const;
+  const ON_3dPoint SubdivisionPoint() const;
 
   /*
   Returns:
@@ -9309,6 +9318,19 @@ public:
   void SetFragmentColorsMappingTag(const class ON_MappingTag&) const;
 
 public:
+  const class ON_SubDLevel& ActiveLevel() const;
+
+  /// <summary>
+  /// If a level exists, get it
+  /// </summary>
+  /// <param name="level_index"></param>
+  /// <returns>
+  /// If the specified level exists, it is returned.
+  /// Otherwise ON_SubDLevel::Empty is returned.
+  /// </returns>
+  const class ON_SubDLevel& LevelForExperts(unsigned int level_index) const;
+
+public:
   /*
   Description:
     Pretend this function and ON_SubDimple do not exist.
@@ -9322,7 +9344,6 @@ public:
     ON_SubDimple* pointer, then your code will crash unpredictably.
   */
   const class ON_SubDimple* SubDimple() const;
-  const class ON_SubDLevel& ActiveLevel() const;
   unsigned int SubDimpleUseCount() const;
 
   void ShareDimple(const ON_SubD&);
@@ -14715,6 +14736,7 @@ public:
   ///</summary>
   const ON_3dPoint SubdivisionPoint() const;
 
+
   /*
   Description:
     Evaluates the Catmull-Clark subdivision point ignoring all cached information.
@@ -15822,6 +15844,7 @@ public:
   /// </summary>
   /// <returns>Catmull-Clark edge subdivision point.</returns>
   const ON_3dPoint SubdivisionPoint() const;
+
 
   /*
   Description:
@@ -16997,6 +17020,7 @@ public:
   /// The SubD face Catmull-Clark subdivision point.
   ///</summary>
   const ON_3dPoint SubdivisionPoint() const;
+
   
   /*
   Description:
@@ -17284,7 +17308,17 @@ public:
   // ON_SubDVertexIterator vit = subd.VertexIterator();
   ON_SubDVertexIterator(
     const class ON_SubD& subd
-    );
+  );
+
+  /// <summary>
+  /// An expert tool to iteratate over existing vertices on a specified level.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <param name="level_index"></param>
+  ON_SubDVertexIterator(
+    const class ON_SubD& subd,
+    unsigned level_index
+  );
 
   // The best way to get an ON_SubDVertexIterator is so use the ON_SubD member function
   // ON_SubDVertexIterator vit = subd.VertexIterator();
@@ -17549,6 +17583,16 @@ public:
     const class ON_SubD& subd
     );
 
+  /// <summary>
+  /// An expert tool to iteratate over existing edges on a specified level.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <param name="level_index"></param>
+  ON_SubDEdgeIterator(
+    const class ON_SubD& subd,
+    unsigned level_index
+  );
+
   // The best way to get an ON_SubDEdgeIterator is so use the ON_SubD member function
   // ON_SubDEdgeIterator eit = subd.EdgeIterator();
   ON_SubDEdgeIterator(
@@ -17811,6 +17855,16 @@ public:
   ON_SubDFaceIterator(
     const class ON_SubD& subd
     );
+
+  /// <summary>
+  /// An expert tool to iteratate over existing faces on a specified level.
+  /// </summary>
+  /// <param name="subd"></param>
+  /// <param name="level_index"></param>
+  ON_SubDFaceIterator(
+    const class ON_SubD& subd,
+    unsigned level_index
+  );
 
   // The best way to get an ON_SubDFaceIterator is so use the ON_SubD member function
   // ON_SubDFaceIterator fit = subd.FaceIterator();

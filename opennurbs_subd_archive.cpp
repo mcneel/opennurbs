@@ -1054,7 +1054,7 @@ bool ON_SubDFace::Write(
         break;
     }
 
-    // Custom texture coordintes
+    // Custom texture coordinates
     const bool bTexturePoints = this->TexturePointsAreSet();
     if (false == Internal_WriteComponentAdditionSize(bTexturePoints, archive, 4))
       break;
@@ -1125,7 +1125,7 @@ bool ON_SubDFace::Read(
       break;
 
     ON_SubDFace* f = subdimple->AllocateFace(
-      base.m_id, // serialzation must preserve ON_SubDFace.m_id
+      base.m_id, // serialization must preserve ON_SubDFace.m_id
       base.SubdivisionLevel(),
       edge_count
     );
@@ -1225,7 +1225,7 @@ bool ON_SubDFace::Read(
     }
 
 
-    // Custom texture coordintes
+    // Custom texture coordinates
     sz = 0;
     if (false == Internal_ReadComponentAdditionSize(archive, 4, &sz))
       break;
@@ -1247,7 +1247,7 @@ bool ON_SubDFace::Read(
       ON_3dPoint a[10];
       bool bContinue = true;
 
-      // Even if allocaion fails, we need to read the points so we can get get
+      // Even if allocation fails, we need to read the points so we can get get
       // future information that is after the points out of the archive.
       subdimple->AllocateFaceTexturePoints(f);
       ON_3dPoint* tp = f->m_texture_points;
@@ -1345,7 +1345,7 @@ unsigned int ON_SubDLevel::SetArchiveId(
       for (clink = clink->m_next; nullptr != clink; clink = clink->m_next)
         ++linked_list_count;
 
-      // Now iteratate the fixed size pool (which always iterates in increasing id order),
+      // Now iterate the fixed size pool (which always iterates in increasing id order),
       // skip components not on this level, and set archive id of the ones on this level.
       unsigned int cidit_level_count = 0;
       archive_id = archive_id_partition[listdex];
@@ -1358,7 +1358,7 @@ unsigned int ON_SubDLevel::SetArchiveId(
         if (prev_id >= c->m_id)
         {
           // This is a serious error!
-          // Contine because this allows us to save something do the disk in these bad cases.
+          // Continue because this allows us to save something do the disk in these bad cases.
           ON_SUBD_ERROR("The m_id values of the active components in the fixed size pool are corrupt.");
         }
         else
@@ -1373,7 +1373,7 @@ unsigned int ON_SubDLevel::SetArchiveId(
       if (cidit_level_count != linked_list_count)
       {
         // This is a serious error!
-        // Contine because this allows us to save something do the disk in these bad cases.
+        // Continue because this allows us to save something do the disk in these bad cases.
         ON_SUBD_ERROR("The m_level values of the active components in the fixed size pool are corrupt.");
       }
       break;
@@ -1726,7 +1726,7 @@ bool ON_SubDimple::Write(
       break;
     }
 
-    // minor version = 1 addtions
+    // minor version = 1 additions
     const unsigned char obsolete_texture_domain_type = ON_SubD::ObsoleteTextureDomainTypeFromTextureCoordinateType(TextureCoordinateType());
     if (false == archive.WriteChar(obsolete_texture_domain_type))
       break;
@@ -1734,16 +1734,16 @@ bool ON_SubDimple::Write(
     if (false == m_texture_mapping_tag.Write(archive))
       break;
 
-    // minor version = 2 addtions
+    // minor version = 2 additions
     if (false == m_symmetry.Write(archive))
       break;
 
-    // minor version = 3 addtions
+    // minor version = 3 additions
     // runtime content number used to compare with the one from the saved on m_symmetry
     // Dale Lear Sep 2020 - Turns out saving the runtime GeometryContentSerialNumber()
     // was a bad idea. Doing it the way I came up with today while adding
     // m_face_packing_topology_hash is much better because all decisions get
-    // made at save time when we have the most reliable infomration. 
+    // made at save time when we have the most reliable information.
     // I've added bSyncSymmetricContentSerialNumber below, but saving gsn has to stay
     // so pre-today Rhino can read files saved from post today Rhino.
     const ON__UINT64 gsn = GeometryContentSerialNumber();
@@ -1943,7 +1943,7 @@ bool ON_SubDimple::Read(
   //
   // No changes to "this SubD" below here.
   // 
-  // The rest is updating infomation that is used to determine if this SubD
+  // The rest is updating information that is used to determine if this SubD
   // is the same SubD that existed when symmetry and texture information
   // was saved. It's ok if this is not the same subd. If and when appropriate
   // something downstream will update either the SubD or the symmetry/texture 

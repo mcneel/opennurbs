@@ -1186,6 +1186,41 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
       return false;
     }
 
+    // 24 June 2024, Mikko, RH-82669:
+    // Flip brep/mesh/SubD if the xform is orientation reversing.
+    if (-1 == iref.m_xform.IsSimilarity())
+    {
+      switch (proxy_geo->ObjectType())
+      {
+      case ON::object_type::brep_object:
+      {
+        ON_Brep* brep = ON_Brep::Cast(proxy_geo);
+        if (0 != brep)
+          brep->Flip();
+      }
+      break;
+
+      case ON::object_type::mesh_object:
+      {
+        ON_Mesh* mesh = ON_Mesh::Cast(proxy_geo);
+        if (0 != mesh)
+          mesh->Flip();
+      }
+      break;
+
+      case ON::object_type::subd_object:
+      {
+        ON_SubD* subd = ON_SubD::Cast(proxy_geo);
+        if (0 != subd)
+          subd->ReverseOrientation();
+      }
+      break;
+
+      default:
+        break;
+      }
+    }
+
     // 13 July 2011 - Part of the fix for bug 87827
     // was to put the m_geometry and m_parent_geometry
     // assignments after the call to SetProxy() which

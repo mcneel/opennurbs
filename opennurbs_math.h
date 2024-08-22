@@ -253,7 +253,7 @@ public:
                     and lower triangles.  Since the matrix is
                     symmetrix, you should do something like evaluate
                     the upper triangle and copy the values to the
-                    lower tiangle.
+                    lower triangle.
   Returns:
    -1 = Hessian evaluation not available.
     0 = unable to evaluate
@@ -680,7 +680,7 @@ Parameters:
     a plane containing the points, pass null here.
   plane_equation - [out]
     If this point is not null, then the equation of the plane
-    containing the points is retuened here.
+    containing the points is returned here.
 Returns:
   0 - points are not coplanar to the specified tolerance
   1 - points are coplanar to the specified tolerance
@@ -884,7 +884,7 @@ int ON_ComparePointList( // returns
 ON_DECL
 bool ON_IsPointListClosed(
        int,  // dim
-       bool,  // true for homogeneos rational points
+       bool,  // true for homogeneous rational points
        int,  // count
        int,  // stride
        const double*
@@ -919,7 +919,7 @@ Parameters:
     Initial point id.  Typically 1 or 0.
   point_ids - [out]
     If not null, then point_ids[] must be an array of length point_count
-    and the ids are retuened in this array.  point_ids[0] = first_point_id.
+    and the ids are returned in this array.  point_ids[0] = first_point_id.
   point_id_map - [out]
     If point_id_index is not null, then it must have length point_count.
     The returned values are a permutation of (0,1,...,point_count-1) such that
@@ -1269,7 +1269,7 @@ Returns:
   critical, then check the solution anytime pr <= 1e-10
   In general, the difference between M*X and B will be
   reasonably small.  However, when the pr is small
-  there tend to be vector E, substantually different
+  there tend to be vector E, substantially different
   from zero, such that M*(X+E) - B is also reasonably
   small.
 See Also:
@@ -1488,7 +1488,7 @@ Parameters:
   K - [out] Sectional curvature
     Curvature of the intersection curve of the surface
     and plane through the surface point where the partial
-    derivatives were evaluationed.
+    derivatives were evaluated.
 Returns:
   True if successful.
   False if first partials are not linearly independent, in
@@ -1519,7 +1519,7 @@ ON_3dVector ON_NormalCurvature(
 
 /*
 Description:
-  Determing if two curvatures are different enough
+  Determine if two curvatures are different enough
   to qualify as a curvature discontinuity.
 Parameters:
   Km - [in]
@@ -1541,7 +1541,7 @@ Parameters:
   curvature_tolerance - [in]
     If |Kp-Km| <= curvature_tolerance,
     then false is returned, otherwise other tests are used
-    to determing continuity.
+    to determine continuity.
   zero_curvature - [in] (ignored if < 2^-110 = 7.7037197787136e-34)
     If |K| <= zero_curvature, then K is treated as zero.
     When in doubt, use ON_ZERO_CURVATURE_TOLERANCE.
@@ -1565,7 +1565,7 @@ Returns:
   True if the curvatures are different enough that the curve should be
   considered not G2.  
   In addition to the tests described under the curvature_tolerance and 
-  radius_tolerance checks, other hurestic tests are used.
+  radius_tolerance checks, other heuristic tests are used.
 */
 ON_DECL
 bool ON_IsCurvatureDiscontinuity( 
@@ -1882,7 +1882,7 @@ int ON_Intersect(
 //   1: intersection is a single point
 //     pointA is obtained by evaluating the line
 //     pointB is obtained by evaluating the cylinder
-//   2: 2 distincts intersection points
+//   2: 2 distinct intersection points
 //   3: line lies on cylinder
 // Remarks:
 //   The value of cylinder.IsFinite() determines if the

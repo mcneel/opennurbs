@@ -212,7 +212,7 @@ public:
   /*
   Returns:
     True if this segment has an ON_BrepTrim and the direction of
-    the ON_BrepTrime is the reverse of the direction of the segment.
+    the ON_BrepTrim is the reverse of the direction of the segment.
   */
   bool ReversedTrimDir() const;
 

@@ -557,7 +557,7 @@ bool ON_LineCurve::Trim( const ON_Interval& domain )
     ON_3dPoint p = PointAt( domain[0] );
     ON_3dPoint q = PointAt( domain[1] );
 		if( !p.IsCoincident(q)){			
-      // 7-May-21 GBA, A successfull trim should return an IsValid ON_LineCurve .
+      // 7-May-21 GBA, A successful trim should return an IsValid ON_LineCurve .
 			m_line.from = p;
 			m_line.to = q;
 			m_t = domain;

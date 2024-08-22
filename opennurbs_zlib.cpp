@@ -303,7 +303,7 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
   m_zlib.m_strm.next_out = m_zlib.m_buffer;
   m_zlib.m_strm.avail_out = m_zlib.sizeof_x_buffer;
 
-  // counter guards prevents infinte loops if there is a bug in zlib return codes.
+  // counter guards prevents infinite loops if there is a bug in zlib return codes.
   int counter = 512; 
   int flush = Z_NO_FLUSH;
 
@@ -504,7 +504,7 @@ bool ON_BinaryArchive::ReadInflate(
   my_next_out  += d;
   my_avail_out -= d;
 
-  // counter guards against infinte loop if there are
+  // counter guards against infinite loop if there are
   // bugs in zlib return codes
   int counter = 512;
   int flush = Z_NO_FLUSH;
@@ -1184,7 +1184,7 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
   m_zlib.m_strm.next_out = m_zlib.m_buffer;
   m_zlib.m_strm.avail_out = m_zlib.sizeof_x_buffer;
 
-  // counter guards prevents infinte loops if there is a bug in zlib return codes.
+  // counter guards prevents infinite loops if there is a bug in zlib return codes.
   int counter = 512; 
   int flush = Z_NO_FLUSH;
 
@@ -1318,7 +1318,7 @@ bool ON_CompressedBuffer::InflateHelper(
   my_next_out  += d;
   my_avail_out -= d;
 
-  // counter guards against infinte loop if there are
+  // counter guards against infinite loop if there are
   // bugs in zlib return codes
   int counter = 512;
   int flush = Z_NO_FLUSH;

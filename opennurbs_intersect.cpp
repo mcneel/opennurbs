@@ -67,7 +67,7 @@ bool ON_Intersect( const ON_BoundingBox& bbox,
   ON_3dVector v = line.Direction();
   const int i = v.MaximumCoordinateIndex();
 
-  // gaurd against ON_UNSET_VALUE as input
+  // guard against ON_UNSET_VALUE as input
   if ( !(tol >= 0.0) )
     tol = 0.0;
 
@@ -1268,11 +1268,11 @@ int ON_Intersect( const ON_Sphere& sphere0,
     return 3;//Same sphere.
   }
 
-  //Spheres are appart.
+  //Spheres are apart.
   if (d > r0 + r1)
     return 0;
 
-  //Spheres tangent and appart
+  //Spheres tangent and apart
   if (d == r0+r1){
     ON_3dPoint P = C0 + r0*D;
     circle.Create(P, 0.0);

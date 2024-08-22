@@ -346,7 +346,7 @@ public:
     Beginning in 2018 this value is taken from the system font metrics
     so that fonts designed to render Asian language text, symbols, 
     and emojis will display as expected and lines of text containing 
-    mulitiple fonts will render more clearly.
+    multiple fonts will render more clearly.
 
     The value (user specified text height)/AscentOfCapital() is used
     as the scale factor to render glyphs when user interface has provided 
@@ -617,7 +617,7 @@ public:
 
 public:
   // The use context determines the length units. Common units include font glyph design units,
-  // normalizied font design units, various display units.  Typically x increases to the right,
+  // normalized font design units, various display units.  Typically x increases to the right,
   // y increases upwards. For glyph and text run boxes, (0,0) is the horizontal base
   //
   ON_2dex m_bbmin = ON_2dex::Unset;
@@ -798,13 +798,13 @@ public:
   /*
   Returns:
     True if the point is on at the start or end of a line or bezier segment.
-    False otherwise (the point is in iterior control point in bezier segment or unset).
+    False otherwise (the point is in interior control point in bezier segment or unset).
   */
   bool IsOnFigure() const;
 
   /*
   Returns:
-    True if the point is in iterior control point in bezier segment.
+    True if the point is in interior control point in bezier segment.
     False otherwise (the point is on at the start or end of a line or bezier segment or unset).
   */
   bool IsOffFigure() const;
@@ -943,7 +943,7 @@ public:
   Description:
     Opennurbs searches the description saved in field 10 of the name table
     for the strings "Engraving - single stroke" / "Engraving - double stroke" / "Engraving"
-    to identify fonts that are desgned for engraving (and which tend to render poorly when
+    to identify fonts that are designed for engraving (and which tend to render poorly when
     used to display text devices like screens, monitors, and printers).
     The SLF (single line fonts) are examples of fonts that have Engraving in field 10.
   Parameters:
@@ -991,7 +991,7 @@ public:
     outer_figure - [in]
       When bPerformExtraChecking is false, outer_figure->FigureOrientation() should 
       be set to what you plan on using when rendering the glyph.
-      The orientation of outer_figur can be either clockwise or counterclockwise
+      The orientation of outer_figure can be either clockwise or counterclockwise
       and, in the context of the entire glyph, outer_figure can be an inner or outer boundary.
       For example, the registered trademark glyph (UNICODE U+00AE) is an example where 
       four nested figures with alternating orientations are common.
@@ -1900,7 +1900,7 @@ public:
       When this->CodePointIsSet() is true, 
       and bUseReplacementCharacter is true,
       and no reasonable glyph definition exists,
-      and no substitued  is available, 
+      and no substituted  is available,
       then the replacement character glyph for UNICODE code point
       ON_UnicodeCodePoint::ON_ReplacementCharacter (U+FFFD) will be returned.
 
@@ -1951,7 +1951,7 @@ public:
   ) const;
 
 #if defined(OPENNURBS_FREETYPE_SUPPORT)
-// Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+// Look in opennurbs_system_runtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
 // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
 
 
@@ -2078,7 +2078,7 @@ private:
   // NOTE WELL: 
   //   The offset of m_codepoint in ON_FontGlyph must be >= 8 bytes.
   //   so the ON_FixeSizePool that manages memory for the glyph cache
-  //   can efficiently iteratate all active managed glyphs.
+  //   can efficiently iterate all active managed glyphs.
   //
   ON_TextBox m_font_unit_glyph_bbox; // values in the native font definition units (freetype FT_LOAD_NO_SCALE units)
   ON_TextBox m_normalized_glyph_bbox; // bounding box in opennurbs normalized font coordinates
@@ -2452,7 +2452,7 @@ public:
     /// <summary> 
     /// Set from an Apple CTFont. The PostScriptName() and FamilyName() match a
     /// font installed on device running MacOS or iOS. The FaceName() matches
-    /// the "typeface" name shonw in the MacOS FontBook app.
+    /// the "typeface" name shown in the MacOS FontBook app.
     /// </summary>
     AppleFont = 3
   };

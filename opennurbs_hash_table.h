@@ -115,7 +115,7 @@ public:
     hash32 - [in]
   Remarks:
     This function is used to find the first element in the hash table with the
-    specified hash32 falue. Use ON_Hash32TableItem.NextItemWithSameHash() to get
+    specified hash32 failure. Use ON_Hash32TableItem.NextItemWithSameHash() to get
     the next item in the has table with the same hash value.
   */
   class ON_Hash32TableItem* FirstItemWithHash(
@@ -130,7 +130,7 @@ public:
   Returns:
     The first item in the hash table.
   Remarks:
-    This function is used for iterating throught every element in the hash table.
+    This function is used for iterating throughout every element in the hash table.
   */
   class ON_Hash32TableItem* FirstTableItem(
     ) const;
@@ -139,7 +139,7 @@ public:
   Returns:
     The next item in the hash table.
   Remarks:
-    This function is used for iterating throught every element in the hash table.
+    This function is used for iterating throughout every element in the hash table.
   */
   class ON_Hash32TableItem* NextTableItem(
     const ON_Hash32TableItem* item

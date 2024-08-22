@@ -956,7 +956,7 @@ class ON_SubDComponentBase* ON_SubDHeap::Internal_AllocateComponentAndSetId(
 
   // In order for m_fspv.ElementFromId(), m_fspe.ElementFromId() , m_fspf.ElementFromId() 
   // to work, it is critical that once a vertex/edge/face is allocated from m_fspv/mfspe/mfspf
-  // the value of m_id never changes.  This is imporant because the value of m_id must persist
+  // the value of m_id never changes.  This is important because the value of m_id must persist
   // in binary archives in order for ON_COMPONENT_INDEX values to persist in binary archives.
 
   ON_SubDComponentBaseLink* c;
@@ -964,7 +964,7 @@ class ON_SubDComponentBase* ON_SubDHeap::Internal_AllocateComponentAndSetId(
   {
     // Requests for a candidate_id value above 3 billion are ignored to insure
     // there is plenty of room for ids. 
-    // It's almost certainly a bug if candidate_id > several millon or so.
+    // It's almost certainly a bug if candidate_id > several million or so.
     candidate_id = 0; 
   }
 
@@ -994,7 +994,7 @@ class ON_SubDComponentBase* ON_SubDHeap::Internal_AllocateComponentAndSetId(
     }
     else
     {
-      // Return element at the head of the unusued list.
+      // Return element at the head of the unused list.
       c = static_cast<ON_SubDComponentBaseLink*>(unused_list);
       unused_list = const_cast<ON_SubDComponentBaseLink*>(c->m_next);
     }
@@ -2075,7 +2075,7 @@ ON_SubDMeshFragment* ON_SubDHeap::AllocateMeshFragment(
         // It is used when an unusual small fragment is allocated from a pool
         // providing large fragments (fsp.SizeofElement() > sizeof_fragment).
         // If fsp.SizeofElement() is not an even multiple of sizeof_fragment,
-        // then some memory is wasted. Beause this situation is uncommon,
+        // then some memory is wasted. Because this situation is uncommon,
         // the waste doesn't matter in the big scheme of things.
         ON_FixedSizePoolElement* ele = (ON_FixedSizePoolElement*)p;
         ele->m_next = m_unused_fragments[density];

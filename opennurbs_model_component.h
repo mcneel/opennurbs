@@ -134,7 +134,7 @@ public:
   Parameters:
     component_type - [in]
   Returns:
-    True if component's of the specified type require uniquen names.
+    True if component's of the specified type require unique names.
   Remarks:
     In general, component names ignore case and parent when testing for
     equality. 
@@ -186,7 +186,7 @@ public:
 
   /*
   Returns:
-    True if a componenent name can begin with the first code point.
+    True if a component name can begin with the first code point.
   Remarks:
     Component names cannot begin with a (, ), [, ], {, }, or space.
     These brackets can be the second or later code points.
@@ -205,7 +205,7 @@ public:
       The first code point is decoded from this string
       and passed to ON_ModelComponent::IsValidComponentNameFirstCodePoint().
   Returns:
-    True if a componenent name can begin with the first code point.
+    True if a component name can begin with the first code point.
   Remarks:
     Component names cannot begin with a (, ), [, ], {, }, or space.
     These brackets can be the second or later code points.
@@ -533,7 +533,7 @@ public:
 
   /*
   Description:
-    Calling LockType() will prhibit future changes to the Type attribute.
+    Calling LockType() will prohibit future changes to the Type attribute.
   */
   void LockComponentType();
 
@@ -614,7 +614,7 @@ public:
 
   /*
   Description:
-    Calling LockModelComponentId() will prhibit future changes to the ModelComponentId attribute.
+    Calling LockModelComponentId() will prohibit future changes to the ModelComponentId attribute.
   */
   void LockId();
 
@@ -647,7 +647,7 @@ public:
     of identical type in the model and is locked.
     If the index has not been set, ON_UNSET_INT_INDEX is returned.
     The Index() value can change when saved in an archive (.3dm file).
-    Use the Id() when you need to reference model compoenents in an archive.
+    Use the Id() when you need to reference model components in an archive.
   */
   int Index() const;
 
@@ -689,7 +689,7 @@ public:
 
   /*
   Description:
-    Calling LockModelComponentIndex() will prhibit future changes to the ModelComponentIndex attribute.
+    Calling LockModelComponentIndex() will prohibit future changes to the ModelComponentIndex attribute.
   */
   void LockIndex();
 
@@ -866,7 +866,7 @@ public:
       and linked block "Z" referencing D.3dm.
       File D.3dm contains a layer "delta", dimstyle "d1", and an embedded block "D_blk".
       
-      Reading file A.3dm will craete the following components:
+      Reading file A.3dm will create the following components:
       Layers:
         alpha
         X>B.3dm
@@ -911,7 +911,7 @@ public:
       and linked block "Z" referencing D.3dm.
       File D.3dm contains a layer "delta", dimstyle "d1", and an embedded block "D_blk".
       
-      Reading file A.3dm will craete the following components:
+      Reading file A.3dm will create the following components:
       Layers:
         alpha
         X>B.3dm
@@ -1147,7 +1147,7 @@ public:
     can possibly call SetName() or the ON_ModelComponent destructor
     could be called.
   Remarks:
-    About the only good use for this function is when a model compoenent is
+    About the only good use for this function is when a model component is
     persistent and the name is needed for a formatted string.  For any
     other use, call the Name() function and store the result in an
     ON_wString.  This function is dangerous because the returned pointer
@@ -1238,7 +1238,7 @@ public:
 
   /*
   Description:
-    If NameIsSet() is true, then the name is deleted in a waty that can be undone by calling UndeleteName() and
+    If NameIsSet() is true, then the name is deleted in a way that can be undone by calling UndeleteName() and
     the DeletedNameIsSet() property is changed to true.
 
     If NameIsSet() is false or NameIsLocked() is true, then nothing is changed.
@@ -1421,7 +1421,7 @@ public:
   Returns:
     True if this model component is a system constant.  
   Remarks:
-    An incomplete list of system constant model compoenents is below:
+    An incomplete list of system constant model components is below:
 
       ON_ModelComponent::Unset
 
@@ -1735,7 +1735,7 @@ public:
     Decrements the iterator and returns the new type.
   Returns:
     The new type
-    ON_ModelComponent::Type::Unset if the iterator is decrented the first type.
+    ON_ModelComponent::Type::Unset if the iterator is decremented the first type.
   */
   ON_ModelComponent::Type PreviousType();
 
@@ -1750,7 +1750,7 @@ public:
 private:
   ON__INT32 m_type_count = 0;
 
-  // -1 iterated before first, m_type_count = iteratated past last
+  // -1 iterated before first, m_type_count = iterated past last
   ON__INT32 m_current_index = ON_UNSET_UINT_INDEX; 
 
   ON_ModelComponent::Type m_types[32];
@@ -1766,11 +1766,11 @@ class ON_CLASS ON_ModelComponentReference
 public:
   static const ON_ModelComponentReference Empty;
   
-  // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ON_ModelComponentReference() ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ~ON_ModelComponentReference(); // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ON_ModelComponentReference(const ON_ModelComponentReference&) ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ON_ModelComponentReference& operator=(const ON_ModelComponentReference&); // No = default to insure m_sp is completely managed in the openurbs DLL.
+  // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ON_ModelComponentReference() ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ~ON_ModelComponentReference(); // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ON_ModelComponentReference(const ON_ModelComponentReference&) ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ON_ModelComponentReference& operator=(const ON_ModelComponentReference&); // No = default to insure m_sp is completely managed in the opennurbs DLL.
   
 #if defined(ON_HAS_RVALUEREF)
   ON_ModelComponentReference( ON_ModelComponentReference&& ) ON_NOEXCEPT;
@@ -1847,7 +1847,7 @@ public:
     ONX_Model::ComponentFromRuntimeSerialNumber()
   Remarks:
     If .NET or other wrappers using "lazy garbage collection" memory management are in use,
-    there may be stale references awaiting gargage collection and this function will return
+    there may be stale references awaiting garbage collection and this function will return
     nullptr when you think it should not. 
     For this function to work reliably, the ONX_Model and its components 
     and references should be in well constructed C++ code with carefully 
@@ -1894,11 +1894,11 @@ public:
   static const ON_ModelComponentWeakReference Empty;
 
 public:
-  // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ON_ModelComponentWeakReference() ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ~ON_ModelComponentWeakReference(); // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ON_ModelComponentWeakReference(const ON_ModelComponentWeakReference&) ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the openurbs DLL.
-  ON_ModelComponentWeakReference& operator=(const ON_ModelComponentWeakReference&); // No = default to insure m_sp is completely managed in the openurbs DLL.
+  // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ON_ModelComponentWeakReference() ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ~ON_ModelComponentWeakReference(); // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ON_ModelComponentWeakReference(const ON_ModelComponentWeakReference&) ON_NOEXCEPT; // No = default to insure m_sp is completely managed in the opennurbs DLL.
+  ON_ModelComponentWeakReference& operator=(const ON_ModelComponentWeakReference&); // No = default to insure m_sp is completely managed in the opennurbs DLL.
   
 #if defined(ON_HAS_RVALUEREF)
   ON_ModelComponentWeakReference( ON_ModelComponentWeakReference&& ) ON_NOEXCEPT;
