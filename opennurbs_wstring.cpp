@@ -232,7 +232,7 @@ bool ON_wString::IsValid(
     return true;
   for (;;)
   {
-    // These checks attempt to detect cases when the memory used for the header informtion
+    // These checks attempt to detect cases when the memory used for the header information
     // no longer contains valid settings.
     const wchar_t* s = m_s;
     if (nullptr == s)
@@ -307,7 +307,7 @@ bool ON_wString::IsValid(
   // prevent imminent and unpredictable crash
   //
   // The empty string is used (as opposed to something like "YIKES - CALL TECH SUPPORT")
-  // becuase anything besides the empty string introduces using heap in a class that
+  // because anything besides the empty string introduces using heap in a class that
   // has been corrupted by some earlier operation.
   const_cast<ON_wString*>(this)->m_s = (wchar_t*)pEmptywString;
   // Devs
@@ -703,7 +703,7 @@ ON_wString::ON_wString( const char* s, int length )
 ON_wString::ON_wString( char c, int repeat_count )
 {
   Create();
-  if ( repeat_count > 0 ) {
+  if ( repeat_count > 0 && c != 0) {
     char* s = (char*)onmalloc((repeat_count+1)*sizeof(*s));
     s[repeat_count] = 0;
     memset( s, c, repeat_count*sizeof(*s) );
@@ -733,7 +733,7 @@ ON_wString::ON_wString( const unsigned char* s, int length )
 ON_wString::ON_wString( unsigned char c, int repeat_count )
 {
   Create();
-  if ( repeat_count > 0 ) {
+  if ( repeat_count > 0 && c != 0) {
     char* s = (char*)onmalloc((repeat_count+1)*sizeof(*s));
     s[repeat_count] = 0;
     memset( s, c, repeat_count*sizeof(*s) );
@@ -769,7 +769,7 @@ ON_wString::ON_wString( wchar_t c, int repeat_count )
     ON_ERROR("Requested size > ON_wString::MaximumStringLength");
     return;
   }
-  if ( repeat_count > 0 )
+  if ( repeat_count > 0 && c != 0)
   {
     ReserveArray(repeat_count);
     for (int i=0;i<repeat_count;i++)
@@ -2456,8 +2456,8 @@ void ON_wString::TrimLeft(const wchar_t* s)
     {
       for (i = 0; 0 != (c = m_s[i]); i++)
       {
-        // All postive code points in ON_IsUnicodeSpaceOrControlCodePoint()
-        // are UTF-16 singltons so it's ok to cast c as a Unicode code point.
+        // All positive code points in ON_IsUnicodeSpaceOrControlCodePoint()
+        // are UTF-16 singletons so it's ok to cast c as a Unicode code point.
         if ( c < 0 || 0 == ON_IsUnicodeSpaceOrControlCodePoint((ON__UINT32)c) )
           break;
       }
@@ -2498,8 +2498,8 @@ void ON_wString::TrimRight(const wchar_t* s)
     {
       for (i--; i >= 0 && 0 != (c = m_s[i]); i--)
       {
-        // All postive code points in ON_IsUnicodeSpaceOrControlCodePoint()
-        // are UTF-16 singltons so it's ok to cast c as a Unicode code point.
+        // All positive code points in ON_IsUnicodeSpaceOrControlCodePoint()
+        // are UTF-16 singletons so it's ok to cast c as a Unicode code point.
         if ( c < 0 || 0 == ON_IsUnicodeSpaceOrControlCodePoint((ON__UINT32)c) )
           break;
       }

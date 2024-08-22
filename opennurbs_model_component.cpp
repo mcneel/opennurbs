@@ -160,7 +160,7 @@ void ON_ModelComponent::Dump(
   if (false == text_log.IsTextHash())
   {
     // m_runtime_serial_number depends on how many components have
-    // been contructed before this one. It must be suppressed when
+    // been constructed before this one. It must be suppressed when
     // calculating content hash values from text logs.
     text_log.Print("Model component %llu\n", m_runtime_serial_number);
   }
@@ -179,7 +179,7 @@ void ON_ModelComponent::Dump(
     {
       text_log.Print("Reference model = %u\n", reference_model_sn);
     }
-    // linked instance defintion model
+    // linked instance definition model
     const unsigned int idef_model_sn = InstanceDefinitionModelSerialNumber();
     if (idef_model_sn > 0)
     {
@@ -291,7 +291,7 @@ static ON__UINT64 ON_ModelComponentContentVersionNumberOne(
   ON__UINT64 runtime_serial_number
   )
 {
-  // make it unlikely for classes created sequentually to have the same content version numbers.
+  // make it unlikely for classes created sequentially to have the same content version numbers.
   ON__UINT64 s = ON_CRC32(0, sizeof(runtime_serial_number), &runtime_serial_number );
   return (runtime_serial_number*0x100000000ULL | s);
 }
@@ -1276,7 +1276,7 @@ const ON_NameHash& ON_ModelComponent::Internal_NameHash() const
 {
   if (m_component_name_hash.IsEmptyNameHash() && m_component_name.IsNotEmpty())
   {
-    // lazy evaulation because SHA-1 calculation takes appreciable time
+    // lazy evaluation because SHA-1 calculation takes appreciable time
 
     // For components whose names are in a tree structure, like layers,
     // the parent id must be included.
@@ -2280,7 +2280,7 @@ bool ON_ModelComponent::SetDeletedModelComponentState(
   ON_ComponentManifest* manifest
   )
 {
-  bDeleted = bDeleted ? true : false; // inusre exact "true"
+  bDeleted = bDeleted ? true : false; // ensure exact "true"
   ON_ComponentStatus component_status = ModelComponentStatus();
   if (bDeleted == component_status.IsDeleted())
   {
@@ -3199,7 +3199,7 @@ bool ON_BinaryArchive::Write3dmReferencedComponentIndex(
       || false == map_item.SourceIsSet()
       )
     {
-      ON_ERROR("model_id not in arcive manifest map.");
+      ON_ERROR("model_id not in archive manifest map.");
     }
     else if (false == ReferencedComponentIndexMapping())
     {
@@ -3761,20 +3761,20 @@ bool ON_BinaryArchive::AddManifestMapItem(
 //
 //
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentWeakReference::ON_ModelComponentWeakReference() ON_NOEXCEPT
 {}
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentWeakReference::~ON_ModelComponentWeakReference()
 {}
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentWeakReference::ON_ModelComponentWeakReference(const ON_ModelComponentWeakReference& src) ON_NOEXCEPT
   : m_wp(src.m_wp)
 {}
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentWeakReference& ON_ModelComponentWeakReference::operator=(const ON_ModelComponentWeakReference& src)
 {
   if ( this != &src)
@@ -3815,20 +3815,20 @@ ON_ModelComponentWeakReference& ON_ModelComponentWeakReference::operator=(const 
 //
 //
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentReference::ON_ModelComponentReference() ON_NOEXCEPT
 {}
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentReference::~ON_ModelComponentReference()
 {}
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentReference::ON_ModelComponentReference(const ON_ModelComponentReference& src) ON_NOEXCEPT
   : m_sp(src.m_sp)
 {}
 
-// Explicit implementation to insure m_sp is completely managed in the openurbs DLL.
+// Explicit implementation to insure m_sp is completely managed in the opennurbs DLL.
 ON_ModelComponentReference& ON_ModelComponentReference::operator=(const ON_ModelComponentReference& src)
 {
   if ( this != &src)

@@ -74,7 +74,7 @@ ON__UINT16 ON_CRC16( ON__UINT16 current_remainder, size_t count, const void* p )
 	  // update crc remainder
 
     // Dale Lear September 2020
-    // I was comparing 16-bit crc, 32-bit crc, MAD5 and SHA-1 hash calcualation speeds.
+    // I was comparing 16-bit crc, 32-bit crc, MAD5 and SHA-1 hash calculation speeds.
     // It turns out, that compilers and optimizers have improved a fair bit since 1994 when this code was written.
     // Manual loop unrolling doesn't help (this used to make a measurable difference in 1994 when we used Watcom C on Win 3.1.)
     // The TestHashSpeed command tests hashing speeds. Short story - use either ON_CRC32 or ON_SHA1. 
@@ -273,7 +273,7 @@ ON__UINT32 ON_CRC32( ON__UINT32 current_remainder, size_t count, const void* p )
 
 /*
 Description:
-  Test speeds of various hash algoritmhs.
+  Test speeds of various hash algorithms.
 Parameters:
   byte_count - [in]
     Number of bytes to hash. This number is rounded up to the nearest multiple of 1024.

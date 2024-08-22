@@ -311,7 +311,7 @@ public:
     The minimum distance between a point on the plane
     and a point on the bounding box.
   See Also:
-    ON_PlaneEquation::MimimumValueAt
+    ON_PlaneEquation::MinimumValueAt
     ON_PlaneEquation::MaximumValueAt
   */
   double MinimumDistanceTo( const ON_Plane& plane ) const;
@@ -484,7 +484,7 @@ public:
   Parameters:
     other_bbox - [in]
   Returns:
-    True if this-intesect-other_bbox is a non-empty valid bounding box
+    True if this-intersect-other_bbox is a non-empty valid bounding box
     and this is set.  False if the intersection is empty, in which case
     "this" is set to an invalid bounding box.
   Remarks:
@@ -628,7 +628,7 @@ public:
 
 public:
   // This hash depends on the context and is a hash
-  // of the information used to calculte the bounding box.
+  // of the information used to calculate the bounding box.
   // It is not the hash of the box values
 
   void Set(

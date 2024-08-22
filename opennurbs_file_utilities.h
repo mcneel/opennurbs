@@ -1048,7 +1048,7 @@ public:
     bSkipTimeCheck - [in] if true, the time of last
        modification is not checked.
   Returns:
-    True if the file existes, can be read, and has a matching byte_count
+    True if the file exists, can be read, and has a matching byte_count
     and SHA-1 hash.
   */
   bool IsSameFileContent( 
@@ -1097,7 +1097,7 @@ public:
 
     /// <summary>
     /// File exists and its size or content differs from the information 
-    /// used to set the content hash. The file's laste modified time
+    /// used to set the content hash. The file's last modified time
     /// is older than ContentLastModifiedTime().
     /// </summary>
     DifferentContentFileIsOlder = 3,
@@ -1633,7 +1633,7 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////////
   //
-  // Iteratation initialization tools
+  // Iteration initialization tools
   //
   /*
   Description:
@@ -1676,7 +1676,7 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////////
   //
-  // Iteratation iteration tools
+  // Iteration tools
   //
 
   /*
@@ -1790,7 +1790,7 @@ public:
   ON__UINT64 CurrentItemCount() const;
 
 private:
-  ON__UINT32 m_state = 0; // 0 unset, 1=initialized, 2 = itereation in progress. 3 = iteration finished.
+  ON__UINT32 m_state = 0; // 0 unset, 1=initialized, 2 = iteration in progress. 3 = iteration finished.
   ON__UINT32 m_reserved = 0;
 
   ON_wString m_directory; // directory passed to Initialize() or FirstItem

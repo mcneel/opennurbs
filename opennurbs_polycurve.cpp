@@ -1012,7 +1012,7 @@ ON_PolyCurve::IsPlanar(
     if ( !GetTestPlane( *this, test_plane ) )
     {
       // 5 May 2006 Dale Lear
-      //   Added additiional attempts to get a test_plane
+      //   Added additional attempts to get a test_plane
       //   for poorly parameterized polycurves. (RR 20057 fix).
       ON_3dPoint P, Q;
       ON_3dVector X;
@@ -1352,8 +1352,8 @@ bool ON_PolyCurve::HasGapAt(int segment_index) const
   //
   // June 2019 - sometime in the past decade ON_PolyCurve::HasGap()
   // changed and the test here is different from ON_Curve::IsClosed().
-  // The initial "Note" no longer applies becaue it's no longer
-  // clear why the current ON_PolyCurve::HasGap() elimiated the "b c"
+  // The initial "Note" no longer applies because it's no longer
+  // clear why the current ON_PolyCurve::HasGap() eliminated the "b c"
   // test that remained in ON_Curve::IsClosed().
 
   if ( false == ON_PointsAreCoincident( 3, false, &P0.x, &P1.x ) )
@@ -1983,7 +1983,7 @@ bool ON_PolyCurve::GetNextDiscontinuity(
       }
 
 
-      // check for discontinity between curve segments
+      // check for discontinuity between curve segments
       int next_segment_index = segment_index+segment_index_delta;
       if ( next_segment_index < 0 || next_segment_index >= count )
       {
@@ -2386,7 +2386,7 @@ bool ON_NurbsCurve::IsContinuous(
     {
       if ( ON::continuity::Cinfinity_continuous == desired_continuity )
       {
-        // Cinfinity_continuous is a euphanisim for "at a knot"
+        // Cinfinity_continuous is a euphemism for "at a knot"
         return false;
       }
 
@@ -2535,10 +2535,10 @@ bool ON_PolyCurve::Evaluate( // returns false if unable to evaluate
     if ( -2 == side || 2 == side )
     {
       // 9 November 2010 Dale Lear - ON_TuneupEvaluationParameter fix
-      //   When evluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
+      //   When evaluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
       //   and the original side parameter was -1 or +1, it is changed to -2 or +2
-      //   to indicate that if t is numerically closed to an end paramter, then
-      //   it should be tuned up to be at the end paramter.
+      //   to indicate that if t is numerically closed to an end parameter, then
+      //   it should be tuned up to be at the end parameter.
       double a = t;
       if ( ON_TuneupEvaluationParameter( side, m_t[segment_index], m_t[segment_index+1], &a) )
       {
@@ -3505,7 +3505,7 @@ bool ON_PolyCurve::Split(
 
 		/* 4 April 2003 Greg Arden		Made the following changes:
 																		1.	Use ParameterSearch() to decide if we should snap domain
-																				boundries to m_t array values.  
+																				boundaries to m_t array values.
 																		2.  Make sure resulting polycurves have Domain() specified as 
 																				split parameter.   
 																		3.  When true is returned the result passes IsValid().

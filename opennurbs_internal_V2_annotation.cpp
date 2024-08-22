@@ -856,7 +856,7 @@ bool ON_OBSOLETE_V5_Annotation::Write( ON_BinaryArchive& file ) const
     // 28 Aug, 2010 - Lowell - changed minor version 0->1 to write
     //   annotative scale flag
     // 24 September 2010 Dale Lear 
-    //   I incremented chunk version to 1.2 and wrote the TextFormaula() string.
+    //   I incremented chunk version to 1.2 and wrote the TextFormula() string.
     rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,3);
     if (!rc)
       return false;
@@ -881,7 +881,7 @@ bool ON_OBSOLETE_V5_Annotation::Write( ON_BinaryArchive& file ) const
 
     // June 17, 2010 - Lowell - Added adjustment to position text
     // a little better in pre-v5 files.
-    // There's no adjustment for right/left justify becasue we don't 
+    // There's no adjustment for right/left justify because we don't
     // know the width of the text here
     // This doesn't change the size or position of any fields being
     // written, but just adjusts the plane to tune up the alignment
@@ -942,7 +942,7 @@ bool ON_OBSOLETE_V5_Annotation::Write( ON_BinaryArchive& file ) const
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimRadius:
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimDiameter:
       // 9 August 2005 Dale Lear - radial dimensions do
-      // not support user postioned text.  The never have
+      // not support user positioned text.  The never have
       // in Rhino, but the old files had 5 points in them.
       if ( 4 == points.Count() )
       {
@@ -1143,7 +1143,7 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimRadius:
     case ON_INTERNAL_OBSOLETE::V5_eAnnotationType::dtDimDiameter:
       // 9 August 2005 Dale Lear - radial dimensions do
-      // not support user postioned text.  The never have
+      // not support user positioned text.  The never have
       // in Rhino, but the old files had 5 points in them.
       if ( 5 == m_points.Count() )
       {
@@ -1268,7 +1268,7 @@ bool ON_OBSOLETE_V5_Annotation::Read( ON_BinaryArchive& file )
   // The only example of this kind of text formatting I've seen here is from a file referenced by
   // https://mcneel.myjetbrains.com/youtrack/issue/RH-59675
   // Uncommenting the following clause will convert all of the '\n' in V5 wrapped text to '\r\n'
-  // causeing V6 to make line breaks at those places.
+  // causing V6 to make line breaks at those places.
   // The text will no longer be "wrapped", but will have hard returns at the end of each line
   // where it was wrapped in V5.
   ////////////////////////////////////
@@ -2107,7 +2107,7 @@ bool ON_OBSOLETE_V5_DimLinear::GetTightBoundingBox(
 int ON_OBSOLETE_V5_DimLinear::Repair()
 {
   // returns 0 = unable to repair
-  //         1 = in perfect condtion
+  //         1 = in perfect condition
   //         2 == repaired.
 
   const int ext0_pt_index   = ON_OBSOLETE_V5_DimLinear::ext0_pt_index;

@@ -339,7 +339,7 @@ public:
     bitmap_texture       = 1U, // "standard" image texture.  // Deprecated.  Use Diffuse.
     diffuse_texture      = 1U, // ideally albedo.
     bump_texture         = 2U, // bump map - see m_bump_scale comment
-    transparency_texture = 3U, // value = alpha (see m_tranparancy_id)  Deprecated.  Use Opacity.  No change needed to functionality - transparency in Rhino has always meant opacity.
+    transparency_texture = 3U, // value = alpha (see m_transparency_id)  Deprecated.  Use Opacity.  No change needed to functionality - transparency in Rhino has always meant opacity.
     opacity_texture      = 3U, // value = alpha.
 
     // The following textures are only for PBR materials
@@ -479,10 +479,10 @@ public:
   // texture in the ON_Material.m_textures[] array that has
   // type m_transparency_texture.  The runtime bitmap_texture's
   // alpha is set to (255-max(R,G,B)) (the "value" in the hue,
-  // saturation,value sense) of the correspondeing 
+  // saturation,value sense) of the corresponding
   // transparency_texture pixel. 
   //
-  // For example, if you had a bitmap texuture that was green 
+  // For example, if you had a bitmap texture that was green
   // with purple dots saved in a RGB .bmp file and you wanted
   // the purple dots to be semi-transparent, you could create
   // another bitmap that was black, where the original was green,

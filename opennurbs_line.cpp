@@ -520,7 +520,7 @@ bool ON_Line::IsFartherThan( double d, const ON_Line& L ) const
       // If ( b >= 0.0), then this->from and L(b) are a pair of closest points.
       if ( b < 0.0 )
       {
-        // Othersise L.from and this(a) are a pair of closest points.
+        // Otherwise L.from and this(a) are a pair of closest points.
         b = 0.0;
         ClosestPointTo(L.from,&a);
       }
@@ -533,7 +533,7 @@ bool ON_Line::IsFartherThan( double d, const ON_Line& L ) const
       // If ( b >= 0.0), then this->to and L(b) are a pair of closest points.
       if ( b < 0.0 )
       {
-        // Othersise L.to and this(a) are a pair of closest points.
+        // Otherwise L.to and this(a) are a pair of closest points.
         b = 0.0;
         ClosestPointTo(L.from,&a);
       }
@@ -590,7 +590,7 @@ ON_Triangle::ON_Triangle(const ON_3dPoint & a, const ON_3dPoint & b, const ON_3d
 
 ON_Triangle::ON_Triangle(double x)
 {
-	// Note this constructor overload is usefull so that ON_Triangle(0) doesn't
+	// Note this constructor overload is useful so that ON_Triangle(0) doesn't
 	// get interpreted as ON_Triangle(nullptr)
 	ON_3dPoint p(x, x, x);
 	m_V[0] = m_V[1] = m_V[2] = p;

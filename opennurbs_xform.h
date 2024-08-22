@@ -253,19 +253,19 @@ public:
   /*
   Description:
     A similarity transformation can be broken into a sequence
-    of a dialation, translation, rotation, and a reflection.
+    of a dilation, translation, rotation, and a reflection.
 	Parameters:
 		*this - must be IsAffine().
 		Translation - [out] Translation vector
-		dilation    - [out]  dialation, (dilation <0 iff this is an orientation reversing similarity )
+		dilation    - [out]  dilation, (dilation <0 iff this is an orientation reversing similarity )
 		Rotation    - [out] a proper rotation transformation ie. R*Transpose(R)=I and det(R)=1 
 	Details:
 		If X.DecomposeSimilarity(T, d, R, tol) !=0 then X ~ TranslationTransformation(T)*DiagonalTransformation(d)*R
 		note when d>0 the transformation is orientation preserving.
 	Note:
-	  If dilation<0 then   DiagonalTransformation( dilation)  is actually a reflection 
-		combined with a "true" dialation, i.e.
-		  DiagonalTransformation( dilation) = DiagonalTransformation(-1) * DiagonalTransformation( |diagonal| ) 
+	  If dilation<0 then   DiagonalTransformation(dilation)  is actually a reflection 
+		combined with a "true" dilation, i.e.
+		  DiagonalTransformation(dilation) = DiagonalTransformation(-1) * DiagonalTransformation( |diagonal| ) 
   Returns:
     +1: This transformation is an orientation preserving similarity.
     -1: This transformation is an orientation reversing similarity.
@@ -277,7 +277,7 @@ public:
 
 	/*
 	Description:
-    NOTE: A better name for this fuction would be IsIsometry().
+    NOTE: A better name for this function would be IsIsometry().
 
     An "isometry" transformation is an affine transformation that preserves
     distances. Isometries include transformation like reflections
@@ -378,7 +378,7 @@ public:
 
 	/*
 		Description:
-			Replace last row with  0  0  0  1 discarding any perspecive part of this transform
+			Replace last row with  0  0  0  1 discarding any perspective part of this transform
 	*/
 	void Affineize();
 
@@ -392,7 +392,7 @@ public:
 	/*
 	Description:
 		Force the linear part of this transformation to be a rotation (or a rotation with reflection).
-		This is probably best to perform minute tweeks.  
+		This is probably best to perform minute tweaks.
 		Use DecomposeRigid(T,R) to find the nearest rotation
 	*/
 	bool Orthogonalize(double tol);
@@ -400,7 +400,7 @@ public:
 	/*
 	Description:
 		A Symmetric linear transformation can be decomposed  A = Q * Diag * Q^T where Diag is a diagonal 
-		transformation.  Diag[i][i] is an eigenvalue of A and the i-th coulmn of Q is a corresponding 
+		transformation.  Diag[i][i] is an eigenvalue of A and the i-th column of Q is a corresponding
 		unit length eigenvector.
 	Parameters:
 	  This transformation must be Linear() and Symmetric, that is *this==Transpose().
@@ -483,8 +483,8 @@ public:
     N_xform - [out]
   Returns:
     The determinant of the transformation.
-    If non-zero, "this" is invertable and N_xform can be calculated.
-    False if "this" is not invertable, in which case
+    If non-zero, "this" is invertible and N_xform can be calculated.
+    False if "this" is not invertible, in which case
     the returned N_xform = this with the right hand column
     and bottom row zeroed out.
   */
@@ -492,10 +492,31 @@ public:
 
   /*
   Description:
+    When transforming 3d point and surface or mesh normals
+    two different transforms must be used.
+    If P_xform transforms the point, then N_xform, the
+    transformation that transforms unit-length and oriented normals
+    of the face to unit-length and oriented normals of the
+    transformed face is:
+
+    N_xform = (IsOrientationPreserving() >= 0 ? 1 : -1) * pow(Determinant(), -1/3) * Transpose(Inverse(P_xform))
+  Parameters:
+    N_xform - [out]
+  Returns:
+    The determinant of the transformation.
+    If non-zero, "this" is invertible and N_xform can be calculated.
+    False if "this" is not invertible, in which case
+    the returned N_xform = this with the right hand column
+    and bottom row zeroed out.
+  */
+  double GetSurfaceNormalXformKeepLengthAndOrientation(ON_Xform& N_xform) const;
+
+  /*
+  Description:
     If a texture mapping is applied to an object, the object
     is subsequently transformed by T, and the texture mapping
     needs to be recalculated, then two transforms are required
-    to recalcalculate the texture mapping.
+    to recalculate the texture mapping.
   Parameters:
     P_xform - [out] 
       Transform to apply to points before applying the
@@ -505,9 +526,9 @@ public:
       the texture mapping transformation.
   Returns:
     The determinant of the "this" transformation.
-    If non-zero, "this" is invertable and P_xform and N_xform
+    If non-zero, "this" is invertible and P_xform and N_xform
     were calculated.
-    False if "this" is not invertable, in which case
+    False if "this" is not invertible, in which case
     the returned P_xform and N_xform are the identity.
   */
   double GetMappingXforms( ON_Xform& P_xform, ON_Xform& N_xform ) const;
@@ -1247,7 +1268,7 @@ Notes:
     int, // count
     int, // stride
     const double*, // points
-    bool bTestZ = true // bTeztZ
+    bool bTestZ = true // bTestZ
     ) const;
 
   // Description: 
@@ -1337,7 +1358,7 @@ public:
   /*
   Description:
     Sets the object to clip transformation to
-    the viewport's workd to clip transformation.
+    the viewport's world to clip transformation.
   */
   bool SetObjectToClipTransformation(
     const class ON_Viewport& viewport
@@ -1419,7 +1440,7 @@ public:
   Returns:
     0 = No part of the of the convex hull of the tested points
         is in the view frustum.
-    1 = A portion of the convex hull of the otested points may
+    1 = A portion of the convex hull of the tested points may
         be in the view frustum.
     2 = The entire convex hull of the tested points is in the
         view frustum.
@@ -1489,7 +1510,7 @@ public:
   Description:
     The "visible area" is the intersection of the view frustum,
     defined by m_xform, and the clipping region, defined by the
-    m_clip_plane[] array.  These functions determing if some
+    m_clip_plane[] array.  These functions determine if some
     portion of the convex hull of the test points is visible.
   Parameters:
     P - [in] point
@@ -1534,7 +1555,7 @@ public:
           0 when the point is in the visible region.  
           Otherwise the bits are set to indicate which planes clip the
           input point.
-          0x01 left of the view frusturm
+          0x01 left of the view frustum
           0x02 right of the view frustum
           0x04 below the view frustum
           0x08 above the view frustum
@@ -1571,7 +1592,7 @@ public:
     0 when the point is in the visible region.  
     Otherwise the bits are set to indicate which planes clip the
     input point.
-    0x01 left of the view frusturm
+    0x01 left of the view frustum
     0x02 right of the view frustum
     0x04 below the view frustum
     0x08 above the view frustum
@@ -1652,7 +1673,7 @@ public:
 
   /*
   Description:
-    Sets point count and aggregate flags falues to zero but does not 
+    Sets point count and aggregate flags values to zero but does not
     deallocate the memory buffer.  When an ON_ClippingRegionPoints will be used
     multiple times, it is more efficient to call Clear() between
     uses than calling Destroy().

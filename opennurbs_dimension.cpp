@@ -994,22 +994,6 @@ bool ON_DimLinear::GetBBox(double* bmin, double* bmax, bool grow) const
 }
 
 
-class StylePointer
-{
-public:
-  ~StylePointer()
-  {
-    if (m_delete_style && nullptr != m_style)
-    {
-      delete m_style;
-      m_style = nullptr;
-      m_delete_style = false;
-    }
-  }
-  const ON_DimStyle* m_style = nullptr;
-  bool m_delete_style = false;
-};
-
 bool ON_DimLinear::GetAnnotationBoundingBox(
   const ON_Viewport* vp,
   const ON_DimStyle* dimstyle,

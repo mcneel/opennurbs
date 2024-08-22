@@ -220,7 +220,7 @@ ON_ParseSettings& ON_ParseSettings::operator|=(const ON_ParseSettings& other)
 
   if (0 == m_context_length_unit_system)
   {
-    // "this" wins if it alread has a locale id.
+    // "this" wins if it already has a locale id.
     // The reason is that the |= operator is used to add
     // a property to "this" when its current
     // property has a "false" value.
@@ -229,7 +229,7 @@ ON_ParseSettings& ON_ParseSettings::operator|=(const ON_ParseSettings& other)
 
   if (0 == m_context_angle_unit_system)
   {
-    // "this" wins if it alread has a locale id.
+    // "this" wins if it already has a locale id.
     // The reason is that the |= operator is used to add
     // a property to "this" when its current
     // property has a "false" value.
@@ -238,7 +238,7 @@ ON_ParseSettings& ON_ParseSettings::operator|=(const ON_ParseSettings& other)
 
   if (0 == m_context_locale_id)
   {
-    // "this" wins if it alread has a locale id.
+    // "this" wins if it already has a locale id.
     // The reason is that the |= operator is used to add
     // a property to "this" when its current
     // property has a "false" value.
@@ -271,7 +271,7 @@ ON_ParseSettings& ON_ParseSettings::operator&=(const ON_ParseSettings& other)
   if ( m_context_locale_id != other.m_context_locale_id )
   {
     // If m_context_locale_id != other.m_context_locale_id 
-    // identify the same language, then preserve the lauguage.
+    // identify the same language, then preserve the language.
     // This is useful when parsing unit names, particularly in
     // English where en-US SI unit names end in "er" and many 
     // other en-* SI unit names end in "re".  Setting 
@@ -1204,7 +1204,7 @@ bool ON_ParseSettings::IsDigitSeparator(ON__UINT32 c) const
     break;
 
   case 0x066C: // UNICODE ARABIC THOUSANDS SEPARATOR
-    // Intended to be used with eastern arabic numerials, 
+    // Intended to be used with eastern arabic numerals,
     // but its lexical function is always a thousands separator.
     return false;
     break;
@@ -1233,7 +1233,7 @@ bool ON_ParseSettings::IsDecimalPoint(ON__UINT32 c) const
     break;
 
   case 0x066B: // UNICODE ARABIC DECIMAL SEPARATOR
-    // Intended to be used with eastern arabic numerials, 
+    // Intended to be used with eastern arabic numerals,
     // but its lexical function is always a decimal point.
     return true;
     break;

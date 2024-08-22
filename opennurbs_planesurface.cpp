@@ -530,7 +530,7 @@ bool ON_PlaneSurface::Split(
 int ON_PlaneSurface::GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the surface's to wthe desired accuracy
+                   //            matches the surface's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
                    //            the interior of the surface's domain, the 
@@ -589,7 +589,7 @@ int
 ON_PlaneSurface::HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the surface's to wthe desired accuracy
+                   //            matches the surface's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
                    //            the interior of the surface's domain, the 

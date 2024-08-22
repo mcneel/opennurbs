@@ -5894,7 +5894,7 @@ double ON_Length2d( double x, double y )
   //     For small denormalized doubles (positive but smaller
   //     than DBL_MIN), some compilers/FPUs set 1.0/fx to +INF.
   //     Without the ON_DBL_MIN test we end up with
-  //     microscopic vectors that have infinte length!
+  //     microscopic vectors that have infinite length!
   //
   //     This code is absolutely necessary.  It is a critical
   //     part of the bug fix for RR 11217.
@@ -6509,7 +6509,7 @@ double ON_Length3d(double x, double y, double z)
   //     For small denormalized doubles (positive but smaller
   //     than DBL_MIN), some compilers/FPUs set 1.0/x to +INF.
   //     Without the ON_DBL_MIN test we end up with
-  //     microscopic vectors that have infinte length!
+  //     microscopic vectors that have infinite length!
   //
   //     This code is absolutely necessary.  It is a critical
   //     part of the bug fix for RR 11217.
@@ -8027,7 +8027,7 @@ bool ON_IsDegenrateConicHelper(double A, double B, double C, double D, double E)
   // (F = 0 in our case here.)
 
   // zero_tol was tuned by 
-  //  1) testing sets of equaly spaced collinear 
+  //  1) testing sets of equally spaced collinear
   //     points with coordinate sizes ranging from 0.001 to 1.0e4 and
   //     segment lengths from 0.001 to 1000.0.
   //  2) testing ellipses with axes lengths ranging from 0.001 to 1000
@@ -8119,7 +8119,7 @@ bool ON_GetConicEquationThrough6Points(
         double* zero_pivot
         )
 {
-  // Sets conic[] to the coefficents = (A,B,C,D,E,F), 
+  // Sets conic[] to the coefficients = (A,B,C,D,E,F),
   // such that A*x*x + B*x*y + C*y*y + D*x + E*y + F = 0
   // for each of the 6 input points.
 
@@ -8453,7 +8453,7 @@ bool ON_GetConicEquationThrough6Points(
   }
 
   // By construction, M[][] is singular and M[4][4] should be nearly zero.
-  // It should be upper triangluar with diagonal 1,1,1,1,0-ish
+  // It should be upper triangular with diagonal 1,1,1,1,0-ish
   if ( max_pivot )
     *max_pivot = max_piv;
   if ( min_pivot )
@@ -8522,7 +8522,7 @@ bool ON_GetConicEquationThrough6Points(
 
   if ( (fabs(A) >= fabs(C)) ? (A<0.0):(C<0.0) )
   {
-    // Make the largest A/C coefficent positive.
+    // Make the largest A/C coefficient positive.
     A = -A; B = -B; C = -C; D = -D; E = -E; F = -F;
   }
 
@@ -8613,7 +8613,7 @@ bool ON_IsConicEquationAnEllipse(
   P[0] = x0*X[0] + y0*Y[0];
   P[1] = x0*X[1] + y0*Y[1];
 
-  // set A and C to elipse axes lengths
+  // set A and C to ellipse axes lengths
   F = conic[5] -(A*x0*x0 + C*y0*y0);
   if ( !(0.0 != F) )
     return false; // F is 0.0 or a NaN
@@ -9934,7 +9934,7 @@ void ON_PeriodicDomain::Initialize(const ON_Interval dom[2], const bool closed[2
 // 
 //  *  proj(Pin[i]) = proj(Out[i])
 //  *  Out[0] = Pin[0]
-//  *  Out[i+1] and Out[i] are in adjacnt bands
+//  *  Out[i+1] and Out[i] are in adjacent bands
 ON_2dPoint ON_PeriodicDomain::LiftToCover(ON_2dPoint Pin, bool stealth )
 {
 	ON_2dPoint out = Pin;

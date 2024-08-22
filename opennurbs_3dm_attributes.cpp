@@ -422,7 +422,7 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   // file version 2.10: custom linetype
   CustomLinetype = 38,
   // 18 Apr 2023 S. Baer
-  // file version 2.11: custome section style
+  // file version 2.11: custom section style
   CustomSectionStyle = 39,
   // 10 May 2023 S. Baer
   // file version 2.12: ClippingPlaneLabelStyle
@@ -1576,7 +1576,7 @@ bool ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
   }
   if (rc)
   {
-    // 22 Sep 2006 - the way ON_3dmObjectAttiributes indicates
+    // 22 Sep 2006 - the way ON_3dmObjectAttributes indicates
     // that an object is put on a particular page view changed
     // from being saved in the m_dmref[] list to using the
     // m_space and m_viewport_id settings.  But the file format
@@ -1720,7 +1720,7 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
     // When mat_source is not (ON::object_material_source::material_from_object. This causes the
     // 3dm content to vary in a way that content hashing must ignore. The sample file
     // C:\dev\github\mcneel\rhino\src4\opennurbs\example_files\V5\v5_teacup.3dm is an example.
-    // It's old enough that it contians material index values >= 0 that are not saved
+    // It's old enough that it contains material index values >= 0 that are not saved
     // by SaveAs V5 writing code since circa 2010 or earlier.
     dump.Print("object material index = %d\n", m_material_index);
   }
@@ -1810,7 +1810,7 @@ bool ON_3dmObjectAttributes::SetName(
     // that are not valid names. Some of these strings begin with a bracket that
     // is permitted to appear later in the name. Prepending a carrot makes the names
     // unique while not turning them into something that the Rhino or python parsers
-    // keey off of in some other way.
+    // key off of in some other way.
     // way to make these names
     ON_wString prefixed_name = '^';
     prefixed_name += name;

@@ -152,7 +152,7 @@ public:
         void 
         ) const override;
   
-  bool Reverse() override;       // reverse parameterizatrion
+  bool Reverse() override;       // reverse parameterization
                         // Domain changes from [a,b] to [-b,-a]
 
   bool Evaluate( // returns false if unable to evaluate
@@ -171,7 +171,7 @@ public:
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
-                   //            matches the curve's to wthe desired accuracy
+                   //            matches the curve's to the desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the curve's to the desired accuracy but, on
                    //            the interior of the curve's domain, the 

@@ -472,7 +472,7 @@ static bool IsOrdinarySmoothQuadCornerVertex(
       return false;
 
     // If we get this far, then this edge has 
-    // the standared smooth edge Catmull Clark subdivision point.
+    // the standard smooth edge Catmull Clark subdivision point.
   }
   return true;
 }
@@ -2091,7 +2091,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if (N < ON_SubDSectorType::MinimumSectorEdgeCount(qv0->m_vertex_tag))
     return ON_SUBD_RETURN_ERROR(false);
 
-  // When qv0 is a valence 2 vertex with trianglar faces, we need to use find or allocate.
+  // When qv0 is a valence 2 vertex with triangular faces, we need to use find or allocate.
   const bool bUseFindOrAllocate = (2 == N  && 3 == qv0->MinimumFaceEdgeCount());
 
   ON_SubDSectorIterator sit;
@@ -2137,7 +2137,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   if (edgep1.IsNull())
     return ON_SUBD_RETURN_ERROR(false);
 
-  // prepare to rotate coutnerclockwise around qv0, 
+  // prepare to rotate counterclockwise around qv0,
   // subdividing edges and adding new faces
   const ON_SubDEdge* e0[2] = {nullptr, edge0};
   ON_SubDEdgePtr e1[2] = {ON_SubDEdgePtr::Null, edgep1};
@@ -2309,7 +2309,7 @@ bool ON_SubDQuadNeighborhood::Subdivide(
   // Add the 7 remaining elements to vertex_grid1[][]
   if (false == bBoundaryCrease1[0])
   {
-    // When the level 0 vertex is valence 2 and the neignboring faces are triangles,
+    // When the level 0 vertex is valence 2 and the neighbouring faces are triangles,
     // this vertex needs to be added to the hash table
     vertex_grid1[3][0] = fsh.AllocateEdgeSubdivisionVertex(bUseFindOrAllocate, m_edge_grid[q0fvi][1]);
     if ( nullptr == vertex_grid1[3][0])
@@ -2882,9 +2882,9 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   ON_SubDVertex* vertex1 = nullptr;
   ON_SubDEdgePtr edge1 = ON_SubDEdgePtr::Null;
 
-  // Calculate 2*N subdivison vertices on the boundary of input "face"
-  // and N subdivision edge that radiate from center_vertex1 to the input face edge's subdivison points.
-  // This loop also vertifies that all input vertex and edge pointers are not null and have the
+  // Calculate 2*N subdivision vertices on the boundary of input "face"
+  // and N subdivision edge that radiate from center_vertex1 to the input face edge's subdivision points.
+  // This loop also verifies that all input vertex and edge pointers are not null and have the
   // expected properties so the rest of this function can dispense with checking.
   const ON_SubDEdgePtr* face_m_edges = face->m_edge4;
   for (unsigned int i = 0; i < N; i++, face_m_edges++)
@@ -2904,10 +2904,10 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
     if (vertex0->m_edge_count < 2)
       return ON_SUBD_RETURN_ERROR(false);
    
-    // One of the main reasons for creating a ON_SubDFaceNeighborhood is to calcualte the 
+    // One of the main reasons for creating a ON_SubDFaceNeighborhood is to calculate the
     // limit mesh and limit cubic surfaces when the original face is not a quad.  
     // For these calculations, we need to calculate and save the limit point for extraordinary
-    // verticies while enough information is available to calculate it.  Doing the calculation
+    // vertices while enough information is available to calculate it.  Doing the calculation
     // before calling m_fsh.AllocateVertex(), insures the information will be copied to vertex1.
     if ( false == vertex0->GetSurfacePoint(face,limit_point) )
       return ON_SUBD_RETURN_ERROR(false);
@@ -2936,7 +2936,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       center_vertex1,
       ON_SubDSectorType::IgnoredSectorCoefficient,
       vertex1,
-      at_crease2_weight // ingored unless vertex1 is tagged as a crease
+      at_crease2_weight // ignored unless vertex1 is tagged as a crease
       );
     if ( edge1.IsNull() )
       return ON_SUBD_RETURN_ERROR(false);
@@ -2947,7 +2947,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       return ON_SUBD_RETURN_ERROR(false);
   }
 
-  // ring_vertex1 and last_ring_vertex1 are used to repeatedly iterate through subdivsion vertices on the boundary 
+  // ring_vertex1 and last_ring_vertex1 are used to repeatedly iterate through subdivision vertices on the boundary
   // of the original face.
   // i = "corner" index (= <= i < N.
   // ring_vertex1[3] = last vertex in the boundary and is used for initialization when i = 0.
@@ -2956,7 +2956,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
   // ring_vertex1[2] = subdivision vertex on input face->Edge(i)
   ON_SubDVertex* ring_vertex1[4] = { nullptr, nullptr, nullptr, vertex1 };
   
-  // Calculate the 2*N subdivison edges on the boundary of input "face"
+  // Calculate the 2*N subdivision edges on the boundary of input "face"
   // and N subdivision faces.
   ON_SubDFace* face1 = nullptr;
   ON_SubDEdgePtr face1_eptrs[4] = {ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Null,ON_SubDEdgePtr::Null,edge1.Reversed()};
@@ -3092,7 +3092,7 @@ bool ON_SubDFaceNeighborhood::QuadSubdivideHelper(
       return ON_SUBD_RETURN_ERROR(false);
     edge1 = m_fsh.AllocateEdge(
       ring_vertex1[2],
-      at_crease2_weight, // ingored unless ring_vertex1[0] is tagged as a crease
+      at_crease2_weight, // ignored unless ring_vertex1[0] is tagged as a crease
       vertex1,
       ON_SubDSectorType::IgnoredSectorCoefficient
       );

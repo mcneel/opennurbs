@@ -14,7 +14,7 @@ This file defines the MSBuild properties:
         The full path to the directory where the final build results 
         (.exe, .dll, .pdb, .lib, ... files) are delivered.
         
-Every build conguration of every opennurbs component should have this
+Every build configuration of every opennurbs component should have this
 property sheet as the first property sheet after the Microsoft boiler plate.
 
 *******************************************************************************
@@ -75,7 +75,7 @@ property sheet as the first property sheet after the Microsoft boiler plate.
   <!--
   Note: 
     An <Import ...> 
-    cannot appear in a <Choose><When>...</When><Otherewise>...</Otherwise></Choose> 
+    cannot appear in a <Choose><When>...</When><Otherwise>...</Otherwise></Choose>
     block, so the condition that checks for the existence of the property sheet
     occurs twice.  
   -->

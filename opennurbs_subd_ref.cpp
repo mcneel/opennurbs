@@ -454,7 +454,7 @@ bool ON_SubDComponentRef::GetBBox(
       switch (m_component_location)
       {
       case ON_SubDComponentLocation::Surface:
-        // public opennubs does not provide limit mesh tools.
+        // public opennurbs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = vertex->ControlNetBoundingBox();
         break;
@@ -472,7 +472,7 @@ bool ON_SubDComponentRef::GetBBox(
       switch (m_component_location)
       {
       case ON_SubDComponentLocation::Surface:
-        // public opennubs does not provide limit mesh tools.
+        // public opennurbs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = edge->ControlNetBoundingBox();
         break;
@@ -489,7 +489,7 @@ bool ON_SubDComponentRef::GetBBox(
       switch (m_component_location)
       {
       case ON_SubDComponentLocation::Surface:
-        // public opennubs does not provide limit mesh tools.
+        // public opennurbs does not provide limit mesh tools.
       case ON_SubDComponentLocation::ControlNet:
         bbox = face->ControlNetBoundingBox();
         break;

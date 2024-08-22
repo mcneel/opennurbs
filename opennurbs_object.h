@@ -262,7 +262,7 @@ ON_UUID ON_GetMostRecentClassIdCreateUuid();
 All classes derived from ON_Object must have the declaration macro
   ON_OBJECT_DECLARE( <classname> );
 as the first line in their class definition, must have a robust
-operator=(), should have a robust copy constructory, and must
+operator=(), should have a robust copy constructor, and must
 have exactly one of the following implementation macros in 
 a .cpp file.
   Classes with a pure virtual function:
@@ -523,8 +523,8 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-        is not nullptr, then a brief englis description of the
-        reason the object is not valid is appened to the log.
+        is not nullptr, then a brief english description of the
+        reason the object is not valid is appended to the log.
         The information appended to text_log is suitable for 
         low-level debugging purposes by programmers and is 
         not intended to be useful as a high level user 
@@ -669,7 +669,7 @@ public:
       ON_Material.m_material_id, ON_3dmObjectAttributes.m_uuid
       ).
   Returns:
-    The id used to identify the object in the openurbs model.
+    The id used to identify the object in the opennurbs model.
   */
   virtual
   ON_UUID ModelObjectId() const;
@@ -995,7 +995,7 @@ public:
   //
   // Component status interface
   //
-  //  Currently implemnented on ON_SubD and ON_Brep
+  //  Currently implemented on ON_SubD and ON_Brep
   //
 
   /*
@@ -1106,7 +1106,7 @@ public:
     Call whenever a component status setting is modified 
     by directly changing it on a component in a way that
     will result in any saved information about the parent
-    object's aggretate component status becoming invalid.
+    object's aggregate component status becoming invalid.
 
   Returns:
     Aggregate information about the object's component states.
@@ -1123,7 +1123,7 @@ public:
     Call whenever a component status setting is modified 
     by directly changing it on a component in a way that
     will result in any saved information about the parent
-    object's aggretate component status becoming invalid.
+    object's aggregate component status becoming invalid.
 
   Remarks:
     The implementations of this function are nearly instant.

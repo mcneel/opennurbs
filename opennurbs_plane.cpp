@@ -430,7 +430,7 @@ bool ON_Plane::Transform( const ON_Xform& xform )
 
   ON_3dPoint origin_pt = xform*origin;
 
-  // use care tranforming vectors to get
+  // use care transforming vectors to get
   // maximum precision and the right answer
   bool bUseVectorXform = (    0.0 == xform.m_xform[3][0] 
                            && 0.0 == xform.m_xform[3][1]

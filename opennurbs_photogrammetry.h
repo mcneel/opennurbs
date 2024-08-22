@@ -117,7 +117,7 @@ public:
     camera_Y - [out]
       world coordinate unit vector in the camera up direction.
     camera_Z - [out]
-      world coordinate unit vector pointing into the cameara (from the
+      world coordinate unit vector pointing into the camera (from the
       image toward the camera).
   */
   bool GetOrientationFrame(

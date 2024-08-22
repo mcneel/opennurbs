@@ -761,7 +761,7 @@ bool ON_Locale::ParseName(
         if ( region_code_capacity > 0 && region_code_capacity <= (size_t)(s1-s0) )
           return false;
         for (size_t i = 0; i < region_code_capacity && s0 < s1; i++)
-          region_code[i] = ToUpper(*s0++); // unppercase for regions is a convention
+          region_code[i] = ToUpper(*s0++); // uppercase for regions is a convention
         continue;
       }
     }
@@ -1170,7 +1170,7 @@ ON_Locale ON_Locale::FromAppleName(
   {
     // Apple uses "zh-Hant" for the "language" name and "zh_TW" for the "locale" name 
     // when identifying OS X string services that might be useful to people who live
-    // in Tiawan.
+    // in Taiwan.
     return ON_Locale::FromWindowsLCIDAndName(ON_Locale::WindowsLCID::zh_TW_LCID, "zh-TW");
   }
 

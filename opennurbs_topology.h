@@ -44,7 +44,7 @@ public:
     ///<summary> 
     /// The Open bit is set when an edge has distinct start and end vertices.
     /// Open and Closed are mutually exclusive edge attributes.
-    /// Note that an open edge can have zero length when two distict vertices
+    /// Note that an open edge can have zero length when two distinct vertices
     /// have identical locations and the edge's geometry is a zero length curve.
     ///</summary>
     Open = 1,

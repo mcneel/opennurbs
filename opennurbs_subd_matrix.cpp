@@ -963,7 +963,7 @@ unsigned int ON_SubDSectorType::GetSubdivisionMatrix(
     // S[4][4] = {{3./4, 1./8, 0, 1./8}, {1./2, 1./2, 0, 0}, {1./4, 1./4, 1./4, 1./4}, {1./2, 0, 0, 1./2}};
     // eigenvalues[4] = {1, 1./2, 1./4, 1./4};
     // eigenvectors[3][4] = {{1, 1, 1, 1}, {0, -1, 0, 1}, {0, 0, 1, 0}};
-    // (eigenvalue 1/4 has algebraic multiplicity = 2 and geometryic multiplicity = 1)
+    // (eigenvalue 1/4 has algebraic multiplicity = 2 and geometric multiplicity = 1)
 
     if (N < 2 || R < 4)
       return ON_SUBD_RETURN_ERROR(0);
@@ -2071,7 +2071,7 @@ unsigned int ON_SubDSectorType::GetSurfaceEvaluationCoefficients(
       if (1 == F)
       {
         // This is the special where IsCatmullClarkCreaseOneFaceCase() returns true.
-        // Catmull-Clark subdivison,
+        // Catmull-Clark subdivision,
         // center vertex is a crease vertex,
         // one face and two crease edges.
         L2[0] = -2.0; // center point coefficients
@@ -2198,7 +2198,7 @@ static bool Internal_GetAlterateTangent(
   {
     if ( 4 == subd_matrix.m_R && ON_SubDVertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
     {
-      // valence 2 crease case when crease edges are colinear
+      // valence 2 crease case when crease edges are collinear
       // F = face point, C = crease vertex point.
       // Default tangents:
       //   L[1] = ON_3dPoint(point_ring +  point_ring_stride) - ON_3dPoint(point_ring + 3 * point_ring_stride);
@@ -2233,7 +2233,7 @@ static bool Internal_GetAlterateNormal(
 
   if ( 4 == subd_matrix.m_R && ON_SubDVertexTag::Crease == subd_matrix.m_sector_type.VertexTag() )
   {
-    // valence 2 crease case when crease edges are colinear
+    // valence 2 crease case when crease edges are collinear
     // F = face point, C = crease vertex point.
     ON_3dVector N(ON_3dVector::ZeroVector);
     if (false == bHaveAlternateL[2])
@@ -2742,7 +2742,7 @@ double ON_SubDMatrix::TestMatrix() const
   }
 
   // A smooth sector with 2 faces is degenerate and does not have nice eigenvalues and eigenvectors
-  // that give a well defined surface normal. In this case we use a hueristic for the normal.
+  // that give a well defined surface normal. In this case we use a heuristic for the normal.
   // When bSmoothTwoFaceCase E1 = {0,0,0,0,0}, lengthE1 = 0, lengthE1 = 0.
   const bool bSmoothTwoFaceCase
     = (m_sector_type.IsSmoothSector() || m_sector_type.IsDartSector())
@@ -2869,7 +2869,7 @@ double ON_SubDMatrix::TestMatrix() const
       if (!(rc >= 0.0))
         break;
 
-      // E1 and E2 should be ortogonal to LP which means
+      // E1 and E2 should be orthogonal to LP which means
       // E0oLP and E1oLP should be zero
       //
       // Why?
@@ -2884,7 +2884,7 @@ double ON_SubDMatrix::TestMatrix() const
       //    = Transpose(LP) * (lambda E)
       //    = lambda * (Transpose(LP) * E )
       //    = lambda * LPoE
-      //   If LPoE != 0, then lamba = 1, which is not the case.
+      //   If LPoE != 0, then lambda = 1, which is not the case.
       rc = bSmoothOrDartTwoFaceCase ? 0.0 : TestMatrixReturnValue(fabs(E1oLP) / lengthE1, rc);
       if (!(rc >= 0.0))
         break;
@@ -2904,7 +2904,7 @@ double ON_SubDMatrix::TestMatrix() const
       break;
     }
 
-    // See if L1 and L2 can produce a reasonable normal in the simplist possible case
+    // See if L1 and L2 can produce a reasonable normal in the simplest possible case
     double z = m_sector_type.SurfaceNormalSign();
     if (!(z > 0.0))
       return ON_SUBD_RETURN_ERROR(ON_UNSET_VALUE);
@@ -3049,7 +3049,7 @@ double ON_SubDMatrix::TestEvaluation(
 
           if (SM.m_R > 0)
           {
-            // Print evauation coefficients.
+            // Print evaluation coefficients.
             const ON_TextLogIndent indent1(*text_log);
             text_log->Print("Limit suface evaluation coefficients:\n");
             const ON_TextLogIndent indent2(*text_log);
@@ -3333,7 +3333,7 @@ double ON_SubDMatrix::TestEvaluation(
       {        
         if (point_ring0[0].x == v1->m_P[0] && point_ring0[0].y == v1->m_P[1] && point_ring0[0].z == v1->m_P[2])
         {
-          // subdivision was reqiured to get initial point ring.
+          // subdivision was required to get initial point ring.
           v0 = v1;
           v1 = ON_SubD::SubdivideSector( v0, element, component_ring_count, fsh[recursion_level % 2]);
           if (nullptr == v1 || N != v1->m_edge_count || F != v1->m_face_count)

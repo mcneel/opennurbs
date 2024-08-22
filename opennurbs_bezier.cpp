@@ -38,7 +38,7 @@ bool ON_BezierCurve::GetTightBoundingBox(
 {
 
   // The result from ON_GetPointListBoundingBox() is good enough
-  // for file IO needs in the public souce code version.
+  // for file IO needs in the public source code version.
   return ON_GetPointListBoundingBox(
     m_dim,
     m_is_rat, 
@@ -3487,7 +3487,7 @@ bool ON_BezierCurve::EvTangent(
   {
     if ( Ev2Der( t, point, D1, D2 ) )
     {
-      // Use l'Hopital's rule to show that if the unit tanget
+      // Use l'Hopital's rule to show that if the unit tangent
       // exists, the 1rst derivative is zero, and the 2nd
       // derivative is nonzero, then the unit tangent is equal
       // to +/-the unitized 2nd derivative.  The sign is equal

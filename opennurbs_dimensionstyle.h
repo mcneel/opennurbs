@@ -136,7 +136,7 @@ public:
 public:
 
   /*
-  The default constructor content is idenical to ON_TextMask::None.
+  The default constructor content is identical to ON_TextMask::None.
   */
   ON_TextMask() = default;
   ~ON_TextMask() = default;
@@ -874,12 +874,12 @@ public:
     //OBSOLETE_AlternateDimensionUnitSystem_   = 108,
 
     /// <summary>
-    /// Dimension length display. See ON_DimStyle::DimensionLengthDisplay() for a descpription of this parameter.
+    /// Dimension length display. See ON_DimStyle::DimensionLengthDisplay() for a description of this parameter.
     /// </summary>
     DimensionLengthDisplay = 109,
 
     /// <summary>
-    /// Alternate dimension length display. See ON_DimStyle::AlternateDimensionLengthDisplay() for a descpription of this parameter.
+    /// Alternate dimension length display. See ON_DimStyle::AlternateDimensionLengthDisplay() for a description of this parameter.
     /// </summary>
     AlternateDimensionLengthDisplay = 110,
 
@@ -1437,7 +1437,7 @@ public:
   Parameters:
     unicode_code_point - [in]
   Returns:
-    The advande for a single code point glyph in the same units as TextHeight() using the current settings
+    The advance for a single code point glyph in the same units as TextHeight() using the current settings
     for TextHeight() and Font().
   Remarks:
     When sequences of code points are rendered, using the per glyph advance does not
@@ -2044,7 +2044,7 @@ public:
   /// text created in page space will be 3.5 millimeters high.
   /// 
   /// Ideally, ON_DimStyle::UnitSystem() would specify the text height units 
-  /// and ON_DimStyle::DimScale() cound be adjusted as model space extents require.
+  /// and ON_DimStyle::DimScale() could be adjusted as model space extents require.
   /// Text in instance definitions would have a well defined height and references
   /// to those instance definitions would display predictably in both model space and page space.
   ///</summary>
@@ -2221,15 +2221,15 @@ private:
   ///   For example, if m_lengthresolution is 2, then dimension length display will be n.ff
   ///   If m_lengthresolution=7,  then dimension length display will be n.fffffff.
   ///
-  /// FRACTONAL LENGTH DISPLAY: 
+  /// FRACTIONAL LENGTH DISPLAY:
   ///   If m_dimension_length_display is ON_DimStyle::LengthDisplay::InchesFractional or
   ///   ON_DimStyle::LengthDisplay::FeetAndInches, then fractional length display is used.
-  ///   In this case any fractional part will be rouded to the closest multiple 
+  ///   In this case any fractional part will be rounded to the closest multiple
   ///   of 1/(2^m_alternate_lengthresolution). 
   ///   Examples: If fractional length display is used and m_lengthresolution=2, 
   //    then the possible fractions are 1/4, 1/2(=2/4), 3/4. 
   ///   If fractional length display is used and m_lengthresolution=7, 
-  //    then any fractional part is rounded to the closest multipl of 1/128 (128=2^7).
+  //    then any fractional part is rounded to the closest multiple of 1/128 (128=2^7).
   /// </summary>
   int m_lengthresolution = 2;
 

@@ -461,7 +461,7 @@ public:
 
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature 
+    Search for a derivative, tangent, or curvature
     discontinuity.
   Parameters:
     c - [in] type of continity to test for.
@@ -950,7 +950,7 @@ public:
     tolerance -[in]
       distance tolerance to use when checking linearity.
   Returns 
-    true if the span is a non-degenrate line.  This means:
+    true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
     - The length of the the line segment from the span's initial 
       point to the span's control point is >= min_length.
@@ -1064,7 +1064,7 @@ public:
         the NURBS curve parameterization may not 
         match to the desired accuracy.  This situation
         happens when getting NURBS representations of
-        curves that have a transendental parameterization
+        curves that have a transcendental parameterization
         like circles
   Remarks:
     This is a low-level virtual function.  If you do not need
@@ -1095,7 +1095,7 @@ public:
         the NURBS curve parameterization may not 
         match.  This situation
         happens when getting NURBS representations of
-        curves that have a transendental parameterization
+        curves that have a transcendental parameterization
         like circles
   Remarks:
     This is a low-level virtual function.  
@@ -1289,7 +1289,7 @@ Parameters:
          [out] with one endpoint possibly changed.
   end1 - [in] if 0, change start of Crv1.  Otherwise change end.
 Returns:
-  true if the endpoints match. Falsse otherwise,
+  true if the endpoints match. False otherwise,
 */
 ON_DECL
 bool ON_ForceMatchCurveEnds(
@@ -1370,7 +1370,7 @@ int ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
 /*
 Description:
 Join all contiguous curves of an array of ON_Curves using an older sort algorithm.
-Unless this loder version is necessary, use ON_JoinCurves instead. 
+Unless this older version is necessary, use ON_JoinCurves instead.
 Parameters:
   InCurves - [in] Array of curves to be joined (not modified)
   OutCurves - [out] Resulting joined curves and copies of curves that were not joined to anything

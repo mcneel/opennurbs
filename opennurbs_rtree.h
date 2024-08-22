@@ -16,7 +16,7 @@
 
 /*
 The opennurbs rtree code is a modified version of the
-free and unrestricted R-tree implementation obtianed from 
+free and unrestricted R-tree implementation obtained from
 http://www.superliminal.com/sources/sources.htm
 
 The first lines on the website indicate the code is free and unrestricted:
@@ -342,7 +342,7 @@ public:
     See the comment for ON_RTreeIterator::First()
   Returns:
     True if a call to Value() will return a non-null pointer.
-    False if there is not a next leaf and all susequent calls to
+    False if there is not a next leaf and all subsequent calls to
     Value() will return null.
   See Also:
     ON_RTreeIterator::Prev();
@@ -381,7 +381,7 @@ public:
     See the comment for ON_RTreeIterator::Last()
   Returns:
     True if a call to Value() will return a non-null pointer.
-    False if there is not a previous leaf and all susequent calls to
+    False if there is not a previous leaf and all subsequent calls to
     Value() will return null.
   See Also:
     ON_RTreeIterator::Next();

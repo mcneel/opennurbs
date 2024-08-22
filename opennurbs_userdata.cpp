@@ -541,7 +541,7 @@ ON_UserData* ON_UnknownUserData::Convert() const
   ON_UserData* ud = nullptr;
   if ( IsValid() ) {
     const ON_ClassId* pID = ON_ClassId::ClassId( m_unknownclass_uuid );
-    // if pID is nullptr, it means the definiton of the unknown user data
+    // if pID is nullptr, it means the definition of the unknown user data
     // is still not available
     if ( pID ) {
       // The class definition has been dynamically loaded since the
@@ -887,7 +887,7 @@ static int cmp_hash_2dex_ij(const void* a, const void* b)
   //    The "i" values are actually 32 bit hashes of a string
   //    and are often large.  The sign of (ai[0] - bi[0]) cannot
   //    be used to compare ai[0] and bi[0] because integer
-  //    overflow occures with values that are large.
+  //    overflow occurs with values that are large.
   //
   ////// NO!
   //////if ( 0 == (rc = ai[0] - bi[0]) )

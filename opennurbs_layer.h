@@ -312,7 +312,7 @@ public:
   /*
   Description:
     Set the index of the linetype used by objects on this layer that do
-    not have a per object lintypes
+    not have a per object linetypes
   Parameters:
     linetype_index - [in]
       Passing -1 will clear the setting.
@@ -733,7 +733,7 @@ public:
 
 public:
 
-  // Layers are origanized in a hierarchical
+  // Layers are organized in a hierarchical
   // structure (like file folders).
   // If a layer is in a parent layer,
   // then m_parent_layer_id is the id of
@@ -819,7 +819,7 @@ public:
 
   /*
   Description:
-    Returns true if a layer's per-viewport visiblity property will be true,
+    Returns true if a layer's per-viewport visibility property will be true,
     initially, in newly created detail views.
   */
   bool PerViewportIsVisibleInNewDetails() const;

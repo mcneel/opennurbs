@@ -244,7 +244,7 @@ public:
   //   2 for success, 0 for failure
   // Remarks:
   //   Note that the parameterization of NURBS curve
-  //   does not match  circle's transcendental paramaterization.  
+  //   does not match  circle's transcendental parameterization.
   //   Use ON_Circle::GetRadianFromNurbFormParameter() and
   //   ON_Circle::GetParameterFromRadian() to convert between 
   //   the NURBS curve parameter and the transcendental parameter.

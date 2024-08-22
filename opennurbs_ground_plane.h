@@ -95,7 +95,7 @@ public:
   virtual void SetTextureRotation(double angle);
 
   // This method populates an ON_Material with default settings and returns true. This is designed
-  // to be overriden by a subclass that can return a more interesting material.
+  // to be overridden by a subclass that can return a more interesting material.
   virtual bool PopulateMaterial(ON_Material& mat) const;
 
   // Emergency virtual function for future expansion.

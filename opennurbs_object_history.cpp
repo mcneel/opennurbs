@@ -2140,7 +2140,7 @@ bool ON_HistoryRecord::SetSubDEdgeChainValues(int value_id, const ON_SimpleArray
       return false;
     const ON_UUID parent_subd_id = c->PersistentSubDId();
     if (ON_nil_uuid == parent_subd_id)
-      return false; // a persistent id is reqiured so that update history can find the new subd and update the runtime ON_SubDEdgePtr values.
+      return false; // a persistent id is required so that update history can find the new subd and update the runtime ON_SubDEdgePtr values.
     if (c->EdgeCount() <= 0)
       return false;
     if (false == c->HasPersistentEdgeIds())
@@ -2596,7 +2596,7 @@ void ON_HistoryRecord::Dump( ON_TextLog& text_log ) const
                  (m_record_type == ON_HistoryRecord::RECORD_TYPE::feature_parameters) 
                  ? "feature parameters" : "history parameters");
 
-  // list antededents
+  // list antecedents
   uuid_list.SetCount(0);
   m_antecedents.GetUuids(uuid_list);
   count = uuid_list.Count();
@@ -2700,7 +2700,7 @@ bool ON_HistoryRecord::Internal_ReadV5( ON_BinaryArchive& archive )
 
     // 16 October 2012 Dale Lear
     //   Fixing http://dev.mcneel.com/bugtrack/?q=101403
-    // Changing bSortDescendantsAferRead from true to false
+    // Changing bSortDescendantsAfterRead from true to false
     // per discussion in the bug report. 
     const bool bSortDescendantsAferRead = false;
     rc = m_descendants.Read(archive,bSortDescendantsAferRead);
@@ -2806,7 +2806,7 @@ bool ON_HistoryRecord::Write(ON_BinaryArchive& archive) const
 bool ON_HistoryRecord::Internal_WriteV5( ON_BinaryArchive& archive ) const
 {
   // 2015-06-01 Dale Lear
-  //   Save m_bCopyOnReplaceObject in the file in chunck version 1.2
+  //   Save m_bCopyOnReplaceObject in the file in chunk version 1.2
 
   const int minor_version 
     = (archive.Archive3dmVersion() >= 60)

@@ -287,7 +287,7 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
   }
   else
   {
-    dump.Print("Has custome section style\n");
+    dump.Print("Has custom section style\n");
   }
 }
 
@@ -1149,12 +1149,6 @@ public:
       const ON__LayerPerViewSettings* b 
       );
 
-  static
-  int CompareViewportId(
-      const ON__LayerPerViewSettings* a, 
-      const ON__LayerPerViewSettings* b
-      );
-
   /*
   Returns:
     A bitfield that sets the bits if a layer setting is
@@ -1258,11 +1252,6 @@ int ON__LayerPerViewSettings::Compare( const ON__LayerPerViewSettings* a, const 
     }
   }
   return rc;
-}
-
-int ON__LayerPerViewSettings::CompareViewportId( const ON__LayerPerViewSettings* a, const ON__LayerPerViewSettings* b )
-{
-  return ON_UuidCompare(a->m_viewport_id,b->m_viewport_id);
 }
 
 unsigned int ON__LayerPerViewSettings::SettingsMask() const
@@ -1751,7 +1740,7 @@ void ON__LayerExtensions::DeleteViewportSettings(
     {
       delete ud;
       // Set bit 0x01 of ON_Layer::m_extension_bits to prevent
-      // ON_Layer visibilty and color queries from wasting
+      // ON_Layer visibility and color queries from wasting
       // time looking for userdata.
       SetExtensionBit( const_cast<unsigned char*>(layer_m_extension_bits), 0x01 );
     }
@@ -1771,7 +1760,7 @@ void ON__LayerExtensions::DeleteViewportSettings(
       {
         delete ud;
         // Set bit 0x01 of ON_Layer::m_extension_bits to prevent
-        // ON_Layer visibilty and color queries from wasting
+        // ON_Layer visibility and color queries from wasting
         // time looking for userdata.
         SetExtensionBit( const_cast<unsigned char*>(layer_m_extension_bits), 0x01 );
       }
@@ -2022,7 +2011,7 @@ void ON_Layer::SetPerViewportPersistentVisibility( ON_UUID viewport_id, bool bVi
   if ( ON_UuidIsNotNil(viewport_id) )
   {
     bool bCreate = false; // This "false" is correct because the per viewport visibility
-                          // setting needs to be in existance for this call to make any
+                          // setting needs to be in existence for this call to make any
                           // sense in the first place.
     ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, &m_extension_bits, viewport_id, bCreate );
     if (vp_settings )
@@ -2047,7 +2036,7 @@ void ON_Layer::UnsetPerViewportPersistentVisibility( ON_UUID viewport_id )
   else
   {
     bool bCreate = false; // This "false" is correct because the per viewport visibility
-                          // setting needs to be in existance for this call to make any
+                          // setting needs to be in existence for this call to make any
                           // sense in the first place.
     ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, &m_extension_bits, viewport_id, bCreate );
     if (vp_settings )
@@ -2309,7 +2298,7 @@ bool ON_Layer::CopyPerViewportSettings(
   {
     if ( ON_UuidIsNil(viewport_id) )
     {
-      // copy per viwport settings for every viewport
+      // copy per viewport settings for every viewport
       const ON__LayerExtensions* soruce_layer_ud = ON__LayerExtensions::LayerExtensions(source_layer,&source_layer.m_extension_bits,false);
       if ( 0 != soruce_layer_ud )
       {
@@ -2328,7 +2317,7 @@ bool ON_Layer::CopyPerViewportSettings(
     }
     else
     {
-      // copy per viwport settings for a specified viewport.
+      // copy per viewport settings for a specified viewport.
       const ON__LayerPerViewSettings* src = ON__LayerExtensions::ViewportSettings( source_layer, &source_layer.m_extension_bits, viewport_id, false);
       if ( 0 != src )
       {

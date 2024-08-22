@@ -311,7 +311,7 @@ int ON_FontGlyph::GetGlyphList
     textlength,
     code_points.Array(),
     textlength,
-    nullptr,    // error status - ingnored
+    nullptr,    // error status - ignored
     0xFFFFFFFF, // mask as many errors as possible
     ON_UnicodeCodePoint::ON_ReplacementCharacter,  // unicode error mark when string is incorrectly encoded
     nullptr     // pointer to end of parsed text is ignored
@@ -1469,7 +1469,7 @@ bool ON_TextRun::GetGlyphContours(
     run.DisplayString(),
     run_font,
     bSingleStrokeFont,
-    0.0, // text_height = 0.0 means get glyphs in openurbs normalized font size
+    0.0, // text_height = 0.0 means get glyphs in opennurbs normalized font size
     0.0, // small_caps_scale,
     run_contours
   );

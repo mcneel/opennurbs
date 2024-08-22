@@ -1036,7 +1036,7 @@ public:
     to a UTF encoded wide character string.
   Parameters:
     windows_code_page - [in]
-      WIndows code page. For example, big5 = 950.
+      Windows code page. For example, big5 = 950.
   Returns:
     A UTF encoded wide character string.
   See Also:
@@ -1840,7 +1840,7 @@ public:
       is the standard format specification are supported.
       Avoid using %S (capital S).  See the Remarks for details.
     ... - [in]
-      arguments for replacable items in the format string.
+      arguments for replaceable items in the format string.
   Returns:
     True if successful.
     False if the string is too long or the format string is not valid.
@@ -3062,11 +3062,11 @@ public:
   ON_wString operator+(const unsigned char* sUTF8) const; // concatenate with a UTF-8 string
   ON_wString operator+(const wchar_t*) const;
 
-  // Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically apprropriate
+  // Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically appropriate
 	//ON_DEPRECATED // deprecation in progress
 	int Compare( const wchar_t* ) const;
 
-  // Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically apprropriate
+  // Use CompareOrdinal(), ComparePath(), CompareAttributeName(), or a test that is linguistically appropriate
 	// ON_DEPRECATED // deprecation in progress
 	int CompareNoCase( const wchar_t* ) const;
 
@@ -4333,7 +4333,7 @@ public:
       is the standard format specification are supported.
       Avoid using %S (capital S).  See the Remarks for details.
     ... - [in]
-      arguments for replacable items in the format string.
+      arguments for replaceable items in the format string.
   Returns:
     True if successful.
     False if the string is too long or the format string is not valid.
@@ -4596,7 +4596,7 @@ public:
   /*
   Description:
     Parses buffer to extract a number.
-    Sperscript and supscript numbers are supported.
+    Superscript and subscript numbers are supported.
   Returns:
     not zero:
       pointer to the first character that was not scanned
@@ -4986,7 +4986,7 @@ class ON_CLASS ON_NameHash
 {
 public:
   /*
-    Default conststruction creates ON_NameHash::UnsetNameHash.
+    Default construction creates ON_NameHash::UnsetNameHash.
   */
   ON_NameHash() = default;
   ~ON_NameHash() = default;

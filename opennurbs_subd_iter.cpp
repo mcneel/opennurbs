@@ -523,6 +523,24 @@ ON_SubDVertexIterator::ON_SubDVertexIterator(
   );
 }
 
+
+ON_SubDVertexIterator::ON_SubDVertexIterator(
+  const class ON_SubD& subd,
+  unsigned level_index
+
+)
+{
+  const ON_SubDLevel& level = subd.LevelForExperts(level_index);
+    Internal_Init(
+    ON_SubDRef::CreateReferenceForExperts(subd),
+    level.m_vertex_count,
+    level.m_vertex[0],
+    level.m_vertex[1],
+    ON_SubDComponentPtr::Null
+  );
+}
+
+
 ON_SubDVertexIterator::ON_SubDVertexIterator(
   const class ON_SubDRef& subd_ref
   )
@@ -681,6 +699,21 @@ ON_SubDEdgeIterator::ON_SubDEdgeIterator(
   )
 {
   const ON_SubDLevel& level = subd.ActiveLevel();
+  Internal_Init(
+    ON_SubDRef::CreateReferenceForExperts(subd),
+    level.m_edge_count,
+    level.m_edge[0],
+    level.m_edge[1],
+    ON_SubDComponentPtr::Null
+  );
+}
+
+ON_SubDEdgeIterator::ON_SubDEdgeIterator(
+  const class ON_SubD& subd,
+  unsigned level_index
+)
+{
+  const ON_SubDLevel& level = subd.LevelForExperts(level_index);
   Internal_Init(
     ON_SubDRef::CreateReferenceForExperts(subd),
     level.m_edge_count,
@@ -852,6 +885,22 @@ ON_SubDFaceIterator::ON_SubDFaceIterator(
   )
 {
   const ON_SubDLevel& level = subd.ActiveLevel();
+  Internal_Init(
+    ON_SubDRef::CreateReferenceForExperts(subd),
+    level.m_face_count,
+    level.m_face[0],
+    level.m_face[1],
+    ON_SubDComponentPtr::Null
+  );
+}
+
+ON_SubDFaceIterator::ON_SubDFaceIterator(
+  const class ON_SubD& subd,
+  unsigned level_index
+
+)
+{
+  const ON_SubDLevel& level = subd.LevelForExperts(level_index);
   Internal_Init(
     ON_SubDRef::CreateReferenceForExperts(subd),
     level.m_face_count,
@@ -1770,7 +1819,7 @@ const ON_SubDFace* ON_SubDSectorIterator::IncrementFace(
       if (edge != ON_SUBD_EDGE_POINTER(face1_edges->m_ptr))
         continue;
 
-      // At this point, face1->Edges(fei) is the edge I just hopped accross
+      // At this point, face1->Edges(fei) is the edge I just hopped across
       // to get from the old current face to face 1. Update current face
       // information and return.
       m_current_face = face1; 

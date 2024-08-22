@@ -64,7 +64,7 @@ public:
 
   bool GetFoci( ON_3dPoint& F1, ON_3dPoint& F2 ) const;
 
-  // Evaluation uses the trigonometrix parameterization
+  // Evaluation uses the trigonometric parameterization
   // t -> plane.origin + cos(t)*radius[0]*plane.xaxis + sin(t)*radius[1]*plane.yaxis
   // evaluate parameters and return point
   ON_3dPoint  PointAt( double ) const;
@@ -118,7 +118,7 @@ public:
         const ON_3dVector&
         );
 
-  // parameterization of NURBS curve does not match ellipse's transcendental paramaterization
+  // parameterization of NURBS curve does not match ellipse's transcendental parameterization
   int GetNurbForm( ON_NurbsCurve& ) const; // returns 0=failure, 2=success
 
 public: // members left public

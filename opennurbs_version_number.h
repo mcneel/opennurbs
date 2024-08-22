@@ -204,7 +204,7 @@ Returns:
   true 
     Input parameters are valid and testing internal version number utilities passed.
   false
-    Inpute parameters are not valid or a bug was detected in internal version number utilities.
+    Input parameters are not valid or a bug was detected in internal version number utilities.
 */
 ON_DECL
 bool ON_TestVersionNumber(

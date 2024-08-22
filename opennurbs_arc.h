@@ -25,7 +25,7 @@ Details:
 	The parameterization of the ON_Arc is inherited from the ON_Circle it is derived from.
 	In particular
 			 t -> center + cos(t)*radius*xaxis + sin(t)*radius*yaxis	
-	where xaxis and yaxis, (part of ON_Circle::m_plane) form an othonormal frame of the plane 
+	where xaxis and yaxis, (part of ON_Circle::m_plane) form an orthonormal frame of the plane
 	containing the circle.
 */
 class ON_CLASS ON_Arc : public ON_Circle
@@ -514,7 +514,7 @@ public:
   // Description:
   //   Get a rational degree 2 NURBS curve representation
   //   of the arc.  Note that the parameterization of NURBS curve
-  //   does not match  arc's transcendental paramaterization.  
+  //   does not match  arc's transcendental parameterization.
   //   Use GetRadianFromNurbFormParameter() and
   //   GetParameterFromRadian() to convert between the NURBS curve 
   //   parameter and the transcendental parameter

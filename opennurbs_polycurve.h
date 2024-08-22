@@ -83,8 +83,8 @@ public:
       If true, gaps are allowed between polycurve segments.
       If false, gaps are not allowed between polycurve segments.
     text_log - [in] if the object is not valid and text_log
-        is not nullptr, then a brief englis description of the
-        reason the object is not valid is appened to the log.
+        is not nullptr, then a brief english description of the
+        reason the object is not valid is appended to the log.
         The information appended to text_log is suitable for 
         low-level debugging purposes by programmers and is 
         not intended to be useful as a high level user 
@@ -248,9 +248,9 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature discontinuity.
+    Search for a derivative, tangent, or curvature discontinuity.
   Parameters:
-    c - [in] type of continity to test for.  If ON::continuity::C1_continuous
+    c - [in] type of continuity to test for.  If ON::continuity::C1_continuous
     t0 - [in] search begins at t0
     t1 - [in] (t0 < t1) search ends at t1
     t - [out] if a discontinuity is found, the *t reports the
@@ -627,7 +627,7 @@ public:
   Description:
     Modify the one or both locations at the end of 
     segment[gap_index-1] and the start of segment[gap_index]
-    so they are coindicent.  
+    so they are coincident.
   Parameters:
     gap_index - [in] 1 <= gap_index < Count()
       If the locations at the end of segment[gap_index-1] and 
@@ -672,7 +672,7 @@ public:
            ON_Curve*
            );
 
-  //PrependAndMatch() and AppendAndMatch() return false if this->IsCLosed() or 
+  //PrependAndMatch() and AppendAndMatch() return false if this->IsClosed() or
   //this->Count() > 0 and curve is closed
   bool PrependAndMatch(ON_Curve*); //Prepend and match end of curve to start of polycurve
   bool AppendAndMatch(ON_Curve*);  //Append and match start of curve to end of polycurve

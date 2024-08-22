@@ -192,12 +192,12 @@ public:
         const ON_Xform&
         );
 
-  void Rotate( // rotatation in XY plane
+  void Rotate( // rotation in XY plane
         double,              // angle in radians
         const ON_2fPoint&   // center of rotation
         );
 
-  void Rotate( // rotatation in XY plane
+  void Rotate( // rotation in XY plane
         double,              // sin(angle)
         double,              // cos(angle)
         const ON_2fPoint&   // center of rotation

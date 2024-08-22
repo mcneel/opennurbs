@@ -226,7 +226,7 @@ ON_Symmetry::Region ON_Symmetry::PointRegion(ON_3dPoint point, bool bUseCleanupT
     break;
   }
 
-  // When the point is not valid, the symmetry is not set, or an evaluaton produces nans, then return ON_Symmetry::Region::Unset.
+  // When the point is not valid, the symmetry is not set, or an evaluation produces nans, then return ON_Symmetry::Region::Unset.
   return ON_Symmetry::Region::Unset; 
 }
 
@@ -509,7 +509,7 @@ bool ON_Symmetry::IsMotifBoundarySubDVertex(const class ON_SubDVertex* v, bool b
   break;
 
   case ON_Symmetry::Type::Rotate:
-    // All boundary vertices must be eligable for joining.
+    // All boundary vertices must be eligible for joining.
     // The pinwheel motifs in RH-63376 shows why.
     return true;
     break;
@@ -933,7 +933,7 @@ bool ON_Symmetry::Read(ON_BinaryArchive& archive)
     if (false == archive.ReadUuid(symmetry_id))
       break;
 
-    // Before June 1, 2021: Chunk verson 2 for rotations that had a rotation plane.
+    // Before June 1, 2021: Chunk version 2 for rotations that had a rotation plane.
     // June 1, 2021: Chunk version 3 for symmetry_type=113 prototyping rotations with no rotation plane
     // Future: Chunk version 4 for final rotations not using a rotation plane.
     int inner_chunk_version = 0;
@@ -1289,7 +1289,7 @@ static bool Internal_SameRotation(const ON_Symmetry* lhs, const ON_Symmetry* rhs
     const double rhs_a = ((lhs_t * rhs_t < 0.0) ? -1.0 : 1.0) * rhs->RotationAngleRadians();
     if (fabs(lhs_a - rhs_a) <= zero_tolerance)
     {
-      // a point 1 unit from the common axis will rotate within zero tolrance
+      // a point 1 unit from the common axis will rotate within zero tolerance
       return true;
     }
   }
@@ -2223,7 +2223,7 @@ double ON_Symmetry::CleanupTolerance() const
 {
   // The default constructor sets m_cleanup_tolerance = 0.0.
   // Handling m_cleanup_tolerance this way insures that ON_Symmetry::CleanupTolerance()
-  // will always return ON_Symmetry::ZeroTolerance (which may chnage), even with class definitions 
+  // will always return ON_Symmetry::ZeroTolerance (which may change), even with class definitions
   // read from old archives.
   return (m_cleanup_tolerance >= ON_Symmetry::ZeroTolerance) ? m_cleanup_tolerance : ON_Symmetry::ZeroTolerance;
 }

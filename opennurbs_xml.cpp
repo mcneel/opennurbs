@@ -4313,12 +4313,12 @@ bool ON_XMLParameters::GetParamNode(const ON_XMLNode& node, ON_XMLVariant& vValu
   }
   else
   if ((sType.CompareNoCase(L"double") == 0) ||
-      (sType.CompareNoCase(L"real") == 0))  // For backward compatibilty with old XML.
+      (sType.CompareNoCase(L"real") == 0))  // For backward compatibility with old XML.
   {
     vValueOut = v.AsDouble();
   }
   else
-  if (sType.CompareNoCase(L"point") == 0)  // For backward compatibilty with old XML.
+  if (sType.CompareNoCase(L"point") == 0)  // For backward compatibility with old XML.
   {
     vValueOut = v.AsColor();
   }
@@ -4532,10 +4532,8 @@ bool ON_XMLParametersV8::GetParam(const wchar_t* wszParamName, ON_XMLVariant& vV
 #define ON_RDK_UD_MATERIAL     L"material"
 #define ON_RDK_UD_INSTANCE_ID  L"instance-id"
 
-static const ON_UUID uuidUniversalRenderEngine = { 0x99999999, 0x9999, 0x9999, { 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99, 0x99 } };
-
-ON_UUID ON_UuidDefaultMaterialInstance    = { 0xdefadefa, 0xdefa, 0xdefa, { 0xde, 0xfa, 0xde, 0xfa, 0xde, 0xfa, 0xde, 0xfa } };
-ON_UUID ON_UuidDefaultEnvironmentInstance = { 0xdefaeeee, 0xdefa, 0xeeee, { 0xde, 0xfa, 0xee, 0xee, 0xde, 0xfa, 0xee, 0xee } };
+ON_UUID ON_UuidDefaultMaterialInstance    = ON_RenderContentType_DefaultMaterial;
+ON_UUID ON_UuidDefaultEnvironmentInstance = ON_RenderContentType_DefaultEnvironment;
 
 ON_OBJECT_IMPLEMENT(ON_RdkUserData, ON_UserData, "AFA82772-1525-43dd-A63C-C84AC5806911");
 
@@ -4670,7 +4668,7 @@ bool ON_RdkUserData::DeleteAfterRead(const ON_BinaryArchive& archive, ON_Object*
   // This replaces a hack in CRhinoRead3dmHelper::ReadMaterialTable() which corrected
   // the plug-in id of V4 materials. These materials were wrongly saved by V4 with the
   // current render engine id instead of 'universal'.
-  pOnMaterial->SetMaterialPlugInId(uuidUniversalRenderEngine); // Fixes RH-27240 'V4 RDK materials do not work correctly in V6'
+  pOnMaterial->SetMaterialPlugInId(ON_UniversalRenderEngineId); // Fixes RH-27240 'V4 RDK materials do not work correctly in V6'
 
   // Transfer the instance id from the user data to the new member variable.
   const auto* wsz = ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_UD_MATERIAL;
@@ -5339,27 +5337,28 @@ void ON_RdkDocumentDefaults::CreateXML(void)
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_ON, false);
           p.SetParam(ON_RDK_SUN_DAYLIGHT_SAVING_MINUTES, 60);
 
-          int cy = 0, cm = 0, cd = 0; double ch = 0.0;
-          ON_SunEngine::GetCurrentLocalDateTime(cy, cm, cd, ch);
+          int dy = 0, dm = 0, dd = 0; double dh = 0.0;
+          ON_SunEngine::GetDefaultLocalDateTime(dy, dm, dd, dh);
 
           ON_SunEngine engine(ON_SunEngine::Accuracy::Minimum);
-          engine.SetLocalDateTime(cy, cm, cd, ch);
+          engine.SetLocalDateTime(dy, dm, dd, dh);
           int y = 0, m = 0, d = 0; double h = 0.0;
           engine.LocalDateTime(y, m, d, h);
           p.SetParam(ON_RDK_SUN_DATE_YEAR,  y);
           p.SetParam(ON_RDK_SUN_DATE_MONTH, m);
           p.SetParam(ON_RDK_SUN_DATE_DAY,   d);
           p.SetParam(ON_RDK_SUN_TIME_HOURS, h);
-          p.SetParam(ON_RDK_SUN_AZIMUTH,            engine.Azimuth());
-          p.SetParam(ON_RDK_SUN_ALTITUDE,           engine.Altitude());
-          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE,  engine.TimeZoneHours());
+          p.SetParam(ON_RDK_SUN_AZIMUTH,  engine.Azimuth());
+          p.SetParam(ON_RDK_SUN_ALTITUDE, engine.Altitude());
 
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENABLED, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_SHADOW_INTENSITY, 1.0);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_OVERRIDE, (_major_version < 6) ? false : true);
           p.SetParam(ON_RDK_SUN_SKYLIGHT_ENVIRONMENT_ID, ON_nil_uuid);
 
-          // Don't create defaults for North, Latitude or Longitude because they are stored in the earth anchor point.
+          // Don't create defaults for North, Latitude or Longitude because they are stored in the
+          // earth anchor point. However, the time zone is not, so create the default for it.
+          p.SetParam(ON_RDK_SUN_OBSERVER_TIMEZONE, 0.0);
         }
 
         // Safe frame.

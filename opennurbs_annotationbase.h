@@ -197,7 +197,7 @@ public:
 
   /*
   Returns:
-  Text information with rich text formatting insturctions removed.
+  Text information with rich text formatting instructions removed.
   Fields are not evaluated.
   */
   const ON_wString PlainText() const;
@@ -241,7 +241,7 @@ public:
     in cases where id collisions occur and ids need to be changed.
   Parameters:
     bKeepOverrides - [in]
-      If you are not an expert oding something low level and complicated, then
+      If you are not an expert coding something low level and complicated, then
       call SetDimensionStyleId(dimstyle_id) or pass bKeepOverrides = false.
 
       If bKeepOverrides is true and dimstyle_id is not nil and this object has 
@@ -332,7 +332,7 @@ public:
       style candidate to evaluate.
     bRequireSetOverrides - [in]
       If bRequireSetOverrides is true, then override_style_candidate->HasOverrides() must be true for a valid candidate.
-      If bRequireSetOverrides is flase, then override_style_candidate->HasOverrides() can have any value.
+      If bRequireSetOverrides is false, then override_style_candidate->HasOverrides() can have any value.
   Returns:
     True if override_style could be successfully used as the parameter 
     to SetOverrideDimensionStyle.
@@ -448,7 +448,7 @@ public:
     ptr - [in]
       pointer to test
   Returns:
-    True if ptr is not nullptr and points to the override style mangaged by this 
+    True if ptr is not nullptr and points to the override style managed by this
     instance.
   */
   bool IsOverrideStylePointer(
@@ -502,7 +502,7 @@ private:
     Gets the appropriate ON_DimStyle to query for a property value.
   Parameters:
     parent_style - [in]
-      parent style pased to the ON_Annotation query function
+      parent style passed to the ON_Annotation query function
     field_id - [in]
       field being queried - this is used to select between using the override style or the parent style.
   */
@@ -1067,7 +1067,7 @@ public:
   void SetTextString(const wchar_t* string);
   /*
   Returns:
-    Dot's secondary text displayed when a user interface event like cliking or hovering occurs.
+    Dot's secondary text displayed when a user interface event like clicking or hovering occurs.
     Typically longer and more detailed than the primary text.
     Default = empty string.
   Remarks:

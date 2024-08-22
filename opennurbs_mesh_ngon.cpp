@@ -1614,7 +1614,7 @@ void ON_Mesh::SetNgonCount(
     }
     else
     {
-      // less expensive to reacalculate map array
+      // less expensive to recalculate map array
       while ( --ngon_count0 >= ngon_count )
       {
         if ( a[ngon_count0] )
@@ -2266,7 +2266,7 @@ class ON_V4V5_MeshNgon* ON_V4V5_MeshNgonList::V4V5_AddNgon(int N)
     return 0;
   ngon.vi = (int*)(blk + 1);
   ngon.fi = ngon.vi + N;
-  memset(ngon.vi,0xFF,(2*N)*sizeof(int)); // set all indicies to -1
+  memset(ngon.vi,0xFF,(2*N)*sizeof(int)); // set all indices to -1
   blk->next = m_memblk_list;
   m_memblk_list = blk;
   return &ngon;
@@ -2308,13 +2308,13 @@ public:
   ON_V4V5_MeshNgonUserData(const ON_V4V5_MeshNgonUserData&);
   ON_V4V5_MeshNgonUserData& operator=(const ON_V4V5_MeshNgonUserData&);
 
-  // vitual ON_UserData override
+  // virtual ON_UserData override
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
   unsigned int SizeOf() const override;
   bool Write(ON_BinaryArchive&) const override;
   bool Read(ON_BinaryArchive&) override;
 
-  // vitual ON_UserData override
+  // virtual ON_UserData override
   bool GetDescription( ON_wString& ) override;
   bool Archive() const override;
 
@@ -2522,7 +2522,7 @@ bool ON_V4V5_MeshNgonUserData::Read(ON_BinaryArchive& archive)
   return rc;
 }
 
-// vitual ON_UserData override
+// virtual ON_UserData override
 bool ON_V4V5_MeshNgonUserData::GetDescription( ON_wString& description )
 {
   description = L"Mesh N-gon list";
@@ -3307,7 +3307,7 @@ static bool FaceInPlane(
 {
   // Note:
   //   This function is called only with Fvi[] lists that have been checked to
-  //   have valid enteries.
+  //   have valid entries.
   double point_buffer[3];
 
   if ( !(fabs(e.ValueAt(vertex_list.GetPoint(Fvi[0],point_buffer))) <= planar_tolerance) )
@@ -3572,7 +3572,7 @@ static unsigned int SetFaceNeighborMap(
           break;
         }
         if ( 5 == nbr_face_side )
-          break; // we found a neighbor and are finished seaching
+          break; // we found a neighbor and are finished searching
       }
     }
   }
@@ -3708,7 +3708,7 @@ static int GetCoplanarConnectedFaces(
             break;
           }
           if ( 5 == nbr_face_side )
-            break; // we found a neighbor and are finished seaching
+            break; // we found a neighbor and are finished searching
         }
       }
     }
@@ -3764,7 +3764,7 @@ Parameters:
     array of length ngon_fi_count that contains the
     face neighbor information.  
     ngon_nbr_map[face_index].m_NFS[j] must be zero
-    for open boundaryies.  If the face side identified by
+    for open boundaries.  If the face side identified by
     ngon_nbr_map[face_index].m_NFS[j] is assigned to an
     ngon boundary, then it is marked as a boundary segment.
   ngon_vi - [out]
@@ -4463,7 +4463,7 @@ unsigned int ON_MeshNgon::FindPlanarNgons(
     {
       NgonMap.Reserve(face_count);
       NgonMap.SetCount(face_count);
-      ngonMap = NgonMap.Array(); // in case a reallocation occured.
+      ngonMap = NgonMap.Array(); // in case a reallocation occurred.
       for ( face_index = 0; face_index < face_count; face_index++ )
         ngonMap[face_index] = ON_UNSET_UINT_INDEX;
     }

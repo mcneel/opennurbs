@@ -904,10 +904,10 @@ ON_PolylineCurve::Evaluate( // returns false if unable to evaluate
     if ( -2 == side || 2 == side )
     {
       // 9 November 2010 Dale Lear - ON_TuneupEvaluationParameter fix
-      //   When evluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
+      //   When evaluation passes through ON_CurveProxy or ON_PolyCurve reparamterization
       //   and the original side parameter was -1 or +1, it is changed to -2 or +2
-      //   to indicate that if t is numerically closed to an end paramter, then
-      //   it should be tuned up to be at the end paramter.
+      //   to indicate that if t is numerically closed to an end parameter, then
+      //   it should be tuned up to be at the end parameter.
       double a = t;
       if ( ON_TuneupEvaluationParameter( side, m_t[segment_index], m_t[segment_index+1], &a) )
       {

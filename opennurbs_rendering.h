@@ -123,7 +123,7 @@ public:
     mapping_id - [in]
       ON_TextureMapping id
   Returns:
-    True if the mapping channel was added or a pefect
+    True if the mapping channel was added or a perfect
     match already existed.  False if a mapping channel 
     with a different mapping_id already exists for this
     plug-in and channel.
@@ -185,13 +185,13 @@ public:
        procedural textures and use these for
        quick previews.
   Returns:
-    True if advancded texture preview is enabled.
+    True if advanced texture preview is enabled.
   */
   void EnableAdvancedTexturePreview(bool b);
 
   /*
   Returns:
-    True if advancded texture preview is enabled.
+    True if advanced texture preview is enabled.
   */
   bool AdvancedTexturePreview() const;
 

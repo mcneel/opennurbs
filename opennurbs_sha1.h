@@ -210,7 +210,7 @@ public:
     Parse a string of 40 hexadecimal digits to create a SHA-1 hash.
   Parameters:
     string_to_parse - [in]
-    bParseLeadinglSpaces - [in]
+    bParseLeadingSpaces - [in]
       If true, leading space characters are parsed.
       Otherwise leading space characters cause parsing to fail.
     bParseInteriorSpace - [in]
@@ -222,7 +222,7 @@ public:
     bIgnoreInternalSpaces - [in]
       If true, isolated hyphens are ignored until 40 hex digits are read.
     bIgnoreInternalHyphens - [in]
-      If true, leading spaces and isolated interior spacess are ignored until 40 hex digits are read.
+      If true, leading spaces and isolated interior spaces are ignored until 40 hex digits are read.
     failure_return_value - [in]
       Value to return if string_to_parse cannot be parsed as 40 hex digits.
   Returns:
@@ -270,7 +270,7 @@ public:
   Returns:
     True if this hash is not equal to ON_SHA1_Hash::EmptyContentHash or ON_SHA1_Hash::ZeroDigest.
   Remarks:
-    ON_SHA1_Hash::EmptyContentHash is the SHA1 of hasing zero bytes and has a non zero digest.
+    ON_SHA1_Hash::EmptyContentHash is the SHA1 of hashing zero bytes and has a non zero digest.
     ON_SHA1_Hash::ZeroDigest is 20 bytes of zeros. Opennurbs uses ON_SHA1_Hash::ZeroDigest to
     indicate a SHA1 has is not initialized.
   */
@@ -326,7 +326,7 @@ public:
 
   /*
   Description:
-    Make one or more calls to AccumulateBytes() as the sequenence of bytes is available.
+    Make one or more calls to AccumulateBytes() as the sequence of bytes is available.
 
   Parameters:
     buffer - [in]
@@ -439,7 +439,7 @@ public:
 
   /*
   Description:
-    Accumuates the full and relative path names.
+    Accumulates the full and relative path names.
   */
   void AccumulateFileReference(
     const class ON_FileReference& file_reference
@@ -550,8 +550,8 @@ public:
 
   /*
   Returns:
-    SHA-1 hash value of the sequenence of ByteCount() bytes that have been
-    passed to this ON_SHA1 classe's Update() function since construction
+    SHA-1 hash value of the sequence of ByteCount() bytes that have been
+    passed to this ON_SHA1 class's Update() function since construction
     or the last call to Reset().
   Remarks:
     You may use Hash() to compute intermediate SHA-1 hash values. 
@@ -606,7 +606,7 @@ private:
 
 /*
 Description:
-  Test speeds of various hash algoritmhs.
+  Test speeds of various hash algorithms.
 Parameters:
   byte_count - [in]
     Number of bytes to hash. This number is rounded up to the nearest multiple of 1024.
@@ -638,7 +638,7 @@ void ON_TestHashSpeed(
 
 /*
 Description:
-  Test speeds of various hash algoritmhs and use text_log to print the results.
+  Test speeds of various hash algorithms and use text_log to print the results.
 Parameters:
   byte_count - [in]
     Number of bytes to hash. This number is rounded up to the nearest multiple of 1024.

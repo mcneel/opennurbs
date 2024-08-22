@@ -109,7 +109,7 @@ public:
   //
   // Whenever there is a question about which values are valid,
   // it is assumed the m_V array is valid and the double precision
-  // informtion should be destroyed.
+  // information should be destroyed.
   int m_fcount = 0;  // single precision vertex count
   int m_dcount = 0;  // double precision vertex count
   ON__UINT32 m_fCRC = 0; // crc of float vertex array
@@ -1222,11 +1222,11 @@ bool ON_Mesh::IsValid( ON_TextLog* text_logx ) const
     const ON_3fPoint* fV = m_V.Array();
     for ( fi = 0; fi < facet_count; fi++ ) 
     {
-      // This test is considered relatively harsh for float precision meshes with nearly degnerate faces
+      // This test is considered relatively harsh for float precision meshes with nearly degenerate faces
       // after they are transformed by a transform with a reasonable sized translation 
       // component, as in https://mcneel.myjetbrains.com/youtrack/issue/RH-10177.
       // However, removing this creates unreasonable pressure on double precision meshes, because, after being 
-      // trasformed to double precision, a wrongly valid single-precision-collapsed-edge mesh makes an
+      // transformed to double precision, a wrongly valid single-precision-collapsed-edge mesh makes an
       // invalid double-precision mesh altogether. This cannot be tolerated.
       // The goal should be to have invalid single-precision-only meshes be treated by MeshRepair when created.
       // See https://mcneel.myjetbrains.com/youtrack/issue/RH-54563 and
@@ -2340,7 +2340,7 @@ bool ON_Mesh::Write( ON_BinaryArchive& file ) const
 //// This id was used in the ON_Mesh::m_mapping_id
 //// field to indicate the texture coordinates are the
 //// canonical ON_Mesh uv texture coordinates by the 
-//// OpenNURBS parameteric surface meshers like
+//// OpenNURBS parametric surface meshers like
 //// ON_Surface::CreateMesh() and ON_Brep::CreateMesh().
 //
 //// {B988A6C2-61A6-45a7-AAEE-9AED7EF4E316}
@@ -2902,7 +2902,7 @@ bool ON_Mesh::Transform(
        const ON_Xform& xform
        )
 {
-  // Tansform user data before doing sanity checks in case rogue code
+  // Transform user data before doing sanity checks in case rogue code
   // damages m_V[], m_dV[] or other data members.
   TransformUserData(xform);
 	DestroyTree();
@@ -3132,7 +3132,7 @@ bool ON_Mesh::SwapCoordinates(
 
 void ON_Mesh::SetClosed(int b)
 {
-  // 6 Novermber 2003 Dale Lear - let expert user set m_mesh_is_closed
+  // 6 November 2003 Dale Lear - let expert user set m_mesh_is_closed
   char mesh_is_closed = 0;
   switch(b)
   {
@@ -3212,7 +3212,7 @@ int ON_MeshIsManifold_Compare3floats( const void* a, const void* b )
       continue; // neither x nor y is a nan
 
     // at least one of x and y is a nan
-    // use conventaion (not a nan) < (nan) because this code must use a well ordered compare for all values.
+    // use convention (not a nan) < (nan) because this code must use a well ordered compare for all values.
     if (x == x)
       return -1; // x is not a nan, y is a nan
     if (y == y)
@@ -4139,7 +4139,7 @@ unsigned int ON_Mesh::AppendDuplicateVertex(
 
 /*
 Description:
-  Increases the capactiy of arrays to be at least the requested capacity.
+  Increases the capacity of arrays to be at least the requested capacity.
 Parameters:
   new_vertex_capacity - [in]
     desired capacity
@@ -5918,7 +5918,7 @@ void ON_Mesh::Append( std::vector<std::shared_ptr<const ON_Mesh>> meshes )
         {
           if (this_mesh_mp_hash != mp_hash)
           {
-            // variable mesh paramters - means output gets none.
+            // variable mesh parameters - means output gets none.
             bSetMeshParameters = false;
           }
         }
@@ -7006,7 +7006,7 @@ const bool ON_MeshParameters::TextureRangeIsValid() const
 
 void ON_MeshParameters::SetTextureRangePictureFrameHack()
 {
-  // A 2012 hack to fix cited issues. Serch for calls in core Rhino
+  // A 2012 hack to fix cited issues. Search for calls in core Rhino
   // code for comments with more details.
   //   Fix http://mcneel.myjetbrains.com/youtrack/issue/RH-17042
   //     Setting mp.TextureRange() = 0 here fixes RH-17042.
@@ -7850,7 +7850,7 @@ static bool Internal_MeshParametersRead_UpdateSubDParameters(
 
   /*
   The adaptive SubD stuff appeared in early Nov 2020. The Dec 1 2020 date gives the changes
-  time to work through the build and disitrubution processes.
+  time to work through the build and distribution processes.
   */
   const unsigned before_adaptive_subd_display = ON_VersionNumberConstruct(7, 1, 2020, 12, 1, 0);
   if (archive_opennurbs_version >= before_adaptive_subd_display)
@@ -7872,7 +7872,7 @@ static bool Internal_MeshParametersRead_UpdateSubDParameters(
   const size_t mp_count = sizeof(mp) / sizeof(mp[0]);
   for (size_t mp_dex = 0; mp_dex < mp_count; ++mp_dex)
   {
-    // If the only geometry setting differnce bewteen a built-in type and archive_mp
+    // If the only geometry setting difference between a built-in type and archive_mp
     // is the subd meshing parameters, update archive_mp to use the built-in's subd 
     // meshing parameters.
     const ON_SubDDisplayParameters mp_subdp = mp[mp_dex].SubDDisplayParameters();
@@ -8300,7 +8300,7 @@ struct EDGEINFO
             // 6 = edge would be a boundary if mesh were exploded
             // 7 = quad would not be convex
             // 8 = if the edge were removed, the quad would not pass the min_diagonal_length_ratio test (not "square" enough)
-            // 16 = tha diagnoal is too short to remove in the first pass that makes the "obvious" quads.
+            // 16 = tha diagonal is too short to remove in the first pass that makes the "obvious" quads.
   double length;
 };
 
@@ -8519,8 +8519,8 @@ bool ON_Mesh::ConvertTrianglesToQuads(
       }
 
       // It is CRITICAL that the length compare use >=.
-      // Otherwise tesselations of equailateral triangles
-      // will not work right in this fuction.
+      // Otherwise tesselations of equilateral triangles
+      // will not work right in this function.
       fei = top.m_topf[ei.fi[1]].m_topei;
       if ((i != fei[0] && EI[fei[0]].length >= ei.length)
         || (i != fei[1] && EI[fei[1]].length >= ei.length)
@@ -10154,7 +10154,7 @@ double ON_SurfaceCurvature::MaximumRadius() const
     }
     else
     {
-      // The minimum directional curvaature is in a principal curvature direction.
+      // The minimum directional curvature is in a principal curvature direction.
       k = (fabs(k1) <= fabs(k2)) ? fabs(k1) : fabs(k2);
     }
 
@@ -10811,7 +10811,7 @@ bool ON_MeshTopology::IsValid() const
     }
   }
 
-  // make sure every mesh.m_V[] maps to a topoligical vertex
+  // make sure every mesh.m_V[] maps to a topological vertex
   for ( vi = 0; vi < v_count; vi++ ) {
     if ( vCheck[vi] != 1 )
       return false; // mesh.m_V[vi] is not referenced
@@ -10958,7 +10958,7 @@ void ON_MeshTopology::Dump( ON_TextLog& dump ) const
       dump.Print("{%g,%g,%g} ", p.x, p.y, p.z);
     }
 
-    // list all mesh geometry viertices that are coincident with this
+    // list all mesh geometry vertices that are coincident with this
     // topological vertex
     dump.Print("(");
     for ( j = 0; j < v.m_v_count; j++ ) {
@@ -10967,7 +10967,7 @@ void ON_MeshTopology::Dump( ON_TextLog& dump ) const
       dump.Print("m_V[%d]",v.m_vi[j]);
     }
 
-    // list all toplogical edges that begin/end at this topological vertex
+    // list all topological edges that begin/end at this topological vertex
     dump.Print(") (");
     for ( j = 0; j < v.m_tope_count; j++ ) {
       if ( j )
@@ -10981,7 +10981,7 @@ void ON_MeshTopology::Dump( ON_TextLog& dump ) const
   for ( ei = 0; ei < tope_count; ei++ ) {
     const ON_MeshTopologyEdge& e = m_tope[ei];
     dump.Print("tope %d: topv%d to topvv%d (", ei, e.m_topvi[0], e.m_topvi[1] );
-    // list all mesh topolical faces attached to this topolical edge
+    // list all mesh topological faces attached to this topological edge
     for ( j = 0; j < e.m_topf_count; j++ ) {
       if (j)
         dump.Print(",");
@@ -11035,7 +11035,7 @@ bool ON_MeshTopology::Create()
 
   while ( 0 == b32IsValid || -1 == b32IsValid ) 
   {
-    // while() is for flow control - this is a while() {... break;} statment.
+    // while() is for flow control - this is a while() {... break;} statement.
     Destroy();
     b32IsValid = 0;
 
@@ -14060,7 +14060,7 @@ void ON_Mesh::UpdateDoublePrecisionVertices()
     // a subset of the float precision vertices
     // have been modified.  So, attempt to
     // keep the precision on double vertices
-    // that alread agree with the float vertices
+    // that already agree with the float vertices
     // in float precision.
     ON_3fPoint P;
     while (dV < dVend)
@@ -17480,7 +17480,7 @@ unsigned int ON_Mesh::MergeFaceSets(
 
         emarks[ci.m_index] |= e_list_mark;
 
-        // add an emark to face tounching this edge
+        // add an emark to face touching this edge
         vmarks[e.m_topvi[0]] |= emark;
         vmarks[e.m_topvi[1]] |= emark;
         for (int efi = 0; efi < e.m_topf_count; ++efi)
@@ -17761,7 +17761,7 @@ unsigned int ON_Mesh::MergeFaceSets(
       ngon_fi.Append(fi);
     }
 
-    // grow ngon by jumping accross edges in ci_list[]
+    // grow ngon by jumping across edges in ci_list[]
     Internal_GrowNgon(
       top, emarks, fmarks,
       e_list_mark | fmark, // etest_mask,

@@ -1566,7 +1566,7 @@ const double* p;
         all_out  &= out;
         if ( some_out && !all_out )
         {
-          // box intersects visble region but is not completely inside it.
+          // box intersects visible region but is not completely inside it.
           return  1;
         }
         bz = m_max.z;
@@ -1652,14 +1652,14 @@ int ON_BoundingBox::GetClosestPoint(
 
 
 
-	// Step 1.  Check for an intersection of the infinte line with the box
+	// Step 1.  Check for an intersection of the infinite line with the box
 	ON_Interval overlap(-ON_DBL_MAX, ON_DBL_MAX);	
 	bool nonempty=true;
   int i;
 	for( i=0;i<3 && nonempty;i++)
 		nonempty = overlap.Intersection(over[i]);
 	
-	if(nonempty){	// infinte line intersects box
+	if(nonempty){	// infinite line intersects box
 		if( overlap.Intersection( ON_Interval(0,1) ) ){
 			// Box & Line segment  intersect
 			if(t0) *t0 = overlap[0];
@@ -1889,14 +1889,14 @@ bool ON_BoundingBox::GetFarPoint(
 ON_DECL
 bool operator==(const ON_BoundingBox& lhs, const ON_BoundingBox& rhs)
 {
-  // returns false if any coordiate is a nan.
+  // returns false if any coordinate is a nan.
   return (lhs.m_min == rhs.m_min && lhs.m_max == rhs.m_max);
 }
 
 ON_DECL
 bool operator!=( const ON_BoundingBox& lhs, const ON_BoundingBox& rhs )
 {
-  // returns false if any coordiate is a nan.
+  // returns false if any coordinate is a nan.
   if (lhs.m_min != rhs.m_min || lhs.m_max != rhs.m_max)
   {
     return (false == lhs.IsNan() && false == rhs.IsNan());
@@ -3106,7 +3106,7 @@ int ON_BoundingBox::IsDegenerate( double tolerance ) const
   ON_3dVector diag = Diagonal();
   if ( tolerance < 0.0 )
   {
-    // compute scale invarient tolerance
+    // compute scale invariant tolerance
     tolerance = diag.MaximumCoordinate()*ON_SQRT_EPSILON;
   }
   int rc = 0;

@@ -52,7 +52,7 @@ bool ON_ComponentAttributes::EdgeIsEligible(
   const unsigned int masks[] =
   {
     // open/closed test
-    // open = edge has distict start/end vertices (they might be located at the same location)
+    // open = edge has distinct start/end vertices (they might be located at the same location)
     // closed = edge has identical start/end vertices.
     ON_ComponentAttributes::EdgeAttributes::Open
     | ON_ComponentAttributes::EdgeAttributes::Closed,

@@ -202,6 +202,8 @@ public:
     The RDK material id identifies a material definition managed by
     the RDK (rendering development kit).  Multiple materials in
     a Rhino or opennurbs model can reference the same RDK material.
+    When setting this value, it is necessary to also set this material's
+    plug-in id to ON_UniversalRenderEngineId. See SetMaterialPlugInId().
   */
   void SetRdkMaterialInstanceId(
     ON_UUID rdk_material_instance_id
@@ -349,7 +351,7 @@ public:
   m_index_of_refraction:
     Default is 1.0.
     Physically, the index of refraction is >= 1.0 and is
-    the value (speed of light in vacum)/(speed of light in material).
+    the value (speed of light in vacuum)/(speed of light in material).
     Some rendering algorithms set m_index_of_refraction to zero or
     values < 1.0 to generate desirable effects.
   */

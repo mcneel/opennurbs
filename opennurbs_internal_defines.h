@@ -42,7 +42,6 @@ inline bool IsFloatEqual (float  f1, float  f2) { return (fabsf(f1 - f2) < 1e-6)
 inline bool IsDoubleEqual(double d1, double d2) { return (fabs (d1 - d2) < 1e-10); }
 
 ON_UUID RdkPlugInId(void);
-ON_UUID UniversalRenderEngineId(void);
 
 ON__INT64 Integerize(float dirty);
 ON__INT64 Integerize(double dirty);

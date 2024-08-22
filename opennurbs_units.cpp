@@ -34,8 +34,8 @@
 #define ON_UNICODE_DEGREE_SYMBOL 0x00B0
 #define ON_WCHAR_DEGREE_SYMBOL L"\x00B0"
 
-// The unicode masuline ordinal indicator (Spanish) 
-// is often mistakenlyused as a degrees symbol.
+// The unicode masculine ordinal indicator (Spanish)
+// is often mistakenly used as a degrees symbol.
 #define ON_UNICODE_MASCULINE_ORDINAL_INDICATOR 0x00BA
 #define ON_WCHAR_MASCULINE_ORDINAL_INDICATOR L"\x00BA"
 
@@ -104,10 +104,10 @@ public:
     Parses m_name and sets the m_utf32_name[] and m_utf32_name_count
     fields.
   Returns:
-    Number of elments of m_name that were parsed; 0 indicates failure.
+    Number of elements of m_name that were parsed; 0 indicates failure.
   Remarks:
     m_name must contain a character that terminates unit system name parsing.
-    This can be a null, digit, punctuation, aritmetic operator, or a 
+    This can be a null, digit, punctuation, arithmetic operator, or a
     unicode code point <= 0x0020 (0x0020 = space = 32 decimal).
   */
   int SetSimplifiedName();
@@ -379,8 +379,8 @@ static ON_UnitName en_US_customary_length_units[] =
 static ON_UnitName angle_no_units[] =
 {
   // These entries prevent parsing the strings unless an
-  // entry for a locale explicitly inludes the string and
-  // the parsing prefered local id matches exactly.
+  // entry for a locale explicitly includes the string and
+  // the parsing preferred local id matches exactly.
   // The purpose is to prevent incorrectly parsing strings
   // the define different unit systems in different 
   // locales.
@@ -907,8 +907,8 @@ static ON__UINT32 ON_ToLower( ON__UINT32 c )
   // unicode capital latin letter code points to the corresponding
   // unicode latin small letter code points.  It is designed to be
   // used in code that has to quickly parse common unit names
-  // in English, Spanish, French, German, Protuguese and Czech. 
-  // If other languages need to be supported, this funcition
+  // in English, Spanish, French, German, Portuguese and Czech.
+  // If other languages need to be supported, this function
   // may need to be enhanced.  
   //
   // In many situations, "to lower" requires more context than a single
@@ -920,7 +920,7 @@ static ON__UINT32 ON_ToLower( ON__UINT32 c )
   // that works on Microsoft's, Apple's, Google's or Gnu's
   // compilers.  There are solutions, but many depend on other
   // app state variables that define an app/machine locale.
-  // This meeans the result is not "predictably consistent".
+  // This means the result is not "predictably consistent".
   if ( c < 'A' )
     return c;
 
@@ -982,7 +982,7 @@ static ON__UINT32 ON_ToLower( ON__UINT32 c )
     // NOTE:
     //  This skips some "obvious" to lower conversions, but none 
     //  of these conversions are needed for common unit 
-    //  names in English, Spanish, French, German, Protuguese 
+    //  names in English, Spanish, French, German, Portuguese
     //  or Czech.
     return c;
   }
@@ -1009,8 +1009,8 @@ static ON__UINT32 ON_ToLatinAtoZ( ON__UINT32 c )
   // It also converts sharp s (eszett) to latin letter S and 
   // greek tau to to latin letter T.
   //
-  // This code is designed to be used efficently parse common unit 
-  // names in English, Spanish, French, German, Protuguese and Czech.
+  // This code is designed to be used efficiently parse common unit
+  // names in English, Spanish, French, German, Portuguese and Czech.
   // If other languages need to be supported, this function will need
   // to be enhanced, redone, or removed.  The unit names being parsed
   // by this code are often input on devices, like English language 
@@ -1164,7 +1164,7 @@ Parameters:
     unit name or abbreviation in Czech, English, French,
     German, Italian, Portuguese or Spanish.
   utf32_small_simple_name - [out]
-    A buffer where a null termintated UTF-32 encoded 
+    A buffer where a null terminated UTF-32 encoded
     simplified small letter version of the input 
     unit name is returned.
   utf32_small_simple_name_capacity - [in]
@@ -1177,7 +1177,7 @@ Returns:
 
 Remarks:
   This code is used to quickly parse optional embedded unit
-  names, abreviations in input streams that specify angles,
+  names, abbreviations in input streams that specify angles,
   lengths, points in cartesian coordinates, and points in
   polar coordinates.  
   
@@ -1216,7 +1216,7 @@ unsigned int ON_GetSmallSimpleUnitsName(
     switch(name[0])
     {
     case ON_UNICODE_QUOTATION_MARK:         // quote (inches, arc seconds)
-    case ON_UNICODE_APOSTROPHE:             // apostophe (feet, arc minutes)
+    case ON_UNICODE_APOSTROPHE:             // apostrophe (feet, arc minutes)
     case ON_UNICODE_DEGREE_SYMBOL:          // degree symbol (arc degrees)
     case ON_UNICODE_GREEK_SMALL_LETTER_TAU: // small tau (turns)
       utf32_small_simple_name[0] = (ON__UINT32)(name[0]);
@@ -1229,8 +1229,8 @@ unsigned int ON_GetSmallSimpleUnitsName(
       utf32_small_simple_name[1] = 0;
       return 1;  
     case ON_UNICODE_MASCULINE_ORDINAL_INDICATOR: 
-      // The unicode masuline ordinal indicator (Spanish) 
-      // is often mistakenlyused as a degrees symbol.
+      // The unicode masculine ordinal indicator (Spanish)
+      // is often mistakenly used as a degrees symbol.
       utf32_small_simple_name[0] = ON_UNICODE_DEGREE_SYMBOL;
       utf32_small_simple_name[1] = 0;
       return 1;  
@@ -1459,7 +1459,7 @@ static bool GetUnitSystemNameCache(
   // length_unit_list[].m_utf32_name_count increases.  
   // Use that fact to build an index based on the value of 
   // length_unit_list[].m_utf32_name_count so searches can
-  // easily be restriced to the region of length_unit_list[]
+  // easily be restricted to the region of length_unit_list[]
   // where a possible match exists.
   for ( i = 0; i < count; i++ )
   {
@@ -1577,7 +1577,7 @@ static unsigned char UnitSystemEnumValue(
             return 0; // this string requires an exact locale id match
 
           // Check for a language match; i.e., if cache.m_unit_list[] is
-          // is for locale en-US and the prefered_locale_id is en-UK,
+          // is for locale en-US and the preferred_locale_id is en-UK,
           // then use the en-US entry.  The "language" part of a locale id
           // is encoded in the low byte of the locale id.
           if ( (0xFF & prefered_locale_id) == (0xFF & cache.m_unit_list[k].m_locale_id) )
@@ -2098,8 +2098,8 @@ int ON_ParseAngleUnitName(
 
     if ( ON_UNICODE_MASCULINE_ORDINAL_INDICATOR == str[0] )
     {
-      // The unicode masuline ordinal indicator (Spanish) 
-      // is often mistakenlyused as a degrees symbol.
+      // The unicode masculine ordinal indicator (Spanish)
+      // is often mistakenly used as a degrees symbol.
       str_index = 1;
       x.m_name = str;
       x.m_unit_system = static_cast<unsigned int>(ON::AngleUnitSystem::Degrees);
@@ -2458,7 +2458,7 @@ int ON_LengthUnitName::Internal_Compare(
   i =  ON_wString::CompareOrdinal(a.m_name,b.m_name,false);
   if (i != 0)
   {
-    // ignore case order is prefered
+    // ignore case order is preferred
     j = ON_wString::CompareOrdinal(a.m_name, b.m_name, true);
     return (0 != j) ? j : i;
   }
@@ -2691,7 +2691,7 @@ int ON_AngleUnitName::Internal_Compare(
   i =  ON_wString::CompareOrdinal(a.m_name,b.m_name,false);
   if (i != 0)
   {
-    // ignore case order is prefered
+    // ignore case order is preferred
     j = ON_wString::CompareOrdinal(a.m_name, b.m_name, true);
     return (0 != j) ? j : i;
   }

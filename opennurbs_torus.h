@@ -49,7 +49,7 @@ public:
   Description:
     Get the circle that is the isocurve on the torus
     at a specified minor angle.
-  Parameteters:
+  Parameters:
     minor_angle_radians - [in]
   Returns:
     A circle with normal major_circle.plane.zaxis that starts
@@ -66,7 +66,7 @@ public:
   Description:
     Get the circle that is the isocurve on the torus
     at a specified minor angle.
-  Parameteters:
+  Parameters:
     minor_angle_degrees - [in]
   Returns:
     A circle with normal major_circle.plane.zaxis that starts
@@ -83,7 +83,7 @@ public:
   Description:
     Get the minor circle that is the isocurve on the torus
     at a specified major angle.
-  Parameteters:
+  Parameters:
     major_angle_radians - [in]
   Returns:
     A circle with radius = minor_radis, 
@@ -101,7 +101,7 @@ public:
   Description:
     Get the minor circle that is the isocurve on the torus
     at a specified major angle.
-  Parameteters:
+  Parameters:
     major_angle_degrees - [in]
   Returns:
     A circle with radius = minor_radis, 
@@ -174,7 +174,7 @@ public:
 
   bool Transform( const ON_Xform& );
 
-  // parameterization of NURBS surface does not match torus's transcendental paramaterization
+  // parameterization of NURBS surface does not match torus's transcendental parameterization
   int GetNurbForm( ON_NurbsSurface& ) const; // returns 0=failure, 2=success
 
   /*

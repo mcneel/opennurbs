@@ -29,6 +29,9 @@ public:
   ON_3dmUnitsAndTolerances(const ON_3dmUnitsAndTolerances&) = default;
   ON_3dmUnitsAndTolerances& operator=(const ON_3dmUnitsAndTolerances&) = default;
 
+  bool operator==(const ON_3dmUnitsAndTolerances& other) const;
+  bool operator!=(const ON_3dmUnitsAndTolerances& other) const;
+
   bool Read( ON_BinaryArchive& );
   bool Write( ON_BinaryArchive& ) const;
 
@@ -926,7 +929,7 @@ public:
 
   ON_wString m_background_bitmap_filename;
   // If m_background_bitmap_filename is not empty, the file cannot be found,
-  // and m_embedded_file_id identifes an embedded image file in the model, 
+  // and m_embedded_file_id identifies an embedded image file in the model,
   // then that file will be used as the background bitmap.
   ON_UUID m_embedded_image_file_id = ON_nil_uuid;
 
@@ -1078,7 +1081,7 @@ public:
   /*
   Parameters:
     unset_location - [in]
-      Location to return if EarlocationIsSet() is false.
+      Location to return if EarthlocationIsSet() is false.
   Returns:
     A 3d point with coordinates (latitude, longitude, elevation).
   */
@@ -1129,7 +1132,7 @@ public:
   );
 
   /*
-    System used to define latiude, longitude and elevation.
+    System used to define latitude, longitude and elevation.
   */
   ON::EarthCoordinateSystem EarthCoordinateSystem() const;
 

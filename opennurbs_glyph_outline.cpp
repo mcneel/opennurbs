@@ -117,24 +117,6 @@ void  ON_Outline::Reverse()
   }
 }
 
-const bool Internal_FigureBoxesAreDisjoint(
-  const ON_BoundingBox& a,
-  const ON_BoundingBox& b
-)
-{
-  // figure boxes are 2d - ignore z.
-  // figures are closed loops, so we can use <= and >= instead of < and >
-  if (a.m_min[0] >= b.m_max[0])
-    return true;
-  if (a.m_max[0] <= b.m_min[0])
-    return true;
-  if (a.m_min[1] >= b.m_max[1])
-    return true;
-  if (a.m_max[1] <= b.m_min[1])
-    return true;
-  return false;
-}
-
 static int Internal_CompareAreaEstimate(ON_OutlineFigure* const* lhs, ON_OutlineFigure* const* rhs)
 {
   // Used to sort the figures_sorted_by_size[] array which is constructed in a way
@@ -905,9 +887,9 @@ static bool Internal_ExtraInsideOfPolylineText(
         alpha[0] * B[1].x + alpha[1] * B[1].y + alpha[2]
       };
       if (h[0] < 0.0 && h[1] < 0.0)
-        continue; // B[0] and B[1] on same side of infinte line through A[0],A[1]
+        continue; // B[0] and B[1] on same side of infinite line through A[0],A[1]
       if (h[0] > 0.0 && h[1] > 0.0)
-        continue; // B[0] and B[1] on same side of infinte line through A[0],A[1]
+        continue; // B[0] and B[1] on same side of infinite line through A[0],A[1]
 
       const double beta[3] =
       {
@@ -919,9 +901,9 @@ static bool Internal_ExtraInsideOfPolylineText(
       h[0] = beta[0] * B[0].x + beta[1] * B[0].y + beta[2];
       h[1] = beta[0] * B[1].x + beta[1] * B[1].y + beta[2];
       if (h[0] < 0.0 && h[1] < 0.0)
-        continue; // A[0] and A[1] on same side of infinte line through B[0],B[1]
+        continue; // A[0] and A[1] on same side of infinite line through B[0],B[1]
       if (h[0] > 0.0 && h[1] > 0.0)
-        continue; // A[0] and A[1] on same side of infinte line through B[0],B[1]
+        continue; // A[0] and A[1] on same side of infinite line through B[0],B[1]
 
       // The line segment A[0],A[1] and line segment B[0],B[1] intersect someplace.
       // The location of the intersection doesn't matter, even if it's one of the end points.
@@ -992,7 +974,7 @@ bool ON_OutlineFigure::IsInsideOf(
     // The context that calls this function is sorting nested loops.
     // The orientation of outer_figure has been decided and set at this point.
     // When this orientation of this is not different, we need more checking
-    // to verify that the orientaion from the font definition file was really "wrong".
+    // to verify that the orientation from the font definition file was really "wrong".
     // The "A crossbar" in Bahnschrift U+00C5 is one of many cases that
     // require this additional checking. More generally, glyphs with
     // orientations set correctly and which use overlapping outer 
@@ -1207,7 +1189,7 @@ bool ON_OutlineFigure::ReverseFigure()
   {
     if ( false == a[i].IsInteriorFigurePoint() )
     {
-      // a[] containts errors, unsets, or embedded figures
+      // a[] contains errors, unsets, or embedded figures
       return error_rc;
     }
   }
@@ -1942,7 +1924,7 @@ class ON_NurbsCurve* ON_OutlineFigure::Internal_GetFigureCurve(
 class Internal_OutlineFigureToPolyline
 {
 public:
-  double m_2x_tolerance = 0.0; // 2*tolerance (2* saves mulitplications)
+  double m_2x_tolerance = 0.0; // 2*tolerance (2* saves multiplications)
   void(*m_PointCallbackFunc)(float x, float y, void*);
   void* m_context = nullptr;
   ON_2fPoint m_prev_point = ON_2fPoint::NanPoint;
@@ -2035,7 +2017,7 @@ void Internal_OutlineFigureToPolyline::Internal_AddBezier(
   {
     if ( level > 1 )
     {
-      // x coordintat of bezier evaluated at t 0.5 is
+      // x coordinate of bezier evaluated at t 0.5 is
       // a = 1/8*bez_cv[0].x + 3/8*bez_cv[1].x + 3/8*bez_cv[2].x + 1/8*bez_cv[3].x
       //
       // x coordinate of midpoint of chord is 
@@ -2754,7 +2736,7 @@ bool ON_OutlineFigure::IsValidFigure(
   const ON_OutlineFigurePoint figure_end = a[figure_end_dex];
   if (figure_id != figure_end.m_figure_index)
   {
-    if ( bLogErrors ) ON_ERROR("BeginFigure and EndFigure points have diffent m_contour_index values.");
+    if ( bLogErrors ) ON_ERROR("BeginFigure and EndFigure points have different m_contour_index values.");
     return false;
   }
 
@@ -3189,7 +3171,7 @@ bool ON_FontGlyph::GetOutline(
       outline
     );
 #elif defined(OPENNURBS_FREETYPE_SUPPORT)
-    // Look in opennurbs_system_rumtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
+    // Look in opennurbs_system_runtime.h for the correct place to define OPENNURBS_FREETYPE_SUPPORT.
     // Do NOT define OPENNURBS_FREETYPE_SUPPORT here or in your project setting ("makefile").
     // Use freetype based tools (least reliable results).
     // Freetype is basically a file reading utility that can parse outline 
@@ -3235,7 +3217,7 @@ bool ON_FontGlyph::GetGlyphContours(
     || ON_UNSET_POSITIVE_FLOAT == height_of_capital
     )
   {
-    // returne results in font design units
+    // return results in font design units
     scale = 1.0;
   }
   else

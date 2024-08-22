@@ -810,7 +810,7 @@ bool ON_Decal::GetTextureMapping(ON_TextureMapping& mappingOut) const
    This object encapsulates the reading of all decal properties from XML nodes.
    It is used by the decal CRC calculation in ComputeDecalCRC().
 
-   TODO: It could also be used by the ON_Decal XML node acccess.
+   TODO: It could also be used by the ON_Decal XML node access.
 
 */
 class ON_DecalNodeReader

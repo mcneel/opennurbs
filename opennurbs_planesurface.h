@@ -185,12 +185,12 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature 
+    Search for a derivative, tangent, or curvature
     discontinuity.
   Parameters:
     dir - [in] If 0, then "u" parameter is checked.  If 1, then
                the "v" parameter is checked.
-    c - [in] type of continity to test for.
+    c - [in] type of continuity to test for.
     t0 - [in] Search begins at t0. If there is a discontinuity
               at t0, it will be ignored.  This makes it 
               possible to repeatedly call GetNextDiscontinuity
@@ -286,7 +286,7 @@ public:
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const override;
 
-  bool Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
+  bool Reverse(  // reverse parameterization, Domain changes from [a,b] to [-b,-a]
     int // dir  0 = "s", 1 = "t"
     ) override;
 

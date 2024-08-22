@@ -824,7 +824,7 @@ const ON_wString ON_FileSystemPath::CleanPath(
   wchar_t* clean_start = clean_head;
   if (bIsUNCHostName)
   {
-    clean_start += 3; // skip \\ and first charater of host name
+    clean_start += 3; // skip \\ and first character of host name
     
     // skip rest of host name
     while ( IsPermittedInHostName(*clean_start) )
@@ -1391,7 +1391,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
   if (false == IsDirSep(*full_tail) || false == IsDirSep(*base_tail))
   {
     // A double directory separator after the initial CleanAndRemoveFileName()
-    // calls indicates invalid file path informtion.
+    // calls indicates invalid file path information.
     return best_answer;
   }
 
@@ -1405,7 +1405,7 @@ const ON_wString ON_FileSystemPath::RelativePath(
   if (IsDirSep(*full_tail) || IsDirSep(*base_tail))
   {
     // A double directory separator after the initial ON_FileSystemPath::CleanPath()
-    // calls indicates invalid file path informtion.
+    // calls indicates invalid file path information.
     return best_answer;
   }
 

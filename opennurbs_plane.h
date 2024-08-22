@@ -34,7 +34,7 @@ public:
     normal - [in] non-zero normal to the plane
   Remarks:
     origin = point, zaxis = unitized normal, xaxis
-    xaxis set with xaxis.PerpindicularTo(zaxis).
+    xaxis set with xaxis.PerpendicularTo(zaxis).
   See Also:
     ON_Plane::CreateFromNormal
   */
@@ -109,7 +109,7 @@ public:
     normal - [in] non-zero normal to the plane
   Remarks:
     origin = point, zaxis = unitized normal, xaxis
-    xaxis set with xaxis.PerpindicularTo(zaxis).
+    xaxis set with xaxis.PerpendicularTo(zaxis).
   Returns:
     true if valid plane is created.
   See Also:

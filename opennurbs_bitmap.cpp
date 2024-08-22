@@ -762,7 +762,7 @@ bool ON_WindowsBitmapEx::Internal_ReadV5( ON_BinaryArchive& file )
   {
     // Calling ON_WindowsBitmap::ReadCompressed() destroys
     // m_bitmap_filename, so we have to read it into a local
-    // string and make the assigment after calling 
+    // string and make the assignment after calling
     // ON_WindowsBitmap::ReadCompressed().
     ON_wString bitmap_filename;
     if (rc)

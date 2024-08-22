@@ -792,7 +792,7 @@ public:
 
   /*
   Returns:
-    True if a aritimetic should be parsed in expressions.
+    True if a arithmetic should be parsed in expressions.
   Example:
     If parsing expression arithmetic is enabled, then the 
     string "3/0.25" will return a value of 12.
@@ -904,7 +904,7 @@ public:
   /*
   Returns:
     True if a number may use scientific E notation to specify
-    mulitiplication by a power of 10.
+    multiplication by a power of 10.
   Example:
     If parsing scientific E notation is enables, then the string
     "2.99792458e8" will be parsed as 2999792458.
@@ -920,7 +920,7 @@ public:
   /*
   Returns:
     True if a number may use scientific E notation may use
-    'D' or 'E' to specify mulitiplication by a power of 10.
+    'D' or 'E' to specify multiplication by a power of 10.
   Example:
     If parsing 'D' as 'E' in scientific E notation is enabled,
     then the string "2.99792458D8" will be parsed as 2999792458.
@@ -1113,7 +1113,7 @@ public:
     - The numerator and denominator must be integers.
     - Strings like "1.0/3.0", "3.5/2" or "pi/2" are not parsed
       as rational numbers. Use ON_ParseSettings::ParseDivision
-      to constrol parsing of these types of strings.
+      to control parsing of these types of strings.
   */
   bool ParseRationalNumber() const;
 
@@ -1140,7 +1140,7 @@ public:
 
   /*
   Returns:
-    True if muliplication signs that appear between numbers will be
+    True if multiplication signs that appear between numbers will be
     parsed.
   Example:
     If this property is true, then strings like 2*3 will be parsed
@@ -1201,7 +1201,7 @@ public:
 
   /*
   Returns:
-    True if paired arentheses symbols that are encountered during
+    True if paired parentheses symbols that are encountered during
     number parsing will be parsed.
   Example:
     If this property is true, then strings like 2(3+4) will be parsed
@@ -1405,7 +1405,7 @@ public:
   Parameters:
     c - [in]
   Returns:
-    Returns '0' throught '9' if c is a digit, otherwise returns 0.
+    Returns '0' through '9' if c is a digit, otherwise returns 0.
   */
   char IsDigit(ON__UINT32 c) const;
 
@@ -1712,7 +1712,7 @@ public:
   /*
   Parameters:
     bParseMultiplication - [in]
-      True if muiltiplication should be permitted in number parsing.
+      True if multiplication should be permitted in number parsing.
   Remarks:
     See ON_ParseSettings::ParseMultiplication()
     for details about this property.

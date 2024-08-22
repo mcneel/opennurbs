@@ -120,7 +120,7 @@ Exceptions:
 If all exponent bits are all 0 (e = 0) and the fraction bits
 are all zero, then the value of the number is zero.
 If all exponent bits are all 0 (e = 0) and at least one fraction
-bits is not zero, then the representaion is "denormalized".
+bits is not zero, then the representation is "denormalized".
 In this case, the float absolute value is 0.f*2^-126 and the
 double absolute value is 0.f*2^-1022.
 If all exponent bits are 1 (float e = 11111111binary = 255decimal
@@ -131,7 +131,7 @@ determines the sign of infinity.
 If all exponent bits are 1 and at least one fraction bit is
 not zero, the number is a "NaN" (not a number).  If the most
 significant fraction bit is 1, the number is a quiet NaN or
-"QNaN".  If the most significan fraction bit is 0, the number
+"QNaN".  If the most significant fraction bit is 0, the number
 is a signalling NaN or "SNaN".
 
 Some authors (SH)   QNaNs are used to indicate
@@ -171,7 +171,7 @@ static double Internal_ON__dblinithelper(int i)
   }
   else
   {
-    // this sitation is not handled by this algorithm
+    // this situation is not handled by this algorithm
     // and that is a bug in the algorithm.
     ON_ERROR("CPU has unexpected bit pattern in double 2.0.");
     i7 = 0;
@@ -245,7 +245,7 @@ static float Internal_ON__fltinithelper(int i)
   }
   else
   {
-    // this sitation is not handled by this algorithm
+    // this situation is not handled by this algorithm
     // and that is a bug in the algorithm.
     ON_ERROR("CPU has unexpected bit pattern in float 2.0f.");
     i3 = 0;
@@ -356,7 +356,7 @@ int ON_DBL::CompareValue(double lhs, double rhs)
 
 int ON_DBL::Compare(const double* lhs, const double* rhs)
 {
-  // sort nullpt to the end
+  // sort nullptr to the end
   if (lhs == rhs)
     return 0;
   if (nullptr == lhs)
@@ -394,7 +394,7 @@ const ON_SubDExpandEdgesParameters ON_SubDExpandEdgesParameters::Default;
 
 const ON_SubDComponentLocation ON_SubD::DefaultSubDAppearance = ON_SubDComponentLocation::Surface;
 
-// The default type must be packed, unpacked, zero, or nan and should be packed or upacked.
+// The default type must be packed, unpacked, zero, or nan and should be packed or unpacked.
 const ON_SubDTextureCoordinateType ON_SubD::DefaultTextureCoordinateType = ON_SubDTextureCoordinateType::Packed;
 
 
@@ -442,8 +442,8 @@ const ON_UUID ON_SubD::CustomFacePackingId =
 { 0x91fd7018, 0x8bbe, 0x4492, { 0x8d, 0x2e, 0xe8, 0x76, 0x1c, 0x50, 0x5a, 0xcf } };
 
 
-// ON_SubD::DefaultFacePackingId must always identitify a built-in face packing
-// algoritm. If a new built-in algorithm is developed that produces generally 
+// ON_SubD::DefaultFacePackingId must always identity a built-in face packing
+// algorithm. If a new built-in algorithm is developed that produces generally
 // better packings and is as fast and reliable as the current default, then
 // ON_SubD::DefaultFacePackingId can be changed. Under no circumstances, should
 // the default be changed to anything that is more than 1.5 times slower than 
@@ -549,17 +549,17 @@ const ON_UUID ON_rhino8_id = { 0x868c63f5, 0x3760, 0x4a45,{ 0x86, 0x00, 0x53, 0x
 // in the core Rhino executable.
 const ON_UUID ON_rhino_id = ON_rhino8_id;
 
-// Used to identifiy userdata read from V2 files
+// Used to identify userdata read from V2 files
 // which were written before userdata had application ids.
 // {132F2340-DB90-494e-BF02-C36F0EA3197C}
 const ON_UUID ON_v2_userdata_id = { 0x132f2340, 0xdb90, 0x494e,{ 0xbf, 0x2, 0xc3, 0x6f, 0xe, 0xa3, 0x19, 0x7c } };
 
-// Used to identifiy userdata read from V3 files
+// Used to identify userdata read from V3 files
 // which were written before userdata had application ids.
 // {4307B91D-6A9D-478e-B0A2-7C577997C663}
 const ON_UUID ON_v3_userdata_id = { 0x4307b91d, 0x6a9d, 0x478e,{ 0xb0, 0xa2, 0x7c, 0x57, 0x79, 0x97, 0xc6, 0x63 } };
 
-// Used to identifiy userdata read from V4 files
+// Used to identify userdata read from V4 files
 // which were written before opennurbs 200609190
 // required application ids.
 // {F73F2953-A244-44c2-B7C2-7E27390D1196}
@@ -1056,7 +1056,7 @@ static ON_Plane Internal_ON_Plane_NanPlane()
 }
 const ON_Plane ON_Plane::NanPlane(Internal_ON_Plane_NanPlane());
 
-// ON_SubDDisplayParameters statics before ON_MeshParamters statics
+// ON_SubDDisplayParameters statics before ON_MeshParameters statics
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Empty;
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::ExtraCoarse = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::ExtraCoarseDensity);
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::Coarse = ON_SubDDisplayParameters::CreateFromDisplayDensity(ON_SubDDisplayParameters::CoarseDensity);
@@ -1079,13 +1079,13 @@ static ON_MeshParameters Internal_ON_MeshParameters_Constants(
 
   // If you change any parameter values, put your name, the date, and the reasons for
   // the change in a comment by the changed value. Include the previous value in
-  // your comment. This is crtically important so we can keep track of what we are
+  // your comment. This is critically important so we can keep track of what we are
   // trying to accomplish.
   //
   // You must also update the mesh parameters file reading code so that settings with old defaults
   // are replaced with setting that have the new defaults AND old defaults get saved in earlier version
   // 3dm files. This requires somebody with a solid understanding of how ON_MeshParameters::Read()/Write()
-  // works, how saving earlier versions of 3dm fiels works, and how reading old version files works.
+  // works, how saving earlier versions of 3dm files works, and how reading old version files works.
 
   switch (selector)
   {
@@ -1442,7 +1442,7 @@ ON_Font::ON_GetGlyphOutlineFuncType ON_Font::Internal_CustomGetGlyphOutlineFunc 
 //ON_Font::ON_GetFontMetricsFuncType ON_Font::Internal_CustomGetFontMetricsFunc = ON_FreeTypeGetFontMetrics;
 //ON_Font::ON_GetGlyphOutlineFuncType ON_Font::Internal_CustomGetGlyphOutlineFunc = ON_FreeTypeGetGlyphOutline;
 
-//// Used to test WIndows DWrite
+//// Used to test Windows DWrite
 //#include "opennurbs_internal_glyph.h"
 //ON_Font::ON_GetGlyphMetricsFuncType ON_Font::Internal_CustomGetGlyphMetricsFunc = ON_WindowsDWriteGetGlyphMetrics;
 //ON_Font::ON_GetFontMetricsFuncType ON_Font::Internal_CustomGetFontMetricsFunc = ON_WindowsDWriteGetFontMetrics;
@@ -2811,7 +2811,7 @@ void ON_SubD::SetAutomaticMeshToSubD(
   bool bAutomaticallyCreateSubD
 )
 {
-  // remove possiblity of hacks to use this as a char value
+  // remove possibility of hacks to use this as a char value
   bAutomaticallyCreateSubD = bAutomaticallyCreateSubD ? true : false;
 
   switch (context)

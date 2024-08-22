@@ -265,7 +265,7 @@
 
 /*
 // The __clang__ test must come before the gnu tests because Apple's clang
-// uncoditionally defines __GNUC__
+// unconditionally defines __GNUC__
 */
 #if !defined(ON_COMPILER_CLANG)
 #define ON_COMPILER_CLANG

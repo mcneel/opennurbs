@@ -270,9 +270,9 @@ public:
   
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature discontinuity.
+    Search for a derivative, tangent, or curvature discontinuity.
   Parameters:
-    c - [in] type of continity to test for.  If ON::continuity::C1_continuous
+    c - [in] type of continuity to test for.  If ON::continuity::C1_continuous
     t0 - [in] search begins at t0
     t1 - [in] (t0 < t1) search ends at t1
     t - [out] if a discontinuity is found, the *t reports the

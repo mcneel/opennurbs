@@ -56,6 +56,7 @@ void ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(
   if (nullptr == availableFontCollection )
     return;
   CFArrayRef availableFontArray = CTFontCollectionCreateMatchingFontDescriptors(availableFontCollection);
+  CFRelease(availableFontCollection);
   if (nullptr == availableFontArray)
     return;
   const CFIndex count = CFArrayGetCount(availableFontArray);
@@ -95,6 +96,7 @@ void ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(
     platform_font->SetPointSize(0);
     platform_font_list.Append(platform_font);
   }
+  CFRelease(availableFontArray);
 }
 
 const ON_Font* ON_Font::GetManagedFontFromAppleCTFont(

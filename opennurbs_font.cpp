@@ -559,7 +559,7 @@ void ON_FontMetrics::SetAscentOfCapital(
 )
 {
   int iascent_of_capital = Internal_FontMetricCeil(ascent_of_capital);
-  //// Dale Lear Feb 2021 - Huh? The contition is never true unless m_ascent - 1 overflows to a positive number.
+  //// Dale Lear Feb 2021 - Huh? The condition is never true unless m_ascent - 1 overflows to a positive number.
   ////if (m_ascent < 0 && iascent_of_capital > m_ascent && iascent_of_capital <= m_ascent - 1)
   ////  iascent_of_capital = m_ascent;
   SetAscentOfCapital(iascent_of_capital);
@@ -570,7 +570,7 @@ void ON_FontMetrics::SetAscentOfx(
 )
 {
   int iascent_of_x = Internal_FontMetricCeil(ascent_of_x);
-  //// Dale Lear Feb 2021 - Huh? The contition is never true unless m_ascent - 1 overflows to a positive number.
+  //// Dale Lear Feb 2021 - Huh? The condition is never true unless m_ascent - 1 overflows to a positive number.
   ////if (m_ascent < 0 && iascent_of_x > m_ascent && iascent_of_x <= m_ascent - 1)
   ////  iascent_of_x = m_ascent;
   SetAscentOfx(iascent_of_x);
@@ -688,7 +688,7 @@ ON_ManagedFonts::~ON_ManagedFonts()
     {
       // ON_Font::Default.m_runtime_serial_number = 1 and it is the only instance of a font
       // with m_runtime_serial_number = 1.  
-      // However, the managed_font pointer points to ON_Font::Default, which was destroyed a few miliseconds ago.
+      // However, the managed_font pointer points to ON_Font::Default, which was destroyed a few milliseconds ago.
       // See opennurbs_statics.cpp and observe that construction order is
       // ..., ON_ManagedFonts::List, ON_Font::Unset, ON_Font::Default, ...
       // and destruction order is
@@ -730,7 +730,7 @@ public:
   double m_font_unit_to_normalized_scale = 1.0;
   double m_normalized_to_font_unit_scale = 1.0;
 
-  // Font metrics in the units from the system font defintion.
+  // Font metrics in the units from the system font definition.
   // UPM = font design cell height (often 1000 for PostScript, 2014 for TrueType, ...)
   ON_FontMetrics m_font_unit_metrics;
 
@@ -913,7 +913,7 @@ const ON_Font* ON_ManagedFonts::GetFromFontCharacteristics(
 
   for (;;)
   {
-    // quick test for default font that occurs often enough to warrent the special checking
+    // quick test for default font that occurs often enough to warrant the special checking
     if (bIsUnderlined)
       break;
     if (bIsStrikethrough)
@@ -1127,17 +1127,17 @@ const ON_Font* ON_ManagedFonts::Internal_AddManagedFont(
   {
     // Feb 22, 2021 RH-62974
     // This managed font is not installed on this device.
-    // After prototyping several approaches permitting variaous types
+    // After prototyping several approaches permitting various types
     // of user configured font substitution, Lowell and Dale Lear
     // concluded that using the default font was the best option.
     // If this is a problem for lots of users, then we need a way
-    // for users to configure the choice of devault font.
+    // for users to configure the choice of default font.
     // Current settings:
     // Windows: Arial
     // Apple: Helvetic Neue
 
     // managed_font is a missing font.
-    // We have to substitue the correct quartet member (regular/bold/italic/bold-italic).
+    // We have to substitute the correct quartet member (regular/bold/italic/bold-italic).
     // Since managed_font references a font that is not installed on this device,
     // IsItalicInQuartet() and IsBoldInQuartet() will probably fall through to
     // the fallback best guess sections of those functions.
@@ -2597,7 +2597,7 @@ bool ON_Font::ModificationPermitted(
     ON_ErrorEx(file_name, line_number, function_name, "Managed fonts cannot be modified.");
   else
   {
-    // Modificaton of this font means the managed information it references
+    // Modification of this font means the managed information it references
     // will not be valid.  A reference to the correct cached information
     // will be generated when it is actually needed.
     m_font_glyph_cache.reset();
@@ -2795,7 +2795,7 @@ static bool Internal_EqualFamilyName(
 class Internal_FontDelta
 {
   // Internal_FontDelta is a simple minded attempt at measuring the difference between a target font and a candidate font.
-  // It is probably a poor substitued for something fancier like PANOSE information.
+  // It is probably a poor substitute for something fancier like PANOSE information.
   // Unfortunately, we generally do not have PANOSE information about the target font.
 
 public:
@@ -2821,7 +2821,7 @@ public:
       return;
     }
 
-    // When we have identical PostSript names, we assume they
+    // When we have identical PostScript names, we assume they
     // are correct and assume font family, weight, stretch, and style 
     // are exact matches.
     const ON_wString target_postscript_name = target_font.PostScriptName();
@@ -2987,7 +2987,7 @@ public:
     return 0;
   }
 
-  // Points to a cadidate for matching the original font
+  // Points to a candidate for matching the original font
   const ON_Font* m_candidate_font = nullptr;
 
   // 0: exact match
@@ -2995,7 +2995,7 @@ public:
   // 2: same LOGFONT.lfName -  different weight,stretch,style
   // 3: same family name - different LOGFONT.lfFaceName, weight,stretch,style
   // 4: some overlap in family name
-  // 5: least favoriable match
+  // 5: least favorable match
   int m_hash_delta = 0;
 
   // m_family_name_delta
@@ -3427,7 +3427,7 @@ const ON_Font* ON_Font::Internal_DecoratedFont(
   const ON_Font* decorated_font = decorated.ManagedFont();
   if (nullptr != decorated_font && ON_FontFaceQuartet::Member::Unset == decorated_font->m_quartet_member)
   {
-    // Decorated faces are not explicity in quartets,
+    // Decorated faces are not explicitly in quartets,
     // but when dealing with rich text, we need to know what quartet member they are decorating.
     decorated_font->m_quartet_member = this->m_quartet_member;
   }
@@ -5479,7 +5479,7 @@ const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
 
     if (nullptr == quartet_faces[0][0] && nullptr == quartet_faces[1][0])
     {
-      // This might happen if buggy code encouters a heavy font like Arial Black
+      // This might happen if buggy code encounters a heavy font like Arial Black
       // and incorrectly specifies the heavy regular/italic faces as bold.
       // A quartet name + regular/bold/italic/italic-bold user interface should offer
       // a regular and italic member in this situation.
@@ -6052,7 +6052,7 @@ const ON_Font* ON_Font::GetManagedFontFromPostScriptName(
   // This font is not installed.
   ON_Font font(ON_Font::Unset);
 
-  // prefered weight/stretch/style since this font is not installed
+  // preferred weight/stretch/style since this font is not installed
   font.SetFontWeight(ON_Font::Weight::Normal);
   font.SetFontStretch(ON_Font::Stretch::Medium);
   font.SetFontStyle(ON_Font::Style::Upright);
@@ -7017,7 +7017,7 @@ unsigned int ON_Font::CRC32(
     ? windows_logfont_name.MapStringOrdinal(ON_StringMapOrdinalType::MinimumOrdinal)
     : windows_logfont_name;
 
-  // SHould probably include PostScript name as well.
+  // Should probably include PostScript name as well.
 
   ON__UINT32 hash = ON_CRC32(0, sizeof(u), &u );
   hash = ON_CRC32(hash,windows_logfont_name_crc.Length()*sizeof(wchar_t),static_cast<const wchar_t*>(windows_logfont_name_crc));
@@ -7155,8 +7155,8 @@ bool ON_Font::SetFontCharacteristics(
     || ON_wString::EqualOrdinal(L"CountryBlueprint", -1, gdi_logfont_name, -1, true)
     )
   {
-    // These two fonts were didstrubuted with ACAD for decades.
-    // Thy have several errors in their defintion including being
+    // These two fonts were distributed with ACAD for decades.
+    // Thy have several errors in their definition including being
     // marked as SYMBOL_CHARSET rather than ANSI_CHARSET.
     logfont_charset = ON_Font::WindowsConstants::logfont_symbol_charset;
   }
@@ -7521,7 +7521,7 @@ public:
     if (s2.IsEmpty())
       return ON_SHA1_Hash::EmptyContentHash;
 
-    // add a hypen between family and postscript name
+    // add a hyphen between family and postscript name
     // to insure hash for Family = A and postscript = BC
     // is different from hash for Family = AB and postscript = C
     s1 += ON_wString::HyphenMinus;
@@ -7604,8 +7604,8 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
     //
     // Internal_FakeWindowsLogfontName(family_name,postscript_name,fake_logfont_name,member);
 
-    // Cominations that are not explicitly specified are correctly handled by using the family name as the fake logfont name.
-    // The explicity fake logfont name should always be different from the family name.
+    // Combinations that are not explicitly specified are correctly handled by using the family name as the fake logfont name.
+    // The explicitly fake logfont name should always be different from the family name.
     Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-Light",          L"American Typewriter Light", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-Semibold",       L"American Typewriter Semibold", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"American Typewriter", L"AmericanTypewriter-CondensedLight", L"American Typewriter Condensed Light", ON_FontFaceQuartet::Member::Regular),

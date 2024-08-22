@@ -104,6 +104,10 @@ public:
   // Helper function; gets the current local date and time.
   static void GetCurrentLocalDateTime(int& y, int& m, int& d, double& h);
 
+  // Helper function; gets the default local date and time.
+  // This is March 21st of the current year at 12:00 noon local time.
+  static void GetDefaultLocalDateTime(int& y, int& m, int& d, double& h);
+
 private:
   class CImpl;
   CImpl* _impl;
@@ -320,5 +324,52 @@ private:
   class CImpl;
   CImpl* _impl;
 };
+
+/*
+Description:
+  Converts a time specified as hour, minute and second to a decimal hours value.
+  Example: hour=9, minute=30, second=0 -> result is 9.5
+Parameters:
+  hour   - [in] The hour value of the time.
+  minute - [in] The minute value of the time.
+  second - [in] The second value of the time.
+Returns:
+  The decimal hours value corresponding to the hour, minute and second.
+*/
+ON_DECL double ON_DecimalHoursFromHMS(int hour, int minute, int second);
+
+/*
+Description:
+  Converts a time specified as decimal hours to hour, minute and second.
+  Guaranteed to produce a valid hour, minute and second result.
+  Example: hours=9.5 -> result is hour=9, minute=30, second=0.
+
+Parameters:
+  hours  - [in]  The decimal hours value of the time. If not in range 0..23 it will be 'unwound' to be in range.
+  hour   - [out] The hour value of the time specified by 'hours'.
+  minute - [out] The minute value of the time specified by 'hours'.
+  second - [out] The second value of the time specified by 'hours'.
+*/
+ON_DECL void ON_DecimalHoursToHMS(double hours, int& hour, int& minute, int& second);
+
+/*
+Description:
+  Converts a time specified as decimal hours to hour, minute and second.
+  Guaranteed to produce a valid hour, minute and second result.
+  Example: hours=9.5 -> result is hour=9, minute=30, second=0.
+  Because of rounding, a value such as 23.99999 will come out as midnight the next day.
+  Therefore, the year, month and day are also passed in so that they can be adjusted if necessary.
+  Example: hours=23.99999 -> result is hour=0, minute=0, second=0 and date is incremented by one day.
+
+Parameters:
+  hours  - [in]  The decimal hours value of the time. If not in range 0..23 it will be 'unwound' to be in range.
+  hour   - [out] The hour value of the time specified by 'hours'.
+  minute - [out] The minute value of the time specified by 'hours'.
+  second - [out] The second value of the time specified by 'hours'.
+  year   - [in/out] The year value of the date, adjusted if necessary.
+  month  - [in/out] The month value of the date, adjusted if necessary.
+  day    - [in/out] The day value of the date, adjusted if necessary.
+*/
+ON_DECL void ON_DecimalHoursToHMS(double hours, int& hour, int& minute, int& second, int& year, int& month, int& day);
 
 #endif

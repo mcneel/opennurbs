@@ -1256,11 +1256,11 @@ int ON_Xform::IsSimilarity() const
 
 int ON_Xform::IsSimilarity(double tol) const
 {
-	// This function does not construt a similarity transformation,  
-	// ( see ON_Xform::DecomposeSimilarity() for this ).  It mearly 
-	// indicates that this transformation is sufficiently close to a similatiry.
+	// This function does not construct a similarity transformation,
+	// ( see ON_Xform::DecomposeSimilarity() for this ).  It merely
+	// indicates that this transformation is sufficiently close to a similarity.
 	// However using with a tight tolerance like tol<ON_ZERO_TOLERANCE 
-	// Indicates that this is very close to being a similar tranformation.
+	// Indicates that this is very close to being a similar transformation.
 	// This calculations is based on approximations and is only  
 	// reliable if tolerance << 1.0. 
 	int rval = 0;
@@ -1297,7 +1297,7 @@ int ON_Xform::DecomposeSimilarity(ON_3dVector& T, double& dilation, ON_Xform& R,
 		/* Three cases:
 		I. L is within OrthogonalTol of being orthogonal then just return R = Linear
 		(this is an optimization to avoid doing an eigen solve)
-		II. Linear<10*tolerance or tol>1.0 then find the closest orthogonal matix R.
+		II. Linear<10*tolerance or tol>1.0 then find the closest orthogonal matrix R.
 		test the final solution to see if |*this-R|<tolerance .
 		III. Otherwise return 0
 		*/
@@ -1395,7 +1395,7 @@ int ON_Xform::DecomposeRigid(ON_3dVector& T,  ON_Xform& R, double tolerance) con
 		/* Three cases:
 			I. Linear is within OrthogonalTol of being orthogonal then just return R = Linear
 				  (this is an optimization to avoid doing an eigen solve)
-			II. Linear~~<10*tolerance or tol>1.0 then find the closest orthogonal matix R.
+			II. Linear~~<10*tolerance or tol>1.0 then find the closest orthogonal matrix R.
 					test the final solution to see if |*this-R|<tolerance .
 			III. Otherwise return 0
 
@@ -1445,11 +1445,11 @@ int ON_Xform::DecomposeRigid(ON_3dVector& T,  ON_Xform& R, double tolerance) con
 
 int ON_Xform::IsRigid(double tolerance) const
 { 
-	// This function does not construt a rigid transformation,  
-	// ( see ON_Xform::DecomposeRigid() for this ).  It mearly 
-	// indicates that this trasformation is sufficiently close to a rigid one.
+	// This function does not construct a rigid transformation,
+	// ( see ON_Xform::DecomposeRigid() for this ).  It merely
+	// indicates that this transformation is sufficiently close to a rigid one.
 	// However using with a tight tolerance like tol<ON_ZERO_TOLERANCE 
-	// Indicates that this is very close to being a rigid tranformation.
+	// Indicates that this is very close to being a rigid transformation.
 	// This calculations is based on approximations and is only  
 	// reliable if tolerance << 1.0. 
 	int rval = 0;
@@ -1486,7 +1486,7 @@ bool ON_Xform::IsAffine() const
 
 void ON_Xform::Affineize()
 {
-	m_xform[3][0] = m_xform[3][0] = m_xform[3][0] = 0.0;
+	m_xform[3][0] = m_xform[3][1] = m_xform[3][2] = 0.0;
 	m_xform[3][3] = 1.0;
 }
 
@@ -1545,7 +1545,7 @@ bool ON_Xform::GetQuaternion(ON_Quaternion& Q) const
         // double S23 = (m_xform[2][3] + m_xform[3][2]) / 2;
 
         double c = (1 - trace) / 2.0;   // cos(theta) should be ~-1.0
-        // magnitude of axis coefficients are compted as such: 
+        // magnitude of axis coefficients are computed as such:
         for (int i = 0; i < 3; i++)
           Axis[i] = sqrt((m_xform[i][i] - c) / (1 - c));
         // need to set the signs
@@ -1669,7 +1669,7 @@ bool ON_Xform::DecomposeAffine(ON_Xform& L, ON_3dVector& T) const
 			L[0][3] = L[1][3] = L[2][3] = 0.0;
 		}
 		/*
-			TODO: A more thourough solution would be to take a tolerance and
+			TODO: A more thorough solution would be to take a tolerance and
 			compute the best approximate T using psuodoinvese and comparing it
 			using the tolerance.
 		*/
@@ -1951,6 +1951,43 @@ double ON_Xform::GetSurfaceNormalXform( ON_Xform& N_xform ) const
     d = 0.0;
   }
   return d;
+}
+
+double ON_Xform::GetSurfaceNormalXformKeepLengthAndOrientation(ON_Xform& N_xform) const
+{
+  N_xform = *this;
+  N_xform.Linearize();
+  double pivot = 0;
+  double det = N_xform.Determinant(&pivot);
+
+  double tol = ON_SQRT_EPSILON * ON_SQRT_EPSILON * ON_SQRT_EPSILON;
+  if (fabs(det) <= tol || fabs(det) * tol >= 1.0 || fabs(pivot) <= ON_EPSILON * fabs(det))
+    return 0.;
+
+  ON_3dVector translation{ ON_3dVector::NanVector };
+  double scale{ ON_DBL_QNAN };
+  ON_Xform rotation{ ON_Xform::Nan };
+  const int is_similarity = N_xform.DecomposeSimilarity(translation, scale, rotation, ON_ZERO_TOLERANCE);
+  // If it's a uniform scale, handle it, otherwise need to get the inverse.
+  if (is_similarity != 0)
+  {
+    N_xform = rotation;
+    if (det < 0)
+    {
+      N_xform = ON_Xform(-1.) * N_xform;
+    }
+    return det;
+  }
+
+  if (!N_xform.Invert()) return 0.;
+  N_xform.Linearize();
+  N_xform.Transpose();
+  if (abs(abs(det) - 1) > ON_SQRT_EPSILON)
+  {
+    N_xform = ON_Xform(pow(det, -1. / 3.)) * N_xform;
+  }
+
+  return det;
 }
 
 double ON_Xform::GetMappingXforms( ON_Xform& P_xform, ON_Xform& N_xform ) const
@@ -2257,7 +2294,7 @@ bool ON_Xform::GetEulerZYZ(double& alpha, double& beta, double& gamma)const
 
 bool ON_Xform::GetKMLOrientationAnglesRadians(double& heading_radians, double& tilt_radians, double& roll_radians ) const
 {
-  // NOTE: In KML, postive rotations are CLOCKWISE about the specified axis.
+  // NOTE: In KML, positive rotations are CLOCKWISE about the specified axis.
   // This is opposite the conventional "right hand rule."
   // https://developers.google.com/kml/documentation/kmlreference#orientation
   heading_radians = ON_DBL_QNAN;
@@ -2308,7 +2345,7 @@ bool ON_Xform::GetKMLOrientationAnglesRadians(double& heading_radians, double& t
     // NOTE WELL: When cos(t) is very near zero, but not equal to zero,
     // this calculation is unstable. In practice t is typically
     // a integer number of degrees between 0 and 180, and this
-    // unstability rarely matters.
+    // instability rarely matters.
 
     // tol = one half an arc second.
     // Should be way more precise than KML requires.
@@ -2326,8 +2363,8 @@ bool ON_Xform::GetKMLOrientationAnglesRadians(double& heading_radians, double& t
     {
       // In this case, cos(tilt angle) = 0, clean.m_xform[2][1] = sin(tilt angle) = +1 or -1.
       // In this case it is impossible to distinguish between the initial rotation around
-      // the y axis and the final rototation around the z axis
-      // (tilt is the middle rotation afound the x axis).
+      // the y axis and the final rotation around the z axis
+      // (tilt is the middle rotation around the x axis).
       // I'm choosing to set roll = 0 in this case.
       h = atan2(clean.m_xform[1][0], clean.m_xform[0][0]); // = atan2(clean.m_xform[0][1], -clean.m_xform[1][2])
       if (fabs(h) <= zero_angle_tol)
@@ -2372,7 +2409,7 @@ bool ON_Xform::GetKMLOrientationAnglesRadians(double& heading_radians, double& t
 
     if (h == h && r == r && t == t)
     {
-      // NOTE: In KML, postive rotations are CLOCKWISE about the specified axis.
+      // NOTE: In KML, positive rotations are CLOCKWISE about the specified axis.
       // This is opposite the conventional "right hand rule."
       // https://developers.google.com/kml/documentation/kmlreference#orientation
       heading_radians = -h;
@@ -2431,17 +2468,17 @@ const ON_Xform ON_Xform::RotationTransformationFromKMLAnglesRadians(
   double roll_radians
 )
 {
-  // NOTE: In KML, postive rotations are CLOCKWISE looking down the specified axis towards the orgin.
+  // NOTE: In KML, positive rotations are CLOCKWISE looking down the specified axis towards the origin.
   // This is opposite the conventional "right hand rule."
   // https://developers.google.com/kml/documentation/kmlreference#orientation
   ON_Xform H, R, T;
-  // Standard trigonometry functons (cosine, sine, ...) follow the right hand rule
+  // Standard trigonometry functions (cosine, sine, ...) follow the right hand rule
   // convention, so the input angles must be negated.
   H.Rotation(-heading_radians, ON_3dVector::ZAxis, ON_3dPoint::Origin); // KML Earth z-axis = up
   T.Rotation(-tilt_radians, ON_3dVector::XAxis, ON_3dPoint::Origin); // KML Earth x-axis = east
   R.Rotation(-roll_radians, ON_3dVector::YAxis, ON_3dPoint::Origin); // KML Earth y-axis = north
-  // KML specifes the rotation order as first R, second T, third H.
-  // Since openurbs ON_Xform acts on the left of points and vectors,
+  // KML specifies the rotation order as first R, second T, third H.
+  // Since opennurbs ON_Xform acts on the left of points and vectors,
   // H*T*R is the correct order.
   // Example transformed_point = H*T*R*point (R is first, T is second, H is third).
   ON_Xform kml_orientation = H * T * R;

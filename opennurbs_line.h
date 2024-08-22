@@ -114,7 +114,7 @@ public:
   Description:
     Get a plane that contains the line.
   Parameters:
-    plane - [out] a plane that contains the line.  The orgin
+    plane - [out] a plane that contains the line.  The origin
        of the plane is at the start of the line.  The distance
        from the end of the line to the plane is <= tolerance.
        If possible a plane parallel to the world xy, yz or zx

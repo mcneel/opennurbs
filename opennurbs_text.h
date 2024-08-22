@@ -500,7 +500,7 @@ public:
   Evaluates the field instructions in the run and puts the results
   in run->m_display_string.
   Parameters:
-  [in/out] ON_TextRun& run  - Run to evsluste. Modified to store results
+  [in/out] ON_TextRun& run  - Run to evaluate. Modified to store results
   Returns:
   true = Success
   false = Failure

@@ -275,7 +275,7 @@ public:
     normalized_mesh_density - [in]
       A double between 0.0 and 1.0
 
-      The table below shows the correpondence between normalized_density and subd display density.
+      The table below shows the correspondence between normalized_density and subd display density.
 
       Mesh density percentage / normalized_mesh_density / subd display density
       0% ->  [0.0, ON_ZERO_TOLERANCE] -> 1 = adaptive MinimumUserInterfaceDensity
@@ -288,7 +288,7 @@ public:
       Invalid input -> adaptive DefaultDensity;
 
    Returns:
-     A valid ON_SubDDisplayParameters with the specified subd display denstity.
+     A valid ON_SubDDisplayParameters with the specified subd display density.
   */
   static const ON_SubDDisplayParameters CreateFromMeshDensity(
     double normalized_mesh_density
@@ -381,7 +381,7 @@ public:
 
   /*
   Description:
-    In almast all cases, you are better off using SetAdaptiveDisplayDensity().
+    In almost all cases, you are better off using SetAdaptiveDisplayDensity().
   Parameters:
     absolute_display_density - [in]
       absolute_display_density <= ON_SubDDisplayParameters::MaximumDensity
@@ -543,7 +543,7 @@ private:
 //
 class ON_CLASS ON_MeshParameters
 {
-  // surface meshing perameters
+  // surface meshing parameters
 public:
 
   // The Rhino legacy mesher is the mesher used in Rhino 1, 2, 3, 4, 5, 6.
@@ -713,14 +713,14 @@ public:
 
   /*
   Description:
-    Mesh creationg parameters to create the default render mesh.
+    Mesh creation parameters to create the default render mesh.
   */
   static 
   const ON_MeshParameters DefaultMesh;
 
   /*
   Description:
-    Mesh creationg parameters to create the a render mesh
+    Mesh creation parameters to create the a render mesh
     when meshing speed is preferred over mesh quality.
   */
   static 
@@ -728,7 +728,7 @@ public:
 
   /*
   Description:
-    Mesh creationg parameters to create the a render mesh
+    Mesh creation parameters to create the a render mesh
     when mesh quality is preferred over meshing speed.
   */
   static 
@@ -736,7 +736,7 @@ public:
 
   /*
   Description:
-    Mesh creationg parameters to create the default analysis mesh.
+    Mesh creation parameters to create the default analysis mesh.
   */
   static 
   const ON_MeshParameters DefaultAnalysisMesh;
@@ -764,7 +764,7 @@ public:
 
       Invalid input is treated as 0.5.
    Returns:
-     A valid ON_MeshParameters with the specified subd display denstity.
+     A valid ON_MeshParameters with the specified subd display density.
   */
   static const ON_MeshParameters CreateFromMeshDensity(
     double normalized_mesh_density
@@ -1041,7 +1041,7 @@ public:
   //   these mesh creation parameters is enabled.
   //
   //   If CustomSettingsEnabled() is false, then these mesh
-  //   creation parameters should be gnored.
+  //   creation parameters should be ignored.
   //
   const bool CustomSettingsEnabled() const;
   void SetCustomSettingsEnabled(
@@ -1128,8 +1128,8 @@ public:
   //   surfaces when the active area is a small subset of
   //   the entire surface, there will be large regions of
   //   unused texture space in [0,1]x[0,1].  When the 3d region
-  //   being meshed is far from being sqaure-ish, there will be
-  //   a substantual amount of distortion mapping [0,1]x[0,1]
+  //   being meshed is far from being square-ish, there will be
+  //   a substantial amount of distortion mapping [0,1]x[0,1]
   //   texture space to the 3d mesh.
   //   
   // 2: packed, scaled, normalized (default)
@@ -1150,7 +1150,7 @@ public:
   void SetTextureRangePictureFrameHack();
 
   // If the object being meshed is closed, m_bClosedObjectPostProcess is true, 
-  // m_bJaggedSeams = false, and the resultig mesh is not closed, then a post meshing process
+  // m_bJaggedSeams = false, and the resulting mesh is not closed, then a post meshing process
   // is applied to find and close gaps in the mesh. Typically the resulting mesh
   // is not closed because the input object has a geometric flaw like loops in
   // trimming curves.
@@ -1223,7 +1223,7 @@ public:
     int grid_min_count
   );
 
-  // desired masimum number of quads in initial grid
+  // desired maximum number of quads in initial grid
   const int GridMaxCount() const;
   void SetGridMaxCount(
     int grid_max_count
@@ -1371,7 +1371,7 @@ private:
   //
   //////////////////////////////////////////////////////////
 private:
-  // This value is perminantly reserved for use by ON_SubD core code
+  // This value is permanently reserved for use by ON_SubD core code
   // that is part of public opennurbs.
   unsigned int m_subd_stuff_reserved5 = 0;
 
@@ -2074,7 +2074,7 @@ public:
   unsigned int OuterBoundaryEdgeCount() const;
 
   /*
-  Pamameters:
+  Parameters:
     mesh_face_list - [in]
       ON_Mesh face list.
     bPermitHoles - [in]
@@ -2096,7 +2096,7 @@ public:
   ) const;
 
   /*
-  Pamameters:
+  Parameters:
     mesh_face_list - [in]
       ON_Mesh face list.
     bPermitHoles - [in]
@@ -2287,7 +2287,7 @@ Parameters:
     of the faces that form the ngon.
   ngon_vi - [out]
     An array of vertex indices that make the ngon boundary.
-  ngon_boundary_markers - [out] indexes into ngon_boundary_points to differiate (inner) boundaries,
+  ngon_boundary_markers - [out] indexes into ngon_boundary_points to differentiate (inner) boundaries,
     if empty there is only an outer boundary.
 Returns:
   Number of vertices in the ngon outer boundary or 0 if the input is
@@ -2403,7 +2403,7 @@ Returns:
     ngons.
   Parameters:
     ngon_buffer - [in]
-      memory used to create ngon classan array with a capacity for at least 10 ON__UINT_PTR elements.
+      memory used to create ngon class array with a capacity for at least 10 ON__UINT_PTR elements.
     mesh_face_index - [in]
     fvi - [in]
       mesh face vertex indices.
@@ -2783,15 +2783,15 @@ public:
   const ON_Mesh* m_mesh;
 
   //////////
-  // number of topoligical vertices (<= m_mesh.VertexCount())
+  // number of topological vertices (<= m_mesh.VertexCount())
   int TopVertexCount() const;
 
   //////////
-  // number of topoligical edges
+  // number of topological edges
   int TopEdgeCount() const;
   
   //////////
-  // number of topoligical faces (same as m_mesh.FaceCount())
+  // number of topological faces (same as m_mesh.FaceCount())
   int TopFaceCount() const;
 
   class ON_MeshComponentRef MeshComponentRef(
@@ -2805,7 +2805,7 @@ public:
       ON_COMPONENT_INDEX::TYPE::mesh_vertex or 
       ON_COMPONENT_INDEX::TYPE::meshtop_vertex.
   Return:
-    If ci correctly identifes a mesh topology vertex, then
+    If ci correctly identifies a mesh topology vertex, then
     component index with type of ON_COMPONENT_INDEX::TYPE::meshtop_vertex is returned.
     Otherwise ON_COMPONENT_INDEX::UnsetComponentIndex is returned.
   */
@@ -3214,7 +3214,7 @@ public:
   ON_SurfaceCurvatureColorMapping& operator=(const ON_SurfaceCurvatureColorMapping&) = default;
 
   /// <summary>
-  /// Construce a ON_SurfaceCurvatureColorMapping for cnverting a specified 
+  /// Construct a ON_SurfaceCurvatureColorMapping for converting a specified
   /// range of curvatures to a color.
   /// </summary>
   /// <param name="kappa_style">
@@ -3230,7 +3230,7 @@ public:
   /// A kappa value k in between kappa_range[0] and kappa_range[1]
   /// is mapped to the saturated color with 
   /// hue = ON_SurfaceCurvatureColorMapping::DefaultHueRangeRadians.ParameterAt(kappa_range.NormalizedParameterAt(k)).
-  /// Kappa values outside the kappa_range inteval are mapped to the hue 
+  /// Kappa values outside the kappa_range interval are mapped to the hue
   /// assigned to the nearest end of the kappa_range interval.
   /// </param>
   ON_SurfaceCurvatureColorMapping(
@@ -3239,7 +3239,7 @@ public:
   );
 
   /// <summary>
-  /// Construce a ON_SurfaceCurvatureColorMapping for cnverting a specified 
+  /// Construct a ON_SurfaceCurvatureColorMapping for converting a specified
   /// range of curvatures to a color.
   /// </summary>
   /// <param name="kappa_style">
@@ -3253,12 +3253,12 @@ public:
   /// A kappa value k in between kappa_range[0] and kappa_range[1]
   /// is mapped to the saturated color with 
   /// hue = hue_range_in_radians.ParameterAt(kappa_range.NormalizedParameterAt(k)).
-  /// Kappa values outside the kappa_range inteval are mapped to the hue 
+  /// Kappa values outside the kappa_range interval are mapped to the hue
   /// assigned to the nearest end of the kappa_range interval.
   /// </param>
   /// <param name="hue_range_in_radians">
   /// When in doubt, pass ON_SurfaceCurvatureColorMapping::DefaultHueRangeRadians.
-  /// This paramter specifies the range of color hues (in radians) assigned
+  /// This parameter specifies the range of color hues (in radians) assigned
   /// to the kappa_range interval.
   /// This interval may be increasing or decreasing.
   /// </param>
@@ -3389,13 +3389,13 @@ public:
   ON_SurfaceDraftAngleColorMapping& operator=(const ON_SurfaceDraftAngleColorMapping&) = default;
 
   /// <summary>
-  /// Construce a ON_SurfaceDraftAngleColorMapping for cnverting a specified 
+  /// Construct a ON_SurfaceDraftAngleColorMapping for converting a specified
   /// range of draft angles to a color.
   /// </summary>
   /// <param name="up">
-  /// Specify the up direction used to caluclate the draft angle.
+  /// Specify the up direction used to calculate the draft angle.
   /// The draft angle of a surface normal N is 0 if N is perpendicular to up,
-  /// pi/2 (90 degrees) if N an up piont the same direction,
+  /// pi/2 (90 degrees) if N an up point the same direction,
   /// and -pi/2 (-90 degrees) if N and up point opposite directions.
   /// </param>
   /// <param name="angle_range_in_radians">
@@ -3417,20 +3417,20 @@ public:
   );
 
   /// <summary>
-  /// Construce a ON_SurfaceDraftAngleColorMapping for cnverting a specified 
+  /// Construct a ON_SurfaceDraftAngleColorMapping for converting a specified
   /// range of draft angles to a color.
   /// </summary>
   /// <param name="up">
-  /// Specify the up direction used to caluclate the draft angle.
+  /// Specify the up direction used to calculate the draft angle.
   /// The draft angle of a surface normal N is 0 if N is perpendicular to up,
-  /// pi/2 (90 degrees) if N an up piont the same direction,
+  /// pi/2 (90 degrees) if N an up point the same direction,
   /// and -pi/2 (-90 degrees) if N and up point opposite directions.
   /// </param>
   /// <param name="angle_range_in_radians">
   /// A range that is used to convert draft angles to colors. 
   /// This interval may be increasing, decreasing, or a singleton.
   /// A draft angle equal to angle_range_in_radians[0] is mapped to 
-  /// hue_range_in_radianss[0].
+  /// hue_range_in_radians[0].
   /// A draft angle equal to angle_range_in_radians[1] is mapped to 
   /// hue_range_in_radians[1].
   /// A draft angle a in between angle_range_in_radians[0] and angle_range_in_radians[1]
@@ -3441,7 +3441,7 @@ public:
   /// </param>
   /// <param name="hue_range_in_radians">
   /// When in doubt, pass ON_SurfaceDraftAngleColorMapping::DefaultHueRangeRadians.
-  /// This paramter specifies the range of color hues (in radians) assigned
+  /// This parameter specifies the range of color hues (in radians) assigned
   /// to the angle_range_in_radians interval.
   /// The hue interval may be increasing or decreasing.
   /// </param>
@@ -3734,7 +3734,7 @@ public:
 
   /*
   Description:
-    Increases the capactiy of arrays used to hold vertex information.
+    Increases the capacity of arrays used to hold vertex information.
   Parameters:
     new_vertex_capacity - [in]
       desired capacity
@@ -4637,7 +4637,7 @@ Returns:
       0: The mesh is not closed.  There is at least one face with an 
          edge that is geometrically distinct (as an unoriented line segment)
          from all other edges.
-      1: The mesh is closed.  Every geometrically distict edge is used
+      1: The mesh is closed.  Every geometrically distinct edge is used
          by two or more faces.
   */
   void SetClosed(int closed);
@@ -4818,7 +4818,7 @@ Returns:
     first_vid - [in]
       Initial vertex id.  Typically 1 or 0.
     Vid - [out]
-      If not null, then Vid[] sould be an array of length VertexCount().
+      If not null, then Vid[] should be an array of length VertexCount().
       and the vertex ids will be stored in this array.  If null,
       the array will be allocated by calling onmalloc().  The returned
       array Vid[i] is the id of the vertex m_V[i].  If m_V[i] and
@@ -5175,7 +5175,7 @@ Returns:
         Distance to offset
       direction - [in]
         If this parameter is ON_3dVector::UnsetVector, offset each vertex in the normal direction
-        orherwise, offset every vertex in the input direction
+        otherwise, offset every vertex in the input direction
     Returns:
       New mesh that is an offset of a duplicate of this mesh
       Or nullptr if the input was invalid or the mesh could not be duplicated or offset
@@ -5212,7 +5212,7 @@ Returns:
   /*
   Description:
     If you modify the values of double precision vertices,
-    then you must call UpdateSinglePrecisonVertices().
+    then you must call UpdateSinglePrecisionVertices().
   Remarks:
     If double precision vertices are not present, this function
     does nothing.
@@ -5254,7 +5254,7 @@ Returns:
     Array of double precision vertices.  If you modify the
     values in this array, you must make the same modifications
     to the single precision vertices, or call 
-    UpdateSinglePrecisonVertices().
+    UpdateSinglePrecisionVertices().
   Example:
 
           // add a bunch of double precision information
@@ -5266,7 +5266,7 @@ Returns:
           // This call updates the single precision values
           // in m_V[] and sets all the counts and CRCs that
           // are used in validity checking.
-          mesh.UpdateSinglePrecisonVertices();
+          mesh.UpdateSinglePrecisionVertices();
     
   Remarks:
     Avoid multiple calls to DoublePrecisionVertices().
@@ -5822,7 +5822,7 @@ Returns:
   Description:
     For each ngon with index in the specified range that has
     interior vertices, remove the interior vertices and
-    triangluate the ngon.
+    triangulate the ngon.
   Parameters:
     vertex_face_map - [in]
       - Pass null if you don't have one.
@@ -5841,7 +5841,7 @@ Returns:
   Returns:
     true 
       one or more vertices were removed and one or more ngons
-      were triangluated. This changes the mesh's vertex and face
+      were triangulated. This changes the mesh's vertex and face
       information and invalidates any input vertex_face_map.
     false
       The mesh was not modified.
@@ -6049,7 +6049,7 @@ The map is an array of length m_F.Count(), ngon_map[]
   // Texture coordinates / surface parameters
   //
   // If m_S.Count() == m_V.Count(), then the mesh has texture
-  // coordinates, or it is a tessellation of a parameteric surface
+  // coordinates, or it is a tessellation of a parametric surface
   // and m_S[j] is the texture coordinate / surface parameter at
   // m_V[j].
   // If the values in m_S are changed, then you need to call

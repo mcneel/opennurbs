@@ -496,7 +496,7 @@ OUTPUT:
         (n)
      bez  (t) = answer[n]
 COMMENTS:
-  Use de Casteljau's algorithm.  Rational fuctions with removable singularities
+  Use de Casteljau's algorithm.  Rational functions with removable singularities
   (like x^2/x) are efficiently and correctly handled.
 EXAMPLE:
   // ...
@@ -1333,7 +1333,7 @@ bool ON_EvaluateNurbsDeBoor(
  *   It is used to convert portions of NURB curves to Beziers and to create
  *   fully multiple end knots.  The functions that perform the above tasks
  *   simply call this function with appropriate values and take linear
- *   combonations of the returned cv's to compute the desired result.
+ *   combinations of the returned cv's to compute the desired result.
  *
  *   Rational cases are handled adding one to the dimension and applying the
  *   quotient rule as needed.
@@ -1585,7 +1585,7 @@ void ON_ConvertNurbSpanToBezier(int cvdim, int order,
  *      span's control vertices
  *   knot
  *      array of (2*order - 2) doubles the define the Nurb
- *      span's knot vector.  The array should satisfiy
+ *      span's knot vector.  The array should satisfy
  *      knot[0] <= ... <= knot[order-2] < knot[order-1] 
  *      <= ... <= knot[2*order-3]
  *   t0, t1

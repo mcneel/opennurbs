@@ -225,7 +225,7 @@ public:
 
  /*
  Description:
-   Points in a Convex Polytope are parameterized , not necessaily uniquely,
+   Points in a Convex Polytope are parameterized , not necessarily uniquely,
    by an ON_4dex of vertex indices and a 4d barycentric point B
     Evaluate(Ind, B ) = Sum_{i=0,..,3} Vertex(Ind[i])*B[i], where the sum is taken over i such that Ind[i]>=0
    If B is a barycentric coordinate
@@ -252,7 +252,7 @@ Description:
 Parameters:
   P0 - [in]  Base Point for closest point
   dex -[out] 
-  bary - [out] Evaluate(dex,bary) is the closest point on this polyhedran
+  bary - [out] Evaluate(dex,bary) is the closest point on this polyhedron
   maximum_distance - [in ] optional upper bound on distance
 
 Returns:
@@ -311,7 +311,7 @@ Details:
     A point represented by a ON_4dex D and a barycentric coordinate B
     can be put in a standard form so that non-negative elements of D are unique and
     corresponding coordinates are positive.  Furthermore, the non-negative
-    indices are all listed before the unset ( neagative ) values
+    indices are all listed before the unset ( negative ) values
   */
   static bool  Standardize(ON_4dex& D, ON_4dPoint& B);
 

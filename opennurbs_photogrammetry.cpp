@@ -419,7 +419,7 @@ Parameters:
     world coordinate unit vector in the camera up direction.
     = OrientationRotation * (0,1,0)
   camera_Z - [out]
-    world coordinate unit vector pointing into the cameara (from the
+    world coordinate unit vector pointing into the camera (from the
     image toward the camera).
     = OrientationRotation * (0,0,1)
 */
