@@ -776,7 +776,7 @@ bool ON_NurbsSurface::Read(
       rc = file.ReadBoundingBox(bbox);
     }
     
-    Create( dim, is_rat, order0, order1, cv_count0, cv_count1 );
+    if(rc) rc = Create( dim, is_rat, order0, order1, cv_count0, cv_count1 );
 
     int count = 0;
     if (rc) rc = file.ReadInt(&count);
