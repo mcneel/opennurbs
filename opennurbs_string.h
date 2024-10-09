@@ -2739,6 +2739,9 @@ public:
   /// <summary>WARNING SIGN U+26A0 (&#x26a0;)</summary>
   static const wchar_t  WarningSign = (wchar_t)ON_UnicodeCodePoint::ON_WarningSign;
 
+  /// <summary>CHECK MARK U+2713 (&#x2713;)</summary>
+  static const wchar_t  CheckMark = (wchar_t)ON_UnicodeCodePoint::ON_CheckMark;
+
   /// <summary>
   /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
   /// By convention, U+FFFD is used to mark string elements where

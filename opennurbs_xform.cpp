@@ -383,13 +383,13 @@ const ON_Xform ON_Xform::DiagonalTransformation(
 #if defined(ON_COMPILER_MSC)
 ON_Xform::ON_Xform( double m[4][4] )
 {
-  memcpy( &m_xform[0][0], &m[0][0], sizeof(m_xform) );
+  memcpy( m_xform, m, sizeof(m_xform) );
 }
 #endif
 
 ON_Xform::ON_Xform( const double m[4][4] )
 {
-  memcpy( &m_xform[0][0], &m[0][0], sizeof(m_xform) );
+  memcpy( m_xform, m, sizeof(m_xform) );
 }
 
 #if defined(ON_COMPILER_MSC)
@@ -442,7 +442,7 @@ ON_Xform::ON_Xform( const float m[4][4] )
 
 ON_Xform::ON_Xform( const double* m )
 {
-  memcpy( &m_xform[0][0], m, sizeof(m_xform) );
+  memcpy( m_xform, m, sizeof(m_xform) );
 }
 
 ON_Xform::ON_Xform( const float* m )

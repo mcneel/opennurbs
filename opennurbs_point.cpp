@@ -9391,17 +9391,21 @@ const ON_2dPoint ON_4dRect::BottomRight(void) const { return ON_2dPoint(right, b
 
 bool ON_4dRect::IntersectRect(const ON_4dRect * r1, const ON_4dRect * r2)
 {
-	left = ON_Max(r1->left, r2->left);
-	top = ON_Max(r1->top, r2->top);
-	right = ON_Min(r1->right, r2->right);
-	bottom = ON_Min(r1->bottom, r2->bottom);
+  // The previous implementation was incorrect. The implementation for ON_4iRect::Intersect
+  // was/is correct, so its implemenation is now used here.
+  left = ON_Max(r1->left, r2->left);
+  right = ON_Min(r1->right, r2->right);
+  if (right > left)
+  {
+    top = ON_Max(r1->top, r2->top);
+    bottom = ON_Min(r1->bottom, r2->bottom);
+    if (bottom > top)
+      return true;
+  }
 
-	if (IsRectEmpty()) {
-		// degenerate rectangle
-		SetRectEmpty();
-		return false;
-	}
-	return true;
+  // degenerate rectangle at this point...
+  SetRectEmpty();
+  return false;
 }
 
 bool ON_4dRect::IntersectRect(const ON_4dRect & r1, const ON_4dRect & r2) { return IntersectRect(&r1, &r2); }

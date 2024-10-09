@@ -321,6 +321,7 @@ bool ON_Matrix::Create( int row_count, int col_count)
         if ( i < rows_per_block )
           rows_per_block = i;
         int dblblk_count = rows_per_block*col_count;
+        // TODO: Make this malloc size a static on the DBLBLK class, this is too ugly
         struct DBLBLK* p = (struct DBLBLK*)onmalloc(sizeof(*p) + dblblk_count*sizeof(p->a[0]));
         p->a = (double*)(p+1);
         p->count = dblblk_count;

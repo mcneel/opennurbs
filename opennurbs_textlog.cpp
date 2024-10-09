@@ -780,39 +780,41 @@ void ON_TextLog::PrintPointList( int dim, bool is_rat, int count, int stride, co
   if ( count == 0 ) {
     Print( "%sEMPTY point list\n", preamble.Array() );
   }
-  else if ( !P ) {
+  else if ( nullptr == P ) {
     Print( "%sNULL point list\n", preamble.Array() );
   }
-
-  for ( i = 0; i < count; i++ ) {
-    Print( "%s[%2d] %c", preamble.Array(), i, (is_rat) ? '[' : '(' );
-    Print( static_cast< const char* >(m_double_format), P[0] );
-    for ( j = 1; j < cvdim; j++ ) {
-      Print( ", ");
-      Print(static_cast< const char* >(m_double_format), P[j] );
-    }
-    Print("%c", (is_rat) ? ']' : ')' );
-    if ( is_rat ) 
-    {
-      w = P[dim];
-      if ( w != 0.0 ) 
-      {
-        // print euclidean coordinates
-        w = 1.0/w;
-        x = w*P[0];
-        Print( " = (");
-        Print( static_cast< const char* >(m_double_format), x );
-        for ( j = 1; j < dim; j++ ) 
-        {
-          x = w*P[j];
-          Print( ", ");
-          Print( static_cast< const char* >(m_double_format), x );
-        }
-        Print(")");
+  else
+  {
+    for (i = 0; i < count; i++) {
+      Print("%s[%2d] %c", preamble.Array(), i, (is_rat) ? '[' : '(');
+      Print(static_cast<const char*>(m_double_format), P[0]);
+      for (j = 1; j < cvdim; j++) {
+        Print(", ");
+        Print(static_cast<const char*>(m_double_format), P[j]);
       }
+      Print("%c", (is_rat) ? ']' : ')');
+      if (is_rat)
+      {
+        w = P[dim];
+        if (w != 0.0)
+        {
+          // print euclidean coordinates
+          w = 1.0 / w;
+          x = w * P[0];
+          Print(" = (");
+          Print(static_cast<const char*>(m_double_format), x);
+          for (j = 1; j < dim; j++)
+          {
+            x = w * P[j];
+            Print(", ");
+            Print(static_cast<const char*>(m_double_format), x);
+          }
+          Print(")");
+        }
+      }
+      Print("\n");
+      P += stride;
     }
-    Print("\n");
-    P += stride;
   }
 }
 

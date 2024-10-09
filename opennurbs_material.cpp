@@ -4137,7 +4137,7 @@ public:
 	virtual ~IClosestPointMapper() {}
 	virtual bool IsValid() const = 0;
 	virtual bool ClosestPointTC(const ON_3dPoint& pt, const ON_3fVector& vtNormalHint, ON_3dPoint& tcOut) const = 0;
-	virtual bool MatchFaceTC(int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut) const = 0;
+	virtual bool MatchFaceTC(int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut, const ON_3fVector& vtNormalHint) const = 0;
 };
 
 // Closest point projection of texture coordinates for a mesh face. Samples projection close to face vertices and then extrapolates to vertices.
@@ -4418,13 +4418,20 @@ public:
     };
   public:
     SeamTool(const ON_Mesh& mesh, const ON_2fPointArray& tc)
-      : m_mesh(mesh), m_tc(tc), m_bProcessed(false), m_faceData(nullptr)
+      : m_mesh(mesh), m_tc(tc), m_bProcessed(false), m_faceData(nullptr), m_bHasSeams(false)
     {
     }
     virtual ~SeamTool()
     {
       delete [] m_faceData;
       m_faceData = nullptr;
+    }
+    bool HasSeams() const
+    {
+      if (!m_bProcessed)
+        Process();
+
+      return m_bHasSeams;
     }
     int SeamlessNeighbours(int fi, int*& pFisOut) const
     {
@@ -4442,9 +4449,38 @@ public:
       pFisOut = m_faceData[fi].m_neighbourFis + m_faceData[fi].m_nSeamless;
       return m_faceData[fi].m_nSeamed;
     }
+    /// <summary>
+    /// Checks if any seams intersect the bounding box of the points expanded by the tolerance
+    /// </summary>
+    /// <param name="count">Number of points</param>
+    /// <param name="pPts">Pointer to an array of points</param>
+    /// <param name="tolerance">Tolerance</param>
+    /// <returns>Returns true if there might be a seam intersecting and false if no seams intersects</returns>
+    bool IntersectsSeams(int count, const ON_3dPoint* pPts, double tolerance) const
+    {
+      if (!m_bProcessed)
+        Process();
+
+      ON_BoundingBox bbox;
+      for (int i = 0; i < count; i++)
+      {
+        bbox.Set(pPts[i], 1);
+      }
+      bbox.Expand(ON_3dVector(tolerance, tolerance, tolerance));
+      ON__INT_PTR sr_id = 0;
+      ON_RTreeSearchResult sr;
+      memset(&sr, 0, sizeof(sr));
+      sr.m_capacity = 1;
+      sr.m_id = &sr_id;
+      m_seamTree.Search(bbox.Min(), bbox.Max(), sr);
+      if (sr.m_count > 0)
+        return true;
+      return false;
+    }
   private:
     void Process() const
     {
+      m_bHasSeams = false;
       m_faceData = new Data[m_mesh.FaceCount()];
       for (int fi = 0; fi < m_mesh.FaceCount(); fi++)
       {
@@ -4465,15 +4501,21 @@ public:
             else
             {
               seamedFis.Append(ofi);
+              const ON_Line seamLine = m_mesh.Topology().TopEdgeLine(tf.m_topei[i]);
+              m_seamTree.Insert(seamLine.BoundingBox().m_min, seamLine.BoundingBox().m_max, tf.m_topei[i]);
+              m_bHasSeams = true;
             }
           }
           else if (te.m_topf_count > 2)
           {
+            const ON_Line seamLine = m_mesh.Topology().TopEdgeLine(tf.m_topei[i]);
+            m_seamTree.Insert(seamLine.BoundingBox().m_min, seamLine.BoundingBox().m_max, tf.m_topei[i]);
             for (int j = 0; j < te.m_topf_count; j++)
             {
               if (te.m_topfi[j] != fi)
               {
                 seamedFis.Append(te.m_topfi[j]);
+                m_bHasSeams = true;
               }
             }
           }
@@ -4488,6 +4530,8 @@ public:
 
     mutable bool m_bProcessed;
     mutable Data* m_faceData;
+    mutable bool m_bHasSeams;
+    mutable ON_RTree m_seamTree;
   };
 
 	static ON_3dPoint Average(int count, const ON_3dPoint* pPts)
@@ -4770,44 +4814,66 @@ public:
     std::unordered_map<int, TcSeamlessPatch*> m_patches;
   };
 
-	virtual bool MatchFaceTC(int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut) const
+	virtual bool MatchFaceTC(int count, const ON_3dPoint* pPts, ON_3dPoint* pTcsOut, const ON_3fVector& vtNormalHint) const
 	{
 		if (nullptr != m_pSourceCPM)
-			return m_pSourceCPM->MatchFaceTC(count, pPts, pTcsOut);
+			return m_pSourceCPM->MatchFaceTC(count, pPts, pTcsOut, vtNormalHint);
 
 		if (nullptr == m_pMeshFaceTree)
 			return false;
 		if (count > 4 || pPts == nullptr || pTcsOut == nullptr)
 			return false;
 
-		const double initialMappingTol = 1.1e-5;
+    // Check if seams are present and if they might intersect the face.
+    // Tolerance used for the intersection is less than the maximum
+    // allowed tolerance for performance reasons.
+    if (m_seamTool.HasSeams() && m_seamTool.IntersectsSeams(count, pPts, 1.1))
+    {
+      // Mapping primitive has seams close to the face. Using seamless
+      // patches to make sure each face gets mapped to a UV continuous block.
+      const double initialMappingTol = 1.1e-5;
 
-		ON_3dPoint amendedPts[5];
-		memcpy(amendedPts, pPts, sizeof(ON_3dPoint) * count);
-		amendedPts[count] = Average(count, pPts);
-		const ON_3dPoint* pAmendedPts = amendedPts;
-		const int amendedCount = count + 1;
+      ON_3dPoint amendedPts[5];
+      memcpy(amendedPts, pPts, sizeof(ON_3dPoint) * count);
+      amendedPts[count] = Average(count, pPts);
+      const ON_3dPoint* pAmendedPts = amendedPts;
+      const int amendedCount = count + 1;
 
-    SamplePoint samplePts[5] = {
-      SamplePoint(amendedPts[0], m_mesh),
-      SamplePoint(amendedPts[1], m_mesh),
-      SamplePoint(amendedPts[2], m_mesh),
-      SamplePoint(amendedPts[3], m_mesh),
-      SamplePoint(amendedPts[4], m_mesh)
-    };
+      SamplePoint samplePts[5] = {
+        SamplePoint(amendedPts[0], m_mesh),
+        SamplePoint(amendedPts[1], m_mesh),
+        SamplePoint(amendedPts[2], m_mesh),
+        SamplePoint(amendedPts[3], m_mesh),
+        SamplePoint(amendedPts[4], m_mesh)
+      };
 
-    TcSeamlessPatchCache patchCache(m_mesh, m_tc, m_seamTool, 5);
+      TcSeamlessPatchCache patchCache(m_mesh, m_tc, m_seamTool, 5);
 
-		for (double mappingTol = initialMappingTol; mappingTol <= 20.0; mappingTol = mappingTol * 10.0)
-		{
-			if (AdaptedMatchFaceTC(amendedCount, pAmendedPts, samplePts, count, pTcsOut, mappingTol, mappingTol == initialMappingTol, patchCache))
-			{
-				if (m_totalMappingTol < mappingTol)
-					m_totalMappingTol = mappingTol;
-				return true;
-			}
-		}
-		m_failedFaceMatches++;
+      for (double mappingTol = initialMappingTol; mappingTol <= 20.0; mappingTol = mappingTol * 10.0)
+      {
+        if (AdaptedMatchFaceTC(amendedCount, pAmendedPts, samplePts, count, pTcsOut, mappingTol, mappingTol == initialMappingTol, patchCache))
+        {
+          if (m_totalMappingTol < mappingTol)
+            m_totalMappingTol = mappingTol;
+          return true;
+        }
+      }
+      m_failedFaceMatches++;
+    }
+    else
+    {
+      // There are no seams on the mapping mesh. Simply use closest point to
+      // for better performance.
+      for (int i = 0; i < count; i++)
+      {
+        if (!ClosestPointTC(pPts[i], vtNormalHint, pTcsOut[i]))
+        {
+          m_failedFaceMatches++;
+          return false;
+        }
+      }
+      return true;
+    }
 		return false;
 	}
 
@@ -5031,7 +5097,7 @@ static bool ProjectTextureCoordinates(const IClosestPointMapper& mapper, const O
 		ON_3dPoint t[4] = { ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin, ON_3dPoint::Origin };
 
 		const int fvc = faceTo.IsQuad() ? 4 : 3;
-		if (mapper.MatchFaceTC(fvc, vtx, t))
+		if (mapper.MatchFaceTC(fvc, vtx, t, vtFaceNormal))
 		{
 			for (int fvi = 0; fvi < fvc; fvi++)
 			{

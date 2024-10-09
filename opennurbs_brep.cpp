@@ -12857,6 +12857,12 @@ bool ON_BrepTrim::ChangeTrimCurve( int c2i )
     m_pbox = c2->BoundingBox();
     m_pbox.m_min.z = 0.0;
     m_pbox.m_max.z = 0.0;
+
+    ON_BrepLoop* pLoop = Loop();
+    if (pLoop && pLoop->m_pbox.IsValid())
+    {
+      pLoop->m_pbox.Union(m_pbox);
+    }
   }
   return true;
 }

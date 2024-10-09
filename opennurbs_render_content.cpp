@@ -367,8 +367,13 @@ static void EnsureNameValid(ON_wString& name)
     name += c;
   }
 
-  // Also disallow ':' inside the name.
-  name.Replace(':', ' ');
+  // 2024-08-27 : kike@mcneel.com
+  // `ON_ModelComponent::IsValidComponentName` allows ':'.
+  // The hole point of https://mcneel.myjetbrains.com/youtrack/issue/RH-78603
+  // is to ensure all type names has same restrictions.
+  // 
+  //// Also disallow ':' inside the name.
+  //name.Replace(':', ' ');
 
   name.TrimLeftAndRight();
 }

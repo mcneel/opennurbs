@@ -324,6 +324,9 @@ enum ON_UnicodeCodePoint
   /// <summary>WARNING SIGN U+26A0 (&#x26a0;)</summary>
   ON_WarningSign = 0x26A0,
 
+  /// <summary>CHECK MARK U+2713 (&#x2713;)</summary>
+  ON_CheckMark = 0x2713,
+
   /// <summary>
   /// REPLACEMENT CHARACTER U+FFFD (&#xfffd;)
   /// By convention, U+FFFD is used to mark string elements where 
