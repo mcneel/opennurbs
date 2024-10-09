@@ -132,6 +132,8 @@ public:
     row_count - [in]
     col_count - [in]
     M - [in]
+      M should point to the start of an array of double*,
+      each pointing to the start of the storage for a row.
     bDestructorFreeM - [in]
       If true, ~ON_Matrix will call onfree(M).
       If false, caller is managing M's memory.
@@ -401,7 +403,12 @@ public:
   bool IsColOrthoganal() const;
   bool IsColOrthoNormal() const;
 
-
+  // 2024-09-05, Pierre:
+  // Note that this does not mean the memory allocated is contiguous.
+  // m points to the start of m_rowmem[0] in most cases.
+  // When the matrix is bigger than max_dblblk_size (see ON_Matrix::Create), m_rowmem does
+  // not point to contiguous pieces of memory, and indexing as **(m + i*m_col_count + j)
+  // would read into the wrong place.
   double** m = nullptr; // m[i][j] = value at row i and column j
               //           0 <= i < RowCount()
               //           0 <= j < ColCount()

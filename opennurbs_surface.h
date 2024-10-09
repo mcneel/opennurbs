@@ -217,6 +217,19 @@ public:
         double* span_vector // array of length SpanCount() + 1 
         ) const = 0; // 
 
+  /// <summary>
+  /// The surface's span vectors are a stricltly monotone increasing lists of doubles
+  /// that specify the rectangles in the domain where the surface is C-infinity.
+  /// </summary>
+  /// <param name="dir">
+  /// 0 selects the first surface parameter's span vector.
+  /// 1 selects the second surface parameter's span vector.
+  /// </param>
+  /// <returns>
+  /// The selected surface span vector.
+  /// </returns>
+  const ON_SimpleArray<double> SpanVector(int dir) const;
+
   //////////
   // If t is in the domain of the surface, GetSpanVectorIndex() returns the 
   // span vector index "i" such that span_vector[i] <= t <= span_vector[i+1].

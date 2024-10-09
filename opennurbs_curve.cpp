@@ -248,6 +248,21 @@ bool ON_Curve::GetSpanVectorIndex(
   return rc;
 }
 
+const ON_SimpleArray<double> ON_Curve::SpanVector() const
+{
+  ON_SimpleArray<double> span_vector;
+  const int span_count = this->SpanCount();
+  if (span_count >= 1)
+  {
+    span_vector.Reserve(span_count + 1);
+    if (this->GetSpanVector(span_vector.Array()))
+      span_vector.SetCount(span_count + 1);
+    else
+      span_vector.Destroy();
+  }
+  return span_vector; // uses Rvalue clone - no array copied.
+}
+
 
 bool ON_Curve::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
        double t,       // t = parameter in domain

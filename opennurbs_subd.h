@@ -845,22 +845,24 @@ public:
   /// This paramter is important in special situations that occur
   /// in low level SubD evaluation code where information from only one
   /// sector is present. In all other cases, this value doesn't matter as long
-  /// as &lt;= global_vertex_sharpness &lt;= maximum_edge_end_sharpness.
-  /// When in doubt pass 0.0.
+  /// as interior_crease_vertex_sharpness &lt;= maximum_edge_sharpness_at_vertex.
+  /// When in doubt pass 0.0 or ON_DBL_QNAN.
   /// </param>
   /// <param name="sharp_edge_end_count">
   /// Number of sharp edges attached to the vertex that have 
   /// nonzero end sharpness at the vertex.
   /// </param>
-  /// <param name="maximum_edge_end_sharpness">
+  /// <param name="maximum_edge_sharpness_at_vertex">
   /// The largest sharp edge end sharpness at the vertex.
   /// </param>
-  /// <returns></returns>
+  /// <returns>
+  /// The vertex sharpness value to use when subdividing the vertex.
+  /// </returns>
   static double VertexSharpness(
     ON_SubDVertexTag vertex_tag,
     double interior_crease_vertex_sharpness,
     unsigned sharp_edge_end_count,
-    double maximum_edge_end_sharpness
+    double maximum_edge_sharpness_at_vertex
   );
 
   /// <summary>
@@ -894,6 +896,235 @@ bool operator==(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs
 
 ON_DECL
 bool operator!=(const ON_SubDEdgeSharpness& lhs, const ON_SubDEdgeSharpness& rhs);
+
+class ON_SubDVertexSharpnessCalculator
+{
+public:
+  ON_SubDVertexSharpnessCalculator() = default;
+  ~ON_SubDVertexSharpnessCalculator() = default;
+  ON_SubDVertexSharpnessCalculator(const ON_SubDVertexSharpnessCalculator&) = default;
+  ON_SubDVertexSharpnessCalculator& operator=(const ON_SubDVertexSharpnessCalculator&) = default;
+
+  static const ON_SubDVertexSharpnessCalculator Unset;
+
+  /// <summary>
+  /// This constructor completely initializes the class
+  /// and you may immediately call VertexSharpness() and VertexSharpPoint().
+  /// </summary>
+  /// <param name="vertex">
+  /// Vertex where sharpness information is desired.
+  /// </param>
+  ON_SubDVertexSharpnessCalculator(
+    const ON_SubDVertex* vertex
+  );
+
+  /// <summary>
+  /// This constructor begins the initialization of the class.
+  /// You must call AddEdgeSharpnessAndControlNetPoint() or
+  /// AddCreaseEdgeControlNetPoint() for each edge attached to the vertex.
+  /// This technique is useful when iteratove subdivision calculations 
+  /// are being performed an no explicit ON_SubDVertex exists.
+  /// </summary>
+  /// <param name="vertex_tag"></param>
+  /// <param name="vertex_control_net_point"></param>
+  /// <param name="maximum_sharpness_at_interior_crease_vertex">
+  /// If the vertex_tag parameter is ON_SubDVertexTag::Crease
+  /// and the vertex is an interior crease (two crease sectors),  
+  /// then maximum_sharpness_at_interior_crease_vertex should
+  /// be the maximum value of the edge sharpnesses of all
+  /// non-crease edges at this vertex. 
+  /// In all other cases pass 0.0.
+  /// When vertex_tag is not ON_SubDVertexTag::Crease, this
+  /// parameter is always ignored.
+  /// </param>
+  ON_SubDVertexSharpnessCalculator(
+    ON_SubDVertexTag vertex_tag,
+    ON_3dPoint vertex_control_net_point,
+    double maximum_sharpness_at_interior_crease_vertex
+  );
+
+  /// <summary>
+  /// Completely initializes the class and you may immediately call VertexSharpness() and VertexSharpPoint().
+  /// </summary>
+  /// <param name="vertex">
+  /// Vertex where sharpness information is desired.
+  /// </param>
+  bool SetVertex(
+    const ON_SubDVertex* vertex
+  );
+
+  /// <summary>
+  /// This constructor begins the initialization of the class.
+  /// You must call AddEdgeSharpnessAndControlNetPoint() or
+  /// AddCreaseEdgeControlNetPoint() for each edge attached to the vertex.
+  /// This technique is useful when iteratove subdivision calculations 
+  /// are being performed an no explicit ON_SubDVertex exists.
+  /// </summary>
+  /// <param name="vertex_tag"></param>
+  /// <param name="vertex_control_net_point"></param>
+  /// <param name="maximum_sharpness_at_interior_crease_vertex">
+  /// If the vertex_tag parameter is ON_SubDVertexTag::Crease
+  /// and the vertex is an interior crease (two crease sectors),  
+  /// then maximum_sharpness_at_interior_crease_vertex should
+  /// be the maximum value of the edge sharpnesses of all
+  /// non-crease edges at this vertex. 
+  /// In all other cases pass 0.0.
+  /// When vertex_tag is not ON_SubDVertexTag::Crease, this
+  /// parameter is always ignored.
+  /// </param>
+  /// <returns>
+  /// True if successful. False otherwise.
+  /// </returns>
+  bool SetVertex(
+    ON_SubDVertexTag vertex_tag,
+    ON_3dPoint vertex_control_net_point,
+    double maximum_sharpness_at_interior_crease_vertex
+  );
+
+  /// <summary>
+  /// If this class was created using the constructor that has a vertex tag
+  /// and that tag was ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
+  /// or ON_SubDVertexTag::Crease, then you you must call this function for
+  /// every sharp edge connected to the vertex. 
+  /// </summary>
+  /// <param name="sharpness_at_vertex">
+  /// If the associated edge is a crease, then pass ON_SubDEdgeSharpness::CreaseValue
+  /// (or call AddCreaseEdge(other_end)).
+  /// If the associated edge is smooth, then pass the edge sharpness at the
+  /// the end connect to the vertex in question.
+  /// </param>
+  /// <param name="other_end_control_net_point">
+  /// The control net point at edge's other vertex.
+  /// </param>
+  /// <returns>
+  /// True if successful. False otherwise.
+  /// </returns>
+  bool AddEdgeSharpnessAndControlNetPoint(
+    double sharpness_at_vertex,
+    ON_3dPoint other_end_control_net_point
+  );
+
+  /// <summary>
+  /// You may call this function if the edge in question
+  /// is a crease edge attached to the vertex.
+  /// </summary>
+  /// <param name="other_end_control_net_point">
+  /// The control net point at edge's other vertex.
+  /// </param>
+  bool AddCreaseEdgeControlNetPoint(
+    ON_3dPoint other_end_control_net_point
+  );
+
+  /// <returns>
+  /// If the vertex has been set, true is returned.
+  /// Otherwise, false is returned.
+  /// </returns>
+  bool VertexIsSet() const;
+
+  /// <returns>If the vertex has been set, the vertex's tag is returned.
+  /// Otherwise, ON_SubDVertexTag::Unset is returned.
+  /// </returns>
+  ON_SubDVertexTag VertexTag() const;
+
+  /// <returns>If the vertex has been set, the vertex's control net point is returned.
+  /// Otherwise, ON_3dPoint::NanPoint is returned.
+  /// </returns>
+  const ON_3dPoint VertexControlNetPoint() const;
+
+  /// <returns>Number of edges attached to the vertex.</returns>
+  unsigned EdgeCount() const;
+
+  /// <returns>Number of sharp edges attached to the vertex.</returns>
+  unsigned SharpEdgeCount() const;
+
+  /// <returns>Number of crease edges attached to the vertex.</returns>
+  unsigned CreaseEdgeCount() const;
+
+  /// <returns>
+  /// True if the vertex has nonzero sharpness. 
+  /// </returns>
+  bool IsSharpVertex() const;
+
+  /// <summary>
+  /// When the vertex sharpness is &gt; 0, the vertex subdivision
+  /// point is a blend of this->VertexSharpPoint() and the 
+  /// Catmull-Clark subdivision point calculated as if there were no sharpness.
+  /// </summary>
+  /// <returns>
+  /// The vertex sharpness.
+  /// </returns>
+  double VertexSharpness() const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <returns>
+  /// If this->VertexSharpness() &gt; 0, then this point must be blended with
+  /// the Catmull-Clark subdivision point calculated as if there were no sharpness.
+  /// Otherwise, 0 is returned.
+  /// </returns>
+  const ON_3dPoint VertexSharpPoint() const;
+
+private:
+  void Internal_SetVertex(
+    ON_SubDVertexTag vertex_tag,
+    ON_3dPoint vertex_control_net_point,
+    double maximum_sharpness_at_interior_crease_vertex
+  );
+
+  void Internal_SetVertex(
+    const ON_SubDVertex* vertex
+  );
+
+  bool Internal_SetVertexSharpnessAndSharpPoint() const;
+
+  mutable enum class Status : unsigned char
+  {
+    Unset,
+
+    /// <summary>
+    /// m_vertex_tag, m_u2.m_vertex_control_net_point are set
+    /// and edges can be added.
+    /// </summary>
+    VertexSet,
+
+    /// <summary>
+    /// m_u1.m_vertex_sharpness = VertexSharpness(),
+    /// m_other_end_control_net_points[0] = VertexSharpPoint().
+    /// m_other_end_control_net_points[1] = ON_3dPoint::NanPoint.
+    /// </summary>
+    SharpnessSet
+  }
+  m_status;
+
+  ON_SubDVertexTag m_vertex_tag = ON_SubDVertexTag::Unset;
+
+  /// <summary>
+  /// Total number of edges attached to the vertex
+  /// </summary>
+  unsigned short m_edge_count = 0;
+
+  /// <summary>
+  /// Number of crease edges attached to the vertex.
+  /// </summary>
+  unsigned short m_crease_edge_count = 0;
+
+  /// <summary>
+  /// Number of sharp edges attached to the vertex.
+  /// </summary>
+  unsigned short m_sharp_edge_count = 0;
+
+  ON_3dPoint m_vertex_control_net_point = {};
+
+  mutable union
+  {
+    double m_max_edge_sharpness_at_vertex = 0.0;
+    double m_vertex_sharpness;
+  } m_u1;
+
+  mutable
+    ON_3dPoint m_other_end_control_net_points[2] = {};
+};
 
 /// <summary>
 /// A ON_SubDFaceCornerDex is a value that identifies a subd face corner.
@@ -1573,12 +1804,17 @@ public:
   bool IsNull() const;
   bool IsNotNull() const;
 
-  /*
-  Returns:
-    If Vertex() is not nullptr, Vertex()->m_id is returned.
-    Otherwise, 0 is returned.
-  */
+  /// <returns>
+  /// If Vertex() is not nullptr, Vertex()->m_id is returned.
+  /// Otherwise, 0 is returned.
+  /// </returns>
   unsigned int VertexId() const;
+
+  /// <returns>
+  /// If Vertex() is not nullptr, Vertex()->m_vertex_tag is returned.
+  /// Otherwise, ON_SubDVertexTag::Unset is returned.
+  /// </returns>
+  ON_SubDVertexTag VertexTag() const;
 
   /*
   Returns:
@@ -2578,11 +2814,64 @@ public:
 
   unsigned int ComponentId() const;
 
+  /// <returns>
+  /// If Vertex() is not nullptr, Vertex()->m_id is returned.
+  /// Otherwise, 0 is returned.
+  /// </returns>
+  unsigned int VertexId() const;
+
+  /// <returns>
+  /// If Edge() is not nullptr, Edge()->m_id is returned.
+  /// Otherwise, 0 is returned.
+  /// </returns>
+  unsigned int EdgeId() const;
+
+  /// <returns>
+  /// If Face() is not nullptr, Face()->m_id is returned.
+  /// Otherwise, 0 is returned.
+  /// </returns>
+  unsigned int FaceId() const;
+
+  /// <returns>
+  /// If Vertex() is not nullptr, Vertex()->m_vertex_tag is returned.
+  /// Otherwise, ON_SubDVertexTag::Unset is returned.
+  /// </returns>
+  ON_SubDVertexTag VertexTag() const;
+
+  /// <returns>
+  /// If Edge() is not nullptr, Edge()->m_edge_tag is returned.
+  /// Otherwise, ON_SubDEdgeTag::Unset is returned.
+  /// </returns>
+  ON_SubDEdgeTag EdgeTag() const;
+
+  /// <returns>
+  /// If Vertex() is not nullptr, Vertex()->m_vertex_tag is returned.
+  /// Otherwise, ON_DBL_NAN is returned.
+  /// </returns>
+  double VertexSharpness() const;
+
+  /// <summary>
+  /// Used to get edge sharpness when the referenced component is an edge.
+  /// </summary>
+  /// <param name="bUseCreaseSharpness">
+  /// </param>
+  /// <returns>
+  /// If Edge() is not nullptr, Edge()->Sharpness(bUseCreaseSharpness) is returned.
+  /// Otherwise, ON_SubDEdgeTag::Nan is returned.
+  /// </returns>
+  const ON_SubDEdgeSharpness EdgeSharpness(bool bUseCreaseSharpness) const;
+
   const ON_COMPONENT_INDEX ComponentIndex() const;
 
   const ON_3dPoint ControlNetCenterPoint() const;
   const ON_BoundingBox ControlNetBoundingBox() const;
+
+  /// <summary>
+  /// Get the location of the component's subdivision vertex.
+  /// </summary>
+  /// <returns>Catmull-Clark component subdivision point.</returns>
   const ON_3dPoint SubdivisionPoint() const;
+
 
   /*
   Returns:
@@ -14345,7 +14634,7 @@ public:
   /// If the vertex is a dart or crease and and one or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
   /// Otherwise 0.0 is returned.
-  ///< / returns>
+  /// </returns>
   double VertexSharpness() const;
 
   /// <summary>
@@ -14445,7 +14734,7 @@ public:
   /// The vertex sharpness is returned ( &gt;= 0.0 ).
   /// If the returned value is &gt; 0.0, then the sharp subdivision point 
   /// = sum(0 &lt;= i &lt; count, c[i]*v[i]->ControlNetPoint())
-  ///< / returns>
+  /// </returns>
   double GetSharpSubdivisionPoint(
     unsigned& count,
     const ON_SubDVertex* v[3],
@@ -14735,6 +15024,22 @@ public:
   /// The SubD vertex Catmull-Clark subdivision point.
   ///</summary>
   const ON_3dPoint SubdivisionPoint() const;
+
+  /// <summary>
+  /// Calculate the Catmull-Clark subdivision point for a crease vertex.
+  /// </summary>
+  /// <param name="P">crease vertex control net point.</param>
+  /// <param name="vertex_sharpness">
+  /// maximum value of smooth edge sharpnesses at the crease vertex.
+  /// <param name="A1">control net point at the other end of one attached crease edge.</param>
+  /// <param name="A2">control net point at the other end of the other attached crease edge.</param>
+  /// <returns></returns>
+  static const ON_3dPoint CreaseVertexSubdivisionPoint(
+    const ON_3dPoint& P,
+    double vertex_sharpness,
+    const ON_3dPoint& A1,
+    const ON_3dPoint& A2
+  );
 
 
   /*

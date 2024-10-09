@@ -294,41 +294,6 @@
 #undef ON_HAS_RVALUEREF
 #endif
 
-#elif defined( ON_COMPILER_ANDROIDNDK )
-/*
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-//
-// ON_COMPILER_ANDROIDNDK
-//
-*/
-
-/*
-// McNeel defines ON_COMPILER_ANDROIDNDK in makefiles
-*/
-
-#if defined(__GNUC__) && (__GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 7))
-// C++11 noexcept and Rvalue references are in gcc 4.7 and later
-#undef ON_NOEXCEPT
-#define ON_NOEXCEPT noexcept
-#if !defined(ON_HAS_RVALUEREF)
-#define ON_HAS_RVALUEREF
-#endif
-
-#else
-#undef ON_HAS_RVALUEREF
-#undef ON_NOEXCEPT
-
-#endif
-
-// You may need to define __GXX_EXPERIMENTAL_CXX0X__ to get
-// C++11 std::shared_ptr to work as you expect when using
-// the Android NDK gcc 4.7.  See
-// http://stackoverflow.com/questions/14532057/smart-pointers-not-working-with-android-ndk-r8
-// for more details.
-//
-//#define __GXX_EXPERIMENTAL_CXX0X__
-
 #elif defined(__GNUG_) || defined(__GNUG__) || defined(__GNUC_) || defined(__GNUC__) || defined(_GNU_SOURCE) || defined(__GNU_SOURCE)
 /*
 ////////////////////////////////////////////////////////////

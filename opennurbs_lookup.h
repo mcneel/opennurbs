@@ -349,8 +349,7 @@ private:
   ON_SerialNumberMap& operator=(const ON_SerialNumberMap&) = delete;
 
 private:
-  ON__UINT64 m_maxsn = 0; // largest sn stored anywhere
-
+  class ON_SerialNumberMapPrivate* m_private = nullptr;
 
   // Serial Number list counts
   ON__UINT64 m_sn_count = 0;   // total number of elements                       

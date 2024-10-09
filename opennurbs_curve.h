@@ -280,6 +280,15 @@ public:
         ON_Interval* span_domain // [OUT] domain of the span containing "t"
         ) const;
 
+  /// <summary>
+  /// The curve's span vector is a stricltly monotone increasing list of doubles
+  /// that are the intervals on which the curve is C-infinity.
+  /// </summary>
+  /// <returns>
+  /// The curve's span vector.
+  /// </returns>
+  const ON_SimpleArray<double> SpanVector() const;
+
   // Description:
   //   Returns maximum algebraic degree of any span
   //   or a good estimate if curve spans are not algebraic.

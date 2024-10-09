@@ -1232,6 +1232,51 @@ unsigned int ON_SubDComponentPtr::ComponentId() const
   return (nullptr != c) ? c->m_id : 0U;
 }
 
+unsigned int ON_SubDComponentPtr::VertexId() const
+{
+  const ON_SubDVertex* v = this->Vertex();
+  return (nullptr != v) ? v->m_id : 0;
+}
+
+unsigned int ON_SubDComponentPtr::EdgeId() const
+{
+  const ON_SubDEdge* e = this->Edge();
+  return (nullptr != e) ? e->m_id : 0;
+}
+
+unsigned int ON_SubDComponentPtr::FaceId() const
+{
+  const ON_SubDFace* f = this->Face();
+  return (nullptr != f) ? f->m_id : 0;
+}
+
+ON_SubDVertexTag ON_SubDComponentPtr::VertexTag() const
+{
+  const ON_SubDVertex* v = this->Vertex();
+  return (nullptr != v) ? v->m_vertex_tag : ON_SubDVertexTag::Unset;
+}
+
+ON_SubDEdgeTag ON_SubDComponentPtr::EdgeTag() const
+{
+  const ON_SubDEdge* e = this->Edge();
+  return (nullptr != e) ? e->m_edge_tag : ON_SubDEdgeTag::Unset;
+}
+
+double ON_SubDComponentPtr::VertexSharpness() const
+{
+  const ON_SubDVertex* v = this->Vertex();
+  return (nullptr != v) ? v->VertexSharpness() : ON_DBL_QNAN;
+}
+
+const ON_SubDEdgeSharpness ON_SubDComponentPtr::EdgeSharpness(bool bUseCreaseSharpness) const
+{
+  const ON_SubDEdgePtr eptr = this->EdgePtr();
+  return
+    eptr.IsNotNull()
+    ? eptr.RelativeSharpness(bUseCreaseSharpness)
+    : ON_SubDEdgeSharpness::Nan;
+}
+
 void ON_SubDComponentPtr::ClearSavedSubdivisionPoints() const
 {
   switch (ON_SUBD_COMPONENT_TYPE_MASK & m_ptr)
@@ -5008,7 +5053,7 @@ double ON_SubDEdgeSharpness::VertexSharpness(
   ON_SubDVertexTag vertex_tag,
   double interior_crease_vertex_sharpness,
   unsigned sharp_edge_end_count,
-  double maximum_edge_end_sharpness
+  double maximum_edge_sharpness_at_vertex
 )
 {
   // NOTE WELL:
@@ -5033,7 +5078,7 @@ double ON_SubDEdgeSharpness::VertexSharpness(
   }
   else if (ON_SubDVertexTag::Crease == vertex_tag)
   {
-    if (interior_crease_vertex_sharpness > 0.0)
+    if (interior_crease_vertex_sharpness > 0.0 && interior_crease_vertex_sharpness <= ON_SubDEdgeSharpness::MaximumValue)
     {
       // In the comments below,
       // VSS = vertex sector sharpness = maximum edges sharpness 
@@ -5049,7 +5094,7 @@ double ON_SubDEdgeSharpness::VertexSharpness(
         return interior_crease_vertex_sharpness;
       }
 
-      if (interior_crease_vertex_sharpness > maximum_edge_end_sharpness)
+      if (interior_crease_vertex_sharpness > maximum_edge_sharpness_at_vertex)
       {
         // It should be the case that the origin of this vertex
         // is an interior crease vertex where:
@@ -5078,7 +5123,7 @@ double ON_SubDEdgeSharpness::VertexSharpness(
     return 0.0;
   }
 
-  return maximum_edge_end_sharpness;
+  return maximum_edge_sharpness_at_vertex;
 }
 
 double ON_SubDEdgeSharpness::SharpnessFromNormalizedValue(
@@ -15244,6 +15289,249 @@ const ON_3dPoint ON_SubDVertex::SubdivisionPoint() const
 {
   ON_3dPoint S;
   return (GetSubdivisionPoint(&S.x) && S.IsValid()) ? S : ON_3dPoint::NanPoint;
+}
+
+const ON_3dPoint ON_SubDVertex::CreaseVertexSubdivisionPoint(
+  const ON_3dPoint& P, 
+  double vertex_sharpness, 
+  const ON_3dPoint& A1, 
+  const ON_3dPoint& A2
+)
+{
+  if (vertex_sharpness >= 1.0 && vertex_sharpness <= ON_SubDEdgeSharpness::MaximumValue)
+    return P;
+
+  const ON_3dPoint C(
+    0.75 * P.x + 0.125 * (A1.x + A2.x),
+    0.75 * P.y + 0.125 * (A1.y + A2.y),
+    0.75 * P.z + 0.125 * (A1.z + A2.z)
+  );
+
+  if (vertex_sharpness > 0.0 && vertex_sharpness < 1.0)
+  {
+    // Apply sharp bias to C
+    const double c = 1.0 - vertex_sharpness;
+    return ON_3dPoint(
+      c * C.x + vertex_sharpness * P.x,
+      c * C.y + vertex_sharpness * P.y,
+      c * C.z + vertex_sharpness * P.z
+    );
+  }
+
+  return C;
+}
+
+const ON_SubDVertexSharpnessCalculator ON_SubDVertexSharpnessCalculator::Unset = ON_SubDVertexSharpnessCalculator();
+
+void ON_SubDVertexSharpnessCalculator::Internal_SetVertex(
+  ON_SubDVertexTag vertex_tag, 
+  ON_3dPoint vertex_control_net_point, 
+  double maximum_sharpness_at_interior_crease_vertex
+)
+{
+  if (ON_SubDVertexTag::Unset != vertex_tag)
+  {
+    m_vertex_tag = vertex_tag;
+    m_edge_count = 0;
+    m_crease_edge_count = 0;
+    m_sharp_edge_count = 0;
+    m_vertex_control_net_point = vertex_control_net_point;
+    if (ON_SubDVertexTag::Crease == vertex_tag
+      && maximum_sharpness_at_interior_crease_vertex > 0.0
+      && maximum_sharpness_at_interior_crease_vertex <= ON_SubDEdgeSharpness::MaximumValue)
+      m_u1.m_max_edge_sharpness_at_vertex = maximum_sharpness_at_interior_crease_vertex;
+    else
+      m_u1.m_max_edge_sharpness_at_vertex = 0.0;
+    m_status = ON_SubDVertexSharpnessCalculator::Status::VertexSet;
+  }
+}
+
+void ON_SubDVertexSharpnessCalculator::Internal_SetVertex(
+  const ON_SubDVertex* vertex
+)
+{
+  if (nullptr != vertex)
+  {
+    Internal_SetVertex(
+      vertex->m_vertex_tag,
+      vertex->ControlNetPoint(),
+      (ON_SubDVertexTag::Crease == this->m_vertex_tag && vertex->m_face_count > 0 && vertex->m_face_count + 1 == this->m_edge_count)
+      ? vertex->Internal_InteriorCreaseVertexSharpnessForExperts()
+      : 0.0
+    );
+    if (ON_SubDVertexSharpnessCalculator::Status::VertexSet == this->m_status && nullptr != vertex->m_edges)
+    {
+      ON_SubDEdgePtr eptr;
+      const ON_SubDVertex* other_vertex;
+      unsigned other_vertex_vi;
+      const unsigned short edge_count = vertex->m_edge_count;
+      for (unsigned short ei = 0; ei < edge_count; ++ei)
+      {
+        eptr = vertex->m_edges[ei];
+        if (vertex == eptr.RelativeVertex(0))
+          other_vertex_vi = 1;
+        else if (vertex == eptr.RelativeVertex(1))
+          other_vertex_vi = 0;
+        else
+          continue;
+        other_vertex = eptr.RelativeVertex(other_vertex_vi);
+        if (nullptr == other_vertex || vertex == other_vertex)
+          continue;
+        AddEdgeSharpnessAndControlNetPoint(eptr.RelativeSharpness(true).EndSharpness(other_vertex_vi), other_vertex->ControlNetPoint());
+      }
+      Internal_SetVertexSharpnessAndSharpPoint();
+    }
+  }
+}
+
+ON_SubDVertexSharpnessCalculator::ON_SubDVertexSharpnessCalculator(const ON_SubDVertex* vertex)
+{
+  Internal_SetVertex(vertex);
+}
+
+ON_SubDVertexSharpnessCalculator::ON_SubDVertexSharpnessCalculator(ON_SubDVertexTag vertex_tag, ON_3dPoint vertex_control_net_point, double maximum_sharpness_at_interior_crease_vertex)
+{
+  Internal_SetVertex(
+    vertex_tag,
+    vertex_control_net_point,
+    ON_SubDVertexTag::Crease == vertex_tag
+    ? maximum_sharpness_at_interior_crease_vertex
+    : 0.0
+  );
+}
+
+bool ON_SubDVertexSharpnessCalculator::SetVertex(const ON_SubDVertex* vertex)
+{
+  *this = ON_SubDVertexSharpnessCalculator::Unset;
+  Internal_SetVertex(vertex);
+  return (this->m_status == ON_SubDVertexSharpnessCalculator::Status::SharpnessSet);
+}
+
+bool ON_SubDVertexSharpnessCalculator::SetVertex(ON_SubDVertexTag vertex_tag, ON_3dPoint vertex_control_net_point, double maximum_sharpness_at_interior_crease_vertex)
+{
+  *this = ON_SubDVertexSharpnessCalculator::Unset;
+  Internal_SetVertex(vertex_tag, vertex_control_net_point, maximum_sharpness_at_interior_crease_vertex);
+  return (this->m_status == ON_SubDVertexSharpnessCalculator::Status::VertexSet);
+}
+
+bool ON_SubDVertexSharpnessCalculator::AddEdgeSharpnessAndControlNetPoint(double sharpness_at_vertex, ON_3dPoint other_end_control_net_point)
+{
+  if (ON_SubDVertexSharpnessCalculator::Status::VertexSet != this->m_status)
+    return false;
+
+  ++m_edge_count;
+  if (sharpness_at_vertex > 0.0 && ON_SubDEdgeSharpness::IsValidValue(sharpness_at_vertex, true))
+  {
+    const unsigned i = this->m_crease_edge_count + this->m_sharp_edge_count;
+    if (i < 2)
+      this->m_other_end_control_net_points[i] = other_end_control_net_point;
+    if (ON_SubDEdgeSharpness::CreaseValue == sharpness_at_vertex)
+      ++m_crease_edge_count;
+    else
+    {
+      ++m_sharp_edge_count;
+      if (sharpness_at_vertex > this->m_u1.m_max_edge_sharpness_at_vertex)
+        this->m_u1.m_max_edge_sharpness_at_vertex = sharpness_at_vertex;
+    }
+  }
+  return true;
+}
+
+bool ON_SubDVertexSharpnessCalculator::AddCreaseEdgeControlNetPoint(ON_3dPoint other_end_control_net_point)
+{
+  return AddEdgeSharpnessAndControlNetPoint(ON_SubDEdgeSharpness::CreaseValue, other_end_control_net_point);
+}
+
+bool ON_SubDVertexSharpnessCalculator::VertexIsSet() const
+{
+  return (ON_SubDVertexSharpnessCalculator::Status::Unset != this->m_status);
+}
+
+ON_SubDVertexTag ON_SubDVertexSharpnessCalculator::VertexTag() const
+{
+  return this->VertexIsSet() ? this->m_vertex_tag : ON_SubDVertexTag::Unset;
+}
+
+const ON_3dPoint ON_SubDVertexSharpnessCalculator::VertexControlNetPoint() const
+{
+  return this->VertexIsSet() ? this->m_vertex_control_net_point : ON_3dPoint::NanPoint;
+}
+
+unsigned ON_SubDVertexSharpnessCalculator::EdgeCount() const
+{
+  return this->m_edge_count;
+}
+
+unsigned ON_SubDVertexSharpnessCalculator::SharpEdgeCount() const
+{
+  return this->m_sharp_edge_count;
+}
+
+unsigned ON_SubDVertexSharpnessCalculator::CreaseEdgeCount() const
+{
+  return this->m_crease_edge_count;
+}
+
+
+bool ON_SubDVertexSharpnessCalculator::IsSharpVertex() const
+{
+  return this->VertexSharpness() > 0.0;
+}
+
+bool ON_SubDVertexSharpnessCalculator::Internal_SetVertexSharpnessAndSharpPoint() const
+{
+  if (ON_SubDVertexSharpnessCalculator::Status::VertexSet == this->m_status && this->m_edge_count > 0)
+  {
+    this->m_status = ON_SubDVertexSharpnessCalculator::Status::Unset;
+
+    const double vertex_sharpness = ON_SubDEdgeSharpness::VertexSharpness(
+      this->m_vertex_tag,
+      (ON_SubDVertexTag::Crease == this->m_vertex_tag ? this->m_u1.m_max_edge_sharpness_at_vertex : 0.0),
+      this->m_sharp_edge_count,
+      this->m_u1.m_max_edge_sharpness_at_vertex
+    );
+
+    ON_3dPoint R = ON_3dPoint::Origin; // origin rather than nan so 0.0 * VertexSharpPoint() is not a nan point
+    if (vertex_sharpness > 0.0)
+    {
+      if (ON_SubDVertexTag::Crease == m_vertex_tag)
+        R = this->m_vertex_control_net_point;
+      else if (ON_SubDVertexTag::Smooth == m_vertex_tag || ON_SubDVertexTag::Dart == m_vertex_tag)
+      {
+        const unsigned short sharp_and_crease_edge_count = this->m_sharp_edge_count + this->m_crease_edge_count;
+        if (sharp_and_crease_edge_count > 2)
+          R = this->m_vertex_control_net_point;
+        else if (2 == sharp_and_crease_edge_count)
+          R = ON_SubDVertex::CreaseVertexSubdivisionPoint(this->m_vertex_control_net_point, 0.0, this->m_other_end_control_net_points[0], this->m_other_end_control_net_points[1]);
+      }
+    }
+
+    this->m_u1.m_vertex_sharpness = vertex_sharpness;
+    this->m_other_end_control_net_points[0] = R;
+    this->m_other_end_control_net_points[1] = ON_3dPoint::NanPoint;
+
+    this->m_status = ON_SubDVertexSharpnessCalculator::Status::SharpnessSet;
+  }
+  else
+    this->m_status = ON_SubDVertexSharpnessCalculator::Status::Unset;
+
+  return (ON_SubDVertexSharpnessCalculator::Status::SharpnessSet == this->m_status) ? this->m_u1.m_vertex_sharpness : 0.0;
+}
+
+double ON_SubDVertexSharpnessCalculator::VertexSharpness() const
+{
+  if (ON_SubDVertexSharpnessCalculator::Status::VertexSet == this->m_status && this->m_edge_count > 0)
+    Internal_SetVertexSharpnessAndSharpPoint();
+  return (ON_SubDVertexSharpnessCalculator::Status::SharpnessSet == this->m_status) ? this->m_u1.m_vertex_sharpness : 0.0;
+}
+
+const ON_3dPoint ON_SubDVertexSharpnessCalculator::VertexSharpPoint() const
+{
+  if (this->IsSharpVertex())
+    return this->m_other_end_control_net_points[0];
+
+  // Return origin rather than nan so that 0.0*this->VertexSharpPoint() will not be a nan point.
+  return ON_3dPoint::Origin;
 }
 
 

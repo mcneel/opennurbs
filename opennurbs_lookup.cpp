@@ -60,6 +60,36 @@ static ON__UINT32 IdCRC32(const ON_UUID* id)
   return ON_CRC32(0, sizeof(*id), id);
 }
 
+// 30 July 2024 S. Baer (RH-82891)
+// Rhino uses serial numbers above UIN32_MAX for "system components"
+// which results in a serial number map with very large numbers for m_maxsn.
+// This caused a huge lag in performance when adding a large number of
+// objects to the document because we were always having to do a large
+// search for an element. The following class replaces m_maxsn and keeps
+// a lower maximum value to help quickly determine if an added element
+// exists with a lower value (rhino objects) exists in the list.
+class ON_SerialNumberMapPrivate
+{
+public:
+  ON__UINT64 MaxSn() const { return m_maxsn; }
+  ON__UINT64 LowerMaxSn() const { return m_lower_maxsn; }
+  void SetMaxSn(ON__UINT64 sn)
+  {
+    m_maxsn = sn;
+    if (sn < UINT32_MAX)
+      m_lower_maxsn = sn;
+  }
+  void SetLowerMaxSn(ON__UINT64 sn)
+  {
+    m_lower_maxsn = sn;
+    if (m_lower_maxsn > m_maxsn)
+      m_maxsn = m_lower_maxsn;
+  }
+
+private:
+  ON__UINT64 m_maxsn = 0; // largest sn stored anywhere
+  ON__UINT64 m_lower_maxsn = 0;
+};
 
 
 
@@ -122,7 +152,7 @@ public:
 
 void ON_SerialNumberMap::EmptyList()
 {
-  m_maxsn = 0;
+  m_private->SetMaxSn(0);
   m_sn_count = 0;
   m_sn_purged = 0;
   m_sn_block0.EmptyBlock();
@@ -153,13 +183,16 @@ void ON_SerialNumberMap::EmptyList()
 }
 ON_SerialNumberMap::ON_SerialNumberMap()
   : m_sn_block0(*(new ON_SN_BLOCK()))
-{}
+{
+  m_private = new ON_SerialNumberMapPrivate();
+}
 
 ON_SerialNumberMap::~ON_SerialNumberMap()
 {
   EmptyList();
   ON_SN_BLOCK* p = &m_sn_block0;
   delete p;
+  delete m_private;
 }
 
 void ON_SN_BLOCK::EmptyBlock()
@@ -546,9 +579,11 @@ struct ON_SerialNumberMap::SN_ELEMENT* ON_SN_BLOCK::BinarySearchBlockHelper(ON__
 
 void ON_SerialNumberMap::UpdateMaxSNHelper()
 {
-  m_maxsn = (m_snblk_list_count > 0) ? m_snblk_list[m_snblk_list_count-1]->m_sn1 : 0;
-  if ( m_maxsn < m_sn_block0.m_sn1 )
-    m_maxsn = m_sn_block0.m_sn1;
+  ON__UINT64 maxsn = (m_snblk_list_count > 0) ? m_snblk_list[m_snblk_list_count-1]->m_sn1 : 0;
+  if (maxsn < m_sn_block0.m_sn1 )
+    maxsn = m_sn_block0.m_sn1;
+
+  m_private->SetMaxSn(maxsn);
 }
 
 struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FindElementHelper(ON__UINT64 sn)
@@ -557,8 +592,11 @@ struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::FindElementHelper(ON_
   class ON_SN_BLOCK* eblk;
   size_t i, j;
 
-  if ( m_maxsn < sn )
+  if (m_private->MaxSn() < sn )
     return 0; // happens almost every time an object is added to the doc
+
+  if (sn < UINT32_MAX && m_private->LowerMaxSn() < sn)
+    return 0;
 
   if ( sn <= 0 )
     return 0;
@@ -1438,7 +1476,7 @@ void ON_SerialNumberMap::GarbageCollectHelper()
     if ( !m_sn_block0.m_sorted )
       m_sn_block0.SortBlockHelper();
     if ( 0 == m_snblk_list_count )
-      m_maxsn = m_sn_block0.m_sn1; 
+      m_private->SetMaxSn(m_sn_block0.m_sn1);
     if ( m_sn_block0.m_count < 7*(ON_SN_BLOCK::SN_BLOCK_CAPACITY/8) )
       return;
   }
@@ -1446,7 +1484,7 @@ void ON_SerialNumberMap::GarbageCollectHelper()
   {
     m_sn_block0.SortBlockHelper();
     if ( 0 == m_snblk_list_count )
-      m_maxsn = m_sn_block0.m_sn1; 
+      m_private->SetMaxSn(m_sn_block0.m_sn1);
   }
 
   // Remove all purged serial numbers from every block
@@ -1663,8 +1701,11 @@ struct ON_SerialNumberMap::SN_ELEMENT* ON_SerialNumberMap::AddSerialNumber(ON__U
         m_sn_block0.m_sorted = 0;
       }        
     }
-    if ( sn > m_maxsn )
-      m_maxsn = sn;
+    if ( sn > m_private->MaxSn() )
+      m_private->SetMaxSn(sn);
+    if (sn < UINT32_MAX && sn > m_private->LowerMaxSn())
+      m_private->SetLowerMaxSn(sn);
+
     m_sn_count++;
     e = &m_sn_block0.m_sn[m_sn_block0.m_count++];
     memset(e,0,sizeof(*e));
@@ -2049,7 +2090,7 @@ void ON_SN_BLOCK::Dump(ON_TextLog& text_log) const
 
 void ON_SerialNumberMap::Dump(ON_TextLog& text_log) const
 {
-  text_log.Print("m_maxsn = %d\n",m_maxsn);
+  text_log.Print("m_maxsn = %d\n", m_private->MaxSn());
   text_log.Print("m_sn_count = %d\n",m_sn_count);
   text_log.Print("m_sn_purged = %d\n",m_sn_purged);
   text_log.Print("m_active_id_count = %d\n",m_sn_purged);
