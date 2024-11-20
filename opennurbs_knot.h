@@ -42,6 +42,77 @@ int ON_KnotCount( // returns (order + cv_count - 2)
           int  // cv_count (>=order)
           );
 
+/// <summary>
+/// Get the indices of the B-spline spans where the specified 
+/// control point is active.
+/// Note that a B-spline with n control points has (n-degree) many spans.
+/// If 0 &lt= span_index &lt; (n-degree), then 
+/// CV(span_index), ..., CV(span_index+degree)
+/// and 
+/// {knot[span_index], ..., knot[span_index+2*degree-1]}
+/// are the control points and knots that are active in that span. 
+/// The domain of the span is 
+/// [knot[span_index+degree-1], knot[span_index+degree]].
+/// </summary>
+/// <param name="order">
+/// B-spline order.
+/// order &gt;= 2 (order = degree + 1)
+/// </param>
+/// <param name="control_point_count">
+/// Number of B-spline control points.
+/// control_point_count &gt;= order
+/// </param>
+/// <param name="control_point_index">
+/// 0 &lt;= control_point_index &lt; control_point_count
+/// </param>
+/// <returns>
+/// If the input is valid,
+/// then the spans whose index satisfies 
+/// ON_2dex.i &lt;= span_index &lt; ON_2dex.j
+/// use the specified control point.
+/// If the iput is not valid, then ON_2dex(0,0) is returned.
+/// </returns>
+ON_DECL
+const ON_2dex ON_BsplineControlPointSpans(
+  int order,
+  int control_point_count,
+  int control_point_index
+); 
+
+/// <summary>
+/// Get the interval in the B-spline domain where the control point is active.
+/// The domain = [knots[order-2], knots[control_point_count-1]].
+/// The returned interval will be in domain and are the parameters
+/// where the control point influnces the value of the B-spline.
+/// </summary>
+/// <param name="order">
+/// Order of the B-spline knot vector.
+/// order &gt;= 2 (order = degree + 1)
+/// </param>
+/// <param name="control_point_count">
+/// Number of B-spline control points.
+/// control_point_count &gt;= order
+/// </param>
+/// <param name="knots">
+/// knots[] is the B-spline knot vector and is an array of 
+/// (order + control_point_count - 2) doubles.
+/// </param>
+/// <param name="control_point_index">
+/// 0 &lt;= control_point_index &lt; control_point_count
+/// </param>
+/// <returns>
+/// The interval in the domain where the control point is active.
+/// </returns>
+ON_DECL
+const ON_Interval ON_BsplineControlPointSupport(
+  int order,
+  int control_point_count,
+  const double* knots,
+  int control_point_index
+);
+
+
+
 ON_DECL
 int ON_KnotMultiplicity(
           int,   // order (>=2)

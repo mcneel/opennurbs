@@ -2049,6 +2049,15 @@ const ON_4dPoint ON_NurbsCurve::ControlPoint(
   return cv;
 }
 
+const ON_2dex ON_NurbsCurve::ControlPointSpans(int control_point_index) const
+{
+  return ON_BsplineControlPointSpans(m_order, m_cv_count, control_point_index);
+}
+
+const ON_Interval ON_NurbsCurve::ControlPointSupport(int control_point_index) const
+{
+  return ON_BsplineControlPointSupport(m_order, m_cv_count, m_knot, control_point_index);
+}
 
 bool 
 ON_NurbsCurve::GetCV( int i, ON_3dPoint& point ) const

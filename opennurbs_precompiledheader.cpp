@@ -28,6 +28,7 @@
 #error Incorrect _M_... setting for x64 build
 #endif
 
+#if !defined(_M_ARM64)
 #if !defined(_M_X64)
 // This should be automatically defined by the compiler
 #error _M_X64 should be defined for x64 builds
@@ -43,6 +44,7 @@
 // This should be automatically defined by the compiler
 #error _M_AMD64 should be defined for x64 builds
 #endif
+#endif // !defined(_M_ARM64)
 
 #endif
 
@@ -104,6 +106,7 @@
 #error Incorrect _M_... setting for x64 build
 #endif
 
+#if !defined(_M_ARM64)
 #if !defined(_M_X64)
 // This should be automatically defined by the compiler
 #error _M_X64 should be defined for x64 builds
@@ -119,6 +122,7 @@
 // This should be automatically defined by the compiler
 #error _M_AMD64 should be defined for x64 builds
 #endif
+#endif // !defined(_M_ARM64)
 
 #endif
 

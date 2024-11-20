@@ -88,6 +88,40 @@ int ON_KnotCount( int order, int cv_count )
   return (order+cv_count-2);
 }
 
+const ON_2dex ON_BsplineControlPointSpans(
+  int order,
+  int control_point_count,
+  int control_point_index
+)
+{
+  for (;;)
+  {
+    if (order < 2 || control_point_count < order)
+      break;
+    if (control_point_index < 0 || control_point_index >= control_point_count)
+      break;
+    const int i0 = control_point_index - order + 1;
+    const int i1 = control_point_index + 1;
+    const int span_count = control_point_count - order + 1;
+    return ON_2dex(i0 >= 0 ? i0 : 0, i1 <= span_count ? i1 : span_count);
+  }
+  return ON_2dex(0, 0);
+}
+
+ON_DECL const ON_Interval ON_BsplineControlPointSupport(int order, int control_point_count, const double* knots, int control_point_index)
+{
+  for (;;)
+  {
+    if (nullptr == knots)
+      break;
+    const ON_2dex active_spans = ON_BsplineControlPointSpans(order, control_point_count, control_point_index);
+    if (active_spans.i <  active_spans.j)
+      return ON_Interval(knots[active_spans.i + order - 2], knots[active_spans.j + order - 2]);
+    break;
+  }  
+  return ON_Interval::Nan;
+}
+
 /////////////////////////////////////////////////////////////////
 //
 // Computes number of knots in knot vector

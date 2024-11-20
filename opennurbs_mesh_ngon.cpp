@@ -2870,7 +2870,7 @@ void ON_MeshVertexFaceMap::Destroy()
   while ( blk )
   {
     next = blk->m_next;
-    delete blk;
+    delete[] blk;
     blk = next;
   }
 }
