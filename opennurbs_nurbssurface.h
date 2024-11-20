@@ -757,6 +757,53 @@ public:
     int j
   ) const;
 
+  /// <summary>
+  /// Get the indices of the spans where the specified 
+  /// control point is active.
+  /// </summary>
+  /// <param name="dir">
+  /// 0: first surface paramter 
+  /// 1: second surface parameter
+  /// </param>
+  /// <param name="control_point_index">
+  /// 0 &lt;= control_point_index &lt; control_point_count
+  /// </param>
+  /// <returns>
+  /// If the input is valid,
+  /// then the spans in the specified parameter direction whose index satisfies 
+  /// ON_2dex.i &lt;= span_index &lt; ON_2dex.j
+  /// use the specified control points.
+  /// If the iput is not valid, then ON_2dex(0,0) is returned.
+  /// </returns>
+  const ON_2dex ControlPointSpans(
+    int dir,
+    int control_point_index
+  ) const;
+
+
+  /// <summary>
+  /// Get the interval in the surface's domain where the specified
+  /// control point is active (helps determine the value of the surface).
+  /// Put another way, if 
+  /// ControlPointSupport(0,i).Contains(u) or ControlPointSupport(1,j).Contains(v)
+  /// is false, then surface->PointAt(u,v) does not depend on the location of CV(i,j).
+  /// </summary>
+  /// <param name="dir">
+  /// 0: first surface paramter 
+  /// 1: second surface parameter
+  /// </param>
+  /// <param name="control_point_index">
+  /// If dir = 0, then this is the first index of the surface control point.
+  /// If dir = 1, then this is the second index of the surface control point.
+  /// 0 &lt;= control_point_index &lt; CVCount(dir).
+  /// </param>
+  /// <returns>
+  /// The parameter interval where the specified control point is active.
+  /// </returns>
+  const ON_Interval ControlPointSupport(
+    int dir,
+    int control_point_index
+  ) const;
 
   /*
   Description:

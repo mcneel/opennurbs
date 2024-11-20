@@ -245,11 +245,33 @@ const ON_4dPoint ON_NurbsSurface::ControlPoint(
   return cv;
 }
 
+const ON_2dex ON_NurbsSurface::ControlPointSpans(int dir, int control_point_index) const
+{
+  if (0 == dir || 1 == dir)
+    return ON_BsplineControlPointSpans(
+      this->m_order[dir],
+      this->m_cv_count[dir],
+      control_point_index
+    );
+  return ON_2dex(0, 0);
+}
+
+const ON_Interval ON_NurbsSurface::ControlPointSupport(int dir, int control_point_index) const
+{
+  if (0 == dir || 1 == dir)
+    return ON_BsplineControlPointSupport(
+      this->m_order[dir],
+      this->m_cv_count[dir],
+      this->m_knot[dir],
+      control_point_index
+    );
+  return ON_Interval::Nan;
+}
+
 ON::point_style ON_NurbsSurface::CVStyle() const
 {
   return m_is_rat ? ON::homogeneous_rational : ON::not_rational;
 }
-
 
 double ON_NurbsSurface::Weight( int i, int j ) const
 {
