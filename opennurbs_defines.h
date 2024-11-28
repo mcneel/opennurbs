@@ -67,6 +67,8 @@
 #if defined(OPENNURBS_EXPORTS)
 /* compiling opennurbs as some type of dynamic linking library */
 
+#define ON_DEPRECATED_IMPORT
+
 #if defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
 /* Linux defaults to exporting all functions*/
 #define ON_CLASS
@@ -101,12 +103,14 @@
 #define ON_DECL __declspec(dllimport)
 #define ON_EXTERN_DECL __declspec(dllimport)
 #define ON_DLL_TEMPLATE extern
+#define ON_DEPRECATED_IMPORT __declspec(deprecated)
 
 #elif defined(ON_COMPILER_CLANG)
 /* using opennurbs as an Apple shared library */
 #define ON_CLASS __attribute__ ((visibility ("default")))
 #define ON_DECL __attribute__ ((visibility ("default")))
 #define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
+#define ON_DEPRECATED_IMPORT __attribute__((deprecated))
 
 #elif defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_WASM)
 /* Linux defaults to exporting all functions*/
@@ -124,6 +128,7 @@
 #define ON_CLASS
 #define ON_DECL
 #define ON_EXTERN_DECL
+#define ON_DEPRECATED_IMPORT
 
 #if defined(ON_DLL_TEMPLATE)
 #undef ON_DLL_TEMPLATE

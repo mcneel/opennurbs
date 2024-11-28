@@ -1822,7 +1822,7 @@ public:
   bool GetPropertiesFromTag(const ON_wString& sTag);
   bool IsClosingTag(const ON_wString& sTag) const;
   ON_XMLNode* GetNodeAtPath(const wchar_t* wszPath, bool bCreate);
-  ON_XMLProperty* AddProperty(const ON_XMLProperty& prop);
+  ON_XMLProperty* AddProperty(const ON_XMLProperty& prop, bool add_to_end = false);
   void AddEmptyDefaultProperty(void);
   ON_XMLProperty* AttachProperty(ON_XMLProperty* pProp);
   bool RemoveProperty(const wchar_t* name);
@@ -2219,14 +2219,34 @@ bool ON_XMLNodePrivate::RecurseChildren(ON_XMLRecurseChildrenCallback callback, 
   return true;
 }
 
-ON_XMLProperty* ON_XMLNodePrivate::AddProperty(const ON_XMLProperty& prop)
+ON_XMLProperty* ON_XMLNodePrivate::AddProperty(const ON_XMLProperty& prop, bool add_to_end)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
   auto* prop_copy = new ON_XMLProperty(prop);
   prop_copy->_private->_owner = &m_node;
-  prop_copy->_private->_next = m_first_property;
-  m_first_property = prop_copy;
+
+  if (!add_to_end || nullptr == m_first_property)
+  {
+    prop_copy->_private->_next = m_first_property;
+    m_first_property = prop_copy;
+  }
+  else
+  {
+    auto last = m_first_property;
+    prop_copy->_private->_next = nullptr;
+
+    //Spin to the end.
+    while (auto n = last->Next())
+    {
+      last = n;
+    }
+
+    ON_ASSERT(nullptr != last);
+    ON_ASSERT(nullptr == last->Next());
+
+    last->_private->_next = prop_copy;
+  }
 
   return prop_copy;
 }
@@ -2610,7 +2630,7 @@ const ON_XMLNode& ON_XMLNode::operator = (const ON_XMLNode& src)
   auto pi = src.GetPropertyIterator();
   while (nullptr != (pProperty = pi.GetNextProperty()))
   {
-    _private->AddProperty(*pProperty);
+    _private->AddProperty(*pProperty, true);  //Add it to the end so that the order stays the same.
   }
 
   // Copy in the children.

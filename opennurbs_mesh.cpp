@@ -9204,6 +9204,10 @@ bool ON_Mesh::NormalizeTextureCoordinates()
       m_Ttag.SetDefaultSurfaceParameterMappingTag();
       if ( m_mesh_parameters )
         m_mesh_parameters->SetTextureRange(1);
+
+      // Jussi Nov 11 2024, RH-84445:
+      //  Texture packing has been modified. Therefore all cached surface parameter mapping texture coordinates need to be invalidated.
+      InvalidateCachedTextureCoordinates(true);
     }
   }
 

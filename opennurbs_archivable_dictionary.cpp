@@ -342,13 +342,18 @@ bool ON_ArchivableDictionary::Read(ON_BinaryArchive& binary_archive)
     auto rc = binary_archive.BeginReadDictionaryEntry(&item_type, item_name);
     if (rc == 1)
     {
-      auto value = DictionaryEntry::CreateInstance((DictionaryEntryType) item_type);
-      if (value != nullptr)
+      std::unique_ptr<DictionaryEntry> value(DictionaryEntry::CreateInstance((DictionaryEntryType)item_type));
+      if (value)
       {
         if (!value->ReadDictionaryEntry(binary_archive))
           return false;
 
-        m_private->m_map[item_name].reset(value);
+        m_private->m_map[item_name] = std::move(value);
+      }
+      else
+      {
+        // We skip unknown item types
+        ON_WarningEx(__FILE__, __LINE__, OPENNURBS__FUNCTION__, "Uknown ArchivableDictionary item type %d.", item_type);
       }
     }
     else if (rc == 2) break;

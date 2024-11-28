@@ -1426,7 +1426,7 @@ int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material
 
     rc = CompareDouble(a_pbr->SubsurfaceScatteringRadius(), b_pbr->SubsurfaceScatteringRadius());
     if (0 != rc) return rc;
-    
+
     rc = CompareDouble(a_pbr->Metallic(), b_pbr->Metallic());
     if (0 != rc) return rc;
 
@@ -1533,7 +1533,7 @@ int ON_Material::CompareReflectionAttributes(const ON_Material& a, const ON_Mate
     if (0 != rc) return rc;
 
     rc = CompareDouble(a_pbr->ClearcoatRoughness(), b_pbr->ClearcoatRoughness());
-    
+
     return rc;
 	}
 
@@ -2185,7 +2185,7 @@ bool ON_Texture::Write(
 
       if ( minor_version <= 1 )
         break;
-      
+
       // version 1.2 added m_bTreatAsLinear
       rc = binary_archive.WriteBool(m_bTreatAsLinear);
       if (!rc) break;
@@ -3917,7 +3917,7 @@ public:
     m_info = src.m_info;
     return *this;
   }
-  
+
 #if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
@@ -3999,7 +3999,7 @@ public:
 #if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
-  
+
   void SetInfo(const ON_MappingMeshInfo& info)
   {
     m_info = info;
@@ -5349,7 +5349,7 @@ public:
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -8429,7 +8429,7 @@ bool ON_TextureMapping::SetOcsMapping(
 {
   const ON_Interval interval(0.0, 1.0);
   const auto rc = SetPlaneMapping(plane, interval, interval, interval);
-  m_type = ON_TextureMapping::TYPE::plane_mapping;
+  m_type = ON_TextureMapping::TYPE::ocs_mapping;
   return rc;
 }
 
@@ -8620,7 +8620,7 @@ private:
 #if defined(ON_COMPILER_CLANG)
 #pragma clang diagnostic pop
 #endif
-  
+
 public:
   ON_PhysicallyBasedMaterialUserData()
   {
@@ -8741,13 +8741,13 @@ public:
       {
         if (!binary_archive.WriteDouble(alpha)) return false;
       }
-      
+
       return true;
     }
 
     bool Read(ON_BinaryArchive& binary_archive, int version)
     {
-      if (!binary_archive.ReadColor(base_color)) return false;                          
+      if (!binary_archive.ReadColor(base_color)) return false;
       if (!binary_archive.ReadInt((int*)&brdf)) return false;
       if (!binary_archive.ReadDouble(&subsurface)) return false;
       if (!binary_archive.ReadColor(subsurface_scattering_color)) return false;
@@ -8771,7 +8771,7 @@ public:
       {
         if (!binary_archive.ReadDouble(&alpha)) return false;
       }
-      
+
       return true;
     }
 #endif
@@ -9163,7 +9163,7 @@ bool ON_Material::IsPhysicallyBased(void) const
 
   //https://mcneel.myjetbrains.com/youtrack/issue/RH-68577
   return pUD->m_parameters.base_color.IsValid();
-  
+
   //return nullptr != PhysicallyBased();
 }
 

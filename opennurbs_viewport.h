@@ -232,6 +232,18 @@ public:
 
   /*
   Description:
+    When a viewport is set to a standard Parallel projection, the 
+    geometry that is on the ceiling plane is occluded by the geometry 
+    above. When a viewport is set to Parallel Reflected projection, 
+    the geometry on the ceiling is shown as if it is mirrored to the 
+    floor below.
+  Remarks:
+    Calls ChangeToParallelProjection and sets the viewscale to (1, 1, -1)
+    */
+  bool ChangeToParallelReflectedProjection();
+
+  /*
+  Description:
     Use this function to change projections of valid viewports
     from parallel to perspective.  It will make common additional
     adjustments to the frustum and camera location so the resulting

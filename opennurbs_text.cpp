@@ -1747,10 +1747,10 @@ bool ON_TextContent::CreateStackedText(ON_TextRun* run, int cpcount, const ON__U
   ON_2dVector V(0.0, 0.0);
   V.x = stack_width + separator_size;
   run->SetAdvance(V);
-  V.x = (stack_width - top_width) / 2.0;
+  V.x = (stack_width - top_width) / 2.0 - top_run->BoundingBox().m_min.x;
   V.y = top_dy;
   top_run->SetOffset(V);
-  V.x = (stack_width - bottom_width) / 2.0;
+  V.x = (stack_width - bottom_width) / 2.0 - bottom_run->BoundingBox().m_min.x;
   V.y = bottom_dy;
   bottom_run->SetOffset(V);
 

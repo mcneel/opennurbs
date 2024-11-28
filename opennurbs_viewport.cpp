@@ -1491,6 +1491,7 @@ bool ON_Viewport::ChangeToParallelProjection( bool bSymmetricFrustum )
      )
   {
     // no changes are required
+    if (rc) rc = SetViewScale(1.0, 1.0, 1.0);
     return rc;
   }
 
@@ -1544,7 +1545,7 @@ bool ON_Viewport::ChangeToParallelProjection( bool bSymmetricFrustum )
     if ( m_target_point.IsValid() )
       UpdateTargetPointHelper(*this,target_distance);
   }
-
+  if (rc) rc = SetViewScale(1.0, 1.0, 1.0);
   return rc;
 }
 
@@ -1632,6 +1633,7 @@ bool ON_Viewport::ChangeToPerspectiveProjection(
       SetCamera35mmLensLength(lens_length);
     }
     // no other changes are required
+    if (rc) rc = SetViewScale(1.0, 1.0, 1.0);
     return rc;
   }
 
@@ -1654,6 +1656,7 @@ bool ON_Viewport::ChangeToPerspectiveProjection(
   if ( rc && m_target_point.IsValid() )
     UpdateTargetPointHelper(*this,target_distance);
 
+  if (rc) rc = SetViewScale(1.0, 1.0, 1.0);
   return rc;
 }
 
@@ -1724,6 +1727,18 @@ bool GetTwoPointPerspectiveUpAndDirHelper( const ON_3dVector& up,
   return false;
 }
 
+/*
+Description:
+  When a viewport is set to Parallel Reflected projection, the geometry on the ceiling is shown as if it is mirrored to the floor below.
+*/
+bool ON_Viewport::ChangeToParallelReflectedProjection()
+{
+  bool rc = false;
+  if (!IsParallelProjection())
+    rc = ChangeToParallelProjection(true);
+  if (rc) rc = SetViewScale(1.0, 1.0, -1.0);
+  return rc;
+}
 bool ON_Viewport::ChangeToTwoPointPerspectiveProjection( 
         double target_distance,
         ON_3dVector up,
@@ -1745,6 +1760,7 @@ bool ON_Viewport::ChangeToTwoPointPerspectiveProjection(
     {
       SetCamera35mmLensLength(lens_length);
     }
+    if (rc) rc = SetViewScale(1.0, 1.0, 1.0);
     // no other changes are required
     return rc;
   }
@@ -1807,7 +1823,7 @@ bool ON_Viewport::ChangeToTwoPointPerspectiveProjection(
     }
 
   }
-
+  if (rc) rc = SetViewScale(1.0, 1.0, 1.0);
   return rc;
 }
 
