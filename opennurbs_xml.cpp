@@ -510,6 +510,8 @@ const ON_XMLVariant& ON_XMLVariant::operator = (const ON_XMLVariant& src)
   // Make sure the source is set back to the original condition.
   src.SetTypePendingFlag(_private->_type_pending);
 
+  _private->_varies = src.Varies();
+
   return *this;
 }
 
