@@ -1087,6 +1087,8 @@ bool ON_EvaluateNurbsSurfaceSpan(
   sizeof_buffer = ((i + j) << 3) + Pcount*Psize;
 
   N_0 = (sizeof_buffer <= sizeof(stack_buffer)) ? stack_buffer : (double*)(heap_buffer=onmalloc(sizeof_buffer));
+  if ( nullptr == N_0)
+    return false;
 	N_1 = N_0 + i;
 	P0  = N_1 + j;
 	memset( P0, 0, Pcount*Psize );
