@@ -655,7 +655,7 @@ double ON_Interval::NormalizedParameterAt( // returns x so that min*(1.0-x) + ma
   if (!ON_IS_VALID(t))
     return ON_UNSET_VALUE; // added 29 Sep 2006
 
-  double x = m_t[0];
+  double x = 0.0;
   if ( m_t[0] != m_t[1] ) {
     x = ( t == m_t[1]) ? 1.0 : (t - m_t[0])/(m_t[1] - m_t[0]);
   }

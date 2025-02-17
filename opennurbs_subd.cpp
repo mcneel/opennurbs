@@ -24287,6 +24287,17 @@ const ON_SubDEdgePtr ON_SubDEdgeChain::EdgeChainNeighbor(
 
       if (e->m_vertex[0] != v && e->m_vertex[1] != v)
         continue; // bogus edge
+
+      // 19 Nov 2024, Mikko, RH-84736:
+      // Avoid making sharp turns in the regular two neighbor face case.
+      if (2 == edge->m_face_count)
+      {
+        if (edge->Face(0) == e->Face(0) || edge->Face(1) == e->Face(0))
+          continue;
+        if (edge->Face(0) == e->Face(1) || edge->Face(1) == e->Face(1))
+          continue;
+      }
+
       if (nullptr == nxt)
       {
         nxt = e;
