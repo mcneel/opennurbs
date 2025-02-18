@@ -1023,14 +1023,14 @@ class ON_SubDComponentBase* ON_SubDHeap::Internal_AllocateComponentAndSetId(
     }
     else
     {
-#if defined(ON_DEBUG)
-      // TEMPORARY ERROR CHECK added Feb 2020 to test new code. Can be removed in April 2020 or earlier if needed.
-      // Ask Dale Lear if confused.
-      if (0 != candidate_id)
-      {
-        ON_SUBD_ERROR("Unable to assign candidate_id");
-      }
-#endif
+      ////#if defined(ON_DEBUG)
+      ////      // TEMPORARY ERROR CHECK added Feb 2020 to test new code. Can be removed in April 2020 or earlier if needed.
+      ////      // Ask Dale Lear if confused.
+      ////      if (0 != candidate_id)
+      ////      {
+      ////        ON_SUBD_ERROR("Unable to assign candidate_id");
+      ////      }
+      ////#endif
       // otherwise assign the next id to this component.
       candidate_id = ++max_id;
     }

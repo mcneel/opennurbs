@@ -357,73 +357,84 @@ static bool ReadBase(
   return ON_SUBD_RETURN_ERROR(false);
 }
 
-static bool Internal_WriteSavedLimitPointList(
-  unsigned int vertex_face_count,
-  bool bHaveLimitPoint,
-  const ON_SubDSectorSurfacePoint& limit_point,
-  ON_BinaryArchive& archive
-  )
-{
-  unsigned int limit_point_count = 0;
-  const ON_SubDSectorSurfacePoint* p;
+// Dale Lear 2024-12-18 Rhino 8.x
+// Due to a bug in v7, the saved limit points were read but nuever used.
+// So I'm simply not writing the limit points anymore.
+//static bool Internal_WriteSavedLimitPointList(
+//  unsigned int vertex_face_count,
+//  bool bHaveLimitPoint,
+//  const ON_SubDSectorSurfacePoint& limit_point,
+//  ON_BinaryArchive& archive
+//  )
+//{
+//  unsigned int limit_point_count = 0;
+//  const ON_SubDSectorSurfacePoint* p;
+//
+//  if (bHaveLimitPoint)
+//  {
+//    for (p = &limit_point; nullptr != p && limit_point_count <= vertex_face_count; p = p->m_next_sector_limit_point)
+//    {
+//      if (!ON_IsValid(p->m_limitP[0]))
+//        break;
+//      if (limit_point_count > 0 && nullptr == p->m_sector_face)
+//        break;
+//      limit_point_count++;
+//    }
+//    if (limit_point_count > vertex_face_count || nullptr != p)
+//      limit_point_count = 0;
+//
+//    if (limit_point_count > vertex_face_count)
+//      limit_point_count = 0;
+//  }
+//  if (0 == limit_point_count)
+//    bHaveLimitPoint = false;
+//
+//  for (;;)
+//  {
+//    unsigned char c = bHaveLimitPoint ? 4 : 0;
+//    if (!archive.WriteChar(c))
+//      break;
+//
+//    if (0 == c)
+//      return true;
+//
+//    if (!archive.WriteInt(limit_point_count))
+//      break;
+//    
+//    p = &limit_point;
+//    for (unsigned int i = 0; i < limit_point_count; i++, p = p->m_next_sector_limit_point )
+//    {
+//      if (!Internal_WriteDouble3(limit_point.m_limitP, archive))
+//        break;
+//      if (!Internal_WriteDouble3(limit_point.m_limitT1, archive))
+//        break;
+//      if (!Internal_WriteDouble3(limit_point.m_limitT2, archive))
+//        break;
+//      if (!Internal_WriteDouble3(limit_point.m_limitN, archive))
+//        break;
+//      if (!Internal_WriteArchiveIdAndFlags(limit_point.m_sector_face ? limit_point.m_sector_face->ArchiveId() : 0, 0, archive))
+//        break;
+//    }
+//    return true;
+//  }
+//  return ON_SUBD_RETURN_ERROR(false);
+//}
 
-  if (bHaveLimitPoint)
-  {
-    for (p = &limit_point; nullptr != p && limit_point_count <= vertex_face_count; p = p->m_next_sector_limit_point)
-    {
-      if (!ON_IsValid(p->m_limitP[0]))
-        break;
-      if (limit_point_count > 0 && nullptr == p->m_sector_face)
-        break;
-      limit_point_count++;
-    }
-    if (limit_point_count > vertex_face_count || nullptr != p)
-      limit_point_count = 0;
-
-    if (limit_point_count > vertex_face_count)
-      limit_point_count = 0;
-  }
-  if (0 == limit_point_count)
-    bHaveLimitPoint = false;
-
-  for (;;)
-  {
-    unsigned char c = bHaveLimitPoint ? 4 : 0;
-    if (!archive.WriteChar(c))
-      break;
-
-    if (0 == c)
-      return true;
-
-    if (!archive.WriteInt(limit_point_count))
-      break;
-    
-    p = &limit_point;
-    for (unsigned int i = 0; i < limit_point_count; i++, p = p->m_next_sector_limit_point )
-    {
-      if (!Internal_WriteDouble3(limit_point.m_limitP, archive))
-        break;
-      if (!Internal_WriteDouble3(limit_point.m_limitT1, archive))
-        break;
-      if (!Internal_WriteDouble3(limit_point.m_limitT2, archive))
-        break;
-      if (!Internal_WriteDouble3(limit_point.m_limitN, archive))
-        break;
-      if (!Internal_WriteArchiveIdAndFlags(limit_point.m_sector_face ? limit_point.m_sector_face->ArchiveId() : 0, 0, archive))
-        break;
-    }
-    return true;
-  }
-  return ON_SUBD_RETURN_ERROR(false);
-}
-
-static bool Internal_ReadSavedLimitPointList(
+// Dale Lear 2024-12-18 Rhino 8.x
+// Due to a bug (missing & limit_points so the array was by value rather than by reference)
+// on that's been in this code since v7, the saved
+// limit points were read but never used.
+// This function reads and discards the information that was never used
+// but which exists in millions of older 3dm files.
+// It appears recalculating the limit point information has been fast enough
+// for many years, so I'm making it clear that this is legacy code.
+static bool Internal_IgnoreSavedLimitPointList(
   ON_BinaryArchive& archive,
-  unsigned int vertex_face_count,
-  ON_SimpleArray< ON_SubDSectorSurfacePoint > limit_points
+  unsigned int vertex_face_count
+  //ON_SimpleArray< ON_SubDSectorSurfacePoint > limit_points // NOTE MISSING & means this array was by value and not by reference
   )
 {
-  limit_points.SetCount(0);
+  //limit_points.SetCount(0);
 
   for (;;)
   {
@@ -444,9 +455,9 @@ static bool Internal_ReadSavedLimitPointList(
     if (limit_point_count > vertex_face_count)
       break;
 
-    limit_points.Reserve(limit_point_count);
-
-    for ( unsigned int i = 0; i < limit_point_count; i++ )
+    //limit_points.Reserve(limit_point_count);
+    unsigned int i = 0;
+    for ( /*empty init*/; i < limit_point_count; i++)
     {
       ON_SubDSectorSurfacePoint limit_point = ON_SubDSectorSurfacePoint::Unset;
       if (!Internal_ReadDouble3(archive,limit_point.m_limitP))
@@ -460,14 +471,14 @@ static bool Internal_ReadSavedLimitPointList(
       ON_SubDFacePtr fptr = ON_SubDFacePtr::Null;
       if (!Internal_ReadArchiveIdAndFlagsIntoComponentPtr(archive,fptr.m_ptr))
         break;
-      limit_points.Append(limit_point);
+      //limit_points.Append(limit_point);
     }
 
-    if (limit_point_count != limit_points.UnsignedCount() )
+    if (limit_point_count != i )
       break;
 
-    if (4 != c)
-      limit_points.SetCount(0);
+    //if (4 != c)
+    //  limit_points.SetCount(0);
 
     return true;
   }
@@ -727,8 +738,19 @@ bool ON_SubDVertex::Write(
       break;
     if (!archive.WriteShort(m_face_count))
       break;
-    if (!Internal_WriteSavedLimitPointList(m_face_count, this->SurfacePointIsSet(), m_limit_point, archive))
+    
+    // Dale Lear 2024-12-18
+    // Due to a bug in ON_SubDVertex::Read(), the limit points written
+    // by Internal_WriteSavedLimitPointList() were read but never used.
+    // It appears that recalculating the limit points every time the
+    // file is read is working out just fine. So writing a zero byte
+    // here means that old code will be able to read new files and
+    // we wont' waste time and disk space saving limit points.
+    if (!archive.WriteChar((unsigned char)0))
       break;
+    //if (!Internal_WriteSavedLimitPointList(m_face_count, this->SurfacePointIsSet(), m_limit_point, archive))
+    //  break;
+
     if (!Internal_WriteEdgePtrList(m_edge_count,m_edge_capacity,m_edges,0,nullptr, archive))
       break;
     if (!Internal_WriteFacePtrList(m_face_count,m_face_capacity,(const ON_SubDFacePtr*)m_faces,0,nullptr, archive))
@@ -770,7 +792,7 @@ bool ON_SubDVertex::Read(
     unsigned short edge_count = 0;
     unsigned short face_count = 0;
 
-    ON_SimpleArray<ON_SubDSectorSurfacePoint> limit_points;
+    //ON_SimpleArray<ON_SubDSectorSurfacePoint> limit_points;
 
     if (!ReadBase(archive,base))
       break;
@@ -783,7 +805,7 @@ bool ON_SubDVertex::Read(
     if (!archive.ReadShort(&face_count))
       break;
 
-    if (!Internal_ReadSavedLimitPointList(archive, face_count, limit_points))
+    if (!Internal_IgnoreSavedLimitPointList(archive, face_count))
       break;
 
     ON_SubDVertex* v = subdimple->AllocateVertex(
@@ -808,16 +830,16 @@ bool ON_SubDVertex::Read(
       break;
     v->m_face_count = face_count;
 
-    for (unsigned int i = 0; i < limit_points.UnsignedCount(); i++)
-    {
-      ON_SubDSectorSurfacePoint limit_point = limit_points[i];
-      limit_point.m_next_sector_limit_point = (const ON_SubDSectorSurfacePoint*)1U; // skips checks
-      if (false == v->SetSavedSurfacePoint( true, limit_point))
-      {
-        v->ClearSavedSurfacePoints();
-        break;
-      }
-    }
+    //for (unsigned int i = 0; i < limit_points.UnsignedCount(); i++)
+    //{
+    //  ON_SubDSectorSurfacePoint limit_point = limit_points[i];
+    //  limit_point.m_next_sector_limit_point = (const ON_SubDSectorSurfacePoint*)1U; // skips checks
+    //  if (false == v->SetSavedSurfacePoint( true, limit_point))
+    //  {
+    //    v->ClearSavedSurfacePoints();
+    //    break;
+    //  }
+    //}
 
     vertex = v;
 

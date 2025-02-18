@@ -1894,6 +1894,12 @@ public:
 class ON_CLASS ON_BinaryArchive // use for generic serialization of binary data
 {
 public:
+  /*
+  *  You might want to initialize this class before using it
+  *  by calling SetArchive3dmVersion with
+  *  ON_BinaryArchive::CurrentArchiveVersion() and
+  *  SetOpenNURBS3dmVersion with ON::Version().
+  */
   ON_BinaryArchive( ON::archive_mode );
   virtual ~ON_BinaryArchive();
 

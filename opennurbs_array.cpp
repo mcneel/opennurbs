@@ -13,6 +13,8 @@
 
 #include "opennurbs.h"
 
+#include <unordered_map>
+
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
@@ -1187,6 +1189,282 @@ ON_UuidPtr* ON_UuidPtrList::SearchHelper(const ON_UUID* uuid) const
   return p;
 }
 
+static_assert(sizeof(ON_UuidPairList) == sizeof(ON_UuidPairList2), "ON_UuidPairList and ON_UuidPairList2 are not the same size");
+static_assert(sizeof(ON_UuidPtrList) == sizeof(ON_UuidPtrList2), "ON_UuidPtrList and ON_UuidPtrList2 are not the same size");
+static_assert(sizeof(ON_UuidIndexList) == sizeof(ON_UuidIndexList2), "ON_UuidIndexList and ON_UuidIndexList2 are not the same size");
+
+template <typename T>
+struct ON_UuidList2_Private
+{
+  struct UuidHasher
+  {
+    inline size_t operator()(const ON_UUID& uuid) const
+    {
+      // We have to copy two 32-bit words into a 64-bit word. Just casting to size_t can cause
+      // a problem on Mac because size_t is required to be aligned on an 8-byte boundary and UUID
+      // is only aligned on a 4-byte boundary.
+      const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&uuid.Data1);
+      return (size_t(d[0]) << 32) | size_t(d[1]);
+    }
+  };
+
+  std::unordered_map<ON_UUID, T, UuidHasher> map;
+};
+
+class ON_UuidPtrList2_Private : public ON_UuidList2_Private<ON__UINT_PTR>{};
+class ON_UuidPairList2_Private : public ON_UuidList2_Private<ON_UUID> {};
+class ON_UuidIndexList2_Private : public ON_UuidList2_Private<int> {};
+
+ON_UuidPtrList2::ON_UuidPtrList2()    : m_private(new ON_UuidPtrList2_Private)  {}
+ON_UuidPairList2::ON_UuidPairList2()  : m_private(new ON_UuidPairList2_Private) {}
+ON_UuidIndexList2::ON_UuidIndexList2() : m_private(new ON_UuidIndexList2_Private) {}
+
+ON_UuidPtrList2::~ON_UuidPtrList2()   = default;
+ON_UuidPairList2::~ON_UuidPairList2() = default;
+ON_UuidIndexList2::~ON_UuidIndexList2() = default;
+
+ON_UuidPtrList2::ON_UuidPtrList2(const ON_UuidPtrList2& src)    { *this = src; }
+ON_UuidPairList2::ON_UuidPairList2(const ON_UuidPairList2& src) {  *this = src;}
+ON_UuidIndexList2::ON_UuidIndexList2(const ON_UuidIndexList2& src) { *this = src; }
+
+ON_UuidPtrList2& ON_UuidPtrList2::operator=(const ON_UuidPtrList2& src)
+{
+  if (this != &src)
+  {
+    m_private.reset(new ON_UuidPtrList2_Private(*src.m_private));
+  }
+  return *this;
+}
+
+ON_UuidPairList2& ON_UuidPairList2::operator=(const ON_UuidPairList2& src)
+{
+  if (this != &src)
+  {
+    m_private.reset(new ON_UuidPairList2_Private(*src.m_private));
+  }
+  return *this;
+}
+
+ON_UuidIndexList2& ON_UuidIndexList2::operator=(const ON_UuidIndexList2& src)
+{
+  if (this != &src)
+  {
+    m_private.reset(new ON_UuidIndexList2_Private(*src.m_private));
+  }
+  return *this;
+}
+
+
+bool ON_UuidPtrList2::AddUuidPtr(const ON_UUID& uuid, ON__UINT_PTR ptr)
+{
+  return m_private->map.insert(std::make_pair(uuid, ptr)).second;
+}
+
+bool ON_UuidPairList2::AddPair(const ON_UUID& id1, const ON_UUID& id2)
+{
+  return m_private->map.insert(std::make_pair(id1, id2)).second;
+}
+
+bool ON_UuidIndexList2::AddUuidIndex(const ON_UUID& uuid, int index)
+{
+  return m_private->map.insert(std::make_pair(uuid, index)).second;
+}
+
+unsigned int ON_UuidPtrList2::Count() const
+{
+  return (int)m_private->map.size();
+}
+
+unsigned int ON_UuidPairList2::Count() const
+{
+  return (int)m_private->map.size();
+}
+
+unsigned int ON_UuidIndexList2::Count() const
+{
+  return (int)m_private->map.size();
+}
+
+void ON_UuidPairList2::Empty()
+{
+  m_private->map.clear();
+}
+
+void ON_UuidPtrList2::RemoveAll()
+{
+  m_private->map.clear();
+}
+
+void ON_UuidIndexList2::RemoveAll()
+{
+  m_private->map.clear();
+}
+
+void ON_UuidPtrList2::Reserve(size_t capacity){}
+void ON_UuidPairList2::Reserve(size_t capacity) {}
+void ON_UuidIndexList2::Reserve(size_t capacity) {}
+
+bool ON_UuidPtrList2::RemoveUuid(const ON_UUID& id1)
+{
+  return 1 == m_private->map.erase(id1);
+}
+
+bool ON_UuidIndexList2::RemoveUuid(const ON_UUID& id1)
+{
+  return 1 == m_private->map.erase(id1);
+}
+
+bool ON_UuidPairList2::RemovePair(const ON_UUID& id1)
+{
+  return 1 == m_private->map.erase(id1);
+}
+
+bool ON_UuidPairList2::RemovePair(const ON_UUID& id1, const ON_UUID& id2)
+{
+  const auto it = m_private->map.find(id1);
+  if (it != m_private->map.end() && it->second == id2)
+  {
+    return RemovePair(id1);
+  }
+  return false;
+}
+
+bool ON_UuidPtrList2::FindUuid(const ON_UUID& uuid) const
+{
+  return FindUuid(uuid, nullptr);
+}
+
+bool ON_UuidIndexList2::FindUuid(const ON_UUID& uuid) const
+{
+  return FindUuid(uuid, nullptr);
+}
+
+bool ON_UuidPtrList2::FindUuid(const ON_UUID& uuid, ON__UINT_PTR* index) const
+{
+  const auto it = m_private->map.find(uuid);
+
+  if (it != m_private->map.end())
+  {
+    if (index)
+    {
+      *index = it->second;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ON_UuidPairList2::FindId1(const ON_UUID& id1, ON_UUID* id2) const
+{
+  const auto it = m_private->map.find(id1);
+
+  if (it != m_private->map.end())
+  {
+    if (id2)
+    {
+      *id2 = it->second;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ON_UuidIndexList2::FindUuid(const ON_UUID& uuid, int* index) const
+{
+  const auto it = m_private->map.find(uuid);
+
+  if (it != m_private->map.end())
+  {
+    if (index)
+    {
+      *index = it->second;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool ON_UuidPtrList2::FindUuidPtr(const ON_UUID& uuid, ON__UINT_PTR ptr) const
+{
+  const auto it = m_private->map.find(uuid);
+
+  return it != m_private->map.end() && it->second == ptr;
+}
+
+bool ON_UuidIndexList2::FindUuidIndex(const ON_UUID& uuid, int ptr) const
+{
+  const auto it = m_private->map.find(uuid);
+
+  return it != m_private->map.end() && it->second == ptr;
+}
+
+bool ON_UuidPairList2::FindPair(const ON_UUID& id1, const ON_UUID& id2) const
+{
+  const auto it = m_private->map.find(id1);
+
+  return it != m_private->map.end() && it->second == id2;
+}
+
+unsigned int ON_UuidPtrList2::GetUuids(ON_SimpleArray<ON_UUID>& uuid_list) const
+{
+  uuid_list.Reserve(Count());
+
+  int i = 0;
+  for (const auto& pair : m_private->map)
+  {
+    uuid_list.Append(pair.first);
+    i++;
+  }
+  return i;
+}
+
+int ON_UuidPairList2::GetId1s(ON_SimpleArray<ON_UUID>& uuid_list) const
+{
+  uuid_list.Reserve(Count());
+
+  int i = 0;
+  for (const auto& pair : m_private->map)
+  {
+    uuid_list.Append(pair.first);
+    i++;
+  }
+  return i;
+}
+
+unsigned int ON_UuidIndexList2::GetUuids(ON_SimpleArray<ON_UUID>& uuid_list) const
+{
+  uuid_list.Reserve(Count());
+
+  int i = 0;
+  for (const auto& pair : m_private->map)
+  {
+    uuid_list.Append(pair.first);
+    i++;
+  }
+  return i;
+}
+
+void ON_UuidPairList2::ImproveSearchSpeed() {}
+void ON_UuidPtrList2::ImproveSearchSpeed()  {}
+void ON_UuidIndexList2::ImproveSearchSpeed() {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ON_UuidPairList::ON_UuidPairList() 
@@ -1831,4 +2109,39 @@ bool ON_2dexMap::RemoveIndex( int i )
   }
   return (0 != e);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -588,6 +588,7 @@ const ON_UUID ON_opennurbs8_id = { 0x50ede5c9, 0x1487, 0x4b4c, { 0xb3, 0xaa, 0x6
 const ON_UUID ON_opennurbs_id = ON_opennurbs8_id;
 
 const ON_UuidPairList ON_UuidPairList::EmptyList;
+const ON_UuidPairList2 ON_UuidPairList2::EmptyList;
 
 const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::UnsetComponentIndex;
 const ON_COMPONENT_INDEX ON_COMPONENT_INDEX::WholeObject;

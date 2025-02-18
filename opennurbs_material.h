@@ -307,6 +307,11 @@ public:
   ON_Color m_reflection = ON_Color::White;
   ON_Color m_transparent = ON_Color::White;
 
+  //The values all of the colors above do not support alpha values, and Rhino will not work correctly
+  //if there is a value other than 0 in that fourth byte.  This function cleans this up.
+  //https://mcneel.myjetbrains.com/youtrack/issue/RH-85216/ONMaterial-diffuse-color-is-ONColorUnsetColor
+  void RemoveColorAlphaValues(void);
+
 private:
   bool m_bShareable = false;
 
