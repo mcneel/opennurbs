@@ -4104,10 +4104,11 @@ void ON_FileReference::SetFullPath(
     else if (bFullPathChanged)
     {
       m_content_hash = ON_ContentHash::Unset;
-      m_full_path_status 
-        = ON_FileSystem::IsFile(m_full_path)
-        ? ON_FileReference::Status::FullPathValid
-        : ON_FileReference::Status::FileNotFound;
+
+      //https://mcneel.myjetbrains.com/youtrack/issue/RH-85181
+      //This used to check whether the file was there, eagerly, but this can be a big performance hit, especially on Google Drive.
+      //And the accessor for this property is basically never called.
+      m_full_path_status = ON_FileReference::Status::Unknown;
     }
   }
 }

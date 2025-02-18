@@ -1154,6 +1154,11 @@ private:
 };
 
 
+
+
+
+
+
 /*
 Description:
   The ON_UuidList class provides a tool
@@ -1275,6 +1280,109 @@ private:
   unsigned int m_sorted_count = 0;
   unsigned int m_removed_count = 0;
 };
+
+
+class ON_CLASS ON_UuidPtrList2
+{
+public:
+  ON_UuidPtrList2();
+  ~ON_UuidPtrList2();
+  ON_UuidPtrList2(const ON_UuidPtrList2& src);
+  ON_UuidPtrList2& operator=(const ON_UuidPtrList2& src);
+
+  unsigned int Count() const;
+  void RemoveAll();
+  void Reserve(size_t capacity);
+  bool AddUuidPtr(const ON_UUID& uuid, ON__UINT_PTR ptr);
+  bool RemoveUuid(const ON_UUID& uuid);
+  bool FindUuid(const ON_UUID& uuid) const;
+  bool FindUuid(const ON_UUID& uuid, ON__UINT_PTR* ptr) const;
+  bool FindUuidPtr(const ON_UUID& uuid, ON__UINT_PTR index) const;
+  unsigned int GetUuids(ON_SimpleArray<ON_UUID>& uuid_list) const;
+  void ImproveSearchSpeed();
+
+private:
+#pragma warning (push)
+#pragma warning (disable : 4251)
+  std::unique_ptr<class ON_UuidPtrList2_Private> m_private;
+  unsigned int padding[2];
+#if defined (ON_RUNTIME_ANDROID) //Android has 32-bit pointers?
+  unsigned char padding_array[12];
+#else
+  unsigned char padding_array[16];
+#endif
+#pragma warning (pop)
+};
+
+class ON_CLASS ON_UuidPairList2
+{
+public:
+  ON_UuidPairList2();
+  ~ON_UuidPairList2();
+  ON_UuidPairList2(const ON_UuidPairList2& src);
+  ON_UuidPairList2& operator=(const ON_UuidPairList2& src);
+
+  static const ON_UuidPairList2 EmptyList;
+
+  unsigned int Count() const;
+  void Empty();
+  void Reserve(size_t capacity);
+  bool AddPair(const ON_UUID& id1, const ON_UUID& id2);
+  bool RemovePair(const ON_UUID& id1);
+  bool RemovePair(const ON_UUID& id1, const ON_UUID& id2);
+  bool FindId1(const ON_UUID& id1, ON_UUID* id2 = 0) const;
+  bool FindPair(const ON_UUID& id1, const ON_UUID& id2) const;
+  int GetId1s(ON_SimpleArray<ON_UUID>& uuid_list) const;
+
+  void ImproveSearchSpeed();
+
+private:
+#pragma warning (push)
+#pragma warning (disable : 4251)
+  std::unique_ptr<class ON_UuidPairList2_Private> m_private;
+  unsigned int padding[2];
+#if defined (ON_RUNTIME_ANDROID) //Android has 32-bit pointers?
+  unsigned char padding_array[12];
+#else
+  unsigned char padding_array[16];
+#endif
+#pragma warning (pop)
+};
+
+class ON_CLASS ON_UuidIndexList2
+{
+public:
+  ON_UuidIndexList2();
+  ~ON_UuidIndexList2();
+  ON_UuidIndexList2(const ON_UuidIndexList2& src);
+  ON_UuidIndexList2& operator=(const ON_UuidIndexList2& src);
+
+  unsigned int Count() const;
+  void RemoveAll();
+  void Reserve(size_t capacity);
+  bool AddUuidIndex(const ON_UUID& uuid, int index);
+  bool RemoveUuid(const ON_UUID& uuid);
+  bool FindUuid(const ON_UUID& uuid) const;
+  bool FindUuid(const ON_UUID& uuid, int* index) const;
+  bool FindUuidIndex(const ON_UUID& uuid, int index) const;
+  unsigned int GetUuids(ON_SimpleArray<ON_UUID>& uuid_list) const;
+  void ImproveSearchSpeed();
+
+private:
+#pragma warning (push)
+#pragma warning (disable : 4251)
+  std::unique_ptr<class ON_UuidIndexList2_Private> m_private;
+  unsigned int padding[2];
+#if defined (ON_RUNTIME_ANDROID) //Android has 32-bit pointers?
+  unsigned char padding_array[12];
+#else
+  unsigned char padding_array[16];
+#endif
+#pragma warning (pop)
+};
+
+
+
 
 
 /*
@@ -1425,6 +1533,9 @@ private:
   unsigned int m_sorted_count;
   unsigned int m_removed_count;
 };
+
+
+
 
 class ON_CLASS ON_2dexMap : private ON_SimpleArray<ON_2dex>
 {

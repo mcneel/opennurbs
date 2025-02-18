@@ -226,7 +226,7 @@ private:
   // and used in BeforeLinkedDefinitionWriteImpl().
   // It has no other use and is not saved in files because the
   // 2nd id is a runtime value that can change every time a file is read.
-  ON_UuidPairList m_runtime_layer_id_map;
+  ON_UuidPairList2 m_runtime_layer_id_map;
 
 private:
   static void InternalDestroyLayerArray(

@@ -249,6 +249,9 @@ bool ON_Material::Read( ON_BinaryArchive& archive )
     if ( !archive.ReadColor( m_reflection ) ) break;
     if ( !archive.ReadColor( m_transparent ) ) break;
 
+    //https://mcneel.myjetbrains.com/youtrack/issue/RH-85216/ONMaterial-diffuse-color-is-ONColorUnsetColor
+    RemoveColorAlphaValues();
+
     if ( !archive.ReadDouble( &m_index_of_refraction ) ) break;
     if ( !archive.ReadDouble( &m_reflectivity ) ) break;
     if ( !archive.ReadDouble( &m_shine ) ) break;
@@ -8831,6 +8834,25 @@ ON_UUID ON_Material::PhysicallyBasedUserdataId(void)
   static const ON_UUID id = { 0x5694e1ac, 0x40e6, 0x44f4,{ 0x9c, 0xa9, 0x3b, 0x6d, 0xe, 0x8c, 0x44, 0x40 } };
 
   return id;
+}
+
+
+static int OnlyRGB(const ON_Color& c)
+{
+  const int col = (int)(unsigned int)c;
+
+  return col & 0x00FFFFFF;
+}
+
+void ON_Material::RemoveColorAlphaValues(void)
+{
+  m_ambient = OnlyRGB(m_ambient);
+  m_diffuse = OnlyRGB(m_diffuse);
+  m_emission = OnlyRGB(m_emission);
+  m_specular = OnlyRGB(m_specular);
+  m_reflection = OnlyRGB(m_reflection);
+  m_transparent = OnlyRGB(m_transparent);
+  
 }
 
 ON_OBJECT_IMPLEMENT(ON_PhysicallyBasedMaterialUserData, ON_UserData, "5694E1AC-40E6-44F4-9CA9-3B6D0E8C4440");

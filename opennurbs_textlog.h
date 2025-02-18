@@ -578,7 +578,7 @@ private:
   bool m_bApplyIdRemap = false;
   
   ON_UUID m_remap_id = ON_nil_uuid;
-  ON_UuidPairList m_remap_id_list;
+  ON_UuidPairList2 m_remap_id_list;
 
   ON_StringMapType m_string_map_type = ON_StringMapType::Identity;
   ON_StringMapOrdinalType m_string_map_ordinal_type = ON_StringMapOrdinalType::Identity;

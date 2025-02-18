@@ -3034,9 +3034,15 @@ const ON_SubDComponentPoint ON_SubDComponentPoint::BestPickPoint(
   // type_bias = -1 if B is a vertex and A is an edge/face or B is an edge and A is a face.
   const int type_bias = (ON_SubDComponentPtr::CompareComponentPtrType(A_component_type, B_component_type)) <= 0 ? 1 : -1;
 
+  // 17 Dec 2024, Mikko, RH-85024:
+  // Skip the following section if either component is a face. 
+  // In that case it gives the wrong answer if you click on an opaque shaded SubD face, 
+  // and at the same time hit an edge/vertex of the same face behind the shaded part.
   if (
     ON_PickType::PointPick == pick_type
     && ((type_bias >= 0) ? Internal_FirstIsPartOfSecond(A, B) : Internal_FirstIsPartOfSecond(B, A))
+    && ON_SubDComponentPtr::Type::Face != A_component_type
+    && ON_SubDComponentPtr::Type::Face != B_component_type
     )
   {
     // A point pick is occurring and best is a vertex on an edge/face or best is an edge on a face.

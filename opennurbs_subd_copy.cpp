@@ -560,38 +560,38 @@ bool ON_SubDArchiveIdMap::AddComponentPtr(ON_SubDComponentPtr eptr, unsigned int
   ON_SubDComponentPtr* p = (ON_SubDComponentPtr*)m_fsp.AllocateElement();
   *p = eptr;
 
-#if defined(ON_DEBUG)
-  if (0 != archive_id)
-  {
-    const ON_SubDComponentPtr* p1 = (const ON_SubDComponentPtr*)m_fsp.Element(archive_id);
-    unsigned int archive_id1 = 0;
-    if (p1 == p)
-    {
-      switch (p1->ComponentType())
-      {
-      case ON_SubDComponentPtr::Type::Vertex:
-        archive_id1 = p1->Vertex()->ArchiveId();
-        break;
-      case ON_SubDComponentPtr::Type::Edge:
-        archive_id1 = p1->Edge()->ArchiveId();
-        break;
-      case ON_SubDComponentPtr::Type::Face:
-        archive_id1 = p1->Face()->ArchiveId();
-        break;
-      default:
-        ON_ERROR("invalid element type");
-        break;
-      }
-    }
-    if (archive_id1 != archive_id)
-    {
-      // break here and then see what went wrong
-      ON_SubDIncrementErrorCount();
-      m_fsp.Element(archive_id);
-      m_fsp.Element(archive_id);
-    }
-  }
-#endif
+////#if defined(ON_DEBUG)
+////  if (0 != archive_id)
+////  {
+////    const ON_SubDComponentPtr* p1 = (const ON_SubDComponentPtr*)m_fsp.Element(archive_id);
+////    unsigned int archive_id1 = 0;
+////    if (p1 == p)
+////    {
+////      switch (p1->ComponentType())
+////      {
+////      case ON_SubDComponentPtr::Type::Vertex:
+////        archive_id1 = p1->Vertex()->ArchiveId();
+////        break;
+////      case ON_SubDComponentPtr::Type::Edge:
+////        archive_id1 = p1->Edge()->ArchiveId();
+////        break;
+////      case ON_SubDComponentPtr::Type::Face:
+////        archive_id1 = p1->Face()->ArchiveId();
+////        break;
+////      default:
+////        ON_ERROR("invalid element type");
+////        break;
+////      }
+////    }
+////    if (archive_id1 != archive_id)
+////    {
+////      // break here and then see what went wrong
+////      ON_SubDIncrementErrorCount();
+////      m_fsp.Element(archive_id);
+////      m_fsp.Element(archive_id);
+////    }
+////  }
+////#endif
 
   m_element_count++;
   return true;

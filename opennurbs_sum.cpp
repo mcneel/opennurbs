@@ -46,6 +46,15 @@ void ON_Sum::Begin( double starting_value )
   m_neg_count = 0;
   m_zero_count = 0;
 
+  // initialize memory. Fixes https://mcneel.myjetbrains.com/youtrack/issue/RH-85423
+  memset(m_pos_sum1, 0, sizeof(double) * sum1_max_count);
+  memset(m_pos_sum2, 0, sizeof(double) * sum2_max_count);
+  memset(m_pos_sum3, 0, sizeof(double) * sum3_max_count);
+
+  memset(m_neg_sum1, 0, sizeof(double) * sum1_max_count);
+  memset(m_neg_sum2, 0, sizeof(double) * sum2_max_count);
+  memset(m_neg_sum3, 0, sizeof(double) * sum3_max_count);
+
   if ( starting_value > 0.0 )
   {
     m_pos_sum = starting_value;
@@ -70,7 +79,9 @@ double ON_Sum::SortAndSum( int count, double* a )
       //double a1 = fabs(a[count-1]);
       m_sum_err += ON_EPSILON*( fabs(a[count-1]) + count*fabs(a[0]) );
     }
-    if ( a[count] < 0.0 )
+    // test first item in the array for sign
+    // fixes https://mcneel.myjetbrains.com/youtrack/issue/RH-85423
+    if ( a[0] < 0.0 ) 
     {
       a += count-1;
       while (count--)
