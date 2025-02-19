@@ -670,6 +670,37 @@ ON_Interval ON_Interval::NormalizedParameterAt( // returns x so that min*(1.0-x)
 												NormalizedParameterAt(t[1]) );
 }
 
+double ON_Interval::TransformParameterTo(const ON_Interval& target, double t) const
+{
+  // 31-JAN-2025 MDvR:
+  // This function was created to fix https://mcneel.myjetbrains.com/youtrack/issue/RH-85831
+  // The bug was a result conversions of ON_PolyCurve parameters at PolyCurve segment ends
+  // to/from Nurbs form curve parameters.
+  if (!IsValid() || !target.IsValid())
+  {
+    return ON_DBL_QNAN;
+  }
+
+  if (*this == target)
+  {
+    return t;
+  }
+
+  double s = NormalizedParameterAt(t);
+  double L1 = std::max<double>(std::abs(target.m_t[0]), std::abs(target.m_t[1]));
+  double L2 = std::max<double>(std::abs(m_t[0]), std::abs(m_t[1]));
+  double L  = std::max<double>(L1, L2);
+  if (abs(s / L) < ON_EPSILON)
+  {
+    s = 0.0;
+  }
+  else if (abs((s - 1.0) / L) < ON_EPSILON)
+  {
+    s = 1.0;
+  }
+  return target.ParameterAt(s);
+}
+
 double
 ON_Interval::Max() const
 {
