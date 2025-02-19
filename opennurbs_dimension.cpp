@@ -765,18 +765,20 @@ bool ON_DimLinear::GetTextXform(
   ON_3dPoint text_center = ON_3dPoint::Origin;
   // Text starts out approximately centered at origin
   ON_3dPoint cp[4];
-  if (!text->Get3dCorners(cp))
-    return false;
-
-  text_center = (cp[0] + cp[2]) / 2.0;
-  text_width = (cp[1].x - cp[0].x) * dimscale;
-  text_height = (cp[3].y - cp[0].y) * dimscale;
-
-  text_gap = dimstyle->TextGap();
-  if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
-    text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
-  text_gap *= dimscale;
-
+  // 06 Feb 2025 - Jeff: https://mcneel.myjetbrains.com/youtrack/issue/RH-84156
+  // Don't exit just because the corners don't exist (i.e. no text or zero-length text).
+  // We still need the transform to get computed.
+  if (text->Get3dCorners(cp))
+  {
+    text_center = (cp[0] + cp[2]) / 2.0;
+    text_width = (cp[1].x - cp[0].x) * dimscale;
+    text_height = (cp[3].y - cp[0].y) * dimscale;
+    
+    text_gap = dimstyle->TextGap();
+    if (dimstyle->MaskFrameType() != ON_TextMask::MaskFrame::NoFrame)
+      text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
+    text_gap *= dimscale;
+  }
 
   if (dimstyle->Alternate() && dimstyle->AlternateBelow())
     text_height = -2.0 * text_gap;

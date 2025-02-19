@@ -639,9 +639,7 @@ bool ON_PolyCurve::ChangeClosedCurveSeam( double t )
       if ( scrv )
       {
         ON_Interval sdom = scrv->Domain();
-        double s = ( old_dom == sdom )
-                 ? t
-                 : sdom.ParameterAt( old_dom.NormalizedParameterAt(t) );
+        double s = old_dom.TransformParameterTo(sdom, t);
         rc = scrv->ChangeClosedCurveSeam(s);
         if ( rc )
           SetDomain( t, t + old_dom.Length() );
@@ -856,11 +854,8 @@ int ON_PolyCurve::IsPolyline(
     {
       sdom.Set(m_t[0],m_t[1]);
       cdom = m_segment[0]->Domain();
-      if ( sdom != cdom )
-      {
-        for ( i = 0; i < pline_t->Count(); i++ )
-          (*pline_t)[i] = sdom.ParameterAt(cdom.NormalizedParameterAt((*pline_t)[i]));
-      }
+      for ( i = 0; i < pline_t->Count(); i++ )
+        (*pline_t)[i] = cdom.TransformParameterTo(sdom, (*pline_t)[i]);
     }
   }
   else if (seg_count > 1 )
@@ -888,11 +883,10 @@ int ON_PolyCurve::IsPolyline(
       {
         sdom.Set( m_t[seg_i], m_t[seg_i+1] );
         cdom = m_segment[seg_i]->Domain();
-        if ( sdom != cdom )
-        {
-          for ( i = 0; i < seg_t.Count(); i++ )
-            seg_t[i] = sdom.ParameterAt(cdom.NormalizedParameterAt(seg_t[i]));
-        }
+
+        for (i = 0; i < seg_t.Count(); i++)
+          seg_t[i] = cdom.TransformParameterTo(sdom, seg_t[i]);
+
         if ( pline_t->Count() > 0 )
           pline_t->Remove();
         pline_t->Append( seg_t.Count(), seg_t.Array() );
@@ -1909,16 +1903,8 @@ bool ON_PolyCurve::GetNextDiscontinuity(
       
       cdom = crv->Domain();
       sdom.Set( m_t[segment_index], m_t[segment_index+1] );
-      if ( sdom == cdom )
-      {
-        s0 = t0;
-        s1 = t1;
-      }
-      else
-      {
-        s0 = cdom.ParameterAt( sdom.NormalizedParameterAt(t0) );
-        s1 = cdom.ParameterAt( sdom.NormalizedParameterAt(t1) );
-      }
+      s0 = sdom.TransformParameterTo(cdom, t0);
+      s1 = sdom.TransformParameterTo(cdom, t1);
       rc = crv->GetNextDiscontinuity( c, s0, s1, &s, &curve_hint, dtype, cos_angle_tolerance, curvature_tolerance );
       if ( rc )
       {
@@ -1929,7 +1915,7 @@ bool ON_PolyCurve::GetNextDiscontinuity(
         }
         else
         {
-          kink_t = sdom.ParameterAt( cdom.NormalizedParameterAt(s) );
+          kink_t = cdom.TransformParameterTo(sdom, s);
           double t_tol = (fabs(t0)+fabs(t1)+fabs(t0-t1))*ON_ZERO_TOLERANCE;
           if ( kink_t <= tmin+t_tol || kink_t >= tmax-t_tol)
           {
@@ -1961,7 +1947,7 @@ bool ON_PolyCurve::GetNextDiscontinuity(
             rc = crv->GetNextDiscontinuity( c, s0, s1, &s, &curve_hint, dtype, cos_angle_tolerance, curvature_tolerance );
             if (rc)
             {
-              kink_t = sdom.ParameterAt( cdom.NormalizedParameterAt(s) );
+              kink_t = cdom.TransformParameterTo(sdom, s);
               if ( kink_t <= tmin || kink_t >= tmax )
                 rc = false;
             }
@@ -2253,8 +2239,7 @@ bool ON_PolyCurve::IsContinuous(
         ON_Interval sdom, cdom;
         cdom = segment_curve->Domain();
         sdom.Set( m_t[segment_index], m_t[segment_index+1] );
-        if ( sdom != cdom )
-          t = cdom.ParameterAt( sdom.NormalizedParameterAt(t) );
+        t = sdom.TransformParameterTo(cdom, t);
         rc = segment_curve->IsContinuous( desired_continuity, t, &curve_hint, 
                                           point_tolerance, d1_tolerance, d2_tolerance, 
                                           cos_angle_tolerance, curvature_tolerance );
@@ -3011,10 +2996,11 @@ bool ON_PolyCurve::GetCurveParameterFromNurbFormParameter(
     ON_Interval in( m_t[i], m_t[i+1] );
     ON_Interval cdom = curve->Domain();
     if ( in != cdom ) {
-      nurbs_t = cdom.ParameterAt(in.NormalizedParameterAt(nurbs_t));
+
+      nurbs_t = in.TransformParameterTo(cdom, nurbs_t);
       rc = curve->GetCurveParameterFromNurbFormParameter(nurbs_t,curve_t);
-      if ( rc )
-        *curve_t = in.ParameterAt(cdom.NormalizedParameterAt(*curve_t));
+      if (rc)
+        *curve_t = cdom.TransformParameterTo(in, *curve_t);
     }
     else {
       rc = curve->GetCurveParameterFromNurbFormParameter(nurbs_t,curve_t);
@@ -3035,10 +3021,10 @@ bool ON_PolyCurve::GetNurbFormParameterFromCurveParameter(
     ON_Interval in( m_t[i], m_t[i+1] );
     ON_Interval cdom = curve->Domain();
     if ( in != cdom ) {
-      curve_t = cdom.ParameterAt(in.NormalizedParameterAt(curve_t));
+      curve_t = in.TransformParameterTo(cdom, curve_t);
       rc = curve->GetNurbFormParameterFromCurveParameter(curve_t,nurbs_t);
-      if ( rc )
-        *nurbs_t = in.ParameterAt(cdom.NormalizedParameterAt(*nurbs_t));
+      if (rc)
+        *nurbs_t = cdom.TransformParameterTo(in, *nurbs_t);
     }
     else {
       rc = curve->GetNurbFormParameterFromCurveParameter(curve_t,nurbs_t);
@@ -3242,8 +3228,8 @@ bool ON_PolyCurve::Trim(
     if ( c_dom != s_dom )
     {
       // need to convert polycurve parameters to "real" segment curve parameters
-      trim_c_dom[0] = c_dom.ParameterAt( s_dom.NormalizedParameterAt(trim_s_dom[0]) );
-      trim_c_dom[1] = c_dom.ParameterAt( s_dom.NormalizedParameterAt(trim_s_dom[1]) );
+      trim_c_dom[0] = s_dom.TransformParameterTo(c_dom, trim_s_dom[0]);
+      trim_c_dom[1] = s_dom.TransformParameterTo(c_dom, trim_s_dom[1]);
       if ( !trim_c_dom.IsIncreasing() )
       {
         if ( s_dom.NormalizedParameterAt(trim_s_dom[0]) >= 1.0-fuzz && s1 > 0 )
@@ -3348,7 +3334,7 @@ bool ON_PolyCurve::Trim(
     trim_c_dom[0] = c_dom[0];
     if ( c_dom != s_dom )
     {
-      trim_c_dom[1] = c_dom.ParameterAt( s_dom.NormalizedParameterAt(trim_s_dom[1]) );
+      trim_c_dom[1] = s_dom.TransformParameterTo(c_dom, trim_s_dom[1]);
       if ( !trim_c_dom.IsIncreasing() )
       {
         if ( s_dom.NormalizedParameterAt(trim_s_dom[1]) <= fuzz && s1 > 0 )
@@ -3433,14 +3419,14 @@ bool ON_PolyCurve::Extend(
     if (!seg) return false;
     ON_Interval sdom = SegmentDomain(0);
     ON_Interval cdom = seg->Domain();
-    double a = (sdom == cdom) ? domain[0] : cdom.ParameterAt(sdom.NormalizedParameterAt(domain[0]));
+    double a = sdom.TransformParameterTo(cdom, domain[0]);
     ON_Interval DesiredDom(a, cdom[1]);
     changed = seg->Extend(DesiredDom);
     if (changed) {
       if (seg->Domain() == DesiredDom)
         m_t[0] = domain[0];
       else
-        m_t[0] = sdom.ParameterAt(cdom.NormalizedParameterAt(seg->Domain()[0]));
+        m_t[0] = cdom.TransformParameterTo(sdom, seg->Domain()[0]);
     }
   }
   if (Domain()[1] < domain[1]){
@@ -3449,14 +3435,14 @@ bool ON_PolyCurve::Extend(
     if (!seg) return false;
     ON_Interval sdom = SegmentDomain(Count()-1);
     ON_Interval cdom = seg->Domain();
-    double a = (sdom == cdom) ? domain[1] : cdom.ParameterAt(sdom.NormalizedParameterAt(domain[1]));
+    double a = sdom.TransformParameterTo(cdom, domain[1]);
     ON_Interval DesiredDom(cdom[0], a);
     chgd = seg->Extend(DesiredDom);
     if (chgd) {
       if (seg->Domain() == DesiredDom)
         m_t[Count()] = domain[1];
       else
-        m_t[Count()] = sdom.ParameterAt(cdom.NormalizedParameterAt(seg->Domain()[1]));
+        m_t[Count()] = cdom.TransformParameterTo(sdom, seg->Domain()[1]);
       changed = true;
     }
   }
@@ -3521,12 +3507,10 @@ bool ON_PolyCurve::Split(
   ON_Interval c_dom = seg_curve->Domain();
 
   double c;
-	if( split_at_break)
-		c = c_dom[0];
-	else
-		c = ( c_dom == s_dom )
-           ? split_parameter
-           : c_dom.ParameterAt( s_dom.NormalizedParameterAt(split_parameter) );
+  if (split_at_break)
+    c = c_dom[0];
+  else
+    c = s_dom.TransformParameterTo(c_dom, split_parameter);
 
   ON_Curve* seg_left = 0;
   ON_Curve* seg_right = 0;
