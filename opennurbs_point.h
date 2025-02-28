@@ -179,6 +179,32 @@ public:
     double interval_parameter
   ) const;
 
+
+  /// <summary>
+  /// Transforms a parameter from the current interval to the target interval.
+  /// It is effectively target.ParameterAt(this.NormalizedParameterAt(t))
+  /// with additional checks when t is very close to the end of this interval.
+  /// It is useful when the calculation of t may have introduced rounding errors.
+  ///
+  /// Specifically, there are cases where t is extremely close to and end of
+  /// this interval, target.ParameterAt(this.NormalizedParameterAt(t))
+  /// will return values that are very near but not exactly at the end of
+  /// the target interval, and
+  /// TransformParameterTo() will return a parameter at the exact end of the
+  /// target interval. This behavior is desired in some cases like
+  /// converting ON_PolyCurve parameters to NurbsForm parameters when the
+  /// polycurve parameter is at a segment.
+  /// </summary>
+  /// <param name="target">Target interval</param>
+  /// <param name="t">Input parameter</param>
+  /// <returns>
+  /// The input parameter in the target interval.
+  /// Returns input paramter unchanged if both intervals are identical.
+  /// Returns ON_DBL_QNAN if either interval is not valid.
+  /// </returns>
+  double TransformParameterTo(const ON_Interval& target, double t) const;
+
+
   double& operator[](int); // returns (index<=0) ? m_t[0] : m_t[1]
   double operator[](int) const; // returns (index<=0) ? m_t[0] : m_t[1]
   double& operator[](unsigned int); // returns (index<=0) ? m_t[0] : m_t[1]
