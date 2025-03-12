@@ -14276,19 +14276,52 @@ bool ON_SubDFace::ReverseEdgeList()
     return ON_SUBD_RETURN_ERROR(false);
   }
 
-  ON_SubDEdgePtr buffer[16];
-  ON_SubDEdgePtr* reversed_eptrs;
-  if ( edge_count <= sizeof(buffer)/sizeof(buffer[0]) )
-    reversed_eptrs = buffer;
+  bool has_tpoints{ TexturePointsAreSet() };
+  constexpr int buffer_size = 16;
+  ON_SubDEdgePtr eptr_buffer[buffer_size]{};
+  ON_3dPoint tpoint_buffer[buffer_size]{};
+  ON_SubDEdgePtr* reversed_eptrs{ nullptr };
+  ON_3dPoint* reversed_tpoints{ nullptr };
+  if (edge_count <= buffer_size) {
+    reversed_eptrs = eptr_buffer;
+    reversed_tpoints = tpoint_buffer;
+  }
   else
   {
     reversed_eptrs = new(std::nothrow) ON_SubDEdgePtr[edge_count];
-    if ( nullptr == reversed_eptrs)
-      return ON_SUBD_RETURN_ERROR(false);
+    if (has_tpoints)
+      reversed_tpoints = new(std::nothrow) ON_3dPoint[edge_count];
   }
 
+
+  if (nullptr == reversed_eptrs)
+    return ON_SUBD_RETURN_ERROR(false);
+  if (has_tpoints && nullptr == reversed_tpoints)
+  {
+    has_tpoints = false;
+    ClearTexturePoints();
+  }
+
+  if (!has_tpoints)
+  {
+    for (unsigned int fei = 0; fei < edge_count; fei++)
+    {
+      reversed_eptrs[fei] = ON_SubDEdgePtr::Null;
+    }
+  }
+  else
+  {
+    for (unsigned int fei = 0; fei < edge_count; fei++)
+    {
+      reversed_eptrs[fei] = ON_SubDEdgePtr::Null;
+      reversed_tpoints[fei] = ON_3dPoint::UnsetPoint;
+    }
+  }
+
+
   ON_SubDEdgePtr* face_eptrs = m_edge4;
-  for (unsigned int fei = 0; fei < edge_count; fei++, face_eptrs++)
+  ON_3dPoint* face_tpoints = m_texture_points;
+  for (unsigned int fei = 0; fei < edge_count; fei++, face_eptrs++, face_tpoints++)
   {
     if (4 == fei)
       face_eptrs = m_edgex;
@@ -14313,19 +14346,45 @@ bool ON_SubDFace::ReverseEdgeList()
         continue;
       *edges_fptrs = ON_SubDFacePtr::Create(this,1-ON_SUBD_FACE_DIRECTION(edges_fptrs->m_ptr));
       break;
-    } 
+    }
+
+    if (has_tpoints)
+    {
+      if (fei == 0)
+        reversed_tpoints[0] = *face_tpoints;
+      else
+        reversed_tpoints[edge_count - fei] = *face_tpoints;
+    }
   }
 
-  face_eptrs = m_edge4;
-  for (unsigned int fei = 0; fei < edge_count; fei++)
+  if (!has_tpoints)
   {
-    if (4 == fei)
-      face_eptrs = m_edgex;
-    *face_eptrs++ = reversed_eptrs[fei];
+    face_eptrs = m_edge4;
+    for (unsigned int fei = 0; fei < edge_count; fei++, face_eptrs++)
+    {
+      if (4 == fei)
+        face_eptrs = m_edgex;
+      *face_eptrs = reversed_eptrs[fei];
+    }
+  }
+  else
+  {
+    face_eptrs = m_edge4;
+    face_tpoints = m_texture_points;
+    for (unsigned int fei = 0; fei < edge_count; fei++, face_eptrs++, face_tpoints++)
+    {
+      if (4 == fei)
+        face_eptrs = m_edgex;
+      *face_eptrs = reversed_eptrs[fei];
+      *face_tpoints = reversed_tpoints[fei];
+    }
   }
 
-  if ( reversed_eptrs != buffer )
+  if (reversed_eptrs != eptr_buffer) {
     delete[] reversed_eptrs;
+    if (has_tpoints)
+      delete[] reversed_tpoints;
+  }
 
   return true;
 }
