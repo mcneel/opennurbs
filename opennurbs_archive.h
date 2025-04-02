@@ -4219,6 +4219,8 @@ public:
     50    a version 5 3dm archive is being read/written
     60    a version 6 3dm archive is being read/written
     70    a version 7 3dm archive is being read/written
+    80    a version 8 3dm archive is being read/written
+    90    a version 9 3dm archive is being read/written
     ...
   See Also:
     ON_BinaryArchive::ArchiveOpenNURBSVersion

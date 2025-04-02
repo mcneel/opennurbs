@@ -393,6 +393,7 @@ set( OPENNURBS_PLUS_HEADERS
     opennurbs_plus_mesh_marker.h
     opennurbs_plus_meshbooleans_impl.h
     opennurbs_plus_particle.h
+    opennurbs_plus_rebuild.h
     opennurbs_plus_rectpack.h
     opennurbs_plus_rectpack2.h
     opennurbs_plus_registry.h
@@ -434,6 +435,7 @@ set( OPENNURBS_PLUS_SOURCES
     opennurbs_plus_meshbooleans.cpp
     opennurbs_plus_mtree.cpp
     opennurbs_plus_particle.cpp
+    opennurbs_plus_rebuild.cpp
     opennurbs_plus_rectpack.cpp
     opennurbs_plus_rectpack1.cpp
     opennurbs_plus_rectpack2.cpp

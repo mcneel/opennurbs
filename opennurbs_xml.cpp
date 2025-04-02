@@ -31,8 +31,8 @@
 
 ON__INT64 Integerize(float dirty)
 {
-  // Use this function when CRCing floats. This eliminates the problem of
-  // rounding errors causing different CRCs to be generated for essentially the same value.
+  // Use this function when CRCing floats. This eliminates the problem of rounding
+  // errors causing different CRCs to be generated for essentially the same value.
   return ON__INT64(
    (dirty      // 0.499999976 0.500000003 (both essentially 0.5 with float dirt).
     + 1e-6)    // 0.500000976 0.500001003
@@ -42,8 +42,8 @@ ON__INT64 Integerize(float dirty)
 
 ON__INT64 Integerize(double dirty)
 {
-  // Use this function when CRCing doubles. This eliminates the problem of
-  // rounding errors causing different CRCs to be generated for essentially the same value.
+  // Use this function when CRCing doubles. This eliminates the problem of rounding
+  // errors causing different CRCs to be generated for essentially the same value.
   return ON__INT64(
    (dirty      // 0.49999999999997 0.50000000000002 (both essentially 0.5 with float dirt).
     + 1e-11)   // 0.50000000000997 0.50000000001002
@@ -121,11 +121,8 @@ static const wchar_t* StringFromUnits(ON::LengthUnitSystem units)
   case ON::LengthUnitSystem::NauticalMiles:     return L"nautical-miles";
   case ON::LengthUnitSystem::Parsecs:           return L"parsecs";
   case ON::LengthUnitSystem::Yards:             return L"yards";
-    default:
-        break;
+  default:                                      return L"none";
   }
-
-  return L"none";
 }
 
 static ON::LengthUnitSystem UnitsFromString(const ON_wString& s)
@@ -1643,9 +1640,6 @@ void ON_XMLPropertyPrivate::operator = (const ON_XMLPropertyPrivate& other)
   if (&other == this)
     return;
 
-  ON_ASSERT(nullptr != _data);
-  ON_ASSERT(nullptr != other._data);
-
   other._data->AddRef();
   _data->Release();
   _data = other._data;
@@ -1828,10 +1822,10 @@ public:
   void AddEmptyDefaultProperty(void);
   ON_XMLProperty* AttachProperty(ON_XMLProperty* pProp);
   bool RemoveProperty(const wchar_t* name);
-  ON_XMLNode* DetachChild(ON_XMLNode& child);
   void RemoveAllProperties(void);
   const ON_XMLNode& TopLevel(void) const;
-  ON_XMLNode* AttachChildNode(ON_XMLNode* pNode);
+  ON_XMLNode* AttachChild(ON_XMLNode* node);
+  ON_XMLNode* DetachChild(ON_XMLNode& child);
   void RemoveAllChildren(void);
   const ON_wString& TagName(void) const;
   void SetTagName(const wchar_t* name);
@@ -2018,38 +2012,41 @@ const ON_XMLNode& ON_XMLNodePrivate::TopLevel(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  const auto* pNode = &m_node;
-  while (nullptr != pNode->_private->m_parent)
+  const ON_XMLNode* node = &m_node;
+  while (nullptr != node->_private->m_parent)
   {
-    pNode = pNode->_private->m_parent;
+    node = node->_private->m_parent;
   }
 
-  return *pNode;
+  return *node;
 }
 
-ON_XMLNode* ON_XMLNodePrivate::AttachChildNode(ON_XMLNode* pNode)
+ON_XMLNode* ON_XMLNodePrivate::AttachChild(ON_XMLNode* node_to_attach)
 {
-  if (nullptr == pNode)
+  if (nullptr == node_to_attach)
     return nullptr;
 
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  if (nullptr == m_last_child)
+  if (node_to_attach->_private->m_parent != nullptr)
+    return nullptr; // 'node' is already attached to this or another XML tree.
+
+  if (nullptr == m_first_child)
   {
     // There are no children - add one.
-    m_last_child = m_first_child = pNode;
+    m_last_child = m_first_child = node_to_attach;
   }
   else
   {
     // There are children - add one to the end.
-    m_last_child->_private->m_next_sibling = pNode;
-    m_last_child = pNode;
+    m_last_child->_private->m_next_sibling = node_to_attach;
+    m_last_child = node_to_attach;
   }
 
-  pNode->_private->m_next_sibling = nullptr;
-  pNode->_private->m_parent = &m_node;
+  node_to_attach->_private->m_next_sibling = nullptr;
+  node_to_attach->_private->m_parent = &m_node;
 
-  return pNode;
+  return node_to_attach;
 }
 
 void ON_XMLNodePrivate::AddEmptyDefaultProperty(void)
@@ -2064,98 +2061,82 @@ void ON_XMLNodePrivate::RemoveAllChildren(void)
   if (nullptr == m_first_child)
     return;
 
-  auto* pNode = m_first_child;
-  while (nullptr != pNode)
+  ON_XMLNode* node = m_first_child;
+  while (nullptr != node)
   {
-    auto* pDelete = pNode;
-    pNode = pNode->NextSibling();
-    delete pDelete;
+    ON_XMLNode* node_to_delete = node;
+    node = node->NextSibling();
+    delete node_to_delete;
   }
 
   m_first_child = nullptr;
   m_last_child = nullptr;
 }
 
-ON_XMLNode* ON_XMLNodePrivate::DetachChild(ON_XMLNode& child)
+ON_XMLNode* ON_XMLNodePrivate::DetachChild(ON_XMLNode& child_to_detach)
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  if (child._private->m_parent != &m_node)
-    return nullptr;
+  if (child_to_detach._private->m_parent != &m_node)
+    return nullptr; // 'child_to_detach' is not attached to this XML tree.
 
-  ON_XMLNode* pChild = nullptr;
+  ON_XMLNode* next_sibling_of_child_to_detach = child_to_detach._private->m_next_sibling;
+  ON_XMLNode* prev_sibling_of_child_to_detach = child_to_detach.PrevSibling();
 
-  auto* pChildNextSibling = child._private->m_next_sibling;
-
-  if (m_first_child == &child)
+  if (m_first_child == &child_to_detach)
   {
-    if (m_last_child == m_first_child)
-      m_last_child = pChildNextSibling;
-
-    m_first_child = pChildNextSibling;
-
-    pChild = &child;
-  }
-  else
-  {
-    auto* pNode = m_first_child;
-    while (nullptr != pNode)
-    {
-      if (pNode->_private->m_next_sibling == &child)
-      {
-        pNode->_private->m_next_sibling = pChildNextSibling;
-
-        if (nullptr == pChildNextSibling)
-          m_last_child = pNode;
-
-        pChild = &child;
-        break;
-      }
-
-      pNode = pNode->_private->m_next_sibling;
-    }
+    m_first_child = next_sibling_of_child_to_detach;
   }
 
-  if (nullptr != pChild)
+  if (nullptr != prev_sibling_of_child_to_detach)
   {
-    pChild->_private->m_parent = nullptr;
-    pChild->_private->m_next_sibling = nullptr;
+    prev_sibling_of_child_to_detach->_private->m_next_sibling = next_sibling_of_child_to_detach;
   }
 
-  return pChild;
+  if (m_last_child == &child_to_detach)
+  {
+    m_last_child = prev_sibling_of_child_to_detach;
+  }
+
+  child_to_detach._private->m_parent = nullptr;
+  child_to_detach._private->m_next_sibling = nullptr;
+
+  return &child_to_detach;
 }
 
 ON_XMLNode* ON_XMLNodePrivate::PrevSibling(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  auto* pPrev = m_parent->_private->m_first_child;
-  if (pPrev == &m_node)
+  ON_XMLNode* prev = m_parent->_private->m_first_child;
+  if (prev == &m_node)
     return nullptr;
 
-  while (pPrev->_private->m_next_sibling != &m_node)
+  while (prev->_private->m_next_sibling != &m_node)
   {
-    pPrev = pPrev->_private->m_next_sibling;
+    prev = prev->_private->m_next_sibling;
   }
 
-  return pPrev;
+  return prev;
 }
 
 void ON_XMLNodePrivate::MoveBefore(ON_XMLNode& other)
 {
-  if (&other == &m_node)
-    return;
-
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  auto* pBeforeOther = other.PrevSibling();
-  if (pBeforeOther == &m_node)
+  ON_XMLNode* this_node = &m_node;
+
+  if (&other == this_node)
     return;
 
-  auto* pPrev = PrevSibling();
-  if (nullptr != pPrev)
+  ON_XMLNode* prev_sibling_of_other = other.PrevSibling();
+  if (prev_sibling_of_other == this_node)
+    return;
+
+  ON_XMLNode* prev_sibling = PrevSibling();
+  if (nullptr != prev_sibling)
   {
-    pPrev->_private->m_next_sibling = m_next_sibling;
+    prev_sibling->_private->m_next_sibling = m_next_sibling;
   }
   else
   {
@@ -2165,31 +2146,40 @@ void ON_XMLNodePrivate::MoveBefore(ON_XMLNode& other)
 
   m_next_sibling = &other;
 
-  if (nullptr == pBeforeOther)
+  if (nullptr == prev_sibling_of_other)
   {
     // 'other' was the head; redirect the parent's first child.
-    m_parent->_private->m_first_child = &m_node;
+    m_parent->_private->m_first_child = this_node;
   }
   else
   {
-    pBeforeOther->_private->m_next_sibling = &m_node;
+    prev_sibling_of_other->_private->m_next_sibling = this_node;
+  }
+
+  // 13th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-86050
+  if (m_parent->_private->m_last_child == this_node)
+  {
+    // 'this_node' was the tail; redirect the parent's last child.
+    m_parent->_private->m_last_child = prev_sibling;
   }
 }
 
 void ON_XMLNodePrivate::MoveAfter(ON_XMLNode& other)
 {
-  if (&other == &m_node)
-    return;
-
   std::lock_guard<std::recursive_mutex> lg(m_mutex);
 
-  auto* pPrev = PrevSibling();
-  if (pPrev == &other)
+  ON_XMLNode* this_node = &m_node;
+
+  if (&other == this_node)
     return;
 
-  if (nullptr != pPrev)
+  auto* prev_sibling = PrevSibling();
+  if (prev_sibling == &other)
+    return;
+
+  if (nullptr != prev_sibling)
   {
-    pPrev->_private->m_next_sibling = m_next_sibling;
+    prev_sibling->_private->m_next_sibling = m_next_sibling;
   }
   else
   {
@@ -2197,9 +2187,16 @@ void ON_XMLNodePrivate::MoveAfter(ON_XMLNode& other)
     m_parent->_private->m_first_child = m_next_sibling;
   }
 
+  // 13th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-86050
+  if (m_parent->_private->m_last_child == this_node)
+  {
+    // 'this' was the tail; redirect the parent's last child.
+    m_parent->_private->m_last_child = prev_sibling;
+  }
+
   m_next_sibling = other._private->m_next_sibling;
 
-  other._private->m_next_sibling = &m_node;
+  other._private->m_next_sibling = this_node;
 }
 
 bool ON_XMLNodePrivate::RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* pv) const
@@ -2378,7 +2375,7 @@ ON_XMLNode* ON_XMLNodePrivate::GetNodeAtPath(const wchar_t* wszPath, bool bCreat
   // The child was not found.
   if (bCreate)
   {
-    return AttachChildNode(new ON_XMLNode(wsz))->_private->GetNodeAtPath(pNext, bCreate);
+    return AttachChild(new ON_XMLNode(wsz))->_private->GetNodeAtPath(pNext, bCreate);
   }
 
   return nullptr;
@@ -2795,14 +2792,19 @@ const ON_XMLNode& ON_XMLNode::TopLevel(void) const
   return _private->TopLevel();
 }
 
-ON_XMLNode* ON_XMLNode::AttachChildNode(ON_XMLNode* pNode)
+ON_XMLNode* ON_XMLNode::AttachChildNode(ON_XMLNode* node)
 {
-  return _private->AttachChildNode(pNode);
+  return _private->AttachChild(node);
 }
 
-ON_XMLProperty* ON_XMLNode::AttachProperty(ON_XMLProperty* pProp)
+ON_XMLNode* ON_XMLNode::AttachChild(ON_XMLNode* node)
 {
-  return _private->AttachProperty(pProp);
+  return AttachChildNode(node);
+}
+
+ON_XMLProperty* ON_XMLNode::AttachProperty(ON_XMLProperty* prop)
+{
+  return _private->AttachProperty(prop);
 }
 
 bool ON_XMLNode::RemoveProperty(const wchar_t* wszPropertyName)
@@ -2835,14 +2837,13 @@ bool ON_XMLNode::RemoveChild(ON_XMLNode* child)
   if (nullptr == child)
     return false;
 
-  ON_XMLNode* detach = _private->DetachChild(*child);
-  if (nullptr != detach)
-  {
-    delete detach;
-    return true;
-  }
+  ON_XMLNode* detach = DetachChild(*child);
+  if (nullptr == detach)
+    return false;
 
-  return false;
+  delete detach;
+
+  return true;
 }
 
 ON_XMLNode::ChildIterator ON_XMLNode::GetChildIterator(void) const
@@ -3679,6 +3680,8 @@ public:
     }
 
     ON_ASSERT(m_paSortedProperties != nullptr);
+    if (m_paSortedProperties == nullptr)
+      return nullptr; // Should never happen.
 
     if (m_iIndex >= int(m_paSortedProperties->size()))
       return nullptr;
@@ -3920,12 +3923,16 @@ ON_XMLUserData::ON_XMLUserData()
 
 ON_XMLUserData::ON_XMLUserData(const ON_XMLUserData& ud)
   :
-  ON_UserData(ud)
+  ON_UserData(ud) // CRITICAL - Be sure to call the base class.
 {
   _private = new (_PRIVATE) ON_XMLUserDataPrivate; PRIVATE_CHECK(ON_XMLUserDataPrivate);
 
-  m_userdata_copycount = ud.m_userdata_copycount;
-  m_userdata_uuid = ud.m_userdata_uuid;
+  // 21st January 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-67878
+  // While working on this bug I noticed the following line which copied the copy count. See below.
+  //m_userdata_copycount = ud.m_userdata_copycount; // This does not fix the bug, however.
+
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
 }
 
 ON_XMLUserData::~ON_XMLUserData()
@@ -3938,9 +3945,12 @@ const ON_XMLUserData& ON_XMLUserData::operator = (const ON_XMLUserData& ud)
 {
   ON_UserData::operator = (ud); // CRITICAL - Be sure to call base class.
 
-  m_userdata_uuid = ud.m_userdata_uuid;
+  ON_ASSERT(m_userdata_uuid == ud.m_userdata_uuid);
 
   _private->m_XMLRoot = ud._private->m_XMLRoot;
+
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
 
   return *this;
 }
@@ -3950,8 +3960,20 @@ const ON_XMLRootNode& ON_XMLUserData::XMLRootForRead(void) const
   return _private->m_XMLRoot.NodeForRead();
 }
 
-ON_XMLRootNode& ON_XMLUserData::XMLRootForWrite(void) const
+ON_XMLRootNode& ON_XMLUserData::XMLRootForWrite(void) const // const is a mistake. [SDK_UNFREEZE]
 {
+  // 22nd January 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-67878
+  // Per conversation with Dale Lear, this is bad because we are actually going to change the user data while
+  // it's already attached to the attributes. We're actually expected to delete the old user data and create
+  // new user data with the changes in it, because otherwise Rhino can't know that it was changed. However,
+  // Dale suggested the easiest way to fix this is to just bump the copy count, because the optimization in
+  // CRhinoObject::ModifyAttributes() involving the copy count is really a hack anyway.
+
+  if (m_userdata_copycount > 0) // Zero means we are not even copying user data.
+  {
+    const_cast<ON_XMLUserData*>(this)->m_userdata_copycount++;
+  }
+
   return _private->m_XMLRoot.NodeForWrite();
 }
 
@@ -4591,12 +4613,11 @@ ON_RdkUserData::ON_RdkUserData(const ON_RdkUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == RdkPlugInId());
 
-  m_application_uuid = RdkPlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
 
   *this = ud;
 }
@@ -4761,7 +4782,7 @@ static void Validate(bool b)
     g_bXMLTestsOK = false;
 }
 
-void GetRDKTestXML(ON_wString& sXML)
+static void GetRDKTestXML(ON_wString& sXML)
 {
     //const auto sFile = L"C:\\Users\\croud\\Desktop\\RdkSave.txt";
     //ON_UnicodeTextFile file;

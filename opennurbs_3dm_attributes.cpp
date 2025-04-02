@@ -34,9 +34,13 @@ public:
   bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
 
   ON::SectionAttributesSource m_section_attributes_source = ON::SectionAttributesSource::FromLayer;
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  int m_section_style_index = -1;
+#endif
   double m_linetype_scale = 1.0;
   ON_Color m_hatch_background_fill;
   bool m_hatch_boundary_visible = false;
+  bool m_detail_background_visible = false;
   ON::SectionLabelStyle m_section_label_style = ON::SectionLabelStyle::None;
 
   std::shared_ptr<ON_Linetype> m_custom_linetype;
@@ -66,6 +70,9 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
 
   if (m_hatch_boundary_visible != other.m_hatch_boundary_visible)
     return false;
+  
+  if (m_detail_background_visible != other.m_detail_background_visible)
+    return false;
 
   if (m_section_label_style != other.m_section_label_style)
     return false;
@@ -83,6 +90,10 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
         return false;
     }
   }
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  if (m_section_style_index != other.m_section_style_index)
+    return false;
+#endif
 
   const ON_Linetype* customThis = m_custom_linetype.get();
   const ON_Linetype* customOther = other.m_custom_linetype.get();
@@ -224,8 +235,14 @@ bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) con
   if ( m_viewport_id != other.m_viewport_id )
     return false;
 
-  if ( m_dmref != other.m_dmref )
+  if(m_dmref.Count() != other.m_dmref.Count())
     return false;
+
+  for (int i = 0; i < m_dmref.Count(); i++)
+  {
+    if (m_dmref[i] != other.m_dmref[i])
+      return false;
+  }
 
   if (m_object_frame != other.m_object_frame)
     return false;
@@ -430,9 +447,10 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   // 11 May 2023 S. Baer
   // file version 2.13: how the participation list for clipping planes is interpreted
   ObsoleteSelectiveClippingListType = 41,
-
+  // 18 Jan 2025 S. Baer
+  DetailBackgroundVisible = 42,
   // add items here
-  LastAttributeTypeCode = 41
+  LastAttributeTypeCode = 42
 };
 
 bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
@@ -892,6 +910,17 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       if (!rc || 0 == itemid) break;
     }
 
+    if (ON_3dmObjectAttributesTypeCodes::DetailBackgroundVisible == itemid) // 42
+    {
+      bool b = true;
+      rc = file.ReadBool(&b);
+      if (!rc) break;
+      SetDetailBackgroundVisible(b);
+
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
     if (minor_version <= 13)
       break;
 
@@ -1069,17 +1098,6 @@ bool ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
 
 bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
 {
-  if (m_private)
-  {
-    // Have the decal collection update the user data if anything has changed and there
-    // is actually decal data for which a user data object is needed. Note that this is
-    // not actually needed when running Rhino because the RDK decal UI directly updates
-    // the user data when changes are made. This is only needed when using ONX_Model and
-    // File3dm outside of Rhino, in case the programmer sets a decal property.
-    const unsigned int archive_3dm_version = file.Archive3dmVersion();
-    m_private->m_decals.UpdateUserData(archive_3dm_version);
-  }
-
   unsigned char c;
   // 29 Nov. 2009 S. Baer
   // Chunk version updated to 2.1 in order to support m_display_order
@@ -1108,6 +1126,11 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
   // Chunk version = 2.12 to support ClippingPlaneLabelStyle
   // 11 May 2023 S. Baer
   // Chunk version = 2.13 to support SelectiveClippingListType
+  // 18 Jan 2025 S. Baer
+  // Do not write a minor chunk version greater than 15. Chunk versions are actually
+  // two values packed into a single unsigned char. The use of type codes for I/O
+  // makes it so the minor version isn't really necessary. Just stop at a minor
+  // version of 13
   bool rc = file.Write3dmChunkVersion(2,13);
   while(rc)
   {
@@ -1489,6 +1512,15 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
     //  rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
     //  if (!rc) break;
     //}
+
+    if (DetailBackgroundVisible() != false)
+    {
+      c = ON_3dmObjectAttributesTypeCodes::DetailBackgroundVisible;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteBool(DetailBackgroundVisible());
+      if (!rc) break;
+    }
 
     // 0 indicates end of attributes - this should be the last item written
     c = 0;
@@ -2389,6 +2421,22 @@ void ON_3dmObjectAttributes::SetSectionAttributesSource(ON::SectionAttributesSou
   m_private->m_section_attributes_source = source;
 }
 
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+int ON_3dmObjectAttributes::SectionStyleIndex() const
+{
+  return m_private ? m_private->m_section_style_index : DefaultAttributesPrivate.m_section_style_index;
+}
+void ON_3dmObjectAttributes::SetSectionStyleIndex(int index)
+{
+  if (SectionStyleIndex() == index)
+    return;
+  
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+  m_private->m_section_style_index = index;
+}
+#endif
+
 void ON_3dmObjectAttributes::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)
 {
   if (nullptr == m_private)
@@ -2484,6 +2532,21 @@ void ON_3dmObjectAttributes::SetHatchBoundaryVisible(bool on)
   m_private->m_hatch_boundary_visible = on;
 }
 
+bool ON_3dmObjectAttributes::DetailBackgroundVisible() const
+{
+  return m_private ? m_private->m_detail_background_visible : DefaultAttributesPrivate.m_detail_background_visible;
+}
+void ON_3dmObjectAttributes::SetDetailBackgroundVisible(bool visible)
+{
+  if (DetailBackgroundVisible() == visible)
+    return;
+  
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+  m_private->m_detail_background_visible = visible;
+}
+
+
 ON::SectionLabelStyle ON_3dmObjectAttributes::ClippingPlaneLabelStyle() const
 {
   return m_private ? m_private->m_section_label_style : DefaultAttributesPrivate.m_section_label_style;
@@ -2538,15 +2601,36 @@ ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  return m_private->m_decals.AddDecal();
+  ON_Decal decal;
+
+  ON_DecalObjectAttributesWrapper w(*this);
+  if (w.AddDecal(decal) != ON_DecalObjectAttributesWrapper::AddDecalResults::Success)
+    return nullptr;
+
+  auto& a = m_private->m_decals.GetDecalArray();
+  const int upper = a.Count() - 1;
+  if (upper < 0)
+    return nullptr;
+
+  return a[upper];
 }
 
-bool ON_3dmObjectAttributes::RemoveDecal(ON_Decal& decal)
+bool ON_3dmObjectAttributes::RemoveDecal(ON_Decal& decal) // Deprecated.
+{
+  const ON_DECAL_CRC decal_crc = decal.DecalCRC();
+  return RemoveDecal(decal_crc);
+}
+
+bool ON_3dmObjectAttributes::RemoveDecal(ON_DECAL_CRC decal_crc)
 {
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  return m_private->m_decals.RemoveDecal(decal);
+  ON_DecalObjectAttributesWrapper w(*this);
+  if (!w.RemoveDecal(decal_crc))
+    return false;
+
+  return true;
 }
 
 void ON_3dmObjectAttributes::RemoveAllDecals(void)
@@ -2554,7 +2638,19 @@ void ON_3dmObjectAttributes::RemoveAllDecals(void)
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  return m_private->m_decals.RemoveAllDecals();
+  ON_DecalObjectAttributesWrapper w(*this);
+  w.RemoveAllDecals();
+}
+
+void ON_3dmObjectAttributes::UserDataChanged(UserDataType type)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate(this);
+
+  if (UserDataType::Decals == type)
+  {
+    m_private->m_decals.InvalidateCache();
+  }
 }
 
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}

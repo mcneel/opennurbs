@@ -4620,6 +4620,24 @@ ON_BinaryArchive::WriteObject( const ON_Object& model_object )
         return Internal_WriteObject(V2_text_dot);
       }
       break;
+
+    case ON::object_type::subd_object:
+    {
+      if (m_3dm_version >= 60)
+        break;
+      const ON_SubD* subd = ON_SubD::Cast(&model_object);
+      if (nullptr == subd)
+        break;
+
+      // Use a SubD mesh proxy for V5 and earlier file formats.
+      std::unique_ptr<ON_Mesh> mesh(ON_SubDMeshProxyUserData::MeshProxyFromSubD(subd));
+      if (nullptr == mesh)
+        return false;
+
+      return Internal_WriteObject(*mesh.get());
+    }
+    break;
+
     default:
       break;
     }
@@ -8587,11 +8605,13 @@ bool ON_BinaryArchive::Write3dmSettings(
     m_V3_plugin_id_list.Append( ON_opennurbs5_id );
     m_V3_plugin_id_list.Append( ON_opennurbs6_id );
     m_V3_plugin_id_list.Append( ON_opennurbs7_id );
+    m_V3_plugin_id_list.Append( ON_opennurbs8_id );
     m_V3_plugin_id_list.Append( ON_rhino3_id );
     m_V3_plugin_id_list.Append( ON_rhino4_id );
     m_V3_plugin_id_list.Append( ON_rhino5_id );
     m_V3_plugin_id_list.Append( ON_rhino6_id );
     m_V3_plugin_id_list.Append( ON_rhino7_id );
+    m_V3_plugin_id_list.Append( ON_rhino8_id );
     m_V3_plugin_id_list.QuickSort( ON_UuidCompare );
   }
 
@@ -18424,12 +18444,12 @@ const void* ON_Read3dmBufferArchive::Buffer() const
   return (const void*)m_buffer;
 }
 
-ON_Write3dmBufferArchive::ON_Write3dmBufferArchive( 
-          size_t initial_sizeof_buffer, 
-          size_t max_sizeof_buffer, 
-          int archive_3dm_version,
-          unsigned int archive_opennurbs_version
-          )
+ON_Write3dmBufferArchive::ON_Write3dmBufferArchive(
+  size_t initial_sizeof_buffer, 
+  size_t max_sizeof_buffer, 
+  int archive_3dm_version,
+  unsigned int archive_opennurbs_version
+  )
 : ON_BinaryArchive(ON::archive_mode::write3dm)
 , m_p(0)
 , m_buffer(0)

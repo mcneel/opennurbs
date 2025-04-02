@@ -1247,5 +1247,87 @@ int ON_ConvexHull2d(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_SimpleArray<ON_2dP
 	return dim;
 }
 
+int ON_MinimumBoundingRectangle(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_Rectangle& rect, bool pntsAreConvexHull)
+{
+  ON_SimpleArray<ON_2dPoint> hull;
+  int rc(-1);
+  if (!pntsAreConvexHull)
+  {
+    rc = ON_ConvexHull2d(Pnt, hull);
+  }
+  else
+  {
+    hull = Pnt;
+  }
+  int n = hull.Count();
+  
+  rect.p = ON_Plane::World_xy;
+  rect.area = 0;
+  if (rc == 0 && n == 1) // convex hull is one point
+  {
+    rect.p.origin = hull[0];
+    rect.p.UpdateEquation();
+    rect.extents[0] = rect.extents[1] = 0.0;
+  }
+  else if (rc == 1 && n == 2) // convex hull is a line segment
+  {
+    rect.p.origin = (hull[1] + hull[0]) / 2.0;
+    rect.p.xaxis = hull[1] - hull[0];
+    rect.p.xaxis.Unitize();
+    rect.p.yaxis = ON_CrossProduct(rect.p.zaxis, rect.p.xaxis);
+    rect.p.UpdateEquation();
+    rect.extents[0] = (hull[1] - rect.p.origin).Length();
+    rect.extents[1] = 0.0;
+  }
+  else if (rc == 2 && n > 2)
+  {
+    ON_Rectangle minRect;
+    minRect.area = DBL_MAX;
+
+    --n; // do not take the duplicated last point of the convex hull into account
+
+    for (int i0 = n - 1, i1 = 0; i1 < n; i0 = i1++)
+    {
+      ON_2dPoint origin = hull[i0];
+      ON_2dVector U0 = hull[i1] - origin; // axis along the line between two adjacent points
+      U0.Unitize();
+
+      // second axis perpendicular to first axis, right handed wrt to Z-axis up.
+      ON_2dVector U1(-U0.y, U0.x); 
+
+      double min0 = DBL_MAX, max0 = 0;
+      double max1 = 0;
+      for (int j = 0; j < n; ++j)
+      {
+        ON_2dVector D = hull[j] - origin;
+        double dot = U0 * D;
+        min0 = std::min<double>(min0, dot);
+        max0 = std::max<double>(max0, dot);
+        dot = U1 * D;
+        max1 = std::max<double>(max1, dot);
+      }
+
+      // keep rectangle with smallest area
+      double area = max1 * (max0 - min0);
+      if (area < minRect.area)
+      {
+        minRect.area = area;
+        minRect.p.origin = origin + ((min0 + max0) / 2) * U0 + (max1 / 2) * U1;
+        minRect.p.xaxis = U0;
+        minRect.p.yaxis = U1;
+        minRect.extents[0] = (max0 - min0) / 2;
+        minRect.extents[1] = max1 / 2;
+      }
+    }
+    minRect.p.UpdateEquation();
+
+    rect.p = minRect.p;
+    rect.extents[0] = minRect.extents[0];
+    rect.extents[1] = minRect.extents[1];
+    rect.area = minRect.area;
+  }
+  return rc;
+}
+
 
 

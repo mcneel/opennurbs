@@ -868,7 +868,7 @@ void ON_SubDComponentBase::Internal_TransformComponentBase(
     if (bTransformationSavedSubdivisionPoint)
       TransformPoint(&xform.m_xform[0][0], m_saved_subd_point1);
     else
-      ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_points_flags);
+      ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_modified_points_flags);
   }
 }
 

@@ -1410,7 +1410,7 @@ unsigned int ON_SubDLevel::SetArchiveId(
 
 void ON_SubDLevel::ClearArchiveId() const
 {
-  // archive ids can be cleared in any order.
+  // archive ids can be cleared in any order.  
   for (const ON_SubDVertex* v = m_vertex[0]; nullptr != v; v = v->m_next_vertex)
     v->SetArchiveId(0);
   for (const ON_SubDEdge* e = m_edge[0]; nullptr != e; e = e->m_next_edge)
@@ -1611,36 +1611,6 @@ bool ON_SubDLevel::Read(
       if ( !element_list.Add(e) )
         break;
       AddEdge(e);
-
-#if !defined(OPENNURBS_IN_RHINO) && !defined(OPENNURBS_7_17_SUBD_SKIP_CHECK_CORNER_SECTOR_COEFFICIENTS)
-      // Versions <= 7.16 saved incorrect sector coefficient values, for smooth edges to corner vertices.
-      // Rhino updates all sector coefficient values when adding the SubD to the document so has no need for this check.
-      if (
-        archive.ArchiveOpenNURBSVersion() <= ON_VersionNumberConstruct(7, 16, 2099, 12, 31, 6)
-        && (e->m_edge_tag == ON_SubDEdgeTag::Smooth || e->m_edge_tag == ON_SubDEdgeTag::SmoothX)
-        )
-      {
-        static const ON_String format{
-          L"The value of m_sector_coefficient[% i] for edge with m_id %u in SubD %u "
-          "is incorrect. Recompute it before using it.\n"
-          "Recompile OpenNURBS with the OPENNURBS_7_17_SUBD_SKIP_CHECK_CORNER_SECTOR_COEFFICIENTS "
-          "flag to skip this check and silence this warning, or update and save your file in "
-          "OpenNURBS >= 7.17.\n"
-        };
-        for (unsigned short evi = 0; evi < 2; evi++)
-        {
-          ON_SubDVertex* vp{ const_cast<ON_SubDVertex*>(e->m_vertex[evi]) };
-          if (!element_list.ConvertArchiveIdToRuntimeVertexPtr(1, 1, &vp)) continue;
-          if (vp->m_vertex_tag == ON_SubDVertexTag::Corner)
-          {
-            ON_String msg{};
-            msg.Format(format, evi, e->m_id, subd.ModelObjectId());
-            ON_WARNING(msg);
-          }
-        }
-      }
-#endif
-
     }
     if ( archive_id != element_list.m_archive_id_partition[2] )
       break;
@@ -1664,7 +1634,7 @@ bool ON_SubDLevel::Read(
     if (archive_id != element_list.Count())
       break;
 
-    // Convert archive_id references to runtime pointers.
+    // Convert archive_id references read from the file to runtime pointers.
     archive_id = element_list.ConvertArchiveIdsToRuntimePointers();
     if ( archive_id <= 0 )
       break;    
@@ -1672,15 +1642,10 @@ bool ON_SubDLevel::Read(
     if (0 == minor_version )
       break;
 
-    unsigned char c = 0;
-    if (!archive.ReadChar(&c))
+    // ignore an obsolete 1/0 value that is never used.
+    unsigned char another_ignored_c = 0;
+    if (!archive.ReadChar(&another_ignored_c))
       break;
-
-    if (1 == c)
-    {
-      //if (!m_limit_mesh.Read(archive))
-      //  break; 
-    }
 
     rc = true;
     break;
@@ -1690,6 +1655,59 @@ bool ON_SubDLevel::Read(
 
   if (!archive.EndRead3dmChunk())
     rc = false;
+
+  // NO - SHOULD BE INCLUDED IN RHINO AS WELL //  #if !defined(OPENNURBS_IN_RHINO)
+  // Dale Lear March 2025 RH-86528
+  //I moved these checks to happen AFTER the entire SubD is read and all 
+  // the archive ids have been updated to runtime pointers. This way the incorrect values
+  // in files wrritten by versions <= 7.16 can simply be fixed and the app reading
+  // the file doesn't have to do aything special.
+  // 
+  // I also made this code run inside and outside of Rhino contexts because there are 
+  // situations where RHino reads .3dm files using ONX_Model tools and does not pass the 
+  // resulting SubD through CRhinoDoc::AddObject() (which fixed the numbers).
+  // 
+  // This prevents crashes because Add() was inter-mixed with ConvertArchiveIdToRuntimeVertexPtr above.
+  // In addition, instead of issuing a warning, I just fix the invalid information.
+  // Details information about this change is in RH-86528
+  // 
+  // The original fix was by Pierre Feb 15, 2022 and cited RH-67425 and RH-67377.
+  // 
+  // Pierre's comment from that loop
+  // Versions <= 7.16 saved incorrect sector coefficient values for smooth edges to corner vertices.
+  // Rhino updates all sector coefficient values when adding the SubD to the document so has no need for this check.
+  if (rc && archive.ArchiveOpenNURBSVersion() <= ON_VersionNumberConstruct(7, 16, 2099, 12, 31, 6))
+  {
+    // The SubD was successfully read and the file we are reading was written
+    // by opennurbs version <= 7.16
+    for (const ON_SubDEdge* e = this->m_edge[0]; nullptr != e; e = e->m_next_edge)
+    {
+      if (ON_SubDEdgeTag::Smooth == e->m_edge_tag || ON_SubDEdgeTag::SmoothX == e->m_edge_tag)
+      {
+        for (unsigned short evi = 0; evi < 2; evi++)
+        {
+          const ON_SubDVertex* v = e->m_vertex[evi];
+          if (nullptr == v)
+            break;
+          if (
+            ON_SubDVertexTag::Corner == v->m_vertex_tag
+            && e->m_sector_coefficient[evi] >= 0.0
+            && e->m_sector_coefficient[evi] <= 1.0)
+          {
+            // Dale Lear March 2025 RH-86528
+            // This used to call ON_WARNING telling the user to change a compile flag
+            // or reset something that would be difficult for most openurbs public
+            // users to understand. I switched to silently fixing the problem.
+            e->UpdateEdgeSectorCoefficientsForExperts(false);            
+            break;
+          }
+        }
+      }
+      if (e == this->m_edge[1])
+        break;
+    }
+  }
+  // NO - SHOULD BE INCLUDED IN RHINO AS WELL // #endif
 
   if (rc)
     return rc;
@@ -2408,7 +2426,7 @@ bool ON_SubDMeshProxyUserData::WriteToArchive(
 {
   for (;;)
   {
-    if (archive.Archive3dmVersion() < 60)
+    if (archive.Archive3dmVersion() >= 60)
       break;
     if (false == IsValid())
       return false;

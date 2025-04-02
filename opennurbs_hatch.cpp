@@ -227,22 +227,30 @@ ON_HatchLine::ON_HatchLine(
 
 bool ON_HatchLine::operator==(const ON_HatchLine& src) const
 {
-  return(
-    m_angle_radians == src.m_angle_radians
-    && m_base == src.m_base
-    && m_offset == src.m_offset
-    && m_dashes == src.m_dashes
-    );
+  if (m_angle_radians != src.m_angle_radians)
+    return false;
+
+  if (m_base != src.m_base)
+    return false;
+
+  if (m_offset != src.m_offset)
+    return false;
+
+  if (m_dashes.Count() != src.m_dashes.Count())
+    return false;
+
+  for (int i = 0; i < m_dashes.Count(); i++)
+  {
+    if (m_dashes[i] != src.m_dashes[i])
+      return false;
+  }
+
+  return true;
 }
 
 bool ON_HatchLine::operator!=(const ON_HatchLine& src) const
 {
-  return(
-    m_angle_radians != src.m_angle_radians
-    || m_base != src.m_base
-    || m_offset != src.m_offset
-    || m_dashes != src.m_dashes
-    );
+  return !(*this == src);
 }
 
 bool ON_HatchLine::IsValid( ON_TextLog* text_log) const
@@ -669,8 +677,10 @@ ON_HatchPattern::ON_HatchPattern() ON_NOEXCEPT
 
 ON_HatchPattern::ON_HatchPattern(const ON_HatchPattern& src)
   : ON_ModelComponent(ON_ModelComponent::Type::HatchPattern, src)
-  , m_type(src.m_type)
   , m_description(src.m_description)
+  , m_pattern_us(src.m_pattern_us)
+  , m_always_model_distances(src.m_always_model_distances)
+  , m_type(src.m_type)
   , m_lines(src.m_lines)
 {}
 
@@ -711,7 +721,7 @@ void ON_HatchPattern::Dump( ON_TextLog& dump) const
 {
   ON_ModelComponent::Dump(dump);
 
-  switch( m_type)
+  switch( FillType())
   {
   case ON_HatchPattern::HatchFillType::Solid:
     dump.Print( "fill type: Solid");
@@ -730,7 +740,7 @@ void ON_HatchPattern::Dump( ON_TextLog& dump) const
     wsDescription = L"";
   dump.Print( "Description: %ls\n", wsDescription);
 
-  if( m_type == ON_HatchPattern::HatchFillType::Lines)
+  if(FillType() == ON_HatchPattern::HatchFillType::Lines)
   {
     int count = m_lines.Count();
     dump.Print( "Line count = %d\n", count);
@@ -740,12 +750,26 @@ void ON_HatchPattern::Dump( ON_TextLog& dump) const
     }
     dump.Print( "\n");
   }
+
+  ON_UnitSystem us(PatternUnitSystem());
+  ON_wString usn = us.UnitSystemName();
+  const wchar_t* s = usn.Array();
+  dump.Print("Pattern Units = %ls\n", s);
+
+  if (m_always_model_distances)
+    dump.Print("Always model units = true\n");
+  else
+    dump.Print("Always model units = false\n");
+
 }
 
 bool ON_HatchPattern::Write(ON_BinaryArchive& archive ) const
 {
   if (archive.Archive3dmVersion() < 60)
     return WriteV5(archive);
+
+  if (archive.Archive3dmVersion() < 90)
+    return WriteV8(archive);
 
   const int major_version = 1;
   const int minor_version = 0;
@@ -770,7 +794,7 @@ bool ON_HatchPattern::Write(ON_BinaryArchive& archive ) const
     if (!archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 0))
       break;
     {
-      const unsigned int count = (m_type == ON_HatchPattern::HatchFillType::Lines ? m_lines.UnsignedCount() : 0);
+      const unsigned int count = (FillType() == ON_HatchPattern::HatchFillType::Lines ? m_lines.UnsignedCount() : 0);
       bool lines_rc = archive.WriteInt(count);
       for (unsigned int i = 0; i < count && lines_rc; i++)
         lines_rc = m_lines[i].Write(archive);
@@ -779,6 +803,13 @@ bool ON_HatchPattern::Write(ON_BinaryArchive& archive ) const
       if (false == lines_rc)
         break;
     }
+
+    unsigned char unitsystem = (unsigned char)m_pattern_us;
+    if (!archive.WriteChar(unitsystem))
+      break;
+
+    if (!archive.WriteBool(m_always_model_distances))
+      break;
 
     rc = true;
     break;
@@ -793,6 +824,9 @@ bool ON_HatchPattern::Read(ON_BinaryArchive& archive)
   if ( Internal_UseHatchReadV5(archive) )
     return ReadV5(archive);
 
+  if (archive.Archive3dmVersion() < 90)
+    return ReadV8(archive);
+
   int major_version = 0;
   int minor_version = 0;
   if (!archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version))
@@ -806,7 +840,7 @@ bool ON_HatchPattern::Read(ON_BinaryArchive& archive)
     unsigned int type_as_unsigned = 0;
     if (!archive.ReadInt(&type_as_unsigned))
       break;
-    m_type = ON_HatchPattern::HatchFillTypeFromUnsigned(type_as_unsigned);
+    m_type = static_cast<ON__UINT8>(ON_HatchPattern::HatchFillTypeFromUnsigned(type_as_unsigned));
 
     if (!archive.ReadString(m_description))
       break;
@@ -826,6 +860,20 @@ bool ON_HatchPattern::Read(ON_BinaryArchive& archive)
         lines_rc = false;
       if (false == lines_rc)
         break;
+    }
+
+    unsigned char unitsystem = 0;
+    if (!archive.ReadChar(&unitsystem))
+      break;
+    m_pattern_us = ON::LengthUnitSystemFromUnsigned(unitsystem);
+
+    if (!archive.ReadBool(&m_always_model_distances))
+      break;
+
+    if (minor_version < 1)
+    {
+      rc = true;
+      break;
     }
 
     rc = true;
@@ -849,7 +897,7 @@ bool ON_HatchPattern::WriteV5( ON_BinaryArchive& ar) const
   if (rc) rc = ar.WriteString( m_description);
   if( rc)
   {
-    if( m_type == ON_HatchPattern::HatchFillType::Lines)
+    if( static_cast<HatchFillType>(m_type) == ON_HatchPattern::HatchFillType::Lines)
     {
       int i, count = m_lines.Count();
       if ( count < 0 )
@@ -882,14 +930,14 @@ bool ON_HatchPattern::ReadV5( ON_BinaryArchive& ar)
 
     int fill_type_as_unsigned = 0;
     if( rc) rc = ar.ReadInt( &fill_type_as_unsigned);
-    if( rc)  m_type = ON_HatchPattern::HatchFillTypeFromUnsigned(fill_type_as_unsigned);
+    if( rc)  m_type = static_cast<ON__UINT8>(ON_HatchPattern::HatchFillTypeFromUnsigned(fill_type_as_unsigned));
     ON_wString hatchpattern_name;
     if( rc) rc = ar.ReadString( hatchpattern_name);
     if (rc) SetName(hatchpattern_name);
     if( rc) rc = ar.ReadString( m_description);
     if( rc)
     {
-      if( m_type == ON_HatchPattern::HatchFillType::Lines)
+      if(static_cast<HatchFillType>(m_type) == ON_HatchPattern::HatchFillType::Lines)
       {
         m_lines.Empty();
         int count = 0;
@@ -917,18 +965,107 @@ bool ON_HatchPattern::ReadV5( ON_BinaryArchive& ar)
   return rc;
 }
 
+bool ON_HatchPattern::WriteV8(ON_BinaryArchive& archive) const
+{
+  const int major_version = 1;
+  const int minor_version = 0;
+  if (!archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, major_version, minor_version))
+    return false;
+  bool rc = false;
+  for (;;)
+  {
+    unsigned int attributes_filter
+      = ON_ModelComponent::Attributes::IdAttribute
+      | ON_ModelComponent::Attributes::IndexAttribute
+      | ON_ModelComponent::Attributes::NameAttribute;
+    if (!WriteModelComponentAttributes(archive, attributes_filter))
+      break;
+
+    if (!archive.WriteInt(static_cast<unsigned int>(m_type)))
+      break;
+
+    if (!archive.WriteString(m_description))
+      break;
+
+    if (!archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 0))
+      break;
+    {
+      const unsigned int count = (FillType() == ON_HatchPattern::HatchFillType::Lines ? m_lines.UnsignedCount() : 0);
+      bool lines_rc = archive.WriteInt(count);
+      for (unsigned int i = 0; i < count && lines_rc; i++)
+        lines_rc = m_lines[i].Write(archive);
+      if (!archive.EndWrite3dmChunk())
+        lines_rc = false;
+      if (false == lines_rc)
+        break;
+    }
+
+    rc = true;
+    break;
+  }
+  if (!archive.EndWrite3dmChunk())
+    rc = false;
+  return rc;
+}
+
+bool ON_HatchPattern::ReadV8(ON_BinaryArchive& archive)
+{
+  int major_version = 0;
+  int minor_version = 0;
+  if (!archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version))
+    return false;
+  bool rc = false;
+  for (;;)
+  {
+    if (!ReadModelComponentAttributes(archive))
+      break;
+
+    unsigned int type_as_unsigned = 0;
+    if (!archive.ReadInt(&type_as_unsigned))
+      break;
+    m_type = static_cast<ON__UINT8>(ON_HatchPattern::HatchFillTypeFromUnsigned(type_as_unsigned));
+
+    if (!archive.ReadString(m_description))
+      break;
+
+    unsigned int tcode = 0;
+    ON__INT64 value = 0;
+    if (!archive.BeginRead3dmBigChunk(&tcode, &value))
+      break;
+    {
+      bool lines_rc = (TCODE_ANONYMOUS_CHUNK == tcode && value > 0);
+      unsigned int count = 0;
+      lines_rc = archive.ReadInt(&count);
+      m_lines.Reserve(count);
+      for (unsigned int i = 0; i < count && lines_rc; i++)
+        lines_rc = m_lines.AppendNew().Read(archive);
+      if (!archive.EndRead3dmChunk())
+        lines_rc = false;
+      if (false == lines_rc)
+        break;
+    }
+
+    rc = true;
+    break;
+  }
+  if (!archive.EndRead3dmChunk())
+    rc = false;
+  return rc;
+}
+
 ON_HatchPattern::ON_HatchPattern::HatchFillType ON_HatchPattern::FillType() const
 {
-  return m_type;
+  return static_cast<HatchFillType>(m_type);
 }
 
 void ON_HatchPattern::SetFillType( ON_HatchPattern::HatchFillType type)
 {
-  if ( m_type != type && type == ON_HatchPattern::HatchFillTypeFromUnsigned(static_cast<unsigned int>(type)) )
+
+  if ( static_cast<HatchFillType>(m_type) != type && type == ON_HatchPattern::HatchFillTypeFromUnsigned(static_cast<unsigned int>(type)) )
   {
     if (ON_HatchPattern::HatchFillType::Lines != type)
       m_lines.Destroy();
-    m_type = type;
+    m_type = static_cast<ON__UINT8>(type);
     IncrementContentVersionNumber();
   }
 }
@@ -1027,6 +1164,29 @@ const ON_ClassArray<ON_HatchLine>& ON_HatchPattern::HatchLines() const
   return m_lines;
 }
 
+ON::LengthUnitSystem ON_HatchPattern::PatternUnitSystem() const
+{
+  return m_pattern_us;
+}
+
+bool ON_HatchPattern::SetPatternUnitSystem(ON::LengthUnitSystem us)
+{
+  if (ON::LengthUnitSystem::Unset == ON::LengthUnitSystemFromUnsigned(static_cast<unsigned>(us))) return false;
+  if (ON::LengthUnitSystem::CustomUnits == us) return false;
+
+  m_pattern_us = us;
+  return true;
+}
+
+bool ON_HatchPattern::AlwaysModelDistances() const
+{
+  return m_always_model_distances;
+}
+
+void ON_HatchPattern::SetAlwaysModelDistances(bool on)
+{
+  m_always_model_distances = on;
+}
 
 //  class ON_HatchLoop
 /////////////////////////////////////////////////////////////////

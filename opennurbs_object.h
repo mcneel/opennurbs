@@ -596,7 +596,9 @@ public:
     the object.  This CRC can be used as a quick way to see
     if two objects are not identical.
   Parameters:
-    current_remainder - [in];
+    current_remainder - [in]; use zero for starting a DataCRC
+                              computation, and use the result of
+                              another DataCRC to compose computations.
   Returns:
     CRC of the information the defines the object.
   */

@@ -879,7 +879,7 @@ ON_EnvironmentsImpl& ON_EnvironmentsImpl::operator = (const ON_EnvironmentsImpl&
   return *this;
 }
 
-bool ON_EnvironmentsImpl::operator == (const ON_EnvironmentsImpl& ep)
+bool ON_EnvironmentsImpl::operator == (const ON_EnvironmentsImpl& ep) const
 {
   if (BackgroundRenderEnvironmentId()        != ep.BackgroundRenderEnvironmentId())        return false;
   if (SkylightingRenderEnvironmentOverride() != ep.SkylightingRenderEnvironmentOverride()) return false;

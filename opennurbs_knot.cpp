@@ -85,7 +85,7 @@ double ON_SpanTolerance( int order, int cv_count, const double* knot, int span_i
 
 int ON_KnotCount( int order, int cv_count )
 {
-  return (order+cv_count-2);
+  return (order >= 2 && cv_count >= order) ? (order+cv_count-2) : 0;
 }
 
 const ON_2dex ON_BsplineControlPointSpans(
@@ -966,7 +966,32 @@ bool ON_MakePeriodicUniformKnotVector(
   return rc;
 }
 
+bool ON_MakeUniformKnotVector(int order, int cv_count, bool bPeriodic, double* knot, double delta)
+{
+  return
+    bPeriodic
+    ? ON_MakePeriodicUniformKnotVector(order, cv_count, knot, delta)
+    : ON_MakeClampedUniformKnotVector(order, cv_count, knot, delta);
+}
 
+int ON_MinimumControlPointCount(int order, bool bPeriodic)
+{
+  return (order >= 2)
+    ? (bPeriodic ? (2 * order - 2 + (order <= 3 ? (4 - order) : 0)) : order)
+    : 0;
+}
+
+int ON_GrevilleAbcissaeCount(
+  int order,
+  int cv_count,
+  bool bPeriodic
+)
+{
+  return
+    (order >= 2 && cv_count >= ON_MinimumControlPointCount(order, bPeriodic))
+    ? (bPeriodic ? (cv_count - order + 1) : cv_count) 
+    : 0;
+}
 
 double ON_GrevilleAbcissa( // get Greville abcissa
           int order,          // order (>=2)
@@ -1000,6 +1025,27 @@ double ON_GrevilleAbcissa( // get Greville abcissa
   return g;
 }
 
+int ON_GrevilleAbcissaOffset(
+  int order,
+  bool bPeriodic,
+  const double* knot
+)
+{
+  if (bPeriodic && order > 2 && nullptr != knot)
+  {
+    const double t0 = knot[order - 2];
+    double g1 = ON_DBL_QNAN;
+    for (int i = 0; i < order - 1; ++i)
+    {
+      const double g0 = g1;
+      g1 = ON_GrevilleAbcissa(order, knot + i);
+      if (g1 >= t0)
+        return ((i > 0 && (t0 - g0) < (g1 - t0)) ? (i - 1) : i);
+    }
+  }
+  return 0;
+}
+
 bool ON_GetGrevilleAbcissae( // get Greville abcissa from knots
           int order,          // order (>=2)
           int cv_count,       // cv count (>=order)
@@ -1010,11 +1056,13 @@ bool ON_GetGrevilleAbcissae( // get Greville abcissa from knots
           )
 {
   // Grevielle abscissae for a given knot vector
-  if ( order < 2 || cv_count < order || !knot || !g )
+  if ( nullptr == knot || nullptr == g )
     return false;
   
-  const int g_count = (bPeriodic) ? cv_count-order+1 : cv_count;
-  
+  const int g_count = ON_GrevilleAbcissaeCount(order, cv_count, bPeriodic);
+  if (g_count < 2)
+    return false;
+
   if (order == 2)
   {
     // g[i] = knot[i] in degree 1 case
@@ -1025,18 +1073,7 @@ bool ON_GetGrevilleAbcissae( // get Greville abcissa from knots
   {
     // g = (knot[i]+...+knot[i+degree-1])/degree
     const double t0 = knot[order-2];
-    if (bPeriodic)
-    {
-      for (int i = 0; i < order - 1; ++i)
-      {
-        g[i] = ON_GrevilleAbcissa(order, knot + i);
-        if (g[i] >= t0)
-        {
-          knot += ((i > 0 && (t0 - g[i - 1]) < (g[i] - t0)) ? (i - 1) : i);
-          break;
-        }
-      }
-    }
+    knot += ON_GrevilleAbcissaOffset(order, bPeriodic, knot);
     for ( int i = 0; i < g_count; ++i)
       g[i] = ON_GrevilleAbcissa( order, knot+i );
     if (bPeriodic && g[0] < t0)

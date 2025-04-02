@@ -32,6 +32,11 @@ bool ON_Color::IsUnset() const
   return ON_Color::UnsetColor == *this;
 }
 
+bool ON_Color::IsTransparent() const
+{
+  return this->Alpha() <= 0;
+}
+
 const ON_Color ON_Color::RandomColor()
 {
   return RandomColor(ON_RandomNumberGenerator::RandomSeed());

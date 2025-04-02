@@ -107,31 +107,27 @@ public:
 class ON_DecalCollection final
 {
 public:
-  ON_DecalCollection(ON_3dmObjectAttributes* a) : m_attr(a) { }
+  ON_DecalCollection(ON_3dmObjectAttributes* attr);
   ON_DecalCollection(const ON_DecalCollection& dc) = delete;
   ~ON_DecalCollection();
 
   const ON_DecalCollection& operator = (const ON_DecalCollection& dc);
 
-  ON_Decal* AddDecal(void);
-  bool RemoveDecal(const ON_Decal&);
-  void RemoveAllDecals(void);
   void ClearDecalArray(void);
-  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
+  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void);
 
   void SetChanged(void);
 
-  void UpdateUserData(unsigned int archive_3dm_version) const;
+  void InvalidateCache(void);
 
 private:
-  void Populate(void) const;
-  int  FindDecalIndex(const ON_UUID& id) const;
+  void Populate(void);
+  int  FindDecalIndex(const ON_DECAL_CRC decal_crc) const;
 
 private:
   ON_3dmObjectAttributes* m_attr;
-  mutable ON_XMLRootNode m_root_node;
   mutable ON_SimpleArray<ON_Decal*> m_decals;
-  mutable bool m_populated = false;
+  mutable bool m_cache_valid = false;
   mutable bool m_changed = false;
 };
 
@@ -167,7 +163,7 @@ public:
 
   ON_EnvironmentsImpl& operator = (const ON_EnvironmentsImpl&);
 
-  bool operator == (const ON_EnvironmentsImpl&);
+  bool operator == (const ON_EnvironmentsImpl&) const;
 
   ON_UUID BackgroundRenderEnvironmentId(void) const;
   void    SetBackgroundRenderEnvironmentId(const ON_UUID& id);

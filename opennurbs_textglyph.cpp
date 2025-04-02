@@ -110,6 +110,21 @@ int ON_FontGlyph::GetGlyphList
   ON_TextBox& text_box
 )
 {
+  return GetGlyphList(code_point_count, code_points, font, unicode_CRLF_code_point, glyph_list, false, 1.0, text_box);
+}
+
+int ON_FontGlyph::GetGlyphList
+(
+  size_t code_point_count,
+  ON__UINT32* code_points,
+  const ON_Font* font,
+  ON__UINT32 unicode_CRLF_code_point,
+  ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+  bool applyKerning,
+  double lineSpaceScale,
+  ON_TextBox& text_box
+)
+{
   glyph_list.SetCount(0);
   text_box = ON_TextBox::Unset;
 
@@ -206,7 +221,7 @@ int ON_FontGlyph::GetGlyphList
   // Get the extents of the rendered text
   //
   int line_count = 0;
-  const int line_height = managed_font->FontMetrics().LineSpace(); // >= 0
+  const int line_height = ON_Round(managed_font->FontMetrics().LineSpace() * lineSpaceScale); // >= 0
 
   int start_index = 0;
   for (int i = 0; i < glyph_count; i++)
@@ -227,6 +242,14 @@ int ON_FontGlyph::GetGlyphList
       || (bCondenseCRLF && unicode_CRLF_code_point == glyphs[end_index]->CodePoint());
     if (false == bEmptyLine)
     {
+      ON_SimpleArray<double> kerningPairs;
+      int kerningCount = 0;
+      if (applyKerning && end_index > start_index)
+      {
+        int count = end_index - start_index + 1;
+        GetGlyphListKerningOffsets(count, code_points + start_index, managed_font, kerningPairs);
+        kerningCount = kerningPairs.Count();
+      }
       // get bounding box of line
       ON_TextBox line_box;
       line_box.m_advance = ON_2dex::Zero;
@@ -244,6 +267,11 @@ int ON_FontGlyph::GetGlyphList
           line_box = glyph_box;
         line_box.m_advance = glyph_delta;
         line_box.m_advance.i += glyph_box.m_advance.i;
+        int kerningIndex = gdex - start_index;
+        if (kerningIndex < kerningCount)
+        {
+          line_box.m_advance.i += ON_Round(kerningPairs[kerningIndex]);
+        }
       }
 
       if (line_box.IsSet())
@@ -292,6 +320,20 @@ int ON_FontGlyph::GetGlyphList
   ON_TextBox& text_box
 )
 {
+  return GetGlyphList(text, font, unicode_CRLF_code_point, glyph_list, false, 1.0, text_box);
+}
+
+int ON_FontGlyph::GetGlyphList
+(
+  const wchar_t* text,
+  const ON_Font* font,
+  ON__UINT32 unicode_CRLF_code_point,
+  ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+  bool applyKerning,
+  double lineSpaceScale,
+  ON_TextBox& text_box
+)
+{
   glyph_list.SetCount(0);
   text_box = ON_TextBox::Unset;
 
@@ -317,13 +359,20 @@ int ON_FontGlyph::GetGlyphList
     nullptr     // pointer to end of parsed text is ignored
   );
 
-  return GetGlyphList(cp_count, code_points.Array(), font, unicode_CRLF_code_point, glyph_list, text_box);
+  return GetGlyphList(cp_count, code_points.Array(), font, unicode_CRLF_code_point, glyph_list, applyKerning, lineSpaceScale, text_box);
+}
+
+int ON_FontGlyph::GetGlyphListBoundingBox(const wchar_t* text, const ON_Font* font, ON_TextBox& text_box)
+{
+  return GetGlyphListBoundingBox(text, font, false, 1.0, text_box);
 }
 
 int ON_FontGlyph::GetGlyphListBoundingBox
 (
   const wchar_t* text,
   const ON_Font* font,
+  bool applyKerning,
+  double lineSpaceScale,
   ON_TextBox& text_box
 )
 {
@@ -334,6 +383,8 @@ int ON_FontGlyph::GetGlyphListBoundingBox
     font,
     unicode_CRLF_code_point,
     glyph_list,
+    applyKerning,
+    lineSpaceScale,
     text_box
   );
 }
@@ -357,6 +408,30 @@ int ON_FontGlyph::GetGlyphListBoundingBox
     text_box
   );
 }
+
+int ON_FontGlyph::GetGlyphListKerningOffsets
+(
+  unsigned int code_point_count,
+  ON__UINT32* code_points,
+  const class ON_Font* font,
+  ON_SimpleArray<double>& kerning_offsets
+)
+{
+  kerning_offsets.SetCount(0);
+#if defined(ON_OS_WINDOWS_GDI)
+  GetGlyphListKerningOffsetsFromDWrite(code_point_count, code_points, font, kerning_offsets);
+#endif
+
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  GetGlyphListKerningOffsetsFromCoreText(code_point_count, code_points, font, kerning_offsets);
+#endif
+
+#if defined(ON_RUNTIME_LINUX)
+  // TODO: create linux kerning implementation
+#endif
+  return kerning_offsets.Count();
+}
+
 
 const ON__UINT32 ON_FontGlyph::CodePoint() const
 {
@@ -1297,6 +1372,35 @@ bool ON_FontGlyph::GetStringContours(
   ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
 )
 {
+  return GetStringContours(text_string, font, bSingleStrokeFont, text_height,
+                           1.0 == small_caps_scale, small_caps_scale, string_contours);
+}
+
+bool ON_FontGlyph::GetStringContours(
+  const wchar_t* text_string,
+  const ON_Font* font,
+  bool bSingleStrokeFont,
+  double text_height,
+  bool make_small_caps,
+  double small_caps_scale,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+)
+{
+  const bool apply_kerning = false;
+  return GetStringContours(text_string, font, bSingleStrokeFont, text_height, make_small_caps, small_caps_scale, apply_kerning, string_contours);
+}
+
+bool ON_FontGlyph::GetStringContours(
+  const wchar_t* text_string,
+  const ON_Font* font,
+  bool bSingleStrokeFont,
+  double text_height,
+  bool make_small_caps,
+  double small_caps_scale,
+  bool apply_kerning,
+  ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+)
+{
   // Dale Lear: https://mcneel.myjetbrains.com/youtrack/issue/RH-38183
   // Font substitution has to be used to get outlines for all code points.
   // I rewrote this entire function to support use of multiple fonts in a single string
@@ -1325,8 +1429,10 @@ bool ON_FontGlyph::GetStringContours(
   if (false == (text_height > ON_ZERO_TOLERANCE && text_height < 1.e38))
     text_height = 0.0;
 
+  // there's really no reason to put a ceiling on small_caps_text_height,
+  // V5 and older would let you make "large" caps
   const double small_caps_text_height
-    = (small_caps_scale > ON_ZERO_TOLERANCE && small_caps_scale < 1.0)
+    = (true == make_small_caps && small_caps_scale > ON_ZERO_TOLERANCE)
     ? small_caps_scale*text_height
     : text_height;
 
@@ -1346,6 +1452,21 @@ bool ON_FontGlyph::GetStringContours(
   ON_3dPoint glyph_base_point = ON_3dPoint::Origin;
 
   unsigned int glyph_count = glyph_list.UnsignedCount();
+  ON_SimpleArray<double> kerning_offsets;
+  if (glyph_count > 1 && apply_kerning)
+  {
+    ON_SimpleArray<ON__UINT32> code_points(glyph_count);
+    for (unsigned int i = 0; i < glyph_count; i++)
+    {
+      const ON_FontGlyph* glyph = glyph_list[i];
+      ON__UINT32 code_point = 0;
+      if (glyph)
+        code_point = glyph->CodePoint();
+      code_points.Append(code_point);
+    }
+    GetGlyphListKerningOffsets(code_points.Count(), code_points.Array(), font, kerning_offsets);
+  }
+
   for ( unsigned int gdex = 0; gdex < glyph_count; gdex++ )
   {
     const ON_FontGlyph* glyph = glyph_list[gdex];
@@ -1365,15 +1486,16 @@ bool ON_FontGlyph::GetStringContours(
 
     double glyph_text_height = text_height;
 
-    const ON_FontGlyph* small_caps_glyph = 
-      (small_caps_text_height > 0.0 &&  small_caps_text_height < text_height)
-      ? Internal_GetGlyphContours_SmallCapsGlyph(glyph)
-      : glyph;
+    const ON_FontGlyph* small_caps_glyph = (true == make_small_caps) ? Internal_GetGlyphContours_SmallCapsGlyph(glyph) : glyph;
+
     if (nullptr != small_caps_glyph)
     {
       glyph_text_height = small_caps_text_height;
       glyph = small_caps_glyph;
     }
+
+    if (nullptr == glyph) // test to shut up compiler warning
+      continue;
 
     ON_BoundingBox glyph_contours_bbox = ON_BoundingBox::UnsetBoundingBox;
     ON_3dVector glyph_contours_advance = ON_3dVector::ZeroVector;
@@ -1381,7 +1503,15 @@ bool ON_FontGlyph::GetStringContours(
     glyph->GetGlyphContours(bSingleStrokeFont, glyph_text_height, glyph_contours, &glyph_contours_bbox, &glyph_contours_advance);
 
     const ON_3dVector translate = glyph_base_point;
-    glyph_base_point.x += glyph_contours_advance.x;
+    double advance_x = glyph_contours_advance.x;
+    if (apply_kerning && gdex < kerning_offsets.UnsignedCount())
+    {
+      double glyph_metrics_scale = font->FontMetrics().GlyphScale(glyph_text_height);
+      double kerning_offset = kerning_offsets[gdex] * glyph_metrics_scale;// *glyph_text_height;
+
+      advance_x += kerning_offset;
+    }
+    glyph_base_point.x += advance_x;
 
     const int contour_count = glyph_contours.Count();
 

@@ -761,3 +761,57 @@ int ON_PointCloud::RemoveRange(int count, const int* pIndices)
 
   return points_removed;
 }
+
+bool ON_PointCloud::Split(const ON_Plane& plane, ON_PointCloud& above, ON_PointCloud& below) const
+{
+  if (!plane.IsValid())
+    return false;
+
+  if (m_P.Count() == 0)
+    return false;
+
+  int target_a = 0;
+  int target_b = 0;
+
+  ON_SimpleArray<bool> targets;
+
+  for (int i = 0; i < m_P.Count(); i++)
+  {
+    const ON_3dPoint& pt = m_P[i];
+    bool current_target = (plane.DistanceTo(pt) > 0.0);
+
+    targets.Append(current_target);
+
+    if (current_target)
+      ++target_a;
+    else
+      ++target_b;
+  }
+
+  if (target_a == 0 || target_b == 0)
+    return false;
+
+  for (int i = 0; i < m_P.Count(); i++)
+  {
+    const ON_3dPoint& pt = m_P[i];
+    bool current_target = targets[i];
+
+    ON_PointCloud& target = current_target ? above : below;
+
+    target.m_P.Append(pt);
+
+    if (HasPointNormals())
+      target.m_N.Append(m_N[i]);
+
+    if (HasPointColors())
+      target.m_C.Append(m_C[i]);
+
+    if (HasPointValues())
+      target.m_V.Append(m_V[i]);
+
+    if (m_hidden_count > 0)
+      target.m_H.Append(m_H[i]);
+  }
+  return true;
+}
+

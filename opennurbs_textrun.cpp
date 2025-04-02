@@ -20,6 +20,12 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+class ON_TextRunPrivate
+{
+public:
+  double m_linespace_scale = 1.0;
+};
+
 class ON_TextRunPool : public ON_FixedSizePool
 {
 public:
@@ -471,6 +477,11 @@ void ON_TextRun::Internal_Destroy()
     delete m_stacked_text;
     m_stacked_text = nullptr;
   }
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
 }
 
 void ON_TextRun::Internal_CopyFrom(const ON_TextRun& src)
@@ -506,6 +517,15 @@ void ON_TextRun::Internal_CopyFrom(const ON_TextRun& src)
   m_left_margin  = src.m_left_margin;
   m_right_margin = src.m_right_margin;
   m_line_index   = src.m_line_index;
+  m_apply_kerning = src.m_apply_kerning;
+  
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
+  if (src.m_private)
+    m_private = new ON_TextRunPrivate(*src.m_private);
 }
 
 ON_TextRun& ON_TextRun::operator=(const ON_TextRun& src)
@@ -651,6 +671,10 @@ bool ON_TextRun::IsValid() const
   {
     if (!(m_run_text_height > 0.0))
       return RunIsInvalid();
+    break;
+  }
+  case RunType::kTab:
+  {
     break;
   }
   default:
@@ -858,6 +882,36 @@ void ON_TextRun::SetAdvance(ON_2dVector advance)
   }
 }
 
+bool ON_TextRun::ApplyKerning() const
+{
+  return m_apply_kerning;
+}
+
+void ON_TextRun::SetApplyKerning(bool applyKerning)
+{
+  if (m_apply_kerning != applyKerning)
+  {
+    Internal_ContentChanged();
+    m_apply_kerning = applyKerning;
+  }
+}
+
+double ON_TextRun::LineSpaceScale() const
+{
+  return m_private ? m_private->m_linespace_scale : 1.0;
+}
+void ON_TextRun::SetLineSpaceScale(double scale)
+{
+  if (fabs(scale - LineSpaceScale()) < ON_EPSILON)
+    return;
+  
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_linespace_scale = scale;
+}
+
+
 
 ON_SHA1_Hash ON_TextRun::TextRunContentHash() const
 {
@@ -904,6 +958,8 @@ ON_SHA1_Hash ON_TextRun::TextRunContentHash(
     sha1.AccumulateUnsigned8(static_cast<unsigned char>(m_direction));
     if ( m_bbox.IsValid() )
       sha1.AccumulateBoundingBox(m_bbox);
+    sha1.AccumulateBool(m_apply_kerning);
+    sha1.AccumulateDouble(LineSpaceScale());
 
     if( bIsStacked )
     {

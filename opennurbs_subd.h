@@ -1015,6 +1015,8 @@ public:
     ON_3dPoint other_end_control_net_point
   );
 
+  int junnkkkkkk() const;
+
   /// <returns>
   /// If the vertex has been set, true is returned.
   /// Otherwise, false is returned.
@@ -3131,7 +3133,7 @@ public:
   /// Postfix operator ++ sets this to ON_SubDComponentPtr::NextComponent() 
   /// and returns the previous value of this.
   /// </summary>
-  /// <returns>ON_SubDComponentPtr::NextComponent()</returns>
+  /// <returns>*this, before increment</returns>
   const ON_SubDComponentPtr operator++(int);
 
 
@@ -13906,12 +13908,36 @@ public:
 protected:
   friend class ON_Internal_SubDFaceMeshFragmentAccumulator;
   friend class ON_SubDHeap;
+
   enum SavedPointsFlags : unsigned char
   {
-    // if ( 0 != (m_saved_points_flags & SubdivisionPointBit), then m_cache_subd_P is set.
+    DeprecatedSavedPointsFlags ON_DEPRECATED_MSG("Replace ON_SubDComponentBase::ON_SavedPointsFlags with ON_SubDComponentBase::SavedOrModifiedPointsFlags") = 0xFF
+  };
+
+  enum ModifiedFlags : unsigned char
+  {
+    DeprecatedModifiedFlags ON_DEPRECATED_MSG("Replace ON_SubDComponentBase::ON_ModifiedFlags with ON_SubDComponentBase::SavedOrModifiedPointsFlags") = 0xFF
+  };
+
+  enum SavedOrModifiedPointsFlags : unsigned char
+  {
+    // if ( 0 != (m_saved_modified_points_flags & Modified1Bit), then the component has been modified and
+    // cached subdivision information needs to be recalculated.
+    Modified1Bit = 0x01,
+
+    // if ( 0 != (m_saved_modified_points_flags & Modified2Bit), then the component is adjacent to
+    // a modified component and cached subdivision information needs to be recalculated.
+    Modified2Bit = 0x02,
+
+    // ModifiedFlagsMask = Modified1Bit | Modified2Bit
+    // if ( 0 != (m_saved_modified_points_flags & ModifiedFlagsMask), then any cached subdivision information
+    // on that component needs to be recalculated.
+    ModifiedFlagsMask = 0x03,
+
+    // if ( 0 != (m_saved_modified_points_flags & SubdivisionPointBit), then m_cache_subd_P is set.
     SubdivisionPointBit = 0x40,
 
-    // if ( 0 != (m_saved_points_flags & SurfacePointBit), then ON_SubDVertex.m_limit* values are set.
+    // if ( 0 != (m_saved_modified_points_flags & SurfacePointBit), then ON_SubDVertex.m_limit* values are set.
     // ON_SubDVertex: Set means one or more sector limit surface points are saved in ON_SubDVertex.m_limit_point.
     // ON_SubDEdge: Set means the limit surface NURBS curve control points are cached.
     // ON_SubDFace: Set means limit surface mesh fragments are saved in ON_SubDFace.m_surface_mesh_fragments.
@@ -13922,24 +13948,8 @@ protected:
     CachedPointMask = 0xC0
   };
 
-  enum ModifiedFlags : unsigned char
-  {
-    // if ( 0 != (m_saved_points_flags & Modified1Bit), then the component has been modified and
-    // cached subdivision information needs to be recalculated.
-    Modified1Bit = 0x01,
-
-    // if ( 0 != (m_saved_points_flags & Modified2Bit), then the component is adjacent to
-    // a modified component and cached subdivision information needs to be recalculated.
-    Modified2Bit = 0x02,
-
-    // ModifiedFlagsMask = Modified1Bit | Modified2Bit
-    // if ( 0 != (m_saved_points_flags & ModifiedFlagsMask), then any cached subdivision information
-    // on that component needs to be recalculated.
-    ModifiedFlagsMask = 0x03
-  };
-
-  // m_saved_points_flags is a bit field based on ON_SubDComponentBase::SavePointsFlags values.
-  // GetSurfacePoint( bUseSavedSurfacePoint=true ) can change the value of m_saved_points_flags
+  // m_saved_modified_points_flags is a bit field based on ON_SubDComponentBase::SavedOrModifiedPointsFlags values.
+  // GetSurfacePoint( bUseSavedSurfacePoint=true ) can change the value of m_saved_modified_points_flags
   void Internal_SetSavedSurfacePointFlag(bool bSavedSurfacePointFlag) const;
   void Internal_SetModified1Flag() const;
   void Internal_SetModified2Flag() const;
@@ -13957,7 +13967,7 @@ protected:
   bool Internal_Modified1or2IsSet() const;
 
   void Internal_ClearModifiedFlags() const;
-  mutable unsigned char m_saved_points_flags = 0U;
+  mutable unsigned char m_saved_modified_points_flags = 0U;
 
   unsigned char m_level = 0U;
 public:
@@ -15623,14 +15633,14 @@ public:
 private:
   // Cached limit curve
   // GetEdgeSurfaceCurveControlPoints( bUseSavedSurfacePoint=true ) can change the value of m_limit_curve.
-  // If 0 != ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags), then
+  // If 0 != ON_SUBD_CACHE_LIMIT_FLAG(m_saved_modified_points_flags), then
   // m_limit_curve is the edge's limit surface curve.
   // The memory is managed by the parent ON_SubD. 
-  // If 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags),
+  // If 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_modified_points_flags),
   // then any information in m_limit_mesh_fragments is dirty
   // and should not be used.
   // ClearSavedSubdivisionPoints() zeros
-  // the appropriate bit of m_saved_points_flags.
+  // the appropriate bit of m_saved_modified_points_flags.
 
   mutable class ON_SubDEdgeSurfaceCurve* m_limit_curve = nullptr;
 
@@ -17021,12 +17031,12 @@ private:
   mutable ON_3dPoint* m_texture_points = nullptr;
 
 private:
-  // If 0 != ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags), then
+  // If 0 != ON_SUBD_CACHE_LIMIT_FLAG(m_saved_modified_points_flags), then
   // m_mesh_fragments is a linked list of (4==m_edge_count?1:m_edge_count)
   // fragments available from MeshFragments() and managed by the parent ON_SubD. 
-  // If 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_points_flags), then any information
+  // If 0 == ON_SUBD_CACHE_LIMIT_FLAG(m_saved_modified_points_flags), then any information
   // in m_limit_mesh_fragments is dirty and should not be used.
-  // ClearSavedSubdivisionPoints() zeros the appropriate bit of m_saved_points_flags.
+  // ClearSavedSubdivisionPoints() zeros the appropriate bit of m_saved_modified_points_flags.
 
   // Mesh fragment(s) for this face
   mutable class ON_SubDMeshFragment* m_mesh_fragments = nullptr;
@@ -17694,13 +17704,34 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Prefix increment the iterator.
+  Returns:
+    Next vertex.
+  Remarks:
+    operator++(void) and NextVertex() behave the same.
+    In OpenNURBS 8.17 and earlier, this function was incorrectly implemented as
+    a postfix increment (operator++(int)). This has been corrected in OpenNURBS 8.18.
+    If you have a plugin compiled without inlining optimizations (e.g. in Debug mode),
+    operator++(void) will be calling the version in opennurbs.dll distributed
+    with Rhino that is used to run the plugin.
+    If you have a plugin compiled with inlining optimizations (e.g. in Release mode),
+    operator++(void) will behave like the version in opennurbs_subd.h distributed
+    with the Rhino SDK that was used to compiled the plugin.
+  */
+  const class ON_SubDVertex* operator++()
+  {
+    return NextVertex();
+  }
+
+  /*
+  Description:
+    Postfix increment the iterator.
   Returns:
     Current vertex.
   Remarks:
-    operator++ and NextVertex() behave differently.
+    operator++(int) and NextVertex() behave differently.
   */
-  const class ON_SubDVertex* operator++()
+  const class ON_SubDVertex* operator++(int)
   {
     const class ON_SubDVertex* v = m_v_current;
     NextVertex();
@@ -17739,11 +17770,12 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Pre-increment the iterator and return the new current vertex.
   Returns:
     Next vertex.
   Remarks:
-    operator++ and NextVertex() behave differently.
+    operator++(void) and NextVertex() behave the same.
+    operator++(int) and NextVertex() behave differently.
   */
   const class ON_SubDVertex* NextVertex()
   {
@@ -17799,6 +17831,41 @@ public:
   {
     m_vertex_index = (m_vertex_count > 0) ? (m_vertex_count - 1) : 0;
     return (m_v_current = m_v_last);
+  }
+
+  /*
+  Description:
+  Get the iterator's base component in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr if it exists, or ON_SubDComponentPtr::Null.
+  */
+  ON_SubDComponentPtr BaseComponentPtr() const
+  {
+    return m_component_ptr.m_ptr == 0 ? ON_SubDComponentPtr::Null : m_component_ptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Edge() if it exists, or nullptr.
+  */
+  ON_SubDEdge* BaseEdge() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsEdge() ? m_component_ptr.Edge() : nullptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Face() if it exists, or nullptr.
+  */
+  ON_SubDFace* BaseFace() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsFace() ? m_component_ptr.Face() : nullptr;
   }
 
 private:
@@ -17967,13 +18034,34 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Prefix increment the iterator.
+  Returns:
+    Next edge.
+  Remarks:
+    operator++(void) and NextEdge() behave the same.
+    In OpenNURBS 8.17 and earlier, this function was incorrectly implemented as
+    a postfix increment (operator++(int)). This has been corrected in OpenNURBS 8.18.
+    If you have a plugin compiled without inlining optimizations (e.g. in Debug mode),
+    operator++(void) will be calling the version in opennurbs.dll distributed
+    with Rhino that is used to run the plugin.
+    If you have a plugin compiled with inlining optimizations (e.g. in Release mode),
+    operator++(void) will behave like the version in opennurbs_subd.h distributed
+    with the Rhino SDK that was used to compiled the plugin.
+  */
+  const class ON_SubDEdge* operator++()
+  {
+    return NextEdge();
+  }
+
+  /*
+  Description:
+    Postfix increment the iterator.
   Returns:
     Current edge.
   Remarks:
-    operator++ and NextEdge() behave differently.
+    operator++(int) and NextEdge() behave differently.
   */
-  const class ON_SubDEdge* operator++()
+  const class ON_SubDEdge* operator++(int)
   {
     const class ON_SubDEdge* e = m_e_current;
     NextEdge();
@@ -18012,11 +18100,12 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Pre-increment the iterator and return the new current edge.
   Returns:
     Next edge.
   Remarks:
-    operator++ and NextEdge() behave differently.
+    operator++(void) and NextEdge() behave the same.
+    operator++(int) and NextEdge() behave differently.
   */
   const class ON_SubDEdge* NextEdge()
   {
@@ -18072,6 +18161,41 @@ public:
   {
     m_edge_index = (m_edge_count > 0) ? (m_edge_count - 1) : 0;
     return m_e_current = m_e_last;
+  }
+
+  /*
+  Description:
+  Get the iterator's base component in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr if it exists, or ON_SubDComponentPtr::Null.
+  */
+  ON_SubDComponentPtr BaseComponentPtr() const
+  {
+    return m_component_ptr.m_ptr == 0 ? ON_SubDComponentPtr::Null : m_component_ptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base vertex in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Vertex() if it exists, or nullptr.
+  */
+  ON_SubDVertex* BaseVertex() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsVertex() ? m_component_ptr.Vertex() : nullptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Face() if it exists, or nullptr.
+  */
+  ON_SubDFace* BaseFace() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsFace() ? m_component_ptr.Face() : nullptr;
   }
 
 private:
@@ -18240,13 +18364,34 @@ public:
 
   /*
   Description:
-    Returns the current face and increment the iterator.
+    Prefix increment the iterator.
+  Returns:
+    Next face.
+  Remarks:
+    operator++(void) and NextFace() behave the same.
+    In OpenNURBS 8.17 and earlier, this function was incorrectly implemented as
+    a postfix increment (operator++(int)). This has been corrected in OpenNURBS 8.18.
+    If you have a plugin compiled without inlining optimizations (e.g. in Debug mode),
+    operator++(void) will be calling the version in opennurbs.dll distributed
+    with Rhino that is used to run the plugin.
+    If you have a plugin compiled with inlining optimizations (e.g. in Release mode),
+    operator++(void) will behave like the version in opennurbs_subd.h distributed
+    with the Rhino SDK that was used to compiled the plugin.
+  */
+  const class ON_SubDFace* operator++()
+  {
+    return NextFace();
+  }
+
+  /*
+  Description:
+    Postfix increment the iterator.
   Returns:
     Current face.
   Remarks:
-    operator++ and NextFace() behave differently.
+    operator++(int) and NextFace() behave differently.
   */
-  const class ON_SubDFace* operator++()
+  const class ON_SubDFace* operator++(int)
   {
     const class ON_SubDFace* f = m_face_current;
     NextFace();
@@ -18286,11 +18431,12 @@ public:
 
   /*
   Description:
-    Returns the next face and increments the iterator.
+    Pre-increment the iterator and return the new current face.
   Returns:
     Next face.
   Remarks:
-    operator++ and NextFace() behave differently.
+    operator++(void) and NextFace() behave the same.
+    operator++(int) and NextFace() behave differently.
   */
   const class ON_SubDFace* NextFace()
   {
@@ -18346,6 +18492,41 @@ public:
   {
     m_face_index = (m_face_count > 0) ? (m_face_count - 1) : 0;
     return (m_face_current = m_face_last);
+  }
+
+  /*
+  Description:
+  Get the iterator's base component in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr if it exists, or ON_SubDComponentPtr::Null.
+  */
+  ON_SubDComponentPtr BaseComponentPtr() const
+  {
+    return m_component_ptr.m_ptr == 0 ? ON_SubDComponentPtr::Null : m_component_ptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base vertex in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Vertex() if it exists, or nullptr.
+  */
+  ON_SubDVertex* BaseVertex() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsVertex() ? m_component_ptr.Vertex() : nullptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Edge() if it exists, or nullptr.
+  */
+  ON_SubDEdge* BaseEdge() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsEdge() ? m_component_ptr.Edge() : nullptr;
   }
 
 
@@ -22064,7 +22245,7 @@ public:
 #if defined(ON_COMPILING_OPENNURBS)
 /*
 The ON_SubDAsUserData class is used to attach a subd to it proxy mesh
-when writing V6 files in commercial rhino.
+when writing prior than V6 files in commercial rhino.
 */
 class ON_SubDMeshProxyUserData : public ON_UserData
 {

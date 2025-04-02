@@ -275,19 +275,10 @@ double ON_DegreesFromRadians(
 
   double d = angle_in_radians*ON_RADIANS_TO_DEGREES;
   
-  const double scale[] = { 1.0, 2.0, 4.0, 8.0, 0.0 };
-  for (int i = 0; scale[i] > 0.0; i++)
-  {
-    double ds = d*scale[i];
-    double f = floor(ds);
-    if (f + 0.5 < ds)
-      f += 1.0;
-    if (fabs(f - ds) < ON_EPSILON*scale[i])
-    {
-      d = f/scale[i];
-      break;
-    }
-  }
+  const double ds = d * 4.0;
+  const double f = floor(ds + 0.25);
+  if (fabs(f - ds) < ON_EPSILON * 4.0)
+    d = f / 4.0;
 
   return d;
 }
@@ -686,6 +677,35 @@ ON_GetParameterTolerance(
   return rc;
 }
 
+int 
+ON_NormalLimitDir(double u, double v, ON_Interval* puDom, ON_Interval* pvDom)
+{
+  const ON_Interval& uDom = puDom ? *puDom : ON_Interval::ZeroToOne;
+  const ON_Interval& vDom = pvDom ? *pvDom : ON_Interval::ZeroToOne;
+
+  int quad(0);
+  if (std::abs(u - uDom.Min()) < ON_EPSILON)
+  {
+    quad = 4;
+    if (std::abs(v - vDom.Min()) < ON_EPSILON)
+      quad = 1;
+  }
+  else if (std::abs(u - uDom.Max()) < ON_EPSILON)
+  {
+    quad = 3;
+    if (std::abs(v - vDom.Min()) < ON_EPSILON)
+      quad = 2;
+  }
+  else if (std::abs(v - vDom.Min()) < ON_EPSILON)
+  {
+    quad = 1;
+  }
+  else if (std::abs(v - vDom.Max()) < ON_EPSILON)
+  {
+    quad = 3;
+  }
+  return quad;
+}
 
 bool
 ON_EvNormal(int limit_dir,

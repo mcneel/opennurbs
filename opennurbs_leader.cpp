@@ -241,7 +241,9 @@ bool ON_Leader::GetTextXform(
     text_shift.x = 0.0;
     text_shift.y = 0.0;
 
-    if (ON_TextMask::MaskFrame::CapsuleFrame != maskframe)
+    if (ON_TextMask::MaskFrame::CapsuleFrame != maskframe &&
+        ON_TextMask::MaskFrame::HexagonCapsuleFrame != maskframe &&
+        ON_TextMask::MaskFrame::RoundRectFrame != maskframe)
     {
       // LeaderAttachStyle - Vertical alignment of text with leader text point
       ON::TextVerticalAlignment attach = dimstyle->LeaderTextVerticalAlignment();
@@ -286,38 +288,352 @@ bool ON_Leader::GetTextXform(
       text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
     }
 
-    if (maskframe == ON_TextMask::MaskFrame::CapsuleFrame)
+    switch (maskframe)
     {
-      double half_height = dimscale * (textblock_height * 0.5 + text_gap);
-      double radius = ON_2dVector(half_height, half_height).Length();
-      if (landing_length > 0.0)
-      {
-        tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-        text_pt2 = text_pt2 + (tail_dir * landing_length);
-      }
-
-      if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
-      {
-        text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
-      }
-      else if (fabs(tail_dir.x) > 0.1 && textblock_width > textblock_height)
-      {
-        if (tail_dir.x > 0)
+      case ON_TextMask::MaskFrame::CapsuleFrame:
         {
-          text_pt2.x += (textblock_width * 0.5 + text_gap - radius * 0.5);
-        }
-        else
-        {
-          text_pt2.x -= (textblock_width * 0.5 + text_gap - radius * 0.5);
-        }
-      }
-      text_pt2 = text_pt2 + (tail_dir * radius);
-    }
-    else
-    {
-      double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
+          double half_height = dimscale * (textblock_height * 0.5 + text_gap);
+          double radius = ON_2dVector(half_height, half_height).Length();
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
 
-      text_pt2 = text_pt2 + (tail_dir * x_offset);
+          if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
+          {
+            text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
+          }
+          else if (fabs(tail_dir.x) > 0.1 && textblock_width > textblock_height)
+          {
+            if (tail_dir.x > 0)
+            {
+              text_pt2.x += (textblock_width * 0.5 + text_gap - radius * 0.5);
+            }
+            else
+            {
+              text_pt2.x -= (textblock_width * 0.5 + text_gap - radius * 0.5);
+            }
+          }
+          text_pt2 = text_pt2 + (tail_dir * radius);
+        }
+        break;
+      case ON_TextMask::MaskFrame::CircleFrame:
+        {
+          double half_height = dimscale * (textblock_height * 0.5 + text_gap);
+          double radius = ON_2dVector(half_height, half_height).Length();
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+          
+          text_pt2 = text_pt2 + (tail_dir * radius);
+        }
+        break;
+      case ON_TextMask::MaskFrame::SquareFrame:
+        {
+          double half_height = fabs(dimscale * (textblock_height * 0.5 + text_gap));
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+          
+          double scale = 1.0;
+          if (fabs(tail_dir.x)>fabs(tail_dir.y) && fabs(tail_dir.x) > ON_SQRT_EPSILON)
+          {
+            scale = 1.0 / fabs(tail_dir.x);
+          }
+          if (fabs(tail_dir.y)>fabs(tail_dir.x) && fabs(tail_dir.y) > ON_SQRT_EPSILON)
+          {
+            scale = 1.0 / fabs(tail_dir.y);
+          }
+
+          text_pt2 = text_pt2 + (tail_dir * (half_height*scale));
+        }
+        break;
+      case ON_TextMask::MaskFrame::DiamondFrame:
+        {
+          double half_height = fabs(dimscale * (textblock_height * 0.5 + text_gap));
+          double radius = ON_2dVector(half_height, half_height).Length();
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+
+          ON_2dVector along(tail_dir);
+          along *= radius;
+          along.x = fabs(along.x);
+          along.y = fabs(along.y);
+          ON_Line lineFromTextCenter(ON_3dPoint::Origin,ON_3dPoint(along.x,along.y,0));
+          ON_Line boundary(ON_3dPoint(radius, 0, 0), ON_3dPoint(0,radius,0));
+          double a=0;
+          double b=0;
+          double distance = radius;
+          if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a > 0)
+          {
+            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+            ON_3dVector v(pt);
+            distance = v.Length();
+          }
+          text_pt2 = text_pt2 + (tail_dir * distance);
+        }
+        break;
+      case ON_TextMask::MaskFrame::TriangleFrame:
+        {
+          double half_height = fabs(dimscale * (textblock_height * 0.5 + text_gap));
+          double radius = ON_2dVector(half_height, half_height).Length() * 1.2;
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+
+          ON_2dVector along(tail_dir);
+          along *= radius;
+          ON_Line lineFromTextCenter(ON_3dPoint::Origin,ON_3dPoint(along.x,along.y,0));
+          ON_2dVector v(0,radius);
+          v.Rotate(2.0*ON_PI/3.0);
+          ON_Line boundary1(ON_3dPoint(0,radius,0),ON_3dPoint(v.x, v.y, 0));
+          ON_Line boundary2(ON_3dPoint(v.x,v.y,0), ON_3dPoint(-v.x,v.y,0));
+          double a=0;
+          double b=0;
+          double distance = radius;
+          if (tail_dir.y >= 0.0)
+          {
+            ON_Line boundary(ON_3dPoint(v.x,-v.y,0), ON_3dPoint(-v.x,-v.y,0));
+            if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+            {
+              ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+              ON_3dVector vec(pt.x, pt.y, pt.z);
+              distance = vec.Length();
+            }
+            else
+            {
+              lineFromTextCenter.from = lineFromTextCenter.to;
+              lineFromTextCenter.from *= -1.0;
+              lineFromTextCenter.to = ON_3dPoint::Origin;
+              boundary.from.y = -boundary.from.y;
+              boundary.to.y = -boundary.to.y;
+              if (tail_dir.x >= 0)
+              {
+                boundary.to.Set(0, radius, 0);
+              }
+              else
+              {
+                boundary.from.Set(0, radius, 0);
+              }
+              if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+              {
+                ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+                ON_3dVector vec(pt);
+                distance = vec.Length();
+              }
+            }
+          }
+          else // tail_dir.y < 0
+          {
+            lineFromTextCenter.from.Set(-fabs(along.x), -along.y, 0);
+            lineFromTextCenter.to = ON_3dPoint::Origin;
+            ON_Line boundary(ON_3dPoint(v.x,v.y,0), ON_3dPoint(0,radius,0));
+            if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+            {
+              ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+              ON_3dVector vec(pt);
+              distance = vec.Length();
+            }
+          }
+
+          text_pt2 = text_pt2 + (tail_dir * distance);
+        }
+        break;
+      case ON_TextMask::MaskFrame::HexagonFrame:
+        {
+          double half_height = fabs(dimscale * (textblock_height * 0.5 + text_gap));
+          double radius = ON_2dVector(half_height, half_height).Length();
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+          
+          ON_2dVector along(tail_dir);
+          along *= radius;
+          
+          ON_Line lineFromTextCenter(ON_3dPoint::Origin,ON_3dPoint(along.x,along.y,0));
+          ON_2dVector v(0,radius);
+          v.Rotate(-ON_PI/6.0);
+          double a=0;
+          double b=0;
+          double distance = radius;
+
+          if (fabs(v.x) >= fabs(along.x))
+          {
+            ON_Line boundary(ON_3dPoint(-v.x,v.y,0), ON_3dPoint(v.x, v.y,0));
+            lineFromTextCenter.to.y = fabs(lineFromTextCenter.to.y);
+            if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+            {
+              ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+              ON_3dVector vec(pt);
+              distance = vec.Length();
+            }
+          }
+          else
+          {
+            ON_Line boundary(ON_3dPoint(v.x,v.y,0), ON_3dPoint(radius,0,0));
+            lineFromTextCenter.to.x = fabs(lineFromTextCenter.to.x);
+            lineFromTextCenter.to.y = fabs(lineFromTextCenter.to.y);
+            if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+            {
+              ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+              ON_3dVector vec(pt);
+              distance = vec.Length();
+            }
+          }
+          
+          text_pt2 = text_pt2 + (tail_dir * distance);
+        }
+        break;
+      case ON_TextMask::MaskFrame::HexagonCapsuleFrame:
+        {
+          double half_height = dimscale * (textblock_height * 0.5 + text_gap);
+          double radius = ON_2dVector(half_height, half_height).Length();
+          ON_3dPoint center(0,0,0);
+          double width = textblock_width;
+
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+
+          if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
+          {
+            text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
+          }
+          else if (fabs(tail_dir.x) > 0.1)
+          {
+            if (tail_dir.x > 0)
+            {
+              text_pt2.x += (textblock_width * 0.5 + text_gap - radius * 0.5);
+            }
+            else
+            {
+              text_pt2.x -= (textblock_width * 0.5 + text_gap - radius * 0.5);
+            }
+          }
+          
+          ON_2dVector corner(0,radius);
+          corner.Rotate(-ON_PI/6.0);
+          
+          ON_2dPoint rightCenter(width * 0.5 - (radius * 0.5), 0);
+          ON_2dPoint rightCorner = rightCenter + corner;
+
+          ON_2dVector along(tail_dir);
+          along *= radius;
+          along.x = fabs(along.x);
+          along.y = fabs(along.y);
+
+          ON_Line lineFromTextCenter(ON_3dPoint::Origin,ON_3dPoint(along.x,along.y,0));
+          ON_Line boundary(ON_3dPoint(-rightCorner.x,rightCorner.y,0), ON_3dPoint(rightCorner.x, rightCorner.y,0));
+          double a = 0.0;
+          double b = 0.0;
+          double distance = radius;
+          if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+          {
+            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+            ON_3dVector v(pt);
+            distance = v.Length();
+          }
+          
+          corner.Rotate(-2.0*ON_PI/6.0);
+          ON_2dPoint endCorner = rightCenter + corner;
+          ON_Line boundary2(ON_3dPoint(rightCorner.x, rightCorner.y, 0), ON_3dPoint(endCorner.x, endCorner.y, 0));
+          if (ON_Intersect(lineFromTextCenter, boundary2,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+          {
+            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+            ON_3dVector v(pt);
+            distance = v.Length();
+          }
+
+          text_pt2 = text_pt2 + (tail_dir * distance);
+        }
+        break;
+      case ON_TextMask::MaskFrame::RoundRectFrame:
+        {
+          double half_height = dimscale * (textblock_height * 0.5 + text_gap);
+          ON_3dPoint center(0,0,0);
+          double width = dimscale * (textblock_width + 2.0 * text_gap);
+          if (width< (half_height*2.0))
+            width = half_height * 2.0;
+
+          if (landing_length > 0.0)
+          {
+            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
+            text_pt2 = text_pt2 + (tail_dir * landing_length);
+          }
+
+          if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
+          {
+            text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap));
+          }
+
+          double cornerRadius = half_height * 0.5;
+          
+          ON_2dPoint rightCenter(0, half_height);
+          ON_2dPoint rightCorner(width * 0.5 - cornerRadius, half_height);
+
+          ON_2dVector along(tail_dir);
+          along *= half_height*10.0;
+          along.x = fabs(along.x);
+          along.y = fabs(along.y);
+
+          ON_Line lineFromTextCenter(ON_3dPoint::Origin,ON_3dPoint(along.x,along.y,0));
+          ON_Line boundary(ON_3dPoint(0,half_height,0), ON_3dPoint(width * 0.5, half_height,0));
+          double a = 0.0;
+          double b = 0.0;
+          double distance = half_height;
+          if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+          {
+            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+            ON_3dVector v(pt);
+            distance = v.Length();
+          }
+          
+          ON_Line boundary2(ON_3dPoint(width*0.5,half_height-cornerRadius,0), ON_3dPoint(width*0.5,0,0));
+          if (ON_Intersect(lineFromTextCenter, boundary2,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
+          {
+            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
+            ON_3dVector v(pt);
+            distance = v.Length();
+          }
+          
+          ON_Circle circle(ON_3dPoint(width*0.5-cornerRadius, half_height-cornerRadius, 0), cornerRadius);
+          ON_Interval ival(ON_PI*1.5, ON_PI*2.0);
+          ON_Arc cornerArc(circle, 0.5*ON_PI);
+          ON_3dPoint arcpoint0;
+          ON_3dPoint arcpoint1;
+          if (ON_Intersect(lineFromTextCenter, cornerArc, &a, arcpoint0, &b, arcpoint1))
+          {
+            if (arcpoint0.IsValid())
+            {
+              ON_3dPoint pt = arcpoint0;
+              ON_3dVector v(pt);
+              distance = v.Length();
+            }
+          }
+          text_pt2 = text_pt2 + (tail_dir * distance);
+        }
+        break;
+      default:
+        {
+          double x_offset = dimscale * (landing_length + text_gap + textblock_width / 2.0);
+
+          text_pt2 = text_pt2 + (tail_dir * x_offset);
+        }
+        break;
     }
 
     // Move from Origin to leader plane
@@ -841,8 +1157,9 @@ ON_2dVector ON_Leader::TailDirection(const ON_DimStyle* dimstyle) const
     dir = m_points[pointcount - 1] - m_points[pointcount - 2];    // This works for Aligned
     if (nullptr != dimstyle)
     {
+      const ON_TextMask::MaskFrame frametype = MaskFrameType(dimstyle);
       if (ON_DimStyle::ContentAngleStyle::Horizontal == dimstyle->LeaderContentAngleStyle() &&
-          MaskFrameType(dimstyle) != ON_TextMask::MaskFrame::CapsuleFrame
+          (frametype == ON_TextMask::MaskFrame::NoFrame || frametype == ON_TextMask::MaskFrame::RectFrame)
         )
       {
         if (dir.x < 0.0)  // going to the left

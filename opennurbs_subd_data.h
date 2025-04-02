@@ -462,18 +462,18 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 
 //////////////////////////////////////////////////////////////////////////
 //
-// m_saved_points_flags
+// m_saved_modified_points_flags
 //
-#define ON_SUBD_CACHE_POINT_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SubdivisionPointBit
-#define ON_SUBD_CACHE_LIMITLOC_FLAG_BIT ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit
-#define ON_SUBD_CACHE_FLAGS_MASK ON_SubDComponentBase::SavedPointsFlags::CachedPointMask
+#define ON_SUBD_CACHE_POINT_FLAG_BIT ON_SubDComponentBase::SavedOrModifiedPointsFlags::SubdivisionPointBit
+#define ON_SUBD_CACHE_LIMITLOC_FLAG_BIT ON_SubDComponentBase::SavedOrModifiedPointsFlags::SurfacePointBit
+#define ON_SUBD_CACHE_FLAGS_MASK ON_SubDComponentBase::SavedOrModifiedPointsFlags::CachedPointMask
 
 #define ON_SUBD_CACHE_FLAGS(cache_subd_flags) (ON_SUBD_CACHE_FLAGS_MASK&(cache_subd_flags))
 #define ON_SUBD_CACHE_POINT_FLAG(cache_subd_flags) (ON_SUBD_CACHE_POINT_FLAG_BIT&(cache_subd_flags))
 #define ON_SUBD_CACHE_LIMITLOC_FLAG(cache_subd_flags) (ON_SUBD_CACHE_LIMITLOC_FLAG_BIT&(cache_subd_flags))
 
-#define ON_SUBD_CACHE_CLEAR_POINT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
-#define ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask))
+#define ON_SUBD_CACHE_CLEAR_POINT_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_LIMITLOC_FLAG_BIT|ON_SubDComponentBase::SavedOrModifiedPointsFlags::ModifiedFlagsMask))
+#define ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(cache_subd_flags) (cache_subd_flags &= (ON_SUBD_CACHE_POINT_FLAG_BIT|ON_SubDComponentBase::SavedOrModifiedPointsFlags::ModifiedFlagsMask))
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -2930,6 +2930,11 @@ private:
   unsigned int m_element_count = 0;
   ON_FixedSizePool m_fsp;
   ON_FixedSizePoolIterator m_fsp_it;
+  // Dale Lear March 13, 2025
+  // Fixing RH-86029
+  // Adding m_fsp_element_finder to speed up ConvertArchiveIdsToRuntimePointers()
+  // when reading files
+  ON_FixedSizePoolElementFromIndexAccelerator m_fsp_archive_id_finder;
 };
 
 //////////////////////////////////////////////////////////////////////////

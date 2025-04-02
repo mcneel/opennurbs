@@ -5486,6 +5486,8 @@ bool ONX_ModelPrivate::SetRDKDocumentInformation(const wchar_t* xml, ONX_Model_U
 
   const auto length_so_far = ArchiveLengthUpToEmbeddedFiles(utf8_length);
   ON_ASSERT(archive.SizeOfArchive() == length_so_far); // Sanity check.
+  if (archive.SizeOfArchive() != length_so_far)
+    return false;
 
   // Write the number of embedded files.
   const auto num_embedded_files = int(m_model.ActiveComponentCount(ON_ModelComponent::Type::EmbeddedFile));
@@ -5736,20 +5738,6 @@ static bool GetRDKObjectInformation(const ON_Object& object, ON_wString& xml, in
   }
 
   return xml.Length() > 0;
-}
-
-bool GetEntireDecalXML(const ON_3dmObjectAttributes& attr, ON_XMLRootNode& xmlOut)
-{
-  // Get the entire XML off of the attributes user data. At the moment (V8) this can only contain decals.
-  ON_wString xml;
-  if (!GetRDKObjectInformation(attr, xml, 0))
-    return false;  // No XML on attributes.
-
-  // Read the XML into a root node.
-  if (ON_XMLNode::ReadError == xmlOut.ReadFromStream(xml))
-    return false; // Failed to read XML.
-
-  return true;
 }
 
 static bool GetMeshModifierUserDataXML(ON_UserData& ud, ON_wString& xml, int archive_3dm_version)

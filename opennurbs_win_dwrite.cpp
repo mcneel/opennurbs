@@ -869,7 +869,8 @@ void ON_WindowsDWriteFontInformation::Dump(ON_TextLog& text_log) const
 {
   text_log.Print("IDWriteFont:\n");
 
-  const bool bTerse = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Medium);
+  // 26-Feb-2025 Dale Fugier, RH-75314, local variable is initialized but not referenced
+  //const bool bTerse = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Medium);
   const bool bChatty = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Medium);
   const bool bVerbose = text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Maximum);
 
@@ -1912,7 +1913,8 @@ bool ON_WindowsDWriteGetGlyphMetrics(
 
   const UINT32 glyphCount = 1;
   const BOOL isSideways = 0;
-  const BOOL isRightToLeft = 0;
+  // 26-Feb-2025 Dale Fugier, RH-75314, local variable is initialized but not referenced
+  //const BOOL isRightToLeft = 0;
   const UINT16 glyphIndices[2] = { (UINT16)dwriteGlyphIndex, 0 };
 
   DWRITE_GLYPH_METRICS  glyphMetrics[2] = {};
@@ -2457,6 +2459,56 @@ IDWriteTextLayout* Internal_TextLayout(
   // delete stuff here
 
   return nullptr;
+}
+
+int ON_FontGlyph::GetGlyphListKerningOffsetsFromDWrite
+(
+  unsigned int code_point_count,
+  ON__UINT32* code_points,
+  const class ON_Font* font,
+  ON_SimpleArray<double>& kerning_offsets
+)
+{
+  kerning_offsets.SetCount(0);
+  if (code_point_count > 1 && code_points && font)
+  {
+    IDWriteFont* dwriteFont = font->WindowsDWriteFont();
+    while (dwriteFont)
+    {
+      Microsoft::WRL::ComPtr<IDWriteFontFace> dwriteFontFace = nullptr;
+      HRESULT hr = dwriteFont->CreateFontFace(&dwriteFontFace);
+      if (FAILED(hr))
+        break;
+
+      if (nullptr == dwriteFontFace || nullptr == dwriteFontFace.Get())
+        break;
+
+      Microsoft::WRL::ComPtr<IDWriteFontFace1> dwriteFontFace1 = nullptr;
+      hr = dwriteFontFace->QueryInterface(__uuidof(IDWriteFontFace1), (void**)&dwriteFontFace1);
+      if (FAILED(hr))
+        break;
+
+      if (nullptr == dwriteFontFace1 || nullptr == dwriteFontFace1.Get())
+        break;
+
+      ON_SimpleArray<UINT16> glyphIndices(code_point_count);
+      glyphIndices.SetCount(code_point_count);
+
+      dwriteFontFace->GetGlyphIndicesW(code_points, code_point_count, glyphIndices.Array());
+
+      ON_SimpleArray<int> adjustments(code_point_count);
+      adjustments.SetCount(code_point_count);
+      dwriteFontFace1->GetKerningPairAdjustments(glyphIndices.Count(), glyphIndices.Array(), adjustments.Array());
+
+      const double normalize_scale = font->FontUnitToNormalizedScale();
+      for (unsigned int i = 1; i < code_point_count; i++)
+      {
+        kerning_offsets.Append(adjustments[i-1] * normalize_scale);
+      }
+      break;
+    }
+  }
+  return kerning_offsets.Count();
 }
 
 #endif

@@ -15,8 +15,8 @@
 #define OPENNURBS_WIP_INC__
 
 // Annotation table is being prototyped and on hold
-// until V6 ships.
 //#define OPENNURBS_ANNOTATION_TABLE_WIP
+#define OPENNURBS_SECTION_STYLE_TABLE_WIP
 
 
 #endif

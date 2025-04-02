@@ -9218,9 +9218,10 @@ void ON_Material::ToPhysicallyBased(void)
   if (IsPhysicallyBased())
     return;
 
-  //This should always be valid.
   auto pbr = std::make_shared<ON_PhysicallyBasedMaterial>(*this);
-  ON_ASSERT(pbr != nullptr);
+  ON_ASSERT(pbr != nullptr); // This should always be valid.
+  if (pbr == nullptr)
+    return; // Should never happen.
 
   const bool bMetal = m_transparency < 0.01 && !m_bFresnelReflections && m_reflectivity > 0.99;
   const bool bGlass = m_transparency > 0.99;

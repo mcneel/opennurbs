@@ -577,6 +577,12 @@ public:
   double TextHeight(const ON_DimStyle* parent_style) const;
   void SetTextHeight(const ON_DimStyle* parent_style, double height);
 
+  bool UseKerning(const ON_DimStyle* parent_style) const;
+  void SetUseKerning(const ON_DimStyle* parent_style, bool enabled);
+
+  double LineSpaceScale(const ON_DimStyle* parent_style) const;
+  void SetLineSpaceScale(const ON_DimStyle* parent_style, double scale);
+
   // Scale factor for displayed distances
   double LengthFactor(const ON_DimStyle* parent_style) const;
   void SetLengthFactor(const ON_DimStyle* parent_style, double);

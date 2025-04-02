@@ -1043,7 +1043,7 @@ int main( int argc, const char *argv[] )
     text_log->Print(" Failures. ");
   else if (err.ErrorCount() > 0) {
     text_log->Print(" Errors:\n");
-    for (int vbli = 0; vbli < verbose_log.Count(); vbli++) {
+    for (unsigned vbli = 0; vbli < verbose_log.Count(); vbli++) {
       text_log->Print("    !! ");
       text_log->Print(verbose_log.Event(vbli).Description());
       text_log->Print("\n");

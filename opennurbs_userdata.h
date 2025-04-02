@@ -19,8 +19,38 @@ class ON_CLASS ON_UserData : public ON_Object
   ON_OBJECT_DECLARE(ON_UserData);
 public:
   ON_UserData();
-  ON_UserData(const ON_UserData&);
-  ON_UserData& operator=(const ON_UserData&);
+
+  /// <summary>
+  /// The copy constructor copies every ON_UserData member
+  /// variable except the pointers
+  /// ON_Object* m_userdata_owner and ON_UserData* m_userdata_next
+  /// and m_userdata_copycount.
+  /// the pointers
+  /// ON_Object* m_userdata_owner and ON_UserData* m_userdata_next
+  /// are set to nullptr; in particular, the new instance of ON_UserData
+  /// is not attached to any object immediately after copy constrtuction.
+  /// If src.m_userdata_copycount is zero, then this->m_userdata_copycount = 0.
+  /// Otherwise this->m_userdata_copycount = src->m_userdata_copycount + 1.
+  /// </summary>
+  /// <param name="src">
+  /// </param>
+  ON_UserData(const ON_UserData& src);
+
+  /// <summary>
+  /// The operator= copies m_userdata_xform.
+  /// If src.m_userdata_copycount is zero, then this->m_userdata_copycount = 0.
+  /// Otherwise this->m_userdata_copycount = src->m_userdata_copycount + 1.
+  /// All other ON_UserData member variables (m_userdata_uuid, m_application_uuid,
+  /// m_userdata_owner, and m_userdata_next) are not changed.
+  /// In particular, operator= does not change the parent object nor 
+  /// does it change the ids that specify what the user data 
+  /// is (m_userdata_uuid) and  what appication is using it (m_application_uuid).
+  /// </summary>
+  /// <param name="src"></param>
+  /// <returns>
+  /// A referene to "this"
+  /// </returns>
+  ON_UserData& operator=(const ON_UserData& src);
 
   //////////
   // The destructor automatically removes the user data
@@ -240,12 +270,51 @@ public:
   ON_UUID m_application_uuid;
 
   ////////
-  // If m_userdata_copycount is 0, user data is not copied when 
-  // object is copied.  If > 0, user data is copied and m_copycount
-  // is incremented when parent object is copied. The user data's 
-  // operator=() is used to copy.  
   // The default ON_UserData::ON_UserData() constructor sets 
-  // m_userdata_copycount to zero.
+  // m_userdata_copycount = 0.
+  // 
+  // If m_userdata_copycount is 0, the user data instance 
+  // is not copied when the parent object is copied.
+  // 
+  // If m_userdata_copycount > 0, then the user data is copied 
+  // (using oprator= or copy construction) and the value of
+  // m_userdata_copycount is incremented on the instance being 
+  // copied to.
+  //
+  // It turns out that m_userdata_copycount is used for two 
+  // different things.
+  // 1) Its original job which is to indicate if the instance of
+  //    user data should be copied when the parent ON_Object is
+  //    copied (via operator= or copy constrution). 
+  // 
+  // 2) It is also used to determine if the information content
+  //    in one user data instance was created by copying another 
+  //    instance. This use is problematic and is endemic in Rhino code.
+  //    For example, if user data A and user data B have identical
+  //    ids, identical m_userdata_xform values, and
+  //    B.m_userdata_copycount = A.m_userdata_copycount+1,
+  //    then the "endemic Rhino code" will conclude that B is a 
+  //    copy of A and the information contained in B is identical
+  //    to the information contained in A. While this conclusion 
+  //    is not necessarily true, it was the best hack available 
+  //    because ON_UserData provides no base class tool to use to
+  //    determine if the information content has changed.
+  //    (If the ON_UserData SDK is ever changed, adding
+  //    a virtual function that returns a SHA1 hash of the 
+  //    information content is a reasonable thing to consider.)
+  //    In any case, if you modify the information in your derived
+  //    class while that class is attached to a parent object
+  //    and m_userdata_copycount > 1, then incrementing
+  //    m_userdata_copycount inside the function that modifies
+  //    the information in your derived class will make
+  //    the flawed logic in the "endemic Rhino code" work
+  //    more reliably.
+  //
+  //    When ON_UserData was first designed, it was assumed that
+  //    the information content would not be modified after the 
+  //    user data was attached to a parent object. This assumption
+  //    was false and it was a silly assumption. But the
+  //    "endemic Rhino code" mentioned above makes this assumption.
   unsigned int m_userdata_copycount;  
 
   ////////

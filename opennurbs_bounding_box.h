@@ -591,6 +591,13 @@ public:
  */
   bool Expand(ON_3dVector delta);
 
+  /* Description:
+   *   Expand the bounding box by adding margin to each component of m_max
+   *   and subtracting it from m_min.
+   * Returns:
+   *   true if the result is Valid. */
+  bool Expand(double margin);
+
   /*
 Description:
   Shrinks the box by subtracting delta to m_max and adding

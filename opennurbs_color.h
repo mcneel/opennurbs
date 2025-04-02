@@ -70,6 +70,12 @@ public:
 
   /*
   Returns:
+    True if alpha is 0.
+  */
+  bool IsTransparent() const;
+
+  /*
+  Returns:
     A random color.
   */
   static const ON_Color RandomColor();

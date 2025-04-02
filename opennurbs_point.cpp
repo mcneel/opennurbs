@@ -581,7 +581,8 @@ void ON_Interval::Set(double t0,double t1)
 double ON_Interval::ParameterAt(double x) const
 {
   if (m_t[0] == m_t[1])
-    x = 0.0;
+    return (ON_IS_VALID(x) ? m_t[0] : ON_UNSET_VALUE);
+
   return (ON_IS_VALID(x) ? ((1.0-x)*m_t[0] + x*m_t[1]) : ON_UNSET_VALUE);
 }
 
@@ -1304,20 +1305,52 @@ ON_3dVector::PerpendicularTo(
   return true;
 }
 
-/*
-  This formula does not suffer loss of accuracy in parallel, anti-parallel or perpendicular cases
-  see https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
-  To verify the formula consider a rhombus with sides A.Unitize() and B.unitize().
-*/
+
 double ON_3dVector::Angle(const ON_3dVector& A, const ON_3dVector& B)
 {
-  double lenA = A.Length();
-  double lenB = B.Length();
-  ON_3dVector sum =  lenB * A + lenA * B;
-  ON_3dVector diff = lenB * A - lenA * B;
-  return 2.0 * atan(diff.Length() / sum.Length());
+  return ON_3dVector::AngleRadians(A, B);
 }
 
+double ON_3dVector::AngleRadians(const ON_3dVector& A, const ON_3dVector& B)
+{
+  // January 2025 - Dale Lear added tests so ON_DBL_QNAN is returned
+  // when invalid input is returned.
+  const double lenA = A.Length();
+  if (false == (lenA > 0.0 && lenA < ON_UNSET_POSITIVE_VALUE))
+    return ON_DBL_QNAN;
+
+  const double lenB = B.Length();
+  if (false == (lenB > 0.0 && lenB < ON_UNSET_POSITIVE_VALUE))
+    return ON_DBL_QNAN;
+
+  const double sum = (lenB * A + lenA * B).Length();
+  if (0.0 == sum)
+  {
+    // January 2025 - Dale Lear added this to prevent division by zero
+    // creating a floating point divide by zero exception in the case
+    // when A = -B and the angle is pi.
+    return ON_PI;
+  }
+
+  const double diff = (lenB * A - lenA * B).Length();
+  if (sum < 1.0 && diff > ON_DBL_MAX * sum)
+  {
+    // January 2025 - Dale Lear added this to prevent 
+    // a floating point overflow exception.
+    return ON_PI;
+  }
+
+
+  // This formula does not suffer loss of accuracy in parallel, anti-parallel or perpendicular cases
+  // see https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
+  // To verify the formula consider a rhombus with sides A.Unitize() and B.unitize().
+  return 2.0 * atan(diff / sum);
+}
+
+double ON_3dVector::AngleDegrees(const ON_3dVector& A, const ON_3dVector& B)
+{
+  return ON_DegreesFromRadians(ON_3dVector::AngleRadians(A, B));
+}
 
 void ON_2dPoint::Transform( const ON_Xform& xform )
 {

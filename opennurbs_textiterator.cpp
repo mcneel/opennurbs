@@ -862,6 +862,8 @@ ON_TextRunBuilder::ON_TextRunBuilder(
   m_current_props.SetItalic(italic);
   m_current_props.SetUnderlined(underlined);
   m_current_props.SetStrikethrough(strikethrough);
+  m_current_props.SetKerningEnabled(dimstyle->UseKerning());
+  m_current_props.SetLineSpaceScale(dimstyle->LineSpaceScale());
 
   m_current_run.Init(
     CurrentFont(),
@@ -872,6 +874,9 @@ ON_TextRunBuilder::ON_TextRunBuilder(
     italic,
     underlined,
     strikethrough);
+  
+  m_current_run.SetApplyKerning(dimstyle->UseKerning());
+  m_current_run.SetLineSpaceScale(dimstyle->LineSpaceScale());
 }
 
 void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
@@ -888,6 +893,8 @@ void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
   m_runs = ON_TextRunArray::EmptyArray;
   m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+  m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
   // Array for accumulating text codepoints
   m_current_codepoints.Empty();
 }
@@ -903,6 +910,8 @@ void ON_TextRunBuilder::AppendCurrentRun()
     }
     m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+    m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+    m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
   }
 }
 
@@ -915,6 +924,8 @@ bool ON_TextRunBuilder::AppendCodePoint(ON__UINT32 codept)
     // First codepoint in a run after format changes
     m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+    m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+    m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
 
     if (ON_TextRun::Stacked::kTop == stacked || ON_TextRun::Stacked::kBottom == stacked)
     {
@@ -1018,6 +1029,7 @@ void ON_TextRunBuilder::FinishCurrentRun()
   if (m_current_run.Type() == ON_TextRun::RunType::kText ||
     m_current_run.Type() == ON_TextRun::RunType::kField ||
     m_current_run.Type() == ON_TextRun::RunType::kNewline ||
+    m_current_run.Type() == ON_TextRun::RunType::kTab ||
     m_current_run.Type() == ON_TextRun::RunType::kParagraph)
   {
     // Finish off the text run - 
@@ -1164,6 +1176,8 @@ void ON_TextRunBuilder::FinishFontDef()
       }
       m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
         m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+      m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+      m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
     }
     SetReadingFontDefinition(false);
   }
@@ -1186,6 +1200,8 @@ void ON_TextRunBuilder::GroupBegin()  // {
 
   m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+  m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
 }
 
 
@@ -1208,6 +1224,8 @@ void ON_TextRunBuilder::GroupEnd()   // '}'
   }
   m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+  m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
 
   if (m_level <= m_font_table_level)
     m_font_table_level = 10000;
@@ -1226,6 +1244,8 @@ void ON_TextRunBuilder::RunBegin()  // like { with no pushing properties
 
   m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
   m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+  m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
 }
 
 
@@ -1241,6 +1261,8 @@ void ON_TextRunBuilder::RunEnd()   // like '}' with no popping properties
   
   m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
+  m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
+  m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
 
   if (m_level <= m_font_table_level)
     m_font_table_level = 10000;
@@ -1484,8 +1506,9 @@ void ON_TextRunBuilder::Section()
 
 void ON_TextRunBuilder::Tab()
 {
-  for(int i = 0; i < 8; i++) AppendCodePoint((ON__UINT32)' ');
-  m_in_run = true;
+  //for(int i = 0; i < 8; i++) AppendCodePoint((ON__UINT32)' ');
+  //m_in_run = true;
+  m_current_run.SetType(ON_TextRun::RunType::kTab);
 }
 
 void ON_TextRunBuilder::Bold(const wchar_t* value)
@@ -2101,8 +2124,9 @@ void ON_RtfStringBuilder::Section()
 
 void ON_RtfStringBuilder::Tab()
 {
-  for (int i = 0; i < 8; i++) AppendCodePoint((ON__UINT32)' ');
-  m_in_run = true;
+  //for (int i = 0; i < 8; i++) AppendCodePoint((ON__UINT32)' ');
+  m_current_run.AddControl(L"\\tab");
+  //m_in_run = true;
 }
 
 void ON_RtfStringBuilder::Bold(const wchar_t* value)
@@ -2747,7 +2771,11 @@ bool ON_RtfParser::ReadTag(bool optional)
       if(0 != ON_wString::CompareOrdinal(name, tagUniCharDec, true))
         m_builder.FormatChange();
       rc = ProcessTag(name, value, optional);
-
+      if (0 == ON_wString::CompareOrdinal(name, L"tab", true) || 0 == ON_wString::CompareOrdinal(name, L"par", true))
+      {
+        // this will finish the current run of tab or par and start a new one
+        m_builder.RunBegin();
+      }
       // Terminating chars other than these are eaten here
       if('\\' == cp || '{' == cp || '}' == cp)
         m_ti.Back();
@@ -2836,9 +2864,9 @@ bool ON_RtfParser::Parse()
           case ON_UnicodeCodePoint::ON_CarriageReturn:
           case ON_UnicodeCodePoint::ON_LineSeparator:
           case ON_UnicodeCodePoint::ON_ParagraphSeparator:
+          //case ON_UnicodeCodePoint::ON_Space:
             FlushCurText(m_builder.m_current_codepoints);
-            m_builder.RunEnd();
-            ProcessTag(L"par", nullptr, false);
+            //ProcessTag(L"par", nullptr, false);
             m_builder.RunBegin();
             break;
 
@@ -3203,7 +3231,8 @@ bool RtfComposer::Compose(
       }
       else if (
         ON_TextRun::RunType::kParagraph == run->Type() ||
-        ON_TextRun::RunType::kNewline == run->Type()
+        ON_TextRun::RunType::kNewline == run->Type() ||
+        ON_TextRun::RunType::kTab == run->Type()
         )
       {
         runholders.AppendNew() = run;
@@ -3347,6 +3376,10 @@ bool RtfComposer::Compose(
       {
         GetRunText(run, run_strings, make_rtf);
       }
+    }
+    else if (ON_TextRun::RunType::kTab == run->Type())
+    {
+      run_strings += make_rtf ? L"\\tab" : L"\\t";
     }
     else if (ON_TextRun::RunType::kNewline == run->Type() || ON_TextRun::RunType::kParagraph == run->Type())
     {

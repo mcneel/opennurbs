@@ -404,7 +404,6 @@ public:
 
 private:
   friend class ON_FixedSizePoolIterator;
-
   void* m_first_block = nullptr;
 
   // ReturnElement() adds to the m_al_element stack.
@@ -449,6 +448,113 @@ private:
   // prohibit copy construction and operator=.
   ON_FixedSizePool(const ON_FixedSizePool&) = delete;
   ON_FixedSizePool& operator=(const ON_FixedSizePool&) = delete;
+};
+
+/// <summary>
+/// ON_FixedSizePoolElementFromIndexAccelerator is used when a fixed size pool
+/// is constant (no more element will be added), large (lots of memory blocks),
+/// and lots of calls need to be made to convert
+/// an element index into a fixed size pool element pointer.
+/// In this case, calling
+/// void* ON_FixedSizePoolElementFromIndexAccelerator::FixedSizePoolElement(size_t element_index)
+/// replaces calling 
+/// void* ON_FixedSizePool::Element(size_t element_index) const
+/// and is much faster for fixed size pools with lots of blocks and lots of conversions from element_index to element pointer.
+/// </summary>
+class ON_CLASS ON_FixedSizePoolElementFromIndexAccelerator
+{
+public:
+  ON_FixedSizePoolElementFromIndexAccelerator() = default;
+  ~ON_FixedSizePoolElementFromIndexAccelerator();
+
+public:
+
+  /// <summary>
+  /// Initialize this ON_FixedSizePoolElementFromIndexAccelerator to
+  /// find elements in fsp from their index.  Any elements added to
+  /// fsp after calling Initialize() will not be found by
+  /// ON_FixedSizePoolElementFromIndexAccelerator::ElementFromIndex().
+  /// It is strongly suggested that you finish creating fsp before
+  /// using ON_FixedSizePoolElementFromIndexAccelerator.
+  /// The computational cost of Initialize() is about fourt times the computational
+  /// cost of calling fps.Element(element_index) for 4 random valid indices.
+  /// Call Clear() or ~ON_FixedSizePoolElementFromIndexAccelerator() when
+  /// you are finished using the accelerated index to element conversion.
+  /// </summary>
+  /// <param name="fsp"></param>
+  /// <returns></returns>
+  size_t Initialize(const ON_FixedSizePool& fsp);
+
+  /// <summary>
+  /// Clears all information set by Initialize(fsp). 
+  /// After calling Clear(), elements can be added to fsp can be 
+  /// </summary>
+  void Clear();
+
+  /// <summary>
+  /// ElementFromIndex(element_index) returns the same pointer that 
+  /// fsp.Element(element_index) would return, where fsp is the ON_FixedSizePool
+  /// passed to the constructor. For ON_FixedSizePool with large numbers of blocks,
+  /// ElementFromIndex() is much faster than fsp.Element(element_index).
+  /// </summary>
+  /// <param name="element_index"></param>
+  /// <returns>
+  /// Return the same pointer that fsp.Element(element_index) would return.
+  /// </returns>
+  void* ElementFromIndex(size_t element_index) const;
+
+private:
+  ON_FixedSizePoolElementFromIndexAccelerator(const ON_FixedSizePoolElementFromIndexAccelerator&) = delete;
+  ON_FixedSizePoolElementFromIndexAccelerator& operator=(const ON_FixedSizePoolElementFromIndexAccelerator&) = delete;
+
+private: 
+  class ON_BlockDex
+  {
+  public:
+    ON_BlockDex() = default;
+    ~ON_BlockDex() = default;
+    ON_BlockDex(const ON_BlockDex&) = default;
+    ON_BlockDex& operator=(const ON_BlockDex&) = default;
+
+  public:
+    // The elements in the block have m_index0 <= index < m_index1.
+    // Number of elements in the block = (m_index1 - m_index0)
+    // m_element0 points to the first element in the block
+    size_t m_index0 = 0;
+    size_t m_index1 = 0;
+
+    // m_element0 points at the first element in the block.
+    // It has type ON__UINT8 so ON_FixedSizePoolElementFromIndexAccelerator
+    // member functions can do arithmetic on it without casts
+    ON__UINT8* m_element0 = nullptr;
+  };
+
+  // sizeof the elements in the fsp
+  size_t m_sizeof_element = 0;
+
+  // number of blocks in the fsp
+  size_t m_blocks_count = 0;
+
+  // In the list of fsp blocks, it is not uncommon for the 
+  // first and last blocks to have different numbers of elements
+  // than the middle blocks. It is very common for the middle blocks
+  // to have the same number of elements.  
+  // When there are 3 or more blocks and all of the middle blocks
+  // have the same number of elements, then m_middle_blocks_element_count
+  // is that number of elements. 
+  size_t m_middle_blocks_element_count = 0;
+
+  // m_first_block_index1-1 = index of the last element in the first block
+  // Sometimes the first block has a different numer of elements than later blocks
+  size_t m_first_block_index1 = 0;
+
+  // m_last_block_index0 = index of the first element in the last block
+  // Very often the last block has fewer elements that previous blocks.
+  size_t m_last_block_index0 = 0;
+
+  const ON_BlockDex* m_blocks = nullptr;
+
+  ON__UINT_PTR m_reserved = 0;
 };
 
 class ON_CLASS ON_FixedSizePoolIterator
@@ -574,7 +680,7 @@ public:
           }
 
   Returns:
-    The first block when iterating the list of blocks.
+    The pointer to the first element in the first block.
   Remarks:
     The heap for a fixed size memory pool is simply a linked
     list of blocks. FirstBlock() and NextBlock() can be used
@@ -597,7 +703,7 @@ public:
   Example:
     See the FirstBlock() documentation.
   Returns:
-    The next block when iterating through the blocks.
+    The pointer to the first element in the next block.
   Remarks:
     Do not make any calls to FirstElement() or NextElement() when using
     FirstBlock() and NextBlock() to iterate through blocks.

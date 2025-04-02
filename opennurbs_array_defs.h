@@ -442,6 +442,44 @@ const T* ON_SimpleArray<T>::Last() const
   return (m_count > 0) ? m_a+(m_count-1) : 0;
 }
 
+// Support STL iterators and algorithms
+
+template <class T>
+T* ON_SimpleArray<T>::begin()
+{
+  return m_a ? &m_a[0] : nullptr;
+}
+
+template <class T>
+T* ON_SimpleArray<T>::end()
+{
+  return m_a ? m_a + m_count : nullptr;
+}
+
+template <class T>
+T const* ON_SimpleArray<T>::cbegin() const
+{
+  return m_a ? &m_a[0] : nullptr;
+}
+
+template <class T>
+T const* ON_SimpleArray<T>::cend() const
+{
+  return m_a ? m_a + m_count : nullptr;
+}
+
+template <class T>
+T const* ON_SimpleArray<T>::begin() const
+{
+    return m_a ? &m_a[0] : nullptr;
+}
+
+template <class T>
+T const* ON_SimpleArray<T>::end() const
+{
+  return m_a ? m_a + m_count : nullptr;
+}
+
 // array operations ////////////////////////////////////////////////////
 
 template <class T>
@@ -530,6 +568,21 @@ void ON_SimpleArray<T>::Append( int count, const T* buffer )
   }
 }
 
+template<class T>
+template<class... _Val>
+void ON_SimpleArray<T>::EmplaceBack(_Val&&... val)
+{
+  T obj = T(std::forward<_Val>(val)...);
+  Append(obj);
+}
+
+template<class T>
+template<class... _Val>
+void ON_SimpleArray<T>::Emplace(int i, _Val&&... val)
+{
+  T obj = T(std::forward<_Val>(val)...);
+  Insert(i, obj);
+}
 
 template <class T>
 void ON_SimpleArray<T>::Prepend( int count, const T* buffer ) 
@@ -993,6 +1046,52 @@ bool ON_SimpleArray<T>::Permute( const int* index )
   }
   return rc;
 }
+
+
+// Generate all permutations of an input array. This generates n! entries, so the input
+// should be a small array. Array sizes larger than 11 are not calculated.
+template<class T>
+static bool ON_GeneratePermutations(const ON_SimpleArray<T> toPermute, ON_ClassArray<ON_SimpleArray<T>>& permutations)
+{
+  int n = toPermute.Count();
+  if (n > 11) return false; // refuse to create 479001600 or more permutations. Should maybe be even smaller.
+  if (n == 0) return true; // empty array has no permutations
+
+  // Heap's non-recursive permutation algorithm https://en.wikipedia.org/wiki/Heap%27s_algorithm
+  int* c = new int[n];
+  memset(c, 0, n * sizeof(int));
+
+  ON_SimpleArray<T> work = toPermute;
+  permutations.Append(work);
+  int i = 1;
+  while (i < n)
+  {
+    if (c[i] < i)
+    {
+      if (i % 2 == 0)
+      {
+        std::swap(work[0], work[i]);
+      }
+      else
+      {
+        std::swap(work[c[i]], work[i]);
+      }
+      permutations.Append(work);
+      c[i]++;
+      i = 1;
+    }
+    else
+    {
+      c[i] = 0;
+      i++;
+    }
+  }
+
+  delete[] c;
+  return true;
+}
+
+
 
 template <class T>
 void ON_SimpleArray<T>::Zero()
@@ -1641,6 +1740,44 @@ template <class T>
 const T* ON_ClassArray<T>::Last() const
 {
   return (m_count > 0) ? m_a+(m_count-1) : 0;
+}
+
+// Support STL iterators and algorithms
+
+template <class T>
+T* ON_ClassArray<T>::begin()
+{
+  return m_a ? &m_a[0] : nullptr;
+}
+
+template <class T>
+T const* ON_ClassArray<T>::begin() const
+{
+  return m_a ? &m_a[0] : nullptr;
+}
+
+template <class T>
+T* ON_ClassArray<T>::end()
+{
+  return m_a ? m_a + m_count : nullptr;
+}
+
+template <class T>
+T const* ON_ClassArray<T>::end() const
+{
+  return m_a ? m_a + m_count : nullptr;
+}
+
+template <class T>
+T const* ON_ClassArray<T>::cbegin() const
+{
+  return m_a ? &m_a[0] : nullptr;
+}
+
+template <class T>
+T const* ON_ClassArray<T>::cend() const
+{
+  return m_a ? m_a + m_count : nullptr;
 }
 
 // array operations ////////////////////////////////////////////////////

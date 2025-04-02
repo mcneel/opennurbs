@@ -1101,7 +1101,7 @@ bool ON_Mesh::IsValid( ON_TextLog* text_logx ) const
     {
       if ( text_log )
       {
-        text_log->Print("ON_Mesh.m_dV[] and m_V[] are not synchronized.\n",
+        text_log->Print("ON_Mesh.m_dV[] and m_V[] are not synchronized or contain invalid numbers.\n",
                         m_dV.UnsignedCount(),vertex_count);
       }
       return ON_MeshIsNotValid(bSilentError);
@@ -15901,21 +15901,21 @@ ON_Mesh* ON_Mesh::CopyComponents(
   return CopyComponents(ci_list.Array(), ci_list.UnsignedCount(), destination_mesh);
 }
 
-bool ON_Mesh::SetSurfaceParamtersFromTextureCoodinates()
+bool ON_Mesh::SetSurfaceParametersFromTextureCoodinates(const ON_SimpleArray<ON_2fPoint>& TCs)
 {
   unsigned int i;
   const unsigned int vcount = m_V.UnsignedCount();
 
   bool rc;
   ON_Interval dom;
-  if (vcount == m_T.UnsignedCount())
+  if (vcount == TCs.UnsignedCount())
   {
     dom.Set(0.0, 1.0);
     m_S.SetCount(0);
     m_S.Reserve(vcount);
     for (i = 0; i < vcount; i++)
     {
-      ON_2dPoint S = m_T[i];
+      ON_2dPoint S = TCs[i];
       m_S.Append(S);
     }
     rc = true;
@@ -16040,6 +16040,12 @@ bool ON_Mesh::SetSurfaceParamtersFromTextureCoodinates()
 
   //return true;
 }
+
+bool ON_Mesh::SetSurfaceParamtersFromTextureCoodinates()
+{
+  return SetSurfaceParametersFromTextureCoodinates(m_T);
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //

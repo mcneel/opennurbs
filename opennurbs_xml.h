@@ -139,6 +139,8 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 
 // Decals (stored in object attributes user data).
 
+#define ON_RDK_USER_DATA_ROOT             L"render-content-manager-data"
+
 #define ON_RDK_DECALS                       L"decals"
 
   #define ON_RDK_DECAL                      L"decal"
@@ -162,25 +164,27 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
     #define ON_RDK_DECAL_PROJECTION_BOTH      L"both"
     #define ON_RDK_DECAL_PROJECTION_NONE      L"none"
 
-    #define ON_RDK_DECAL_MAP_TO_INSIDE_ON     L"map-to-inside-on"
-    #define ON_RDK_DECAL_TRANSPARENCY         L"transparency"
-    #define ON_RDK_DECAL_TEXTURE_INSTANCE     L"texture-instance"
-    #define ON_RDK_DECAL_HEIGHT               L"height"
-    #define ON_RDK_DECAL_ORIGIN               L"origin"
-    #define ON_RDK_DECAL_RADIUS               L"radius"
-    #define ON_RDK_DECAL_HORZ_SWEEP_STA       L"latitude-start"
-    #define ON_RDK_DECAL_HORZ_SWEEP_END       L"latitude-stop"
-    #define ON_RDK_DECAL_VERT_SWEEP_STA       L"longitude-start"
-    #define ON_RDK_DECAL_VERT_SWEEP_END       L"longitude-stop"
-    #define ON_RDK_DECAL_VECTOR_UP            L"vector-up"
-    #define ON_RDK_DECAL_VECTOR_ACROSS        L"vector-across"
-    #define ON_RDK_DECAL_MIN_U                L"min-u"
-    #define ON_RDK_DECAL_MIN_V                L"min-v"
-    #define ON_RDK_DECAL_MAX_U                L"max-u"
-    #define ON_RDK_DECAL_MAX_V                L"max-v"
-    #define ON_RDK_DECAL_IS_TEMPORARY         L"is-temporary"
-    #define ON_RDK_DECAL_IS_VISIBLE           L"is-visible"
-    #define ON_RDK_DECAL_INSTANCE_ID          L"instance-id"
+    #define ON_RDK_DECAL_MAP_TO_INSIDE_ON           L"map-to-inside-on"
+    #define ON_RDK_DECAL_TRANSPARENCY               L"transparency"
+    #define ON_RDK_DECAL_TEXTURE_INSTANCE           L"texture-instance"
+    #define ON_RDK_DECAL_HEIGHT                     L"height"
+    #define ON_RDK_DECAL_ORIGIN                     L"origin"
+    #define ON_RDK_DECAL_RADIUS                     L"radius"
+    #define ON_RDK_DECAL_HORZ_SWEEP_STA             L"latitude-start"
+    #define ON_RDK_DECAL_HORZ_SWEEP_END             L"latitude-stop"
+    #define ON_RDK_DECAL_VERT_SWEEP_STA             L"longitude-start"
+    #define ON_RDK_DECAL_VERT_SWEEP_END             L"longitude-stop"
+    #define ON_RDK_DECAL_VECTOR_UP                  L"vector-up"
+    #define ON_RDK_DECAL_VECTOR_ACROSS              L"vector-across"
+    #define ON_RDK_DECAL_SAVED_VECTOR_LENGTH_UP     L"saved-length-up"
+    #define ON_RDK_DECAL_SAVED_VECTOR_LENGTH_ACROSS L"saved-length-across"
+    #define ON_RDK_DECAL_MIN_U                      L"min-u"
+    #define ON_RDK_DECAL_MIN_V                      L"min-v"
+    #define ON_RDK_DECAL_MAX_U                      L"max-u"
+    #define ON_RDK_DECAL_MAX_V                      L"max-v"
+    #define ON_RDK_DECAL_IS_TEMPORARY               L"is-temporary"
+    #define ON_RDK_DECAL_IS_VISIBLE                 L"is-visible"
+    #define ON_RDK_DECAL_INSTANCE_ID                L"instance-id"
 
 // Render Content.
 
@@ -543,10 +547,13 @@ public: // Hierarchy.
   // Returns true if successful, false on failure.
   virtual bool RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* data) const;
 
-public: // Change data.
-  // Adds a node as a child of this node. Takes ownership of node.
-  // Returns a pointer to node for convenience.
+public:
+  // Attaches a node as a child of this node. Takes ownership of the node.
+  // Returns a pointer to the node for convenience.
   virtual ON_XMLNode* AttachChildNode(ON_XMLNode* node);
+
+  // Same as AttachChildNode(), added for naming consistency.
+  ON_XMLNode* AttachChild(ON_XMLNode* node);
 
   // Attaches a property directly to the node. Takes ownership of the property.
   // Any existing property with the same name is first deleted.
@@ -569,7 +576,7 @@ public: // Change data.
   // Returns true if successful, else false.
   virtual bool RemoveProperty(const wchar_t* prop_name);
 
-  // Removes the child node and passes ownership to the caller.
+  // Detaches the child node and passes ownership to the caller.
   // Returns the detached node or null on failure.
   virtual ON_XMLNode* DetachChild(ON_XMLNode& child);
 
@@ -841,7 +848,7 @@ private:
   friend class ON_XMLParametersIteratorPrivate;
 };
 
-class ON_CLASS ON_XMLParametersV8 : public ON_XMLParameters
+class ON_CLASS ON_XMLParametersV8 : public ON_XMLParameters // Only used for Render Content.
 {
 public:
   ON_XMLParametersV8(ON_XMLNode& node);
