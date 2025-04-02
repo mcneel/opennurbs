@@ -1782,6 +1782,39 @@ void ON_Annotation::SetTextHeight(const ON_DimStyle* parent_style, double height
   }
 }
 
+bool ON_Annotation::UseKerning(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::Kerning).UseKerning();
+}
+void ON_Annotation::SetUseKerning(const ON_DimStyle* parent_style, bool enabled)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = enabled != parent_style->UseKerning();
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetUseKerning(enabled);
+    override_style->SetFieldOverride(ON_DimStyle::field::Kerning, bCreate);
+  }
+}
+
+double ON_Annotation::LineSpaceScale(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::LineSpaceScale).LineSpaceScale();
+}
+void ON_Annotation::SetLineSpaceScale(const ON_DimStyle* parent_style, double scale)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = Internal_DimStyleDoubleChanged(scale, parent_style->LineSpaceScale());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetLineSpaceScale(scale);
+    override_style->SetFieldOverride(ON_DimStyle::field::LineSpaceScale, bCreate);
+  }
+}
+
+
 double ON_Annotation::LengthFactor(const ON_DimStyle* parent_style) const
 {
   return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::LengthFactor).LengthFactor();

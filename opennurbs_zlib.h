@@ -45,4 +45,10 @@ voidpf zcalloc(voidpf, unsigned, unsigned);
 void  zcfree(voidpf, voidpf);
 ON_END_EXTERNC
 
+ON_DECL
+int ON_Compress(Bytef* dest, uLongf* destLen, const Bytef *source, uLong sourceLen);
+
+ON_DECL
+uLong ON_CompressBound(uLong sourceLen);
+
 #endif

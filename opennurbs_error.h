@@ -23,12 +23,22 @@
 #define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) {ON_ErrorEx(__FILE__,__LINE__,OPENNURBS__FUNCTION__, #cond " is false");return(returncode);}}while(0)
 #define ON_ASSERT_OR_RETURNVOID(cond) do{if (!(cond)) {ON_ErrorEx(__FILE__,__LINE__,OPENNURBS__FUNCTION__, #cond " is false");return;}}while(0)
 
-// Do not use ON_ASSERT. If a condition can be checked by ON_ASSERT, then the
-// code must be written detect and respond to that condition. This define will
-// be deleted ASAP. It is being used to detect situations where a crash will
-// occur and then letting the crash occur. 
-#define ON_ASSERT(cond) ON_REMOVE_ASAP_AssertEx(cond,__FILE__,__LINE__,OPENNURBS__FUNCTION__, #cond " is false")
-
+// ON_ASSERT is only compiled in debug builds and is useful for alerting developers if certain assumptions
+// are false. Use ON_ASSERT with great care. If a condition can be checked by ON_ASSERT, then the code must
+// be written to detect and respond to that condition in release builds. Do not use it to detect situations
+// where a crash will occur and then let the crash occur!
+//
+// ON_VERIFY is similar to ON_ASSERT except that it also executes the condition in release builds.
+// The same comments about safety for ON_ASSERT also apply to ON_VERIFY.
+//
+#define ON_AssertEx ON_REMOVE_ASAP_AssertEx // TODO: Remove this when the SDK can be broken.
+#ifdef _DEBUG
+#define ON_ASSERT(cond) ON_AssertEx(cond, __FILE__, __LINE__, OPENNURBS__FUNCTION__, #cond " is false")
+#define ON_VERIFY(cond) ON_ASSERT(cond)
+#else
+#define ON_ASSERT(cond) { }
+#define ON_VERIFY(cond) ((void)(cond))
+#endif
 
 ON_BEGIN_EXTERNC
 
@@ -77,7 +87,7 @@ void ON_VARGS_FUNC_CDECL ON_Error(
   const char* file_name, /* __FILE__ will do fine */
   int line_number,       /* __LINE__ will do fine */
   const char* format,    /* format string */
-  ...                    /* format ags */
+  ...                    /* format args */
   );
 
 ON_DECL
@@ -86,7 +96,7 @@ void ON_VARGS_FUNC_CDECL ON_ErrorEx(
   int line_number,            /* __LINE__ will do fine */
   const char* function_name,  /* OPENNURBS__FUNCTION__ will do fine */
   const char* format,         /* format string */
-  ...                         /* format ags */
+  ...                         /* format args */
   );
 
 ON_DECL
@@ -94,27 +104,26 @@ void ON_VARGS_FUNC_CDECL ON_Warning(
   const char* file_name, /* __FILE__ will do fine */
   int line_number,       /* __LINE__ will do fine */
   const char* format,    /* format string */
-  ...                    /* format ags */
+  ...                    /* format args */
   );
 
 ON_DECL
 void ON_VARGS_FUNC_CDECL ON_WarningEx(
   const char* file_name,      /* __FILE__ will do fine */
   int line_number,            /* __LINE__ will do fine */
-  const char* function_name,  /*OPENNURBS__FUNCTION__ will do fine */
+  const char* function_name,  /* OPENNURBS__FUNCTION__ will do fine */
   const char* format,         /* format string */
-  ...                         /* format ags */
+  ...                         /* format args */
   );
 
-// Ideally - these "assert" functions will be deleted when the SDK can be changed.
 ON_DECL
-void ON_VARGS_FUNC_CDECL ON_REMOVE_ASAP_AssertEx(
-  int,        // if false, error is flagged
+void ON_VARGS_FUNC_CDECL ON_REMOVE_ASAP_AssertEx( // TODO: Remove the REMOVE_ASAP part when the SDK can be broken.
+  int condition,              /* if false, error is flagged */
   const char* file_name,      /* __FILE__ will do fine */
   int line_number,            /* __LINE__ will do fine */
   const char* function_name,  /* OPENNURBS__FUNCTION__ will do fine */
   const char* format,         /* format string */
-  ...                         /* format ags */
+  ...                         /* format args */
   );
 
 ON_DECL
@@ -136,8 +145,8 @@ public:
     Unset = 0,
     Warning = 1,   // call to ON_WARNING / ON_Warning / ON_WarningEx
     Error = 2,     // call to ON_ERROR / ON_Error / ON_ErrorEx
-    Assert = 3,    // ON_ASSERT (do not use ON_ASSERT - write code that handles errors and calls ON_ERROR)
-    Custom = 4,
+    Assert = 3,    // call to ON_ASSERT / ON_AssertEx
+    Custom = 4,    // custom
     SubDError = 5, // call to ON_SubDIncrementErrorCount()
     BrepError = 6, // call to ON_BrepIncrementErrorCount()
     NotValid = 7   // call to ON_IsNotValid()

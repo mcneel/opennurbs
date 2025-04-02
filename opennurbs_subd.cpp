@@ -13567,7 +13567,7 @@ bool ON_SubDComponentBase::SetSavedSubdivisionPoint(
     m_saved_subd_point1[0] = subdivision_point[0];
     m_saved_subd_point1[1] = subdivision_point[1];
     m_saved_subd_point1[2] = subdivision_point[2];
-    m_saved_points_flags |= ON_SUBD_CACHE_POINT_FLAG_BIT;
+    m_saved_modified_points_flags |= ON_SUBD_CACHE_POINT_FLAG_BIT;
     return true;
   }
 
@@ -13579,7 +13579,7 @@ bool ON_SubDComponentBase::GetSavedSubdivisionPoint(
   double subdivision_point[3]
   ) const
 {
-  if ( 0 == (ON_SUBD_CACHE_POINT_FLAG_BIT & m_saved_points_flags) )
+  if ( 0 == (ON_SUBD_CACHE_POINT_FLAG_BIT & m_saved_modified_points_flags) )
     return false;
 
   if (nullptr != subdivision_point)
@@ -14166,34 +14166,34 @@ bool ON_SubDFace::GetFacePackRectCorners(bool bGridOrder, ON_2dPoint face_pack_r
 
 void ON_SubDComponentBase::Internal_ClearSubdivisionPointAndSurfacePointFlags() const
 {
-  ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_points_flags);
-  ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(m_saved_points_flags);
+  ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_modified_points_flags);
+  ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(m_saved_modified_points_flags);
 }
 
 bool ON_SubDComponentBase::Internal_SubdivisionPointFlag() const
 {
-  return (0 != ON_SUBD_CACHE_POINT_FLAG(m_saved_points_flags));
+  return (0 != ON_SUBD_CACHE_POINT_FLAG(m_saved_modified_points_flags));
 }
 
 void ON_SubDComponentBase::Internal_ClearSubdivisionPointFlag() const
 {
-  ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_points_flags);
+  ON_SUBD_CACHE_CLEAR_POINT_FLAG(m_saved_modified_points_flags);
 }
 
 bool ON_SubDComponentBase::Internal_SurfacePointFlag() const
 {
-  return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_points_flags));
+  return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_modified_points_flags));
 }
 
 void ON_SubDComponentBase::Internal_ClearSurfacePointFlag() const
 {
-  ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(m_saved_points_flags);
+  ON_SUBD_CACHE_CLEAR_LIMITLOC_FLAG(m_saved_modified_points_flags);
 }
 
 bool ON_SubDComponentBase::SavedSubdivisionPointIsSet() const
 {
   return 
-    (0 != ON_SUBD_CACHE_POINT_FLAG(m_saved_points_flags))
+    (0 != ON_SUBD_CACHE_POINT_FLAG(m_saved_modified_points_flags))
     ? (ON_IS_VALID(m_saved_subd_point1[0]) && ON_IS_VALID(m_saved_subd_point1[1]) && ON_IS_VALID(m_saved_subd_point1[2]))
     : false;
 }
@@ -14235,7 +14235,7 @@ const ON_3dVector ON_SubDComponentBase::SubdivisionDisplacement() const
 void ON_SubDComponentBase::Internal_SetSavedSurfacePointFlag(bool bSavedSurfacePointFlag) const
 {
   if (bSavedSurfacePointFlag)
-    m_saved_points_flags |= ON_SUBD_CACHE_LIMITLOC_FLAG_BIT;
+    m_saved_modified_points_flags |= ON_SUBD_CACHE_LIMITLOC_FLAG_BIT;
   else
     Internal_ClearSurfacePointFlag();
 }
@@ -14243,27 +14243,27 @@ void ON_SubDComponentBase::Internal_SetSavedSurfacePointFlag(bool bSavedSurfaceP
 
 void ON_SubDComponentBase::Internal_SetModified1Flag() const
 {
-  m_saved_points_flags |= ON_SubDComponentBase::ModifiedFlags::Modified1Bit;
+  m_saved_modified_points_flags |= ON_SubDComponentBase::SavedOrModifiedPointsFlags::Modified1Bit;
 }
 
 void ON_SubDComponentBase::Internal_SetModified2Flag() const
 {
-  m_saved_points_flags |= ON_SubDComponentBase::ModifiedFlags::Modified1Bit;
+  m_saved_modified_points_flags |= ON_SubDComponentBase::SavedOrModifiedPointsFlags::Modified1Bit;
 }
 
 void ON_SubDComponentBase::Internal_ClearModifiedFlags() const
 {
-  m_saved_points_flags &= ~ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask;
+  m_saved_modified_points_flags &= ~ON_SubDComponentBase::SavedOrModifiedPointsFlags::ModifiedFlagsMask;
 }
 
 bool ON_SubDComponentBase::Internal_Modified1IsSet() const
 {
-  return (0 != (m_saved_points_flags & ON_SubDComponentBase::ModifiedFlags::Modified1Bit));
+  return (0 != (m_saved_modified_points_flags & ON_SubDComponentBase::SavedOrModifiedPointsFlags::Modified1Bit));
 }
 
 bool ON_SubDComponentBase::Internal_Modified1or2IsSet() const
 {
-  return (0 != (m_saved_points_flags & ON_SubDComponentBase::ModifiedFlags::ModifiedFlagsMask));
+  return (0 != (m_saved_modified_points_flags & ON_SubDComponentBase::SavedOrModifiedPointsFlags::ModifiedFlagsMask));
 }
 
 bool ON_SubDFace::ReverseEdgeList()

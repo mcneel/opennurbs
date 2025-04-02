@@ -1849,7 +1849,7 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
     return false;
 
   ON_TextBox text_box;
-  const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(run->DisplayString(), font, text_box);
+  const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(run->DisplayString(), font, run->ApplyKerning(), run->LineSpaceScale(), text_box);
   bool rc = (line_count > 0 && text_box.IsSet());
   if (line_count == 0 && ON_TextRun::RunType::kText == run->Type())
     run->SetBoundingBox(ON_2dPoint(0,0), ON_2dPoint(0,0));
@@ -1925,7 +1925,8 @@ double ON_TextContent::GetLinefeedHeight(ON_TextRun& run)
     if (!(lfht == legacy_lfht))
       ON_TextLog::Null.Print(L"Break");
   }
-
+  
+  lfht *= run.LineSpaceScale();
 
   return lfht;
 }
@@ -1993,6 +1994,34 @@ bool ON_TextContent::MeasureTextContent(ON_TextContent* text, bool raw, bool wra
   if (wrapped && !rc1)
     return false;
   return true;
+}
+
+// should this be a private static member?
+double ON_TextContent__prevOrCurrTabStop(double adv, double tab_size)
+{
+  if (adv < 0.0 || tab_size <= 0.0)
+    return 0.0;
+
+  double prev_or_current_tab_stop = 0.0;
+	double next_tab_stop = tab_size;
+	while (next_tab_stop <= adv)
+	{
+		prev_or_current_tab_stop = next_tab_stop;
+		next_tab_stop += tab_size;
+		continue;
+	}
+	return prev_or_current_tab_stop;
+}
+
+// should this be a private static member?
+double ON_TextContent__advanceDistToNextTabStop(double adv, double tab_size)
+{
+  if (adv < 0.0 || tab_size <= 0.0)
+    return 0.0;
+
+  double overflow = adv - ON_TextContent__prevOrCurrTabStop(adv, tab_size);
+	double advDist = tab_size - overflow;
+  return advDist;
 }
 
 //static
@@ -2075,6 +2104,18 @@ bool ON_TextContent::MeasureTextRunArray(
         line_start = false;
         line_end = false;
         last_text_run = run;
+      }
+      else if (h_align == ON::TextHorizontalAlignment::Left && ON_TextRun::RunType::kTab == run->Type())
+      {
+        const ON_Font* font = run->Font();
+        double height_scale = run->HeightScale(font);
+        double magic_tab_factor = 300.0; // this value should be user configurable and/or based on the font being used
+        double adv = ON_TextContent__advanceDistToNextTabStop(line_width, magic_tab_factor * height_scale);
+
+        ON_2dVector advance(adv, 0);
+        run->SetAdvance(advance);
+
+        line_width += adv;
       }
       if (max_line_height == 0.0)
         max_line_height = line_height;

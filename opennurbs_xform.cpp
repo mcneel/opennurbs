@@ -337,21 +337,26 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
 //
 
 ON_Xform::ON_Xform()
+: m_xform
 {
-  memset( m_xform, 0, sizeof(m_xform) );
-  m_xform[3][3] = 1.0;
+  {0.0, 0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
 }
+{ }
 
 ON_Xform::ON_Xform(
   double x
 )
+: m_xform
 {
-  memset( m_xform, 0, sizeof(m_xform) );
-  m_xform[0][0] = x;
-  m_xform[1][1] = x;
-  m_xform[2][2] = x;
-  m_xform[3][3] = 1.0;
+  {  x, 0.0, 0.0, 0.0},
+  {0.0,   x, 0.0, 0.0},
+  {0.0, 0.0,   x, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
 }
+{ }
 
 const ON_Xform ON_Xform::DiagonalTransformation(
   double d
@@ -373,12 +378,29 @@ const ON_Xform ON_Xform::DiagonalTransformation(
   double d2
 )
 {
-  ON_Xform xform(ON_Xform::IdentityTransformation);
-  xform.m_xform[0][0] = d0;
-  xform.m_xform[1][1] = d1;
-  xform.m_xform[2][2] = d2;
-  return xform;
+  return ON_Xform
+  (
+     d0, 0.0, 0.0, 0.0,
+    0.0,  d1, 0.0, 0.0,
+    0.0, 0.0,  d2, 0.0,
+    0.0, 0.0, 0.0, 1.0
+  );
 }
+
+ON_Xform::ON_Xform(
+  double m00, double m01, double m02, double m03,
+  double m10, double m11, double m12, double m13,
+  double m20, double m21, double m22, double m23,
+  double m30, double m31, double m32, double m33
+)
+: m_xform
+{
+  { m00, m01, m02, m03 },
+  { m10, m11, m12, m13 },
+  { m20, m21, m22, m23 },
+  { m30, m31, m32, m33 }
+}
+{ }
 
 #if defined(ON_COMPILER_MSC)
 ON_Xform::ON_Xform( double m[4][4] )
@@ -521,90 +543,90 @@ const double* ON_Xform::operator[](int i) const
 //
 // All non-commutative operations have "this" as left hand side and
 // argument as right hand side.
-ON_Xform ON_Xform::operator*( const ON_Xform& rhs ) const
+ON_Xform ON_Xform::operator*(const ON_Xform& rhs) const
 {
-  double m[4][4];
   const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0]*p[0] + m_xform[0][1]*p[4] + m_xform[0][2]*p[ 8] + m_xform[0][3]*p[12];
-  m[0][1] = m_xform[0][0]*p[1] + m_xform[0][1]*p[5] + m_xform[0][2]*p[ 9] + m_xform[0][3]*p[13];
-  m[0][2] = m_xform[0][0]*p[2] + m_xform[0][1]*p[6] + m_xform[0][2]*p[10] + m_xform[0][3]*p[14];
-  m[0][3] = m_xform[0][0]*p[3] + m_xform[0][1]*p[7] + m_xform[0][2]*p[11] + m_xform[0][3]*p[15];
+  return ON_Xform
+  (
+    m_xform[0][0] * p[0] + m_xform[0][1] * p[4] + m_xform[0][2] * p[ 8] + m_xform[0][3] * p[12],
+    m_xform[0][0] * p[1] + m_xform[0][1] * p[5] + m_xform[0][2] * p[ 9] + m_xform[0][3] * p[13],
+    m_xform[0][0] * p[2] + m_xform[0][1] * p[6] + m_xform[0][2] * p[10] + m_xform[0][3] * p[14],
+    m_xform[0][0] * p[3] + m_xform[0][1] * p[7] + m_xform[0][2] * p[11] + m_xform[0][3] * p[15],
 
-  m[1][0] = m_xform[1][0]*p[0] + m_xform[1][1]*p[4] + m_xform[1][2]*p[ 8] + m_xform[1][3]*p[12];
-  m[1][1] = m_xform[1][0]*p[1] + m_xform[1][1]*p[5] + m_xform[1][2]*p[ 9] + m_xform[1][3]*p[13];
-  m[1][2] = m_xform[1][0]*p[2] + m_xform[1][1]*p[6] + m_xform[1][2]*p[10] + m_xform[1][3]*p[14];
-  m[1][3] = m_xform[1][0]*p[3] + m_xform[1][1]*p[7] + m_xform[1][2]*p[11] + m_xform[1][3]*p[15];
+    m_xform[1][0] * p[0] + m_xform[1][1] * p[4] + m_xform[1][2] * p[ 8] + m_xform[1][3] * p[12],
+    m_xform[1][0] * p[1] + m_xform[1][1] * p[5] + m_xform[1][2] * p[ 9] + m_xform[1][3] * p[13],
+    m_xform[1][0] * p[2] + m_xform[1][1] * p[6] + m_xform[1][2] * p[10] + m_xform[1][3] * p[14],
+    m_xform[1][0] * p[3] + m_xform[1][1] * p[7] + m_xform[1][2] * p[11] + m_xform[1][3] * p[15],
 
-  m[2][0] = m_xform[2][0]*p[0] + m_xform[2][1]*p[4] + m_xform[2][2]*p[ 8] + m_xform[2][3]*p[12];
-  m[2][1] = m_xform[2][0]*p[1] + m_xform[2][1]*p[5] + m_xform[2][2]*p[ 9] + m_xform[2][3]*p[13];
-  m[2][2] = m_xform[2][0]*p[2] + m_xform[2][1]*p[6] + m_xform[2][2]*p[10] + m_xform[2][3]*p[14];
-  m[2][3] = m_xform[2][0]*p[3] + m_xform[2][1]*p[7] + m_xform[2][2]*p[11] + m_xform[2][3]*p[15];
+    m_xform[2][0] * p[0] + m_xform[2][1] * p[4] + m_xform[2][2] * p[ 8] + m_xform[2][3] * p[12],
+    m_xform[2][0] * p[1] + m_xform[2][1] * p[5] + m_xform[2][2] * p[ 9] + m_xform[2][3] * p[13],
+    m_xform[2][0] * p[2] + m_xform[2][1] * p[6] + m_xform[2][2] * p[10] + m_xform[2][3] * p[14],
+    m_xform[2][0] * p[3] + m_xform[2][1] * p[7] + m_xform[2][2] * p[11] + m_xform[2][3] * p[15],
 
-  m[3][0] = m_xform[3][0]*p[0] + m_xform[3][1]*p[4] + m_xform[3][2]*p[ 8] + m_xform[3][3]*p[12];
-  m[3][1] = m_xform[3][0]*p[1] + m_xform[3][1]*p[5] + m_xform[3][2]*p[ 9] + m_xform[3][3]*p[13];
-  m[3][2] = m_xform[3][0]*p[2] + m_xform[3][1]*p[6] + m_xform[3][2]*p[10] + m_xform[3][3]*p[14];
-  m[3][3] = m_xform[3][0]*p[3] + m_xform[3][1]*p[7] + m_xform[3][2]*p[11] + m_xform[3][3]*p[15];
-
-  return ON_Xform(m);
+    m_xform[3][0] * p[0] + m_xform[3][1] * p[4] + m_xform[3][2] * p[ 8] + m_xform[3][3] * p[12],
+    m_xform[3][0] * p[1] + m_xform[3][1] * p[5] + m_xform[3][2] * p[ 9] + m_xform[3][3] * p[13],
+    m_xform[3][0] * p[2] + m_xform[3][1] * p[6] + m_xform[3][2] * p[10] + m_xform[3][3] * p[14],
+    m_xform[3][0] * p[3] + m_xform[3][1] * p[7] + m_xform[3][2] * p[11] + m_xform[3][3] * p[15]
+  );
 }
 
 ON_Xform ON_Xform::operator+( const ON_Xform& rhs ) const
 {
-  double m[4][4];
   const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0] + p[0];
-  m[0][1] = m_xform[0][1] + p[1];
-  m[0][2] = m_xform[0][2] + p[2];
-  m[0][3] = m_xform[0][3] + p[3];
+  return ON_Xform
+  (
+    m_xform[0][0] + p[ 0],
+    m_xform[0][1] + p[ 1],
+    m_xform[0][2] + p[ 2],
+    m_xform[0][3] + p[ 3],
 
-  m[1][0] = m_xform[1][0] + p[4];
-  m[1][1] = m_xform[1][1] + p[5];
-  m[1][2] = m_xform[1][2] + p[6];
-  m[1][3] = m_xform[1][3] + p[7];
+    m_xform[1][0] + p[ 4],
+    m_xform[1][1] + p[ 5],
+    m_xform[1][2] + p[ 6],
+    m_xform[1][3] + p[ 7],
 
-  m[2][0] = m_xform[2][0] + p[ 8];
-  m[2][1] = m_xform[2][1] + p[ 9];
-  m[2][2] = m_xform[2][2] + p[10];
-  m[2][3] = m_xform[2][3] + p[11];
+    m_xform[2][0] + p[ 8],
+    m_xform[2][1] + p[ 9],
+    m_xform[2][2] + p[10],
+    m_xform[2][3] + p[11],
 
-  m[3][0] = m_xform[3][0] + p[12];
-  m[3][1] = m_xform[3][1] + p[13];
-  m[3][2] = m_xform[3][2] + p[14];
-  m[3][3] = m_xform[3][3] + p[15];
-
-  return ON_Xform(m);
+    m_xform[3][0] + p[12],
+    m_xform[3][1] + p[13],
+    m_xform[3][2] + p[14],
+    m_xform[3][3] + p[15]
+  );
 }
 
 ON_Xform ON_Xform::operator-( const ON_Xform& rhs ) const
 {
-  double m[4][4];
   const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0] - p[0];
-  m[0][1] = m_xform[0][1] - p[1];
-  m[0][2] = m_xform[0][2] - p[2];
-  m[0][3] = m_xform[0][3] - p[3];
+  return ON_Xform
+  (
+    m_xform[0][0] - p[ 0],
+    m_xform[0][1] - p[ 1],
+    m_xform[0][2] - p[ 2],
+    m_xform[0][3] - p[ 3],
 
-  m[1][0] = m_xform[1][0] - p[4];
-  m[1][1] = m_xform[1][1] - p[5];
-  m[1][2] = m_xform[1][2] - p[6];
-  m[1][3] = m_xform[1][3] - p[7];
+    m_xform[1][0] - p[ 4],
+    m_xform[1][1] - p[ 5],
+    m_xform[1][2] - p[ 6],
+    m_xform[1][3] - p[ 7],
 
-  m[2][0] = m_xform[2][0] - p[ 8];
-  m[2][1] = m_xform[2][1] - p[ 9];
-  m[2][2] = m_xform[2][2] - p[10];
-  m[2][3] = m_xform[2][3] - p[11];
+    m_xform[2][0] - p[ 8],
+    m_xform[2][1] - p[ 9],
+    m_xform[2][2] - p[10],
+    m_xform[2][3] - p[11],
 
-  m[3][0] = m_xform[3][0] - p[12];
-  m[3][1] = m_xform[3][1] - p[13];
-  m[3][2] = m_xform[3][2] - p[14];
-  m[3][3] = m_xform[3][3] - p[15];
-
-  return ON_Xform(m);
+    m_xform[3][0] - p[12],
+    m_xform[3][1] - p[13],
+    m_xform[3][2] - p[14],
+    m_xform[3][3] - p[15]
+  );
 }
-  
+
 ///////////////////////////////////////////////////////////////
 //
 // ON_Xform
@@ -778,11 +800,13 @@ const ON_Xform ON_Xform::TranslationTransformation(
   double dz
 )
 {
-  ON_Xform xform(ON_Xform::IdentityTransformation);
-  xform.m_xform[0][3] = dx;
-  xform.m_xform[1][3] = dy;
-  xform.m_xform[2][3] = dz;
-  return xform;
+  return ON_Xform
+  (
+    1.0, 0.0, 0.0, dx,
+    0.0, 1.0, 0.0, dy,
+    0.0, 0.0, 1.0, dz,
+    0.0, 0.0, 0.0, 1.0
+  );
 }
 
 void ON_Xform::PlanarProjection( const ON_Plane& plane )
@@ -837,30 +861,29 @@ void ON_Xform::ActOnRight(double x,double y,double z,double w,double v[4]) const
 
 const ON_Xform operator*(double c, const ON_Xform& xform)
 {
-  ON_Xform cx(xform);
-  double* p = &cx.m_xform[0][0];
-  double* p1 = p + 16;
-  while (p < p1)
-  {
-    const double x = *p;
-    *p++ = c*x;
-  }
-  return cx;
+  const double* p = &xform.m_xform[0][0];
+
+  return ON_Xform
+  (
+    c * p[ 0], c * p[ 1], c * p[ 2], c * p[ 3],
+    c * p[ 4], c * p[ 5], c * p[ 6], c * p[ 7],
+    c * p[ 8], c * p[ 9], c * p[10], c * p[11],
+    c * p[12], c * p[13], c * p[14], c * p[15]
+  );
 }
 
 const ON_Xform operator*(const ON_Xform& xform, double c)
 {
-  ON_Xform xc(xform);
-  double* p = &xc.m_xform[0][0];
-  double* p1 = p + 16;
-  while (p < p1)
-  {
-    const double x = *p;
-    *p++ = x*c;
-  }
-  return xc;
-}
+  const double* p = &xform.m_xform[0][0];
 
+  return ON_Xform
+  (
+    p[ 0] * c, p[ 1] * c, p[ 2] * c, p[ 3] * c,
+    p[ 4] * c, p[ 5] * c, p[ 6] * c, p[ 7] * c,
+    p[ 8] * c, p[ 9] * c, p[10] * c, p[11] * c,
+    p[12] * c, p[13] * c, p[14] * c, p[15] * c
+  );
+}
 
 ON_2dPoint ON_Xform::operator*( const ON_2dPoint& p ) const
 {
@@ -2550,29 +2573,29 @@ const ON_Xform ON_Xform::MirrorTransformation(
 {
   const ON_PlaneEquation e = mirror_plane.UnitizedPlaneEquation();
   const ON_3dVector N(e.x, e.y, e.z);
-  ON_3dVector V = (-2.0*e.d)*N;
-  ON_Xform mirror;
-  mirror.m_xform[0][0] = 1 - 2.0*N.x*N.x;
-  mirror.m_xform[0][1] = -2.0*N.x*N.y;
-  mirror.m_xform[0][2] = -2.0*N.x*N.z;
-  mirror.m_xform[0][3] = V.x;
+  const ON_3dVector V = (-2.0*e.d)*N;
+  return ON_Xform
+  (
+    1.0 - 2.0 * N.x * N.x,
+        - 2.0 * N.x * N.y,
+        - 2.0 * N.x * N.z,
+    V.x,
 
-  mirror.m_xform[1][0] = -2.0*N.y*N.x;
-  mirror.m_xform[1][1] = 1.0 - 2.0*N.y*N.y;
-  mirror.m_xform[1][2] = -2.0*N.y*N.z;
-  mirror.m_xform[1][3] = V.y;
+        - 2.0 * N.y * N.x,
+    1.0 - 2.0 * N.y * N.y,
+        - 2.0 * N.y * N.z,
+    V.y,
 
-  mirror.m_xform[2][0] = -2.0*N.z*N.x;
-  mirror.m_xform[2][1] = -2.0*N.z*N.y;
-  mirror.m_xform[2][2] = 1.0 - 2.0*N.z*N.z;
-  mirror.m_xform[2][3] = V.z;
+        - 2.0 * N.z * N.x,
+        - 2.0 * N.z * N.y,
+    1.0 - 2.0 * N.z * N.z,
+    V.z,
 
-  mirror.m_xform[3][0] = 0.0;
-  mirror.m_xform[3][1] = 0.0;
-  mirror.m_xform[3][2] = 0.0;
-  mirror.m_xform[3][3] = 1.0;
-
-  return mirror;
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  );
 }
 
 

@@ -775,6 +775,165 @@ void* ON_FixedSizePoolIterator::NextBlock( size_t* block_element_count )
   return m_it_element;
 }
 
+
+size_t ON_FixedSizePoolElementFromIndexAccelerator::Initialize(const ON_FixedSizePool& fsp)
+{
+  Clear();
+  size_t total_element_count = 0;
+  if (fsp.IsValid())
+  {
+    m_sizeof_element = fsp.SizeofElement();
+    ON_FixedSizePoolIterator fit(fsp);
+    ON_SimpleArray< ON_BlockDex> sloppy_buffer(2064);
+    ON_BlockDex blockdex;
+    blockdex.m_index0 = 0;
+    blockdex.m_index1 = 0;
+    size_t block_element_count = 0;
+    for (blockdex.m_element0 = reinterpret_cast<ON__UINT8*>(fit.FirstBlock(&block_element_count)); nullptr != blockdex.m_element0; blockdex.m_element0 = reinterpret_cast<ON__UINT8*>(fit.NextBlock(&block_element_count)))
+    {
+      if (block_element_count <= 0)
+        continue;
+      total_element_count += block_element_count;
+      blockdex.m_index0 = blockdex.m_index1;
+      blockdex.m_index1 += block_element_count;
+      sloppy_buffer.Append(blockdex);
+      ++m_blocks_count;
+    }
+    if (m_blocks_count > 0)
+    {
+      const size_t sz = m_blocks_count * sizeof(ON_BlockDex);
+      void* p = onmalloc(sz);
+      memcpy(p, sloppy_buffer.Array(), sz);
+      m_blocks = reinterpret_cast<const ON_BlockDex*>(p);
+      sloppy_buffer.Destroy();
+      m_first_block_index1 = m_blocks[0].m_index1;
+      m_last_block_index0 = m_blocks[m_blocks_count-1].m_index0;
+      if (m_blocks_count >= 3)
+      {
+        const size_t second_block_element_count = m_blocks[1].m_index1 - m_blocks[1].m_index0;
+        bool bConstantSizeTailBlocks = true;
+        for (size_t i = 2; i + 1 < m_blocks_count; ++i)
+        {
+          if (second_block_element_count == m_blocks[i].m_index1 - m_blocks[i].m_index0)
+            continue;
+          bConstantSizeTailBlocks = false;
+          break;
+        }
+        if (bConstantSizeTailBlocks)
+          m_middle_blocks_element_count = second_block_element_count;
+      }
+    }
+  }
+  if (m_middle_blocks_element_count > 0)
+  {
+    const ON_BlockDex last_blkdex = m_blocks[m_blocks_count - 1];
+    const size_t check
+      = m_blocks[0].m_index1
+      + m_middle_blocks_element_count * (m_blocks_count - 2)
+      + (last_blkdex.m_index1 - last_blkdex.m_index0);
+    if (
+      m_first_block_index1 != m_blocks[0].m_index1 || m_last_block_index0 != last_blkdex.m_index0
+      || check != fsp.TotalElementCount()
+      || check != total_element_count
+      || check != last_blkdex.m_index1
+      )
+    {
+      ON_ERROR("Serious bug or the imlementation of ON_FixedSizePool changed.");
+      m_middle_blocks_element_count = 0; // <- this will force a binary search until the bug is fixed.
+    }
+  }
+  return total_element_count;
+}
+
+void ON_FixedSizePoolElementFromIndexAccelerator::Clear()
+{
+  // Yup, I really, really meant to cast m_blocks as a void*.
+  m_sizeof_element = 0;
+  m_blocks_count = 0;
+  m_middle_blocks_element_count = 0;
+  m_last_block_index0 = 0;
+  void* p = const_cast<void*>(reinterpret_cast<const void*>(m_blocks));
+  m_blocks = nullptr;
+  if (nullptr != p)
+    onfree(p);
+}
+
+
+ON_FixedSizePoolElementFromIndexAccelerator::~ON_FixedSizePoolElementFromIndexAccelerator()
+{ 
+  Clear();
+}
+
+void* ON_FixedSizePoolElementFromIndexAccelerator::ElementFromIndex(size_t element_index) const
+{
+  const ON_BlockDex* blkdex = nullptr;
+  if (m_blocks_count > 0 && element_index >= 0)
+  {
+    // NOTE: blocks[0].m_index0 is always 0.
+    if (element_index < m_first_block_index1)
+    {
+      // element is in the first block
+      blkdex = m_blocks;
+    }
+    else if (element_index >= m_last_block_index0 )
+    {
+      // element is in the last block or element_index is not valid
+      // blkdex = last block info
+      blkdex = m_blocks + (m_blocks_count - 1);
+      if (element_index >= blkdex->m_index1)
+      {
+        // element_index >= number of allocated elements in the fixed size pool.
+        blkdex = nullptr;
+      }
+    }
+    else if (m_middle_blocks_element_count > 0)
+    {
+      // When m_middle_blocks_element_count > 0, every m_fsp block
+      // after the first one have the same number of elements.
+      // This is very common when m_fsp has 2 or more blocks.
+      const size_t i = element_index - m_blocks[1].m_index0;
+      const size_t j = (i / m_middle_blocks_element_count) + 1;
+      if (j + 1 < m_blocks_count)
+        blkdex = m_blocks + j;
+    }
+    else if(m_blocks_count >= 3)
+    {
+      // This is the uncommon case when the middle sized blocks have variable size.
+      // Use a binary search on {blocks[1], ,,, blocks[m_blocks_count-2]}
+      // to find the block with m_index0 <= element_index <  m_index1
+      const ON_BlockDex* base = m_blocks + 1;
+      size_t nel = m_blocks_count - 2;
+      while (nel > 0)
+      {
+        size_t i = nel / 2;
+        if (element_index < base[i].m_index0)
+        {
+          nel = i;
+        }
+        else if (element_index >= base[i].m_index1)
+        {
+          ++i;
+          base += i;
+          nel -= i;
+        }
+        else
+        {
+          // base[i] satisfies base->m_index0 <= element_index < base->m_index1
+          // and is the block containing the element we want.
+          blkdex = base + i;
+          break;
+        }
+      }
+    }
+  }
+
+  return 
+    (nullptr != blkdex)
+    ? (reinterpret_cast<void*>(blkdex->m_element0 + ((element_index - blkdex->m_index0) * m_sizeof_element)))
+    : nullptr;
+}
+
+
 void* ON_FixedSizePool::Element(size_t element_index) const
 {
   if (element_index < (size_t)m_total_element_count)

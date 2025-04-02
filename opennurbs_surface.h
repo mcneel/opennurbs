@@ -684,6 +684,26 @@ public:
 
   /*
   Description:
+    Get isoparametric curve. This is a quick way to invoke ON_Surface::IsoCurve
+  Parameters:
+    iso - [in] ON_Surface::ISO::north returns the curve where U varies and V is V_max
+               ON_Surface::ISO::east  returns the curve where V varies and U is U_max
+               ON_Surface::ISO::south returns the curve where U varies and V is V_min
+               ON_Surface::ISO::west  returns the curve where V varies and U is U_min
+               ON_Surface::ISO::x_iso returns the curve where V varies and U is p and p is inside the U-domain
+               ON_Surface::ISO::y_iso returns the curve where U varies and V is p and p is inside the V-domain
+               Any other ON_Surface::ISO value will return NULL
+               
+    p - [in]   The parameter to use when iso is x_iso or y_iso
+               Parameter values outside the U- or V-domain will return NULL if iso is x_iso or y_iso, respectively
+  Returns:
+    Isoparametric curve or NULL if input is invalid
+  */
+  ON_Curve* CurveIso(ON_Surface::ISO iso, double p = ON_UNSET_VALUE) const;
+
+
+  /*
+  Description:
     Removes the portions of the surface outside of the specified interval.
 
   Parameters:

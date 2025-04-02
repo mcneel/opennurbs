@@ -377,6 +377,11 @@ public:
   ON::SectionAttributesSource SectionAttributesSource() const;
   void SetSectionAttributesSource(ON::SectionAttributesSource source);
 
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  int SectionStyleIndex() const;
+  void SetSectionStyleIndex(int index);
+#endif
+  
   /*
   Description:
     Attributes can have optional custom section style associated with them.
@@ -434,6 +439,13 @@ public:
   bool HatchBoundaryVisible() const;
   void SetHatchBoundaryVisible(bool on);
 #pragma endregion
+  
+  // Description:
+  //   Detail backgrounds are by default transparent. This setting allows
+  //   details to specify that they really want to be drawn with their display
+  //   mode background settings.
+  bool DetailBackgroundVisible() const;
+  void SetDetailBackgroundVisible(bool visible);
 
   ON::SectionLabelStyle ClippingPlaneLabelStyle() const;
   void SetClippingPlaneLabelStyle(ON::SectionLabelStyle style);
@@ -520,15 +532,15 @@ public:
 
   /*
   Description:
-    Get an array of decals that are stored on this attributes object.
-    Do not store or delete pointers from the array.
+    Get an array of decals that are stored on this attributes object. Do not store or delete pointers from
+    the array. Each time this method is called, pointers from the previous call might be invalidated.
   */
   const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
 
   /*
   Description:
-    Add a new decal to this attributes object. The returned pointer points to an object
-    that is owned by the attributes. Do not store or delete it.
+    Add a new decal to this attributes object. The returned pointer is temporary and points to an object that
+    is owned by the attributes. Do not store or delete it. If you call GetDecalArray(), the decal may be deleted.
   */
   ON_Decal* AddDecal(void);
 
@@ -536,7 +548,8 @@ public:
   Description:
     Remove a decal from this attributes object. Returns true if successful, else false.
   */
-  bool RemoveDecal(ON_Decal& decal);
+  ON_DEPRECATED bool RemoveDecal(ON_Decal& decal);
+  bool RemoveDecal(ON_DECAL_CRC decal_crc);
 
   /*
   Description:
@@ -551,6 +564,19 @@ public:
     Get the mesh modifiers that are stored on this attributes object.
   */
   class ON_MeshModifiers& MeshModifiers(void) const;
+
+  /* Used by UserDataChanged(). */
+  enum class UserDataType
+  {
+    Decals,
+  };
+
+  /*
+  Description:
+    This method should be called to notify the object that some user data has been changed.
+    At the moment, this is only used by decals.
+  */
+	void UserDataChanged(UserDataType type);
 
   // Display material references.
 

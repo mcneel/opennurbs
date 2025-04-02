@@ -28,6 +28,11 @@
 		1D4453271ED645A700CD7FC1 /* zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4453121ED645A700CD7FC1 /* zlib.h */; };
 		1D4453281ED645A700CD7FC1 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 1D4453131ED645A700CD7FC1 /* zutil.c */; };
 		1D4453291ED645A700CD7FC1 /* zutil.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4453141ED645A700CD7FC1 /* zutil.h */; };
+		2DA7CBD32D7F43A600B5F3B5 /* gzguts.h in Headers */ = {isa = PBXBuildFile; fileRef = 2DA7CBD22D7F43A600B5F3B5 /* gzguts.h */; };
+		2DA7CBD82D7F43C000B5F3B5 /* gzlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DA7CBD52D7F43C000B5F3B5 /* gzlib.c */; };
+		2DA7CBD92D7F43C000B5F3B5 /* gzclose.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DA7CBD42D7F43C000B5F3B5 /* gzclose.c */; };
+		2DA7CBDA2D7F43C000B5F3B5 /* gzread.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DA7CBD62D7F43C000B5F3B5 /* gzread.c */; };
+		2DA7CBDB2D7F43C000B5F3B5 /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 2DA7CBD72D7F43C000B5F3B5 /* gzwrite.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +58,11 @@
 		1D4453131ED645A700CD7FC1 /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zutil.c; sourceTree = "<group>"; };
 		1D4453141ED645A700CD7FC1 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
 		1DB0281D1ED6430300FA9144 /* libopennurbs_public_zlib.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libopennurbs_public_zlib.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		2DA7CBD22D7F43A600B5F3B5 /* gzguts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gzguts.h; sourceTree = "<group>"; };
+		2DA7CBD42D7F43C000B5F3B5 /* gzclose.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gzclose.c; sourceTree = "<group>"; };
+		2DA7CBD52D7F43C000B5F3B5 /* gzlib.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gzlib.c; sourceTree = "<group>"; };
+		2DA7CBD62D7F43C000B5F3B5 /* gzread.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gzread.c; sourceTree = "<group>"; };
+		2DA7CBD72D7F43C000B5F3B5 /* gzwrite.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gzwrite.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +79,7 @@
 		1D44532A1ED6460C00CD7FC1 /* Header Files */ = {
 			isa = PBXGroup;
 			children = (
+				2DA7CBD22D7F43A600B5F3B5 /* gzguts.h */,
 				1D4453031ED645A700CD7FC1 /* crc32.h */,
 				1D4453051ED645A700CD7FC1 /* deflate.h */,
 				1D4453081ED645A700CD7FC1 /* inffast.h */,
@@ -97,6 +108,10 @@
 				1D44530E1ED645A700CD7FC1 /* trees.c */,
 				1D4453101ED645A700CD7FC1 /* uncompr.c */,
 				1D4453131ED645A700CD7FC1 /* zutil.c */,
+				2DA7CBD42D7F43C000B5F3B5 /* gzclose.c */,
+				2DA7CBD52D7F43C000B5F3B5 /* gzlib.c */,
+				2DA7CBD62D7F43C000B5F3B5 /* gzread.c */,
+				2DA7CBD72D7F43C000B5F3B5 /* gzwrite.c */,
 			);
 			name = "Source Files";
 			sourceTree = "<group>";
@@ -130,6 +145,7 @@
 			files = (
 				1D44531A1ED645A700CD7FC1 /* deflate.h in Headers */,
 				1D44531E1ED645A700CD7FC1 /* inffixed.h in Headers */,
+				2DA7CBD32D7F43A600B5F3B5 /* gzguts.h in Headers */,
 				1D4453181ED645A700CD7FC1 /* crc32.h in Headers */,
 				1D44531D1ED645A700CD7FC1 /* inffast.h in Headers */,
 				1D4453221ED645A700CD7FC1 /* inftrees.h in Headers */,
@@ -204,6 +220,10 @@
 				1D4453171ED645A700CD7FC1 /* crc32.c in Sources */,
 				1D4453251ED645A700CD7FC1 /* uncompr.c in Sources */,
 				1D4453151ED645A700CD7FC1 /* adler32.c in Sources */,
+				2DA7CBD82D7F43C000B5F3B5 /* gzlib.c in Sources */,
+				2DA7CBD92D7F43C000B5F3B5 /* gzclose.c in Sources */,
+				2DA7CBDA2D7F43C000B5F3B5 /* gzread.c in Sources */,
+				2DA7CBDB2D7F43C000B5F3B5 /* gzwrite.c in Sources */,
 				1D4453211ED645A700CD7FC1 /* inftrees.c in Sources */,
 				1D4453161ED645A700CD7FC1 /* compress.c in Sources */,
 				1D44531B1ED645A700CD7FC1 /* infback.c in Sources */,
@@ -228,7 +248,7 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -260,7 +280,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -287,7 +307,7 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -313,7 +333,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -361,7 +381,7 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_COMMA = NO;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -387,7 +407,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;

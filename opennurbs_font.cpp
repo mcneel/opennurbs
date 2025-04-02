@@ -1678,7 +1678,8 @@ void ON_ManagedFonts::Internal_GetWindowsInstalledFonts(
   ON_SimpleArray<ON_WindowsDWriteFontInformation> dwrite_font_list;
   // freetype cannot support simulated fonts. If freetype is not used, we can include simulated fonts.
   const bool bIncludeSimulatedFontFaces = true;
-  const bool bKeepDWriteFont = true;
+  // 26-Feb-2025 Dale Fugier, RH-75314, local variable is initialized but not referenced
+  //const bool bKeepDWriteFont = true;
   ON_Font::GetInstalledWindowsDWriteFonts(
     L"GetUserDefaultLocaleName",
     bIncludeSimulatedFontFaces,
@@ -5891,7 +5892,7 @@ const ON_Font* ON_Font::GetManagedFont(
   );
   if (nullptr != installed_font)
   {
-    if (point_size > 0.0 && point_size < ON_Font::AnnotationFontApplePointSize)
+    if (point_size > 0.0 && point_size < (double)ON_Font::AnnotationFontApplePointSize)
     {
       ON_Font f(*installed_font);
       f.m_point_size = point_size;
@@ -7296,7 +7297,7 @@ bool ON_Font::SetFromAppleFontName(
   apple_font_name = static_cast<const wchar_t*>(local_apple_font_name);
 
   const bool bAnnotationFont
-  = ON_Font::IsValidPointSize(point_size) && point_size < ON_Font::AnnotationFontCellHeight
+  = ON_Font::IsValidPointSize(point_size) && point_size < (double)ON_Font::AnnotationFontCellHeight
     ? false
     : true;
 
@@ -10204,7 +10205,8 @@ void ON_Font::DumpLogfont(
   text_log.Print("lfQuality = %s\n", static_cast<const char*>(s));
 
   const unsigned int pitch = (logfont->lfPitchAndFamily & 0x03);
-  const unsigned int family = (logfont->lfPitchAndFamily & 0xF);
+  // 26-Feb-2025 Dale Fugier, RH-75314, local variable is initialized but not referenced
+  //const unsigned int family = (logfont->lfPitchAndFamily & 0xF);
   switch (pitch)
   {
   case DEFAULT_PITCH: s = "DEFAULT_PITCH"; break;
@@ -12544,7 +12546,8 @@ bool ON_Font::GetWindowsTextMetrics(
 
   // need to get TEXTMETRICS tmInternalLeading
   const bool bValidMapModeParameter = (map_mode >= MM_MIN && map_mode <= MM_MAX);
-  const bool bNeedDeviceContext = (false == bValidMapModeParameter || MM_TEXT == map_mode);
+  // 26-Feb-2025 Dale Fugier, RH-75314, local variable is initialized but not referenced
+  //const bool bNeedDeviceContext = (false == bValidMapModeParameter || MM_TEXT == map_mode);
   HDC font_hdc = nullptr;
 
   const int savedDC
@@ -13580,6 +13583,13 @@ void ON_Font::SetCustomMeasurementFunctions(
 {
   ON_Font::Internal_CustomGetGlyphMetricsFunc = measureGlyphFunc;
   ON_Font::Internal_CustomGetFontMetricsFunc = metricsFunc;
+}
+
+void ON_Font::SetCustomKerningFunction(
+  ON_GetFontKerningPairsFuncType kerningFunc
+)
+{
+  ON_Font::Internal_CustomGetFontKerningPairsFunc = kerningFunc;
 }
 
 unsigned int ON_ManagedFonts::GetGlyphMetricsInFontDesignUnits(

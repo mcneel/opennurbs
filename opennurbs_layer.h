@@ -794,6 +794,11 @@ public:
   // this intersection can result in curves as well as hatches for the
   // closed curves generated
 
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  int SectionStyleIndex() const;
+  void SetSectionStyleIndex(int index);
+#endif
+  
   /*
   Description:
     Layers can have optional custom section style associated with them.
@@ -824,6 +829,22 @@ public:
   */
   bool PerViewportIsVisibleInNewDetails() const;
   void SetPerViewportIsVisibleInNewDetails(bool bVisible);
+
+  /*
+  Description:
+    Gets the short description of the layer.
+  Returns:
+    string - The short desciption or ON_wString::EmptyString.
+  */
+  ON_wString Description() const;
+
+  /*
+  Description:
+    Sets the short description of the layer.
+  Parameters:
+    description - [in] the short description, can be nullptr.
+  */
+  void SetDescription(const wchar_t* description);
 
 private:
   // The following information may not be accurate and is subject

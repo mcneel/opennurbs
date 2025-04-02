@@ -1816,11 +1816,34 @@ public:
 
   static int GetGlyphList
   (
+    const wchar_t* text,
+    const class ON_Font* font,
+    ON__UINT32 unicode_CRLF_code_point,
+    ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+    bool applyKerning,
+    double lineSpaceScale,
+    ON_TextBox& text_box
+  );
+
+  static int GetGlyphList
+  (
     size_t code_point_count,
     ON__UINT32* code_points,
     const class ON_Font* font,
     ON__UINT32 unicode_CRLF_code_point,
     ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+    ON_TextBox& text_box
+  );
+
+  static int GetGlyphList
+  (
+    size_t code_point_count,
+    ON__UINT32* code_points,
+    const class ON_Font* font,
+    ON__UINT32 unicode_CRLF_code_point,
+    ON_SimpleArray<const ON_FontGlyph*>& glyph_list,
+    bool applyKerning,
+    double lineSpaceScale,
     ON_TextBox& text_box
   );
 
@@ -1853,10 +1876,44 @@ public:
 
   static int GetGlyphListBoundingBox
   (
+    const wchar_t* text,
+    const class ON_Font* font,
+    bool applyKerning,
+    double lineSpaceScale,
+    ON_TextBox& text_box
+  );
+
+  static int GetGlyphListBoundingBox
+  (
     size_t code_point_count,
     ON__UINT32* code_points,
     const class ON_Font* font,
     ON_TextBox& text_box
+  );
+
+  /*
+  Description:
+    Gets kerning adjustment offsets between glyphs
+  Parameters:
+    code_point_count - [in]
+      number of code points in 'code_points'. Kerning is computed between glyphs
+      so this should always be > 1 to perform any calculations
+    code_points - [in]
+      unicode codepoints for glyphs to examine
+    font - [in]
+      font to use for gathering kerning information
+    kerning_offsets - [out]
+      array of kerning offsets
+  Returns:
+    number of offsets computed on success. 0 if no offsets were computed. This
+    will be the same as kerning_offsets.Count()
+  */
+  static int GetGlyphListKerningOffsets
+  (
+    unsigned int code_point_count,
+    ON__UINT32* code_points,
+    const class ON_Font* font,
+    ON_SimpleArray<double>& kerning_offsets
   );
 
   /*
@@ -2066,10 +2123,30 @@ public:
     const class ON_Font* font,
     bool bSingleStrokeFont,
     double height_of_capital,
+    bool make_small_caps,
     double small_caps_scale,
     ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
   );
 
+  static bool GetStringContours(
+    const wchar_t* text_string,
+    const class ON_Font* font,
+    bool bSingleStrokeFont,
+    double height_of_capital,
+    double small_caps_scale,
+    ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+  );
+
+  static bool GetStringContours(
+    const wchar_t* text_string,
+    const class ON_Font* font,
+    bool bSingleStrokeFont,
+    double height_of_capital,
+    bool make_small_caps,
+    double small_caps_scale,
+    bool apply_kerning,
+    ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
+  );
 
 private:
   friend class ON_GlyphMap;
@@ -2112,6 +2189,26 @@ private:
   bool Internal_GetPlatformSubstitute(
     ON_FontGlyph& substitute
   ) const;
+
+#if defined(ON_OS_WINDOWS_GDI)
+  static int GetGlyphListKerningOffsetsFromDWrite
+  (
+    unsigned int code_point_count,
+    ON__UINT32* code_points,
+    const class ON_Font* font,
+    ON_SimpleArray<double>& kerning_offsets
+  );
+#endif
+
+#if defined(ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
+  static int GetGlyphListKerningOffsetsFromCoreText
+  (
+    unsigned int code_point_count,
+    ON__UINT32* code_points,
+    const class ON_Font* font,
+    ON_SimpleArray<double>& kerning_offsets
+  );
+#endif
 };
 
 
@@ -6163,15 +6260,27 @@ public:
       class ON_Outline& outline
     );
 
+  typedef void (*ON_GetFontKerningPairsFuncType)(
+    size_t code_point_count,
+    ON__UINT32* code_points,
+    const ON_Font* font,
+    ON_SimpleArray<double>& kerningpairs
+    );
+
   static void SetCustomMeasurementFunctions(
     ON_GetGlyphMetricsFuncType measureGlyphFunc,
     ON_GetFontMetricsFuncType metricsFunction
+  );
+
+  static void SetCustomKerningFunction(
+    ON_GetFontKerningPairsFuncType kerningFunction
   );
 
 private:
   static ON_GetGlyphMetricsFuncType Internal_CustomGetGlyphMetricsFunc;
   static ON_GetFontMetricsFuncType Internal_CustomGetFontMetricsFunc;
   static ON_GetGlyphOutlineFuncType Internal_CustomGetGlyphOutlineFunc;
+  static ON_GetFontKerningPairsFuncType Internal_CustomGetFontKerningPairsFunc;
 
 public:
   static void GetRunBounds(

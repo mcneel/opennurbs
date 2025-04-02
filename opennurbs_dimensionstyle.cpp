@@ -423,6 +423,8 @@ ON_DimStyle::field ON_DimStyle::FieldFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::TextFit);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ArrowFit);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::DecimalSeparator);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::Kerning);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::LineSpaceScale);
   }
   if (field_as_unsigned > static_cast<unsigned int>(ON_DimStyle::field::AlternateDimensionLengthDisplay))
   {
@@ -976,6 +978,13 @@ ON_TextMask::MaskFrame ON_TextMask::MaskFrameFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::NoFrame);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::RectFrame);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::CapsuleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::CircleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::SquareFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::DiamondFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::TriangleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::HexagonFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::HexagonCapsuleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::RoundRectFrame);
   }
   ON_ERROR("mask_type_as_unsigned parameter is not valid");
   return ON_TextMask::MaskFrame::NoFrame;
@@ -2229,7 +2238,7 @@ bool ON_DimStyle::Write(
   ON_BinaryArchive& file // serialize definition to binary archive
   ) const
 {
-  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 9))
+  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 11))
     return false;
 
   bool rc = false;
@@ -2571,6 +2580,14 @@ bool ON_DimStyle::Write(
     if (!file.WriteInt(u)) break;
     // END chunk version 1.9 information
 
+    bool useKerning = UseKerning();
+    if (!file.WriteBool(useKerning)) break;
+    // END chunk version 1.10 information
+
+    double scale = LineSpaceScale();
+    if (!file.WriteDouble(scale)) break;
+    // END chunk version 1.11 information
+    
     rc = true;
     break;
   }
@@ -3126,6 +3143,31 @@ bool ON_DimStyle::Read(
     if (!file.ReadInt(&u)) break;
     m_decimal_separator = (wchar_t)u;
     // END chunk version 1.9 information
+    if (minor_version <= 9)
+    {
+      rc = true;
+      break;
+    }
+    
+    bool useKerning = false;
+    if (!file.ReadBool(&useKerning)) break;
+    SetUseKerning(useKerning);
+    // END chunk version 1.10 information
+    if (minor_version <= 10)
+    {
+      rc = true;
+      break;
+    }
+    
+    double scale = 1.0;
+    if (!file.ReadDouble(&scale)) break;
+    SetLineSpaceScale(scale);
+    // END chunk version 1.11 information
+    if (minor_version <= 11)
+    {
+      rc = true;
+      break;
+    }
 
     rc = true;
     break;
@@ -3643,6 +3685,7 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(this->UnitSystem()));
 
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_text_orientation));
+    sha1.AccumulateBool(m_bUseKerning);
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_leader_text_orientation));
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_dim_text_orientation));
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_dimradial_text_orientation));
@@ -3654,6 +3697,7 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_TextFit));
 
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_decimal_separator));
+    sha1.AccumulateDouble(LineSpaceScale());
 
     // Save hash in mutable m_text_position_properties_hash
     m_text_position_properties_hash = sha1.Hash();
@@ -5188,6 +5232,35 @@ wchar_t ON_DimStyle::DecimalSeparator() const
   return m_decimal_separator;
 }
 
+bool ON_DimStyle::UseKerning() const
+{
+  return m_bUseKerning;
+}
+void ON_DimStyle::SetUseKerning(bool enableKerning)
+{
+  if (m_bUseKerning != enableKerning)
+  {
+    m_bUseKerning = enableKerning;
+    Internal_TextPositionPropertiesChange();
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::Kerning);
+}
+
+double ON_DimStyle::LineSpaceScale() const
+{
+  return m_linespace_scale;
+}
+void ON_DimStyle::SetLineSpaceScale(double scale)
+{
+  if (fabs(m_linespace_scale-scale)>ON_FLOAT_EPSILON)
+  {
+    m_linespace_scale = (float)scale;
+    Internal_TextPositionPropertiesChange();
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::LineSpaceScale);
+}
+
+
 ON__UINT32* ON_DimStyle::Internal_GetOverrideParentBit(ON_DimStyle::field field_id, ON__UINT32* mask) const
 {
   unsigned int bitdex = 0;
@@ -5781,6 +5854,12 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
       break;
     case ON_DimStyle::field::DecimalSeparator:
       ON_INTERNAL_UPDATE_PROPERTY(DecimalSeparator);
+      break;
+    case ON_DimStyle::field::Kerning:
+      ON_INTERNAL_UPDATE_PROPERTY(UseKerning);
+      break;
+    case ON_DimStyle::field::LineSpaceScale:
+      ON_INTERNAL_UPDATE_PROPERTY(LineSpaceScale);
       break;
     default:
       ON_ERROR("The switch statement in this function has gaps!");

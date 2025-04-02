@@ -1668,15 +1668,62 @@ public:
     ON_3dVector failure_result
   ) const;
 
-  /*
-    Angle (in radians) between two vectors. A and B must be non-zero vectors
-   Returns 
-     0<= angle <= ON_PI
-    Note: The function is symmetric, i.e Angle(A,B) = Angle(B,A)
-          This function is always accurate, in particular for nearly parallel,
-          anti-parallel or  perpendicular vectors
-  */
+  /// <summary>
+  /// Get then angle in radians between two nonzero vectors. 
+  /// The order of the vector parameters does not matter.
+  /// The calculation uses atan() in formula that performs 
+  /// well for vectors that are nearly parallel or anti-parallel.
+  /// </summary>
+  /// <param name="A">
+  /// Nonzero vector
+  /// </param>
+  /// <param name="B">
+  /// Nonzero vector
+  /// </param>
+  /// <returns>
+  /// If A and B are nonzero vectors, then the angle between A and B
+  /// in radians returned; the returned value is in the range [0, ON_PI].
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
   static double Angle(const ON_3dVector& A, const ON_3dVector& B);
+
+  /// <summary>
+  /// Get then angle in radians between two nonzero vectors. 
+  /// The order of the vector parameters does not matter.
+  /// The calculation uses atan() in formula that performs 
+  /// well for vectors that are nearly parallel or anti-parallel.
+  /// </summary>
+  /// <param name="A">
+  /// Nonzero vector
+  /// </param>
+  /// <param name="B">
+  /// Nonzero vector
+  /// </param>
+  /// <returns>
+  /// If A and B are nonzero vectors, then the angle between A and B
+  /// in radians returned; the returned value is in the range [0, ON_PI].
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  static double AngleRadians(const ON_3dVector& A, const ON_3dVector& B);
+
+  /// <summary>
+  /// Get then angle in degrees between two nonzero vectors. 
+  /// The order of the vector parameters does not matter.
+  /// The calculation uses atan() in formula that performs 
+  /// well for vectors that are nearly parallel or anti-parallel.
+  /// </summary>
+  /// <param name="A">
+  /// Nonzero vector
+  /// </param>
+  /// <param name="B">
+  /// Nonzero vector
+  /// </param>
+  /// <returns>
+  /// If A and B are nonzero vectors, then the angle between A and B
+  /// in degrees returned; the returned value is in the range [0, 180].
+  /// Otherwise ON_DBL_QNAN is returned.
+  /// </returns>
+  static double AngleDegrees(const ON_3dVector& A, const ON_3dVector& B);
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
@@ -3747,6 +3794,8 @@ private:
   const double* m_dP;
   const float* m_fP;
 };
+
+
 
 
 /*

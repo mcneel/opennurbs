@@ -31,8 +31,13 @@ public:
   bool operator!=(const ON_LayerPrivate&) const;
 
   std::shared_ptr<ON_SectionStyle> m_custom_section_style;
-
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  int m_section_style_index = -1;
+#endif
   bool m_visible_in_new_details = true;
+
+  // Layer description or notes
+  ON_wString m_description;
 };
 
 static const ON_LayerPrivate DefaultLayerPrivate;
@@ -57,7 +62,15 @@ bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
     }
   }
 
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  if (m_section_style_index != other.m_section_style_index)
+    return false;
+#endif
+
   if (m_visible_in_new_details != other.m_visible_in_new_details)
+    return false;
+
+  if (m_description != other.m_description)
     return false;
 
   return true;
@@ -320,8 +333,10 @@ enum ON_LayerTypeCodes : unsigned char
   // 11 May 2023 S. Baer
   // New selective clipping data with bool for list type
   ObsoleteSelectiveClippingListType = 36,
-
-  LastLayerTypeCode = 36
+  // 7 Jan 2025 D. Fugier
+  // layer description
+  LayerDescription = 37,
+  LastLayerTypeCode = 37
 };
 
 bool ON_Layer::Write(
@@ -587,6 +602,17 @@ bool ON_Layer::Write(
     //  rc = file.WriteBool(m_private->m_clipplane_list_is_participation);
     //  if (!rc) break;
     //}
+
+    // 7 Jan 2025 D. Fugier
+    // layer description
+    if (Description() != DefaultLayerPrivate.m_description)
+    {
+      c = ON_LayerTypeCodes::LayerDescription; // 37
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteString(Description());
+      if (!rc) break;
+    }
 
     // 0 indicates end of new non-default attributes
     c = 0;
@@ -903,6 +929,20 @@ bool ON_Layer::Read(
                         //  m_private = new ON_LayerPrivate();
                         //m_private->m_clipplane_list_is_participation = b;
 
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      // 7 Jan 2025 D. Fugier
+                      // layer description
+                      if (ON_LayerTypeCodes::LayerDescription == itemid) // 37
+                      {
+                        ON_wString str;
+                        rc = file.ReadString(str);
+                        if (!rc)
+                          break;
+                        if (str.Length() > 0)
+                          SetDescription(static_cast<const wchar_t*>(str));
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -2473,6 +2513,26 @@ void ON_Layer::UnsetPersistentLocking()
   m_extension_bits &= and_mask;
 }
 
+#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+int ON_Layer::SectionStyleIndex() const
+{
+  return m_private ? m_private->m_section_style_index : DefaultLayerPrivate.m_section_style_index;
+}
+void ON_Layer::SetSectionStyleIndex(int index)
+{
+  if (index<-1)
+    index = -1;
+  
+  if (index == SectionStyleIndex())
+    return;
+  
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+
+  m_private->m_section_style_index = index;
+}
+#endif
+
 void ON_Layer::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)
 {
   if (nullptr == m_private)
@@ -2511,4 +2571,24 @@ void ON_Layer::SetPerViewportIsVisibleInNewDetails(bool bVisible)
   if (nullptr == m_private)
     m_private = new ON_LayerPrivate();
   m_private->m_visible_in_new_details = bVisible;
+  IncrementContentVersionNumber();
+}
+
+ON_wString ON_Layer::Description() const
+{
+  return m_private ? m_private->m_description : ON_wString::EmptyString;
+}
+
+void ON_Layer::SetDescription(const wchar_t* description)
+{
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+
+  ON_wString str(description);
+  str.TrimLeftAndRight();
+  if (str != m_private->m_description)
+  {
+    m_private->m_description = str;
+    IncrementContentVersionNumber();
+  }
 }

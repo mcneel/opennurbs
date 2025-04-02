@@ -1206,5 +1206,86 @@ void ON_Font::DumpCTFont(
   text_log.PopIndent();
 }
 
+int ON_FontGlyph::GetGlyphListKerningOffsetsFromCoreText
+(
+  unsigned int code_point_count,
+  ON__UINT32* code_points,
+  const class ON_Font* font,
+  ON_SimpleArray<double>& kerning_offsets
+ )
+{
+  kerning_offsets.SetCount(0);
+  if (code_point_count < 2 || nullptr == code_points || nullptr == font)
+    return 0;
+
+  ON_SimpleArray<wchar_t> characters((int)code_point_count+1);
+  characters.SetCount((int)code_point_count + 1);
+  ON_ConvertUTF32ToWideChar(0, code_points, (int)code_point_count, characters.Array(), characters.Count(), nullptr, 0xFFFFFFFF, ON_UnicodeCodePoint::ON_ReplacementCharacter, nullptr);
+  ON_wString text = characters.Array();
+  int characterCount = text.Length();
+  if (characterCount > 1)
+  {
+    CFStringRef str = text.ToAppleCFString();
+    bool isSubstitute = false;
+    CTFontRef fontref = font->AppleCTFont(ON_Font::Constants::AnnotationFontCellHeight, isSubstitute);
+
+    CFRange range;
+    range.length = 0;
+    range.location = 0;
+    {
+      CFStringRef keysWithKerning[] = { kCTFontAttributeName };
+      CFTypeRef valuesWithKerning[] = { fontref };
+      CFDictionaryRef attributesWithKerning = CFDictionaryCreate(NULL,
+        (const void**)&keysWithKerning, (const void**)&valuesWithKerning, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+      CFAttributedStringRef attributedStringKerned = CFAttributedStringCreate(nullptr, str, attributesWithKerning);
+      CTTypesetterRef typesetter = CTTypesetterCreateWithAttributedString(attributedStringKerned);
+      CTLineRef line = CTTypesetterCreateLine(typesetter, range);
+      CFArrayRef runs = CTLineGetGlyphRuns(line);
+      CTRunRef run = (CTRunRef)CFArrayGetValueAtIndex(runs, 0);
+
+      // positions include kerning info
+      const CGPoint* positions = CTRunGetPositionsPtr(run);
+      for (int i = 1; i < characterCount; i++)
+      {
+        double advance = positions[i].x - positions[i - 1].x;
+        kerning_offsets.Append(advance);
+      }
+      CFRelease(line);
+      CFRelease(typesetter);
+      CFRelease(attributedStringKerned);
+      CFRelease(attributesWithKerning);
+    }
+
+    {
+      CFStringRef keysNoKerning[] = { kCTFontAttributeName, kCTKernAttributeName };
+      double d = 0;
+      CFNumberRef zero = CFNumberCreate(NULL, kCFNumberDoubleType, &d);
+      CFTypeRef valuesNoKerning[] = { fontref, zero };
+      CFDictionaryRef attributesNoKerning = CFDictionaryCreate(NULL,
+        (const void**)&keysNoKerning, (const void**)&valuesNoKerning, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+      CFAttributedStringRef attributedStringNoKerning = CFAttributedStringCreate(nullptr, str, attributesNoKerning);
+      CTTypesetterRef typesetter = CTTypesetterCreateWithAttributedString(attributedStringNoKerning);
+      CTLineRef line = CTTypesetterCreateLine(typesetter, range);
+      CFArrayRef runs = CTLineGetGlyphRuns(line);
+      CTRunRef run = (CTRunRef)CFArrayGetValueAtIndex(runs, 0);
+
+      // positions include kerning info
+      const CGPoint* positions = CTRunGetPositionsPtr(run);
+      for (int i = 1; i < characterCount; i++)
+      {
+        double advance = positions[i].x - positions[i - 1].x;
+        kerning_offsets[i - 1] = kerning_offsets[i - 1] - advance;
+      }
+      CFRelease(line);
+      CFRelease(typesetter);
+      CFRelease(attributedStringNoKerning);
+      CFRelease(attributesNoKerning);
+    }
+
+    CFRelease(fontref);
+    CFRelease(str);
+  }
+  return kerning_offsets.Count();
+}
 
 #endif

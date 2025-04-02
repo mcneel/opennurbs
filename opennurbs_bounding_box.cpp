@@ -1924,6 +1924,13 @@ bool ON_BoundingBox::Expand(ON_3dVector delta)
   return IsValid();
 }
 
+bool ON_BoundingBox::Expand(double margin)
+{
+  for (int i = 0; i < 3; ++i) m_min[i] -= margin;
+  for (int i = 0; i < 3; ++i) m_max[i] += margin;
+  return IsValid();
+}
+
 bool ON_BoundingBox::Shrink(ON_3dVector delta)
 {
   m_min += delta;

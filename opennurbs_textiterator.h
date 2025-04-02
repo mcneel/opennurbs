@@ -110,28 +110,8 @@ public:
   class TextProps
   {
   public:
-    TextProps()
-    {}
-    TextProps(
-      double height,
-      double stackscale,
-      ON_Color color,
-      ON_DimStyle::stack_format stackformat,
-      bool bold,
-      bool italic,
-      bool underlined,
-      bool strikethrough,
-      unsigned int charset)
-      : m_height(height)
-      , m_stackscale(stackscale)
-      , m_color(color)
-      , m_stackformat(stackformat)
-      , m_bold(bold)
-      , m_italic(italic)
-      , m_underlined(underlined)
-      , m_strikethrough(strikethrough)
-      , m_codepage(1252)
-    {}
+    TextProps(){}
+
     double Height() const
     {
       return m_height;
@@ -198,6 +178,22 @@ public:
     {
       m_strikethrough = strikethrough;
     }
+    bool IsKerningEnabled() const
+    {
+      return m_kerning;
+    }
+    void SetKerningEnabled(bool kerning)
+    {
+      m_kerning = kerning;
+    }
+    double LineSpaceScale() const
+    {
+      return m_linespace_scale;
+    }
+    void SetLineSpaceScale(double scale)
+    {
+      m_linespace_scale = scale;
+    }
     unsigned int CodePage()
     {
       return m_codepage;
@@ -240,11 +236,12 @@ public:
     unsigned int              m_codepage = 1252;
     unsigned int              m_charset = 0;   // Charset isn't really needed but is here to make debugging a little easier
     bool                      m_format_pending = false;
+    bool                      m_kerning = false;
+    double                    m_linespace_scale = 1.0;
   };
 
   ON_ClassArray< TextProps >  m_prop_stack;
   TextProps                   m_current_props;
-  TextProps                   m_pending_props;
 
   // Rtf uses UTF-16 encoding and surrogate pairs need to be properly handled.
   // For example, the single UNICODE code point ON_UnicodeCodePoint::Wastebasket U+1F5D1 (decimal 128465)

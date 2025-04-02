@@ -125,7 +125,21 @@ public:
     /// <summary> Text mask frame outline rectangle drawn </summary>
     RectFrame = 1,
     /// <summary> Text mask frame outline capsule drawn </summary>
-    CapsuleFrame = 2
+    CapsuleFrame = 2,
+    /// <summary> Text mask frame outline circle drawn </summary>
+    CircleFrame = 3,
+    /// <summary> Text mask frame outline square drawn </summary>
+    SquareFrame = 4,
+    /// <summary> Text mask frame outline square rotated 45 degrees </summary>
+    DiamondFrame = 5,
+    /// <summary> Text mask frame outline triangle drawn </summary>
+    TriangleFrame = 6,
+    /// <summary> Text mask frame outline as a hexagon </summary>
+    HexagonFrame = 7,
+    /// <summary> Text mask frame outline as an elongated hexagon </summary>
+    HexagonCapsuleFrame = 8,
+    /// <summary> Text mask frame outline as a rounded rectangle </summary>
+    RoundRectFrame = 9,
   };
 #pragma endregion
 
@@ -903,8 +917,18 @@ public:
     /// </summary>
     DecimalSeparator = 114,
 
+    /// <summary>
+    /// Enable kerning for placement of characters
+    /// </summary>
+    Kerning = 115,
+    
+    /// <summary>
+    /// Scale applied for line spacing
+    /// </summary>
+    LineSpaceScale = 116,
+    
     /// <summary>Every enum UINT value that identifies a valid dimension style property is less than the UINT value of Count.</summary>
-    Count = 115
+    Count = 117
   };
   
 #pragma endregion
@@ -2165,6 +2189,13 @@ public:
   void SetDecimalSeparator(wchar_t separator);
   wchar_t DecimalSeparator() const;
 
+  // Should kerning be applied when computing glyph placement
+  bool UseKerning() const;
+  void SetUseKerning(bool enableKerning);
+  
+  double LineSpaceScale() const;
+  void SetLineSpaceScale(double scale);
+
   //double ModelSize() const;
   //void SetModelSize(double size);
   //double PaperSize() const;
@@ -2299,7 +2330,7 @@ private:
 
   bool   m_bSuppressExtension1                     = false;   // flag to not draw extension lines
   bool   m_bSuppressExtension2                     = false;   // flag to not draw extension lines
-  bool   m_bReserved1 = false;
+  bool   m_bUseKerning                             = false;
   bool   m_bReserved2 = false;
 
   // m_field_override_count
@@ -2393,7 +2424,7 @@ private:
     
   unsigned char   m_ReservedChar1                  = 0;
   unsigned short  m_ReservedShort1 = 0;
-  unsigned int    m_ReservedInt1 = 0;
+  float           m_linespace_scale                = 1.0f;
 
   double          m_text_rotation                  = 0.0;              // Dimension text rotation around text point (radians)
   int             m_alternate_tolerance_resolution = 4; // for decimal, digits past the decimal point, fractions: 1/2^n

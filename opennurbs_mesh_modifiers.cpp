@@ -84,7 +84,6 @@ ON_UUID ON_DisplacementUserData::Uuid(void)
 ON_DisplacementUserData::ON_DisplacementUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -94,12 +93,11 @@ ON_DisplacementUserData::ON_DisplacementUserData(const ON_DisplacementUserData& 
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -703,7 +701,6 @@ ON_UUID ON_EdgeSofteningUserData::Uuid(void)
 ON_EdgeSofteningUserData::ON_EdgeSofteningUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -713,12 +710,11 @@ ON_EdgeSofteningUserData::ON_EdgeSofteningUserData(const ON_EdgeSofteningUserDat
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -898,7 +894,6 @@ ON_UUID ON_ThickeningUserData::Uuid(void)
 ON_ThickeningUserData::ON_ThickeningUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -908,12 +903,11 @@ ON_ThickeningUserData::ON_ThickeningUserData(const ON_ThickeningUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -1084,7 +1078,6 @@ ON_UUID ON_CurvePipingUserData::Uuid(void)
 ON_CurvePipingUserData::ON_CurvePipingUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -1094,12 +1087,11 @@ ON_CurvePipingUserData::ON_CurvePipingUserData(const ON_CurvePipingUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -1312,7 +1304,6 @@ ON_UUID ON_ShutLiningUserData::Uuid(void)
 ON_ShutLiningUserData::ON_ShutLiningUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -1322,12 +1313,11 @@ ON_ShutLiningUserData::ON_ShutLiningUserData(const ON_ShutLiningUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 

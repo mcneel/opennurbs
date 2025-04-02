@@ -467,6 +467,7 @@ ON_SubDArchiveIdMap::ON_SubDArchiveIdMap()
 
 bool ON_SubDArchiveIdMap::Reset()
 {
+  m_fsp_archive_id_finder.Clear();
   m_fsp.ReturnAll();
   m_element_index = ON_UNSET_UINT_INDEX;
   m_element_count = 0;
@@ -546,7 +547,15 @@ const ON_SubDComponentPtr* ON_SubDArchiveIdMap::ComponentPtrFromArchiveId(
   unsigned int archive_id
   ) const
 {
-  return (const ON_SubDComponentPtr*)m_fsp.Element(archive_id);
+  // Dale Lear March 2025
+  // fixing RH-86029 and RH-85040
+  // When m_fsp has lots of blocks (In RH-85040 m_fsp has thousands of blocks)
+  // m_fsp.Element() is slow.  I created ON_FixedSizePoolElementFromIndexAccelerator
+  // to dramatically speed up converting an index into a fsp to an element point from the approprate fsp block.
+  // m_fsp_archive_id_finder.ElementFromIndex() is dramatically faster than m_fsp.Element().
+  // SLOW // const ON_SubDComponentPtr* cptr = (const ON_SubDComponentPtr*)m_fsp.Element(archive_id);
+  const ON_SubDComponentPtr* cptr = (const ON_SubDComponentPtr*)m_fsp_archive_id_finder.ElementFromIndex(archive_id);
+  return cptr;
 }
 
 
@@ -608,6 +617,8 @@ unsigned int ON_SubDArchiveIdMap::ConvertArchiveIdsToRuntimePointers()
     return ON_SUBD_RETURN_ERROR(0);
   
   element = Next();
+
+  m_fsp_archive_id_finder.Initialize(m_fsp);
 
   unsigned int archive_id;
 

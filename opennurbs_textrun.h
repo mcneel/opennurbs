@@ -132,6 +132,7 @@ public:
     kHeader      = 9,
     kFonttbl     = 10,
     kColortbl    = 11,
+    kTab         = 12,
   };
 
   static ON_TextRun::RunType RunTypeFromUnsigned(
@@ -214,6 +215,12 @@ public:
   const ON_2dVector& Advance() const;
   void SetAdvance(ON_2dVector advance);
 
+  bool ApplyKerning() const;
+  void SetApplyKerning(bool applyKerning);
+  
+  double LineSpaceScale() const;
+  void SetLineSpaceScale(double scale);
+  
   // This returns the scale of m_height / HeightOfI.
   // It doesn't take into account anything about annotation scaling
   // This is the scale for converting ON_TextRun bounding boxes and 
@@ -298,6 +305,9 @@ private:
   mutable ON_SHA1_Hash m_text_run_display_hash = ON_SHA1_Hash::ZeroDigest;
 
   ON_TextRun::Stacked  m_text_stacked = ON_TextRun::Stacked::kNone; // 0: Normal text, 1: Run is stacked container, 2: Run is top of stacked fraction, 3: Run is bottom of stacked fraction
+  unsigned char        m_reserved_char0 = 0;
+  unsigned char        m_reserved_char1 = 0;
+  unsigned char        m_reserved_char2 = 0;
 
 private:
   void Internal_ContentChanged() const;
@@ -340,8 +350,10 @@ public:
 
   int                  m_line_index = -1;          // line position in ON_TextContent
 
+  bool                 m_apply_kerning = false;
+  unsigned char        m_reserved_char3 = 0;
 private:
-  ON__UINT_PTR m_reserved=0;
+  class ON_TextRunPrivate* m_private = nullptr;
 
 private:
   friend class ON_StackedText;

@@ -1189,10 +1189,6 @@ ON_UuidPtr* ON_UuidPtrList::SearchHelper(const ON_UUID* uuid) const
   return p;
 }
 
-// static_assert(sizeof(ON_UuidPairList) == sizeof(ON_UuidPairList2), "ON_UuidPairList and ON_UuidPairList2 are not the same size");
-// static_assert(sizeof(ON_UuidPtrList) == sizeof(ON_UuidPtrList2), "ON_UuidPtrList and ON_UuidPtrList2 are not the same size");
-// static_assert(sizeof(ON_UuidIndexList) == sizeof(ON_UuidIndexList2), "ON_UuidIndexList and ON_UuidIndexList2 are not the same size");
-
 template <typename T>
 struct ON_UuidList2_Private
 {

@@ -1402,6 +1402,13 @@ ON_GetParameterTolerance(
         );
 
 
+// calculates the limit dir (quadrant) needed by ON_EvNormal.
+// if uDom is nullptr, ON_Interval::ZeroToOne is used for the u-domain
+// if vDOm is nullptr, ON_Interval::ZeroToOne is used for the v-domain
+// NOTE: u and v are NOT checked for containment in uDom, vDom
+ON_DECL 
+int ON_NormalLimitDir(double u, double v, ON_Interval* uDom = nullptr, ON_Interval* vDom = nullptr); 
+
 ON_DECL
 bool ON_EvNormal(
         int, // limit_dir 0=default,1=from quadrant I, 2 = from quadrant II, ...
@@ -1409,6 +1416,7 @@ bool ON_EvNormal(
         const ON_3dVector&, const ON_3dVector&, const ON_3dVector&, // optional second partials (Duu, Duv, Dvv)
         ON_3dVector& // unit normal returned here
         );
+
 
 // returns false if the returned tangent is zero
 ON_DECL
@@ -1644,7 +1652,7 @@ Parameters:
   D2a - [in] second derivative of curve A.
   Pb - [in] point on curve B.
   D1b - [in] first derivative of curve B.
-  D3b - [in] second derivative of curve B.
+  D2b - [in] second derivative of curve B.
   point_tolerance - [in] if the distance between two points is
       greater than point_tolerance, then the curve is not C0.
   d1_tolerance - [in] if the difference between two first derivatives is

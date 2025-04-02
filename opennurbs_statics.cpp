@@ -543,11 +543,14 @@ const ON_UUID ON_rhino7_id = { 0x78464c2c, 0x9aeb, 0x456e,{ 0x8c, 0x27, 0x86, 0x
 // {868c63f5-3760-4a45-8600-5399cc57b47c}
 const ON_UUID ON_rhino8_id = { 0x868c63f5, 0x3760, 0x4a45,{ 0x86, 0x00, 0x53, 0x99, 0xcc, 0x57, 0xb4, 0x7c } };
 
+// {953A29B7-895D-4389-9374-F5106F10D17D}
+const ON_UUID ON_rhino9_id = { 0x953a29b7, 0x895d, 0x4389, { 0x93, 0x74, 0xf5, 0x10, 0x6f, 0x10, 0xd1, 0x7d } };
+
 // ON_rhino_id is always set to the value for the current version
 // of Rhino.  ON_rhino_id is the id that should be used as the
 // userdata application id for userdata class definitions that are
 // in the core Rhino executable.
-const ON_UUID ON_rhino_id = ON_rhino8_id;
+const ON_UUID ON_rhino_id = ON_rhino9_id;
 
 // Used to identify userdata read from V2 files
 // which were written before userdata had application ids.
@@ -578,14 +581,17 @@ const ON_UUID ON_opennurbs6_id = { 0x7b0b585d, 0x7a31, 0x45d0,{ 0x92, 0x5e, 0xbd
 const ON_UUID ON_opennurbs7_id = { 0x523bfe6e, 0xef49, 0x4b75,{ 0xa8, 0xd6, 0x25, 0x3f, 0xaf, 0x50, 0x44, 0xd3 } };
 
 // {50EDE5C9-1487-4B4C-B3AA-6840B460E3CF}
-const ON_UUID ON_opennurbs8_id = { 0x50ede5c9, 0x1487, 0x4b4c, { 0xb3, 0xaa, 0x68, 0x40, 0xb4, 0x60, 0xe3, 0xcf } };
+const ON_UUID ON_opennurbs8_id = { 0x50ede5c9, 0x1487, 0x4b4c,{ 0xb3, 0xaa, 0x68, 0x40, 0xb4, 0x60, 0xe3, 0xcf } };
+
+// {9421EE97-E895-47BC-99EB-5FD1BA35B367}
+const ON_UUID ON_opennurbs9_id = { 0x9421ee97, 0xe895, 0x47bc,{ 0x99, 0xeb, 0x5f, 0xd1, 0xba, 0x35, 0xb3, 0x67 } };
 
 
 // ON_opennurbs_id is always set to the value for the current version
 // of opennurbs.  ON_opennurbs_id is the id that should be used as
 // the userdata application id for userdata classes definitions that
 // are in the opennurbs library.
-const ON_UUID ON_opennurbs_id = ON_opennurbs8_id;
+const ON_UUID ON_opennurbs_id = ON_opennurbs9_id;
 
 const ON_UuidPairList ON_UuidPairList::EmptyList;
 const ON_UuidPairList2 ON_UuidPairList2::EmptyList;
@@ -1437,6 +1443,7 @@ const ON_FontMetrics ON_FontMetrics::LastResortMetrics( Internal_LastResortFontM
 ON_Font::ON_GetGlyphMetricsFuncType ON_Font::Internal_CustomGetGlyphMetricsFunc = nullptr;
 ON_Font::ON_GetFontMetricsFuncType ON_Font::Internal_CustomGetFontMetricsFunc = nullptr;
 ON_Font::ON_GetGlyphOutlineFuncType ON_Font::Internal_CustomGetGlyphOutlineFunc = nullptr;
+ON_Font::ON_GetFontKerningPairsFuncType ON_Font::Internal_CustomGetFontKerningPairsFunc = nullptr;
 
 // Used to test freetype
 //ON_Font::ON_GetGlyphMetricsFuncType ON_Font::Internal_CustomGetGlyphMetricsFunc = ON_FreeTypeGetGlyphMetrics;
