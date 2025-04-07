@@ -139,6 +139,8 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 
 // Decals (stored in object attributes user data).
 
+#define ON_RDK_USER_DATA_ROOT             L"render-content-manager-data"
+
 #define ON_RDK_DECALS                       L"decals"
 
   #define ON_RDK_DECAL                      L"decal"

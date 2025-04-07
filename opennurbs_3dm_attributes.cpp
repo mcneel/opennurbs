@@ -2525,15 +2525,36 @@ ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void) const
   return m_private->m_mesh_modifiers;
 }
 
-const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const
+const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const // Deprecated.
+{
+  std::vector<std::shared_ptr<ON_Decal>> decals;
+  GetDecalArray(decals);
+
+  static ON_SimpleArray<ON_Decal*> dummy;
+  dummy.Destroy();
+
+  for (const auto& decal_sp : decals)
+  {
+    dummy.Append(decal_sp.get());
+  }
+
+  return dummy;
+}
+
+void ON_3dmObjectAttributes::GetDecalArray(std::vector<std::shared_ptr<ON_Decal>>& array_out) const
 {
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  return m_private->m_decals.GetDecalArray();
+  array_out = m_private->m_decals.GetDecalArray();
 }
 
-ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
+ON_Decal* ON_3dmObjectAttributes::AddDecal(void) // Deprecated.
+{
+  return AddDecalEx().get();
+}
+
+const std::shared_ptr<ON_Decal> ON_3dmObjectAttributes::AddDecalEx(void)
 {
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
