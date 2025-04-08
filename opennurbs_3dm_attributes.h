@@ -518,19 +518,26 @@ public:
 
   // Decals.
 
+  // This method is deprecated in favor of the one below.
+  ON_DEPRECATED const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
+
   /*
   Description:
     Get an array of decals that are stored on this attributes object.
-    Do not store or delete pointers from the array.
+    Param array_out is first cleared and then filled with shared pointers to decals (if any).
+    Do not store or delete raw pointers from the array.
   */
-  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
+  void GetDecalArray(std::vector<std::shared_ptr<ON_Decal>>& array_out) const;
+
+  // This method is deprecated in favor of AddDecalEx().
+  ON_DEPRECATED ON_Decal* AddDecal(void);
 
   /*
   Description:
     Add a new decal to this attributes object. The returned pointer points to an object
     that is owned by the attributes. Do not store or delete it.
   */
-  ON_Decal* AddDecal(void);
+  const std::shared_ptr<ON_Decal> AddDecalEx(void);
 
   /*
   Description:

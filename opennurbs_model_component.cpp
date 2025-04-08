@@ -3888,6 +3888,10 @@ ON_ModelComponentReference ON_ModelComponentReference::CreateConstantSystemCompo
   if ( system_model_component.IsSystemComponent())
     return CreateForExperts(const_cast<ON_ModelComponent*>(&system_model_component),false);
 
+
+  // If you get this error, first double check and make sure you
+  // are calling ON::Begin() before you make any other calls
+  // into opennurbs.
   ON_ERROR("Invalid system_model_component parameter.");
   return ON_ModelComponentReference::Empty;
 }
