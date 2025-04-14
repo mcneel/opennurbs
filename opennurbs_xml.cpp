@@ -2174,6 +2174,13 @@ void ON_XMLNodePrivate::MoveBefore(ON_XMLNode& other)
   {
     pBeforeOther->_private->m_next_sibling = &m_node;
   }
+
+  // 13th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-86050
+  if (m_parent->_private->m_last_child == &m_node)
+  {
+    // 'this' was the tail; redirect the parent's last child.
+    m_parent->_private->m_last_child = pPrev;
+  }
 }
 
 void ON_XMLNodePrivate::MoveAfter(ON_XMLNode& other)
@@ -2195,6 +2202,13 @@ void ON_XMLNodePrivate::MoveAfter(ON_XMLNode& other)
   {
     // 'this' was the head; redirect the parent's first child.
     m_parent->_private->m_first_child = m_next_sibling;
+  }
+
+  // 13th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-86050
+  if (m_parent->_private->m_last_child == &m_node)
+  {
+    // 'this' was the tail; redirect the parent's last child.
+    m_parent->_private->m_last_child = pPrev;
   }
 
   m_next_sibling = other._private->m_next_sibling;
@@ -3950,8 +3964,20 @@ const ON_XMLRootNode& ON_XMLUserData::XMLRootForRead(void) const
   return _private->m_XMLRoot.NodeForRead();
 }
 
-ON_XMLRootNode& ON_XMLUserData::XMLRootForWrite(void) const
+ON_XMLRootNode& ON_XMLUserData::XMLRootForWrite(void) const // const is a mistake. [SDK_UNFREEZE]
 {
+  // 22nd January 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-67878
+  // Per conversation with Dale Lear, this is bad because we are actually going to change the user data while
+  // it's already attached to the attributes. We're actually expected to delete the old user data and create
+  // new user data with the changes in it, because otherwise Rhino can't know that it was changed. However,
+  // Dale suggested the easiest way to fix this is to just bump the copy count, because the optimization in
+  // CRhinoObject::ModifyAttributes() involving the copy count is really a hack anyway.
+
+  if (m_userdata_copycount > 0) // Zero means we are not even copying user data.
+  {
+    const_cast<ON_XMLUserData*>(this)->m_userdata_copycount++;
+  }
+
   return _private->m_XMLRoot.NodeForWrite();
 }
 
