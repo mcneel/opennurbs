@@ -3131,7 +3131,7 @@ public:
   /// Postfix operator ++ sets this to ON_SubDComponentPtr::NextComponent() 
   /// and returns the previous value of this.
   /// </summary>
-  /// <returns>ON_SubDComponentPtr::NextComponent()</returns>
+  /// <returns>*this, before increment</returns>
   const ON_SubDComponentPtr operator++(int);
 
 
@@ -17694,13 +17694,34 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Prefix increment the iterator.
+  Returns:
+    Next vertex.
+  Remarks:
+    operator++(void) and NextVertex() behave the same.
+    In OpenNURBS 8.17 and earlier, this function was incorrectly implemented as
+    a postfix increment (operator++(int)). This has been corrected in OpenNURBS 8.18.
+    If you have a plugin compiled without inlining optimizations (e.g. in Debug mode),
+    operator++(void) will be calling the version in opennurbs.dll distributed
+    with Rhino that is used to run the plugin.
+    If you have a plugin compiled with inlining optimizations (e.g. in Release mode),
+    operator++(void) will behave like the version in opennurbs_subd.h distributed
+    with the Rhino SDK that was used to compiled the plugin.
+  */
+  const class ON_SubDVertex* operator++()
+  {
+    return NextVertex();
+  }
+
+  /*
+  Description:
+    Postfix increment the iterator.
   Returns:
     Current vertex.
   Remarks:
-    operator++ and NextVertex() behave differently.
+    operator++(int) and NextVertex() behave differently.
   */
-  const class ON_SubDVertex* operator++()
+  const class ON_SubDVertex* operator++(int)
   {
     const class ON_SubDVertex* v = m_v_current;
     NextVertex();
@@ -17739,11 +17760,12 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Pre-increment the iterator and return the new current vertex.
   Returns:
     Next vertex.
   Remarks:
-    operator++ and NextVertex() behave differently.
+    operator++(void) and NextVertex() behave the same.
+    operator++(int) and NextVertex() behave differently.
   */
   const class ON_SubDVertex* NextVertex()
   {
@@ -17799,6 +17821,41 @@ public:
   {
     m_vertex_index = (m_vertex_count > 0) ? (m_vertex_count - 1) : 0;
     return (m_v_current = m_v_last);
+  }
+
+  /*
+  Description:
+  Get the iterator's base component in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr if it exists, or ON_SubDComponentPtr::Null.
+  */
+  ON_SubDComponentPtr BaseComponentPtr() const
+  {
+    return m_component_ptr.m_ptr == 0 ? ON_SubDComponentPtr::Null : m_component_ptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Edge() if it exists, or nullptr.
+  */
+  ON_SubDEdge* BaseEdge() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsEdge() ? m_component_ptr.Edge() : nullptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Face() if it exists, or nullptr.
+  */
+  ON_SubDFace* BaseFace() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsFace() ? m_component_ptr.Face() : nullptr;
   }
 
 private:
@@ -17967,13 +18024,34 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Prefix increment the iterator.
+  Returns:
+    Next edge.
+  Remarks:
+    operator++(void) and NextEdge() behave the same.
+    In OpenNURBS 8.17 and earlier, this function was incorrectly implemented as
+    a postfix increment (operator++(int)). This has been corrected in OpenNURBS 8.18.
+    If you have a plugin compiled without inlining optimizations (e.g. in Debug mode),
+    operator++(void) will be calling the version in opennurbs.dll distributed
+    with Rhino that is used to run the plugin.
+    If you have a plugin compiled with inlining optimizations (e.g. in Release mode),
+    operator++(void) will behave like the version in opennurbs_subd.h distributed
+    with the Rhino SDK that was used to compiled the plugin.
+  */
+  const class ON_SubDEdge* operator++()
+  {
+    return NextEdge();
+  }
+
+  /*
+  Description:
+    Postfix increment the iterator.
   Returns:
     Current edge.
   Remarks:
-    operator++ and NextEdge() behave differently.
+    operator++(int) and NextEdge() behave differently.
   */
-  const class ON_SubDEdge* operator++()
+  const class ON_SubDEdge* operator++(int)
   {
     const class ON_SubDEdge* e = m_e_current;
     NextEdge();
@@ -18012,11 +18090,12 @@ public:
 
   /*
   Description:
-    Increment the iterator.
+    Pre-increment the iterator and return the new current edge.
   Returns:
     Next edge.
   Remarks:
-    operator++ and NextEdge() behave differently.
+    operator++(void) and NextEdge() behave the same.
+    operator++(int) and NextEdge() behave differently.
   */
   const class ON_SubDEdge* NextEdge()
   {
@@ -18072,6 +18151,41 @@ public:
   {
     m_edge_index = (m_edge_count > 0) ? (m_edge_count - 1) : 0;
     return m_e_current = m_e_last;
+  }
+
+  /*
+  Description:
+  Get the iterator's base component in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr if it exists, or ON_SubDComponentPtr::Null.
+  */
+  ON_SubDComponentPtr BaseComponentPtr() const
+  {
+    return m_component_ptr.m_ptr == 0 ? ON_SubDComponentPtr::Null : m_component_ptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base vertex in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Vertex() if it exists, or nullptr.
+  */
+  ON_SubDVertex* BaseVertex() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsVertex() ? m_component_ptr.Vertex() : nullptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Face() if it exists, or nullptr.
+  */
+  ON_SubDFace* BaseFace() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsFace() ? m_component_ptr.Face() : nullptr;
   }
 
 private:
@@ -18240,13 +18354,34 @@ public:
 
   /*
   Description:
-    Returns the current face and increment the iterator.
+    Prefix increment the iterator.
+  Returns:
+    Next face.
+  Remarks:
+    operator++(void) and NextFace() behave the same.
+    In OpenNURBS 8.17 and earlier, this function was incorrectly implemented as
+    a postfix increment (operator++(int)). This has been corrected in OpenNURBS 8.18.
+    If you have a plugin compiled without inlining optimizations (e.g. in Debug mode),
+    operator++(void) will be calling the version in opennurbs.dll distributed
+    with Rhino that is used to run the plugin.
+    If you have a plugin compiled with inlining optimizations (e.g. in Release mode),
+    operator++(void) will behave like the version in opennurbs_subd.h distributed
+    with the Rhino SDK that was used to compiled the plugin.
+  */
+  const class ON_SubDFace* operator++()
+  {
+    return NextFace();
+  }
+
+  /*
+  Description:
+    Postfix increment the iterator.
   Returns:
     Current face.
   Remarks:
-    operator++ and NextFace() behave differently.
+    operator++(int) and NextFace() behave differently.
   */
-  const class ON_SubDFace* operator++()
+  const class ON_SubDFace* operator++(int)
   {
     const class ON_SubDFace* f = m_face_current;
     NextFace();
@@ -18286,11 +18421,12 @@ public:
 
   /*
   Description:
-    Returns the next face and increments the iterator.
+    Pre-increment the iterator and return the new current face.
   Returns:
     Next face.
   Remarks:
-    operator++ and NextFace() behave differently.
+    operator++(void) and NextFace() behave the same.
+    operator++(int) and NextFace() behave differently.
   */
   const class ON_SubDFace* NextFace()
   {
@@ -18346,6 +18482,41 @@ public:
   {
     m_face_index = (m_face_count > 0) ? (m_face_count - 1) : 0;
     return (m_face_current = m_face_last);
+  }
+
+  /*
+  Description:
+  Get the iterator's base component in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr if it exists, or ON_SubDComponentPtr::Null.
+  */
+  ON_SubDComponentPtr BaseComponentPtr() const
+  {
+    return m_component_ptr.m_ptr == 0 ? ON_SubDComponentPtr::Null : m_component_ptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base vertex in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Vertex() if it exists, or nullptr.
+  */
+  ON_SubDVertex* BaseVertex() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsVertex() ? m_component_ptr.Vertex() : nullptr;
+  }
+
+  /*
+  Description:
+  Get the iterator's base edge in which we are iterating, if it exists.
+  Returns:
+  m_component_ptr.Edge() if it exists, or nullptr.
+  */
+  ON_SubDEdge* BaseEdge() const
+  {
+    if (m_component_ptr.m_ptr == 0) return nullptr;
+    return m_component_ptr.IsEdge() ? m_component_ptr.Edge() : nullptr;
   }
 
 
@@ -22064,7 +22235,7 @@ public:
 #if defined(ON_COMPILING_OPENNURBS)
 /*
 The ON_SubDAsUserData class is used to attach a subd to it proxy mesh
-when writing V6 files in commercial rhino.
+when writing prior than V6 files in commercial rhino.
 */
 class ON_SubDMeshProxyUserData : public ON_UserData
 {
