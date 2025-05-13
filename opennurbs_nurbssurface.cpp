@@ -778,60 +778,127 @@ bool ON_NurbsSurface::Read(
   // NOTE - check legacy I/O code if changed
   int major_version = 0;
   int minor_version = 0;
-  bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if (rc && major_version==1) {
+  while (file.Read3dmChunkVersion(&major_version, &minor_version))
+  {
+    if (1 != major_version)
+      break;
+
     // common to all 1.x versions
-    int dim = 0, is_rat = 0, order0 = 0, order1 = 0, cv_count0 = 0, cv_count1 = 0;
-    int reserved1 = 0, reserved2 = 0;
-    if (rc) rc = file.ReadInt( &dim );
-    if (rc) rc = file.ReadInt( &is_rat );
-    if (rc) rc = file.ReadInt( &order0 );
-    if (rc) rc = file.ReadInt( &order1 );
-    if (rc) rc = file.ReadInt( &cv_count0 );
-    if (rc) rc = file.ReadInt( &cv_count1 );
+    int dim = 0;
+    if (false == file.ReadInt(&dim))
+      break;
+    if (dim < 1)
+      break;
+    int is_rat = 0;
+    if (false == file.ReadInt(&is_rat))
+      break;
 
-    if (rc) rc = file.ReadInt(&reserved1);
-    if (rc) rc = file.ReadInt(&reserved2);
+    int order0 = 0;
+    if (false == file.ReadInt( &order0 ))
+      break;
+    if (order0 < 2)
+      break;
+    int order1 = 0;
+    if (false == file.ReadInt( &order1 ))
+      break;
+    if (order1 < 2)
+      break;
 
-    if (rc) {
-      ON_BoundingBox bbox; // read bounding box - may be used in future
-      rc = file.ReadBoundingBox(bbox);
-    }
+    int cv_count0 = 0;
+    if (false == file.ReadInt( &cv_count0 ))
+      break;
+    if (cv_count0 < order0)
+      break;
+    int cv_count1 = 0;
+    if (false == file.ReadInt( &cv_count1 ))
+      break;
+    if (cv_count1 < order1)
+      break;
+
+    // These are sanity checks for overflow.
+    // Safe fix for RH-83540
+    // They prevent attempt to allocate large numbers of knots when
+    // one of the orders or cv_counts red above is from a corrupt file.
+    const int expected_knot_count0 = ON_KnotCount(order0, cv_count0);
+    if (expected_knot_count0 < 2)
+      break;
+    const int expected_knot_count1 = ON_KnotCount(order1, cv_count1);
+    if (expected_knot_count1 < 2)
+      break;
+    const int expected_cv_count = cv_count0 * cv_count1;
+    if (expected_cv_count < 4)
+      break;
+    const int expected_cv_capacity = (is_rat != 0 ? (dim + 1) : dim) * expected_cv_count;
+    if (expected_cv_capacity < 4)
+      break;
+
+
+    int reserved1 = 0;
+    if (false == file.ReadInt(&reserved1))
+      break;
+    int reserved2 = 0;
+    if (false == file.ReadInt(&reserved2))
+      break;
+
+    ON_BoundingBox ignored_bbox; // read bounding box place holder - may be used in future
+    if (false == file.ReadBoundingBox(ignored_bbox))
+      break;
     
-    Create( dim, is_rat, order0, order1, cv_count0, cv_count1 );
-
-    int count = 0;
-    if (rc) rc = file.ReadInt(&count);
-    if (rc && count < 0)
-      rc = false;
-    if (rc ) rc = ReserveKnotCapacity(0,count);
-    if (rc) rc = file.ReadDouble( count, m_knot[0] );
-
-    count = 0;
-    if (rc) rc = file.ReadInt(&count);
-    if (rc && count < 0)
-      rc = false;
-    if (rc ) rc = ReserveKnotCapacity(1,count);
-    if (rc) rc = file.ReadDouble( count, m_knot[1] );
-
-    count = 0;
-    if (rc) rc = file.ReadInt(&count);
-    if (rc && count < 0)
-      rc = false;
+    if (false == Create(dim, is_rat, order0, order1, cv_count0, cv_count1))
+      break;
     const int cv_size = CVSize();
-    if (rc) rc = ReserveCVCapacity( count*cv_size );
-    if (count > 0 && cv_size > 0 && rc ) {
-      int i, j;
-      for ( i = 0; i < m_cv_count[0] && rc; i++ ) {
-        for ( j = 0; j < m_cv_count[1] && rc; j++ ) {
-          rc = file.ReadDouble( cv_size, CV(i,j) );
-        }
+    if (cv_size < dim)
+      break;
+
+    int knot_count0 = 0;
+    if (false == file.ReadInt(&knot_count0))
+      break;
+    if (knot_count0 != expected_knot_count0)
+      break;
+    if (false == ReserveKnotCapacity(0, knot_count0))
+      break;
+    if (false == file.ReadDouble(knot_count0, m_knot[0]))
+      break;
+
+    int knot_count1 = 0;
+    if (false == file.ReadInt(&knot_count1))
+      break;
+    if (knot_count1 != expected_knot_count1)
+      break;
+    if (false == ReserveKnotCapacity(1, knot_count1))
+      break;
+    if (false == file.ReadDouble(knot_count1, m_knot[1]))
+      break;
+
+    int cv_count = 0;
+    if (false == file.ReadInt(&cv_count))
+      break;
+    if (cv_count != expected_cv_count)
+      break;
+    if (false == ReserveCVCapacity(cv_count * cv_size))
+      break;
+    int i = 0;
+    for ( i = 0; i < m_cv_count[0]; i++ ) 
+    {
+      int j = 0;
+      for ( j = 0; j < m_cv_count[1]; j++ )
+      {
+        if (false == file.ReadDouble(cv_size, CV(i, j)))
+          break;
       }
+      if (j != m_cv_count[1])
+        break;
     }
+    if (i != m_cv_count[0])
+      break;
+
+    // successful read
+    return true;
   }
-  if ( !rc )
-    Destroy();
-  return rc;
+
+  // Corrupt file
+  Destroy();
+  return false;
 }
 
 ON_Interval ON_NurbsSurface::Domain( int dir ) const

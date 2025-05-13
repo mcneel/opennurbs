@@ -316,6 +316,73 @@ bool ON_VersionNumberParse(
   return rc;
 }
 
+int ON_VersionNumberCompare(
+  unsigned int lhs_version_number,
+  unsigned int rhs_version_number,
+  int invalid_input_result
+)
+{
+  // Ignore the minor version. The major version and date determine
+  // what code is newer/older when it comes to file contents.
+  // The "branch" is meaningless.
+  unsigned int lhs_major_version = 0;
+  unsigned int lhs_year = 0;
+  unsigned int lhs_month = 0;
+  unsigned int lhs_date = 0;
+  const bool bLHSIsValid = ON_VersionNumberParse(
+    lhs_version_number,
+    &lhs_major_version,
+    nullptr,
+    &lhs_year,
+    &lhs_month,
+    &lhs_date,
+    nullptr
+  );
+  if (false == bLHSIsValid)
+    return invalid_input_result;
+
+  // Ignore the minor version. The major version and date determine
+  // what code is newer/older when it comes to file contents.
+  // The "branch" is meaningless.
+  unsigned int rhs_major_version = 0;
+  unsigned int rhs_year = 0;
+  unsigned int rhs_month = 0;
+  unsigned int rhs_date = 0;
+  const bool bRHSIsValid = ON_VersionNumberParse(
+    rhs_version_number,
+    &rhs_major_version,
+    nullptr,
+    &rhs_year,
+    &rhs_month,
+    &rhs_date,
+    nullptr
+  );
+  if (false == bRHSIsValid)
+    return invalid_input_result;
+
+  if (lhs_major_version < rhs_major_version)
+    return -1;
+
+  if (lhs_major_version > rhs_major_version)
+    return 1;
+
+  // The minor version number does not tell us which version of opennurbs is older/newer.
+  // The date is the only way to determine this.
+
+  const unsigned int lhs_ymd = ((lhs_year * 100 + lhs_month) * 100 + lhs_date);
+  const unsigned int rhs_ymd = ((rhs_year * 100 + rhs_month) * 100 + rhs_date);
+
+  if (lhs_ymd < rhs_ymd)
+    return -1;
+
+  if (lhs_ymd > rhs_ymd)
+    return 1;
+
+  // The branch is meaningless.
+
+  return 0;
+}
+
 const ON_String ON_VersionNumberToString(
   unsigned int version_number,
   bool bUnsignedFormat,

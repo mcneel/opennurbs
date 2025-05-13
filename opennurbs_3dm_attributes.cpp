@@ -22,6 +22,9 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+// TODO: This really needs to be a member of ON_3dmObjectAttributes but that would break the SDK.
+std::recursive_mutex g_mutex;
+
 class ON_3dmObjectAttributesPrivate
 {
 public:
@@ -1076,6 +1079,7 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
     // not actually needed when running Rhino because the RDK decal UI directly updates
     // the user data when changes are made. This is only needed when using ONX_Model and
     // File3dm outside of Rhino, in case the programmer sets a decal property.
+    std::lock_guard<std::recursive_mutex> lg(g_mutex);
     const unsigned int archive_3dm_version = file.Archive3dmVersion();
     m_private->m_decals.UpdateUserData(archive_3dm_version);
   }
@@ -2519,22 +2523,49 @@ void ON_3dmObjectAttributes::SetObjectFrame(const ON_COMPONENT_INDEX& ci, const 
 
 ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
+
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
   return m_private->m_mesh_modifiers;
 }
 
-const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const
+const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const // Deprecated.
 {
+  std::vector<std::shared_ptr<ON_Decal>> decals;
+  GetDecalArray(decals);
+
+  static ON_SimpleArray<ON_Decal*> dummy;
+  dummy.Destroy();
+
+  for (const auto& decal_sp : decals)
+  {
+    dummy.Append(decal_sp.get());
+  }
+
+  return dummy;
+}
+
+void ON_3dmObjectAttributes::GetDecalArray(std::vector<std::shared_ptr<ON_Decal>>& array_out) const
+{
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
+
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
-  return m_private->m_decals.GetDecalArray();
+  array_out = m_private->m_decals.GetDecalArray();
 }
 
-ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
+ON_Decal* ON_3dmObjectAttributes::AddDecal(void) // Deprecated.
 {
+  return AddDecalEx().get();
+}
+
+const std::shared_ptr<ON_Decal> ON_3dmObjectAttributes::AddDecalEx(void)
+{
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
+
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
@@ -2543,6 +2574,8 @@ ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
 
 bool ON_3dmObjectAttributes::RemoveDecal(ON_Decal& decal)
 {
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
+
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 
@@ -2551,6 +2584,8 @@ bool ON_3dmObjectAttributes::RemoveDecal(ON_Decal& decal)
 
 void ON_3dmObjectAttributes::RemoveAllDecals(void)
 {
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
+
   if (nullptr == m_private)
     m_private = new ON_3dmObjectAttributesPrivate(this);
 

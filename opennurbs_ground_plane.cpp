@@ -246,6 +246,7 @@ bool ON_GroundPlane::PopulateMaterial(ON_Material& mat) const
 
 void ON_GroundPlane::SetXMLNode(ON_XMLNode& node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
   _impl->SetModelNode(node);
 }
 

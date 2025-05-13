@@ -332,6 +332,8 @@ ON_InternalXMLImpl::~ON_InternalXMLImpl()
 
 ON_XMLNode& ON_InternalXMLImpl::Node(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   // If the model node pointer is set, return that. This is a pointer to a node owned by the ON_3dmRenderSettings
   // which contains the entire RDK document XML. This is used by objects (Ground Plane, etc.) that are owned by the
   // ON_3dmRenderSettings. In the case of Ground Plane etc, it's a pointer into the ON_3dmRenderSettings XML.
@@ -353,6 +355,8 @@ ON_XMLNode& ON_InternalXMLImpl::Node(void) const
 void ON_InternalXMLImpl::SetModelNode(ON_XMLNode& node)
 {
   ON_ASSERT(_model_node == nullptr);
+
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
 
   if (nullptr != _local_node)
   {
@@ -2213,12 +2217,23 @@ void ONX_Model::DumpComponentLists( ON_TextLog& dump ) const
 ON_SHA1_Hash ONX_Model::ContentHash(
 ) const
 {
+  return ContentHash(ON_TextHash::Null);
+}
+
+ON_SHA1_Hash ONX_Model::ContentHash(
+  ON_TextLog& hashed_text
+) const
+{
   const bool bRemapIds = true;
   ON_TextHash hash_log;
   hash_log.SetIdRemap(bRemapIds);
+  if (false == hashed_text.IsNull())
+    hash_log.SetOutputTextLog(&hashed_text);
   Dump(hash_log);
   return hash_log.Hash();
+
 }
+
 
 class ON__CIndexPair
 {
@@ -4177,7 +4192,7 @@ unsigned int ONX_ModelTest::Source3dmFileVersion() const
 bool ONX_ModelTest::SkipCompare(unsigned int source_3dm_file_version)
 {
   const bool bSkipCompare
-    = (source_3dm_file_version >= 1 && source_3dm_file_version < 50);
+    = (source_3dm_file_version >= 1 && source_3dm_file_version < 70);
   return bSkipCompare;
 }
 
@@ -4363,8 +4378,9 @@ static void InternalDumpResultAndErrorCount(
   text_log.Print("%s", ONX_ModelTest::ResultToString(result));
   if (false == InternalCleanPass(result,error_counter))
   {
-    text_log.Print(": ");
+    text_log.Print(" (");
     error_counter.Dump(text_log);
+    text_log.Print(")");
   }
   text_log.PrintNewLine();
 }
@@ -4413,7 +4429,8 @@ std::shared_ptr<ONX_Model> ONX_ModelTest::ReadWriteReadModel() const
 
 static const ON_wString Internal_DumpModelfileName(
   const ON_wString source_3dm_file_path,
-  bool bSourceModel
+  bool bSourceModel,
+  bool bIsHashLog
 )
 {
   ON_wString file_name_stem = ON_FileSystemPath::FileNameFromPath(source_3dm_file_path,false);
@@ -4422,34 +4439,43 @@ static const ON_wString Internal_DumpModelfileName(
   ON_wString text_file_path = ON_FileSystemPath::VolumeAndDirectoryFromPath(source_3dm_file_path);
   text_file_path += file_name_stem;
   text_file_path += L"_ONX_ModelTest_";
+  if (bIsHashLog)
+    text_file_path += L"HASH_LOG_";
   if (bSourceModel)
     text_file_path += L"original";
   else
     text_file_path += L"copy";
 
+  if (false == bIsHashLog)
+  {
+    // The C-runtime loat/double formatting 
+    // can change with change with OS and relase/debug.
+    // This information is appended so the person reading
+    // the text file knows the context where it was created.
 #if defined(ON_RUNTIME_WIN)
 #if defined(ON_64BIT_RUNTIME)
-  text_file_path += L"_Win64";
+    text_file_path += L"_Win64";
 #elif defined(ON_32BIT_RUNTIME)
-  text_file_path += L"_Win32";
+    text_file_path += L"_Win32";
 #else
-  text_file_path += L"_Win";
+    text_file_path += L"_Win";
 #endif
 #elif defined(ON_RUNTIME_APPLE_MACOS)
-  text_file_path += L"_MacOS";
+    text_file_path += L"_MacOS";
 #elif defined(ON_RUNTIME_APPLE_IOS)
-  text_file_path += L"_iOS";
+    text_file_path += L"_iOS";
 #elif defined(ON_RUNTIME_APPLE)
-  text_file_path += L"_AppleOS";
+    text_file_path += L"_AppleOS";
 #elif defined(ON_RUNTIME_ANDROID)
-  text_file_path += L"_AndroidOS";
+    text_file_path += L"_AndroidOS";
 #endif
 
 #if defined(ON_DEBUG)
-  text_file_path += L"Debug";
+    text_file_path += L"Debug";
 #else
-  text_file_path += L"Release";
+    text_file_path += L"Release";
 #endif
+  }
 
   text_file_path += L".txt";
   return text_file_path;
@@ -4457,7 +4483,7 @@ static const ON_wString Internal_DumpModelfileName(
 
 bool ONX_ModelTest::DumpSourceModel() const
 {
-  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path,true);
+  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path, true, false);
   return DumpSourceModel(text_file_path);
 }
 
@@ -4493,7 +4519,7 @@ bool ONX_ModelTest::DumpSourceModel(ON_TextLog& text_log) const
 
 bool ONX_ModelTest::DumpReadWriteReadModel() const
 {
-  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path,false);
+  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path,false, false);
   return DumpReadWriteReadModel(text_file_path);
 }
 
@@ -4529,6 +4555,60 @@ bool ONX_ModelTest::DumpReadWriteReadModel(ON_TextLog& text_log) const
   return ONX_ModelTest::DumpModel(ReadWriteReadModel().get(), text_log);
 }
 
+bool ONX_ModelTest::DumpHashLogs(
+  ON_wString& source_model_hash_log_filename,
+  ON_SHA1_Hash& source_model_hash,
+  ON_wString& copy_model_hash_log_filename,
+  ON_SHA1_Hash& copy_model_hash
+) const
+{
+  source_model_hash_log_filename = ON_wString::EmptyString;
+  source_model_hash = ON_SHA1_Hash::EmptyContentHash;
+  copy_model_hash_log_filename = ON_wString::EmptyString;
+  copy_model_hash = ON_SHA1_Hash::EmptyContentHash;
+
+  for (;;)
+  {
+    const auto source_model_sp = SourceModel();
+    const ONX_Model* source_model = source_model_sp.get();
+    if (nullptr == source_model)
+      break;
+    if (source_model->Manifest().ActiveComponentCount(ON_ModelComponent::Type::Unset) <= 0)
+      break;
+
+    const auto copy_model_sp = ReadWriteReadModel();
+    const ONX_Model* copy_model = copy_model_sp.get();
+    if (nullptr == copy_model)
+      break;
+    if (copy_model->Manifest().ActiveComponentCount(ON_ModelComponent::Type::Unset) <= 0)
+      break;
+
+    source_model_hash_log_filename = Internal_DumpModelfileName(m_source_3dm_file_path, true, true);
+    if (source_model_hash_log_filename.IsEmpty())
+      break;
+    FILE* fp = ON_FileStream::Open(static_cast<const wchar_t*>(source_model_hash_log_filename), L"w");
+    if (nullptr == fp)
+      break;
+    ON_TextLog source_hash_log(fp);
+    source_model_hash = source_model->ContentHash(source_hash_log);
+    ON_FileStream::Close(fp);
+
+    copy_model_hash_log_filename = Internal_DumpModelfileName(m_source_3dm_file_path, false, true);
+    if (copy_model_hash_log_filename.IsEmpty())
+      break;
+    fp = ON_FileStream::Open(static_cast<const wchar_t*>(copy_model_hash_log_filename), L"w");
+    if (nullptr == fp)
+      break;
+    ON_TextLog copy_hash_log(fp);
+    source_model_hash = copy_model->ContentHash(copy_hash_log);
+    ON_FileStream::Close(fp);
+
+    return true;
+  }
+  return false;
+}
+
+
 void ONX_ModelTest::Dump(ON_TextLog& text_log) const
 {
   const ONX_ModelTest::Type test_type = TestType();
@@ -4545,12 +4625,19 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
 
   //const int i_rwrcompare = static_cast<const unsigned char>(ONX_ModelTest::Type::ReadWriteReadCompare);
   const bool bSkipCompare
-    = ONX_ModelTest::SkipCompare(Source3dmFileVersion())
-    && ONX_ModelTest::Type::ReadWriteReadCompare == test_type;
+    = ONX_ModelTest::Type::ReadWriteReadCompare == test_type
+    && InternalCleanPass(m_test_results[0], m_error_counts[0]) // init passed cleanly
+    && InternalCleanPass(m_test_results[1], m_error_counts[1]) // read source passed cleanly
+    && InternalCleanPass(m_test_results[2], m_error_counts[2]) // write temporary passed cleanly
+    && InternalCleanPass(m_test_results[2], m_error_counts[3]) // read temporary passed cleanly
+    && (ONX_ModelTest::SkipCompare(Source3dmFileVersion()) || ONX_ModelTest::Result::Skip == m_test_results[4]);
+    ;
   const unsigned int imax
     = bSkipCompare
     ? static_cast<const unsigned char>(ONX_ModelTest::Type::ReadWriteRead)
     : static_cast<const unsigned char>(test_type);
+
+  // bSkipDetails = true if all tests passed and there are no errors, warnings, failures of any sort.
   bool bSkipDetails = InternalCleanPass(m_test_result, m_error_count);
   for (unsigned int i = 0; i <= imax && bSkipDetails; i++)
   {
@@ -4561,6 +4648,7 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
   {
     if (bSkipCompare)
     {
+      // Let user know we skipped the compare
       text_log.PushIndent();
       text_log.Print("Compare test skipped because source file version is too old.\n");
       text_log.PopIndent();
@@ -4584,13 +4672,13 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
       break;
 
     i++;
-    text_log.Print("Write temporary files: ");
+    text_log.Print("Write temporary file: ");
     InternalDumpResultAndErrorCount(m_test_results[i], m_error_counts[i], text_log);
     if (i >= imax)
       break;
 
     i++;
-    text_log.Print("Read temporary files: ");
+    text_log.Print("Read temporary file: ");
     InternalDumpResultAndErrorCount(m_test_results[i], m_error_counts[i], text_log);
     if (i >= imax)
       break;
