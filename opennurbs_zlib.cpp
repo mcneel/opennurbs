@@ -23,6 +23,13 @@
 
 #include "opennurbs_zlib.h"
 
+// RH-86025, RH3DM-179, 2025-02-14, Pierre:
+// We only really need the #pragma comment(lib, "path") to work when we are using
+// MSVC and the Microsoft linker, but not defining include dirs in build properties.
+// Other compilers do not recognize this pragma and instead use build properties to link to libs.
+// ON_CMAKE_BUILD should be renamed "ON_NOT_USING_MSVC_LINK_LIB_PRAGMA"
+// This whole thing should be reworked so MSVC builds also use build properties,
+// instead of this non-portable pragma.
 #if defined(ON_COMPILER_MSC) && !defined(ON_CMAKE_BUILD)
 
 #if !defined(OPENNURBS_ZLIB_LIB_DIR)
@@ -35,9 +42,8 @@
 #else
 // Define OPENNURBS_ZLIB_LIB_DIR to be the directory containing zlib.lib
 #error You must define OPENNURBS_ZLIB_LIB_DIR
-#endif
+#endif  // defined(OPENNURBS_INPUT_LIBS_DIR)
 
-#endif
 
 
 #if defined(_LIB) && defined(_MT) && !defined(_DLL)
@@ -48,9 +54,11 @@
 // using Microsoft DLL C-runtime
 #pragma message ( "Linking with zlib.lib in " OPENNURBS_PP2STR(OPENNURBS_ZLIB_LIB_DIR) )
 #pragma comment(lib, "\"" OPENNURBS_ZLIB_LIB_DIR "/" "zlib.lib" "\"")
-#endif
+#endif  // defined(_LIB) && defined(_MT) && !defined(_DLL)
 
-#endif
+#endif  // !defined(OPENNURBS_ZLIB_LIB_DIR)
+
+#endif  // defined(ON_COMPILER_MSC) && !defined(ON_CMAKE_BUILD)
 
 // compressed buffer I/O uses zlib 1.1.3 inflate()/deflate()
 class ON_CompressorImplementation
