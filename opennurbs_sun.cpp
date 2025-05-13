@@ -892,6 +892,11 @@ double ON_Sun::CImpl::North(void) const
 
 void ON_Sun::CImpl::SetNorth(double north)
 {
+  // 28th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-81036
+  // Only set the north if it actually changes.
+  if (north == North())
+    return;
+
   if (nullptr != _earth_anchor_point)
   {
     // Store the north in the earth anchor point. This is more complicated than just setting one value.
@@ -938,6 +943,11 @@ double ON_Sun::CImpl::Latitude(void) const
 
 void ON_Sun::CImpl::SetLatitude(double lat)
 {
+  // 28th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-81036
+  // Only set the latitude if it actually changes.
+  if (lat == Latitude())
+    return;
+
   if (nullptr != _earth_anchor_point)
   {
     // Store the latitude in the earth anchor point.
@@ -971,6 +981,11 @@ double ON_Sun::CImpl::Longitude(void) const
 
 void ON_Sun::CImpl::SetLongitude(double lon)
 {
+  // 28th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-81036
+  // Only set the longitude if it actually changes.
+  if (lon == Longitude())
+    return;
+
   if (nullptr != _earth_anchor_point)
   {
     // Store the longitude in the earth anchor point.
