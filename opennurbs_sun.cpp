@@ -892,6 +892,11 @@ double ON_Sun::CImpl::North(void) const
 
 void ON_Sun::CImpl::SetNorth(double north)
 {
+  // 28th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-81036
+  // Only set the north if it actually changes.
+  if (north == North())
+    return;
+
   if (nullptr != _earth_anchor_point)
   {
     // Store the north in the earth anchor point. This is more complicated than just setting one value.
@@ -938,6 +943,11 @@ double ON_Sun::CImpl::Latitude(void) const
 
 void ON_Sun::CImpl::SetLatitude(double lat)
 {
+  // 28th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-81036
+  // Only set the latitude if it actually changes.
+  if (lat == Latitude())
+    return;
+
   if (nullptr != _earth_anchor_point)
   {
     // Store the latitude in the earth anchor point.
@@ -971,6 +981,11 @@ double ON_Sun::CImpl::Longitude(void) const
 
 void ON_Sun::CImpl::SetLongitude(double lon)
 {
+  // 28th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-81036
+  // Only set the longitude if it actually changes.
+  if (lon == Longitude())
+    return;
+
   if (nullptr != _earth_anchor_point)
   {
     // Store the longitude in the earth anchor point.
@@ -1504,6 +1519,7 @@ void ON_Sun::SetAzimuthAndAltitudeFromVector(const ON_3dVector& v)
 
 void ON_Sun::SetXMLNode(ON_XMLNode& node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
   _impl->SetModelNode(node);
 }
 
@@ -1538,6 +1554,12 @@ void ON_Sun::OnInternalXmlChanged(const ON_Sun* sun)
     SetLatitude(sun->Latitude());
     SetLongitude(sun->Longitude());
   }
+
+  // 18th March 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-86536
+  // Since the XML has been bulk-overwritten, we need to make sure the sun calculation is done next time
+  // Azimuth() or Altitude() is called. This bug was introduced by the fix for RH-81036 because that fix
+  // prevented code which had the side-effect of setting _calc_dirty from being executed.
+  _impl->_calc_dirty = true;
 }
 
 static const int SunVersion = 1;

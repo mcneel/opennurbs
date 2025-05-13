@@ -6135,6 +6135,8 @@ The map is an array of length m_F.Count(), ngon_map[]
   */
   bool SetSurfaceParamtersFromTextureCoodinates();
 
+  bool SetSurfaceParametersFromTextureCoodinates(const ON_SimpleArray<ON_2fPoint>& TCs);
+
 
   /////////////////////////////////////////////////////////////////
   // Implementation - curvature

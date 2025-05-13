@@ -1861,6 +1861,32 @@ void ON_Object::Dump( ON_TextLog& dump ) const
   }
 }
 
+void ON_Object::DumpUserData(const wchar_t* description, ON_TextLog& text_log) const
+{
+  if (text_log.IsTextHash())
+  {
+    // Dale Lear April 7, 2025 - Fix RH-86913
+    // User data is not hashed because the output depends on 
+    // the order the user data is attached, which plug-ins happen
+    // to be loaded, copy counts (which get incremented in a read-write-read test)
+    // and other factors that lead to variable and unpredictable results.
+    return;
+  }
+
+  const ON_UserData* ud = this->FirstUserData();
+  while (0 != ud)
+  {
+    if (nullptr != description)
+      text_log.Print(L"%ls\n", description);
+    text_log.PushIndent();
+    ud->Dump(text_log);
+    text_log.PopIndent();
+    ud = ud->Next();
+  }
+
+  return;
+}
+
 bool ON_Object::Write(
        ON_BinaryArchive&
      ) const
