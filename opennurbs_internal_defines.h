@@ -113,11 +113,11 @@ public:
 
   const ON_DecalCollection& operator = (const ON_DecalCollection& dc);
 
-  ON_Decal* AddDecal(void);
+  std::shared_ptr<ON_Decal> AddDecal(void);
   bool RemoveDecal(const ON_Decal&);
   void RemoveAllDecals(void);
   void ClearDecalArray(void);
-  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void) const;
+  const std::vector<std::shared_ptr<ON_Decal>>& GetDecalArray(void) const;
 
   void SetChanged(void);
 
@@ -128,9 +128,10 @@ private:
   int  FindDecalIndex(const ON_UUID& id) const;
 
 private:
+  mutable std::recursive_mutex _mutex;
   ON_3dmObjectAttributes* m_attr;
   mutable ON_XMLRootNode m_root_node;
-  mutable ON_SimpleArray<ON_Decal*> m_decals;
+  mutable std::vector<std::shared_ptr<ON_Decal>> m_decals;
   mutable bool m_populated = false;
   mutable bool m_changed = false;
 };

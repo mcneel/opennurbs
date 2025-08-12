@@ -583,6 +583,18 @@ public:
   virtual
   void Dump( ON_TextLog& ) const;
 
+  /// <summary>
+  /// Go through the linked list of ON_UserData attached to this and
+  /// call the virtual Dump(text_log) function on each instance.
+  /// </summary>
+  /// <param name="description">
+  /// General context description to print before each instance.
+  /// </param>
+  /// <param name="text_log">
+  /// Destination text log.
+  /// </param>
+  void DumpUserData(const wchar_t* description, ON_TextLog& text_log) const;
+
   /*
   Returns:
     An estimate of the amount of memory the class uses in bytes.

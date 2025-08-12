@@ -4620,6 +4620,24 @@ ON_BinaryArchive::WriteObject( const ON_Object& model_object )
         return Internal_WriteObject(V2_text_dot);
       }
       break;
+
+    case ON::object_type::subd_object:
+    {
+      if (m_3dm_version >= 60)
+        break;
+      const ON_SubD* subd = ON_SubD::Cast(&model_object);
+      if (nullptr == subd)
+        break;
+
+      // Use a SubD mesh proxy for V5 and earlier file formats.
+      std::unique_ptr<ON_Mesh> mesh(ON_SubDMeshProxyUserData::MeshProxyFromSubD(subd));
+      if (nullptr == mesh)
+        return false;
+
+      return Internal_WriteObject(*mesh.get());
+    }
+    break;
+
     default:
       break;
     }
@@ -6578,65 +6596,46 @@ bool ON_BinaryArchive::EndRead3dmChunk(bool bSupressPartiallyReadChunkWarning)
     {
       // partially read chunk - happens when chunks are skipped or old code
       // reads a new minor version of a chunk whnich has added information.
-      if ( file_offset != c->m_start_offset ) 
+      if ( file_offset != c->m_start_offset)
       {
-        if ( m_3dm_version != 1 || (m_error_message_mask&0x02) == 0 ) 
+        for (;;)
         {
-          // when reading v1 files, there are some situations where
-          // it is reasonable to attempt to read 4 bytes at the end
-          // of a file.  The above test prevents making a call
-          // to ON_WARNING() in these situations.
-
-          unsigned int file_year = 0;
-          unsigned int file_month = 0;
-          unsigned int file_date = 0;
-          unsigned int file_major_version = 0;
-          const bool bHaveFileDate = ON_VersionNumberParse(
-            m_3dm_opennurbs_version,
-            &file_major_version,
-            0,
-            &file_year,
-            &file_month,
-            &file_date,
-            0
-            );
-
-          const unsigned int file_ymd
-            = bHaveFileDate
-            ? ((file_year * 100 + file_month) * 100 + file_date)
-            : 0;
-
-          unsigned int app_year = 0;
-          unsigned int app_month = 0;
-          unsigned int app_date = 0;
-          unsigned int app_major_version = 0;
-          const bool bHaveAppDate = ON_VersionNumberParse(
-            ON::Version(),
-            &app_major_version,
-            0,
-            &app_year,
-            &app_month,
-            &app_date,
-            0
-            );
-
-          const unsigned int app_ymd
-            = bHaveAppDate
-            ? ((app_year * 100 + app_month) * 100 + app_date)
-            : 0;
-
-          if (file_major_version <= app_major_version 
-            && file_ymd <= app_ymd
-            )
+          if (bSupressPartiallyReadChunkWarning)
           {
-            // We are reading a file written by this version or an
-            // earlier version of opennurbs.  
-            // There should not be any partially read chunks.
-            if (!bSupressPartiallyReadChunkWarning)
-            {
-              ON_WARNING("ON_BinaryArchive::EndRead3dmChunk: partially read chunk - skipping bytes at end of current chunk.");
-            }
+            // The calling code expects there to be a partially read chunk.
+            break;
           }
+
+          // The calling code had no reason to supress warnings about this chunk
+          // being partially read.
+          const bool bIsV1EndOfFile = this->Archive3dmVersion() == 1 && 0 != (m_error_message_mask & 0x02);
+          if (bIsV1EndOfFile)
+          {
+            // when reading v1 files, there are some situations where
+            // it is reasonable to attempt to read 4 bytes at the end
+            // of a file. The above test prevents making a call
+            // to ON_WARNING() in these situations.
+            break;
+          }
+
+          // m_3dm_opennurbs_version = version of opennurbs that wrote this 3dm file.
+          // ON::Version() = this version of opennurbs.
+          if (ON_VersionNumberCompare(m_3dm_opennurbs_version, ON::Version(), 2) <= 0)
+          {
+            // We are reading a file that was written by this version or an earlier version of opennurbs.  
+            // This chunk should have been completely read.
+            // Typically, this is a bug that can be fixed after carefully studying why it occured.
+            // Either there is a bug in the reading or writing of the chunk or new informaton was
+            // added at the end of a chunk and the opennurbs major version or YYMMDD was not
+            // correctly set.
+            // In rare cases, somebody did something more seriously wrong and likely harder to figure out.
+            // 
+            // In any case, issue a warning and continue reading. This is not a fatal problem but
+            // it indicates information is being lost.
+            ON_WARNING("ON_BinaryArchive::EndRead3dmChunk: partially read chunk - skipping bytes at end of current chunk.");
+          }
+
+          break;
         }
       }
 
@@ -18424,12 +18423,12 @@ const void* ON_Read3dmBufferArchive::Buffer() const
   return (const void*)m_buffer;
 }
 
-ON_Write3dmBufferArchive::ON_Write3dmBufferArchive( 
-          size_t initial_sizeof_buffer, 
-          size_t max_sizeof_buffer, 
-          int archive_3dm_version,
-          unsigned int archive_opennurbs_version
-          )
+ON_Write3dmBufferArchive::ON_Write3dmBufferArchive(
+  size_t initial_sizeof_buffer, 
+  size_t max_sizeof_buffer, 
+  int archive_3dm_version,
+  unsigned int archive_opennurbs_version
+  )
 : ON_BinaryArchive(ON::archive_mode::write3dm)
 , m_p(0)
 , m_buffer(0)

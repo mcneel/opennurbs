@@ -749,33 +749,6 @@ ON_3dPoint ON_OBSOLETE_V2_AnnotationArrow::Tail() const
 }
 
 
-static bool ON_Internal_UseSubDMeshProxy(
-  const ON_BinaryArchive& archive
-)
-{
-  if (archive.Archive3dmVersion() != 60)
-  {
-    return false; // subd mesh proxy only applies when reading or writing a V6 files.
-  }
-
-  // In a WIP, used subd objects.
-  const unsigned int min_subd_version =
-#if defined(RHINO_COMMERCIAL_BUILD)
-    // Sep 5 2017 Dale Lear RH-41113
-    // Rhino 6 commercial will have SubD objects.
-    // Nope. -> V6 commercial builds do not have subd objects - use proxy mesh when version < 7.
-    // 7 
-    6 
-#else
-    // V6 WIP builds and all V7 and later builds have subd objects.
-    // Use proxy mesh when version < 6.
-    6
-#endif
-    ;
-  return (ON::VersionMajor() < min_subd_version);
-}
-
-
 /*
 Description:
   In rare cases one object must be converted into another.
@@ -888,38 +861,19 @@ ON_Object* ON_BinaryArchive::Internal_ConvertObject(
 
   if (ON::object_type::mesh_object == archive_object->ObjectType())
   {
-    const ON_Mesh* mesh = ON_Mesh::Cast(archive_object);
-    if (nullptr != mesh )
+    if (m_3dm_version <= 60)
     {
-      if ( false == ON_Internal_UseSubDMeshProxy(*this) )
+      const ON_Mesh* mesh = ON_Mesh::Cast(archive_object);
+      if (nullptr != mesh)
       {
         // If mesh is a subd mesh proxy, return the original subd.
         ON_SubD* subd = ON_SubDMeshProxyUserData::SubDFromMeshProxy(mesh);
-        if ( nullptr != subd )
+        if (nullptr != subd)
           return subd;
       }
     }
   }
-  else if (ON::object_type::subd_object == archive_object->ObjectType())
-  {
-    const ON_SubD* subd = ON_SubD::Cast(archive_object);
-    if (nullptr != subd)
-    {
-      ON_Mesh* mesh = nullptr;
-      if ( Archive3dmVersion() < 60 )
-      {
-        mesh = subd->GetControlNetMesh(nullptr, ON_SubDGetControlNetMeshPriority::Geometry);
-      }
-      else if ( ON_Internal_UseSubDMeshProxy(*this) )
-      {
-        // Use a subd mesh proxy for V6 commercial builds.
-        mesh = ON_SubDMeshProxyUserData::MeshProxyFromSubD(subd);
-      }
-      if (nullptr != mesh)
-        return mesh;
-    }
-  }
-  
+
   // no conversion required.
   return nullptr;
 }

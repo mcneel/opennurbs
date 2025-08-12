@@ -318,16 +318,7 @@ void ON_ModelGeometryComponent::Dump( ON_TextLog& text_log ) const
   else
   {
     attributes->Dump(text_log);
-    // attributes user data
-    const ON_UserData* ud = attributes->FirstUserData();
-    while (0 != ud)
-    {
-      text_log.Print("Attributes user data:\n");
-      text_log.PushIndent();
-      ud->Dump(text_log);
-      text_log.PopIndent();
-      ud = ud->Next();
-    }
+    attributes->DumpUserData(L"Attributes user data:", text_log);
   }
   text_log.PopIndent();
 
@@ -339,16 +330,7 @@ void ON_ModelGeometryComponent::Dump( ON_TextLog& text_log ) const
   else
   {
     geometry->Dump(text_log);
-    // geometry user data
-    const ON_UserData* ud = geometry->FirstUserData();
-    while (0 != ud)
-    {
-      text_log.Print("Geometry user data:\n");
-      text_log.PushIndent();
-      ud->Dump(text_log);
-      text_log.PopIndent();
-      ud = ud->Next();
-    }
+    geometry->DumpUserData(L"Geometry user data:", text_log);
   }
   text_log.PopIndent();
 }

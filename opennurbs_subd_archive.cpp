@@ -2408,7 +2408,7 @@ bool ON_SubDMeshProxyUserData::WriteToArchive(
 {
   for (;;)
   {
-    if (archive.Archive3dmVersion() < 60)
+    if (archive.Archive3dmVersion() >= 60)
       break;
     if (false == IsValid())
       return false;

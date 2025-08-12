@@ -252,8 +252,6 @@ public:
   bool SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& custom_param_node);
 
 public: // For internal use only.
-  static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32, const ON_XMLNode&);
-  void GetEntireCustomXML(ON_XMLNode&) const;
   void AppendCustomXML(const ON_XMLNode&);
 
 private:
