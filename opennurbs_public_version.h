@@ -50,8 +50,6 @@
 #define RMA_VERSION_WITH_PERIODS_STRING   "8.20.25157.13000"
 #define RMA_VERSION_WITH_PERIODS_WSTRING L"8.20.25157.13000"
 
-
-
 // git revision SHA-1 hash as char hexadecimal string
 #define RMA_GIT_REVISION_HASH_STRING ""
 #define RMA_GIT_REVISION_HASH_WSTRING L""
