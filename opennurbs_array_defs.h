@@ -623,7 +623,7 @@ void ON_SimpleArray<T>::RemoveValue(const T& key)
 }
 
 template <class T>
-void ON_SimpleArray<T>::RemoveIf(bool predicate(const T& key))
+void ON_SimpleArray<T>::RemoveIf(bool (*predicate)(const T& key))
 {
   int t = 0;
   for (int i = 0; i < m_count; i++)

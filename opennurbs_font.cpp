@@ -10752,7 +10752,16 @@ bool ON_Font::Read(
     || (file.PeekAt3dmBigChunkType(&typecode,&big_value) && 1 == typecode)
     )
   {
-    ON_WARNING("Should probably be reading an ON_TextStyle");
+    // Dale Lear 2025 May 8 - RH-87126
+    // Some older version files are triggering this warning when 
+    // override dimstyles are read. It is true V5 files had a text style table,
+    // but we didn't expect to encounter override dimstyles in these old
+    // files. It's not clear to me how these files come into existence,
+    // but this warning seems to be doing more harm than good. In the xase in the bug,
+    // the older version files read correctly. When V8 and V9 files are saved, they appear
+    // to be getting saved correctly.
+    // 
+    // ON_WARNING("Should probably be reading an ON_TextStyle");
     int font_index = -1;
     ON_UUID font_id = ON_nil_uuid;
     return ReadV5(

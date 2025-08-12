@@ -1577,6 +1577,22 @@ public:
   */
   ON_SHA1_Hash ContentHash() const;
 
+  /// <summary>
+  /// Get a SHA-1 has of the model's content and the text that was hashed.
+  /// </summary>
+  /// <param name="hashed_text">
+  /// The text that was hashed is returned here. Typically this is used when
+  /// a human wants to look at text diffences to determine why two models
+  /// that were supposed to be the same had different values of ContentHash().
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the model's content. If two models have identical content,
+  /// then the have equal ContentHash() values.
+  /// </returns>
+  ON_SHA1_Hash ContentHash(
+    ON_TextLog& hashed_text
+  ) const;
+
 private:
   void Internal_DumpSummary(
     ON_TextLog& dump, 
@@ -1994,6 +2010,42 @@ public:
     Call after test is completed.
   */
   bool DumpReadWriteReadModel(ON_TextLog& text_log) const;
+
+  /// <summary>
+  /// The read-write-read-compare test 
+  /// 1.) Reads the source model and calculates a SHA-1 hash of its contents.
+  /// 2.) Writes the source model to a temporary archive.
+  /// 3.) Reads the temporary archive and calculates a SHA-1 hash of its contents.
+  /// 4.) Compares the SHA-1 hashes from step 1 and step 3. 
+  /// If those hashes are equal, then the read-write-read-compare test passes. 
+  /// If those hashes are different, the test fails. 
+  /// When the test fails, use this function to save the information used to 
+  /// compute the hashes in human readable text files that can be compared 
+  /// using a text compare tool.
+  /// The differences between the text files will tell you what caused
+  /// the hashes to be different.
+  /// </summary>
+  /// <param name="source_model_hash_log_filename">
+  /// The name of the text file containing the hashed text description
+  /// of the source model is returned here.
+  /// </param>
+  /// <param name="source_model_hash">
+  /// The hash of the source model is returned here.
+  /// </param>
+  /// <param name="copy_model_hash_log_filename">
+  /// The name of the text file containing the hashed text description
+  /// of the read-write-read model is returned here.
+  /// </param>
+  /// <param name="copy_model_hash">
+  /// The hash of the read-write-read model is returned here.
+  /// </param>
+  /// <returns></returns>
+  bool DumpHashLogs(
+    ON_wString& source_model_hash_log_filename,
+    ON_SHA1_Hash& source_model_hash,
+    ON_wString& copy_model_hash_log_filename,
+    ON_SHA1_Hash& copy_model_hash
+  ) const;
 
 private:
   void Internal_BeginTest();

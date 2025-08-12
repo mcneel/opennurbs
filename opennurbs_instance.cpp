@@ -743,6 +743,15 @@ bool ON_ReferencedComponentSettingsImpl::Internal_UpdateLayer(
 
   // Add more settings here without breaking anything
 
+  // 25-Apr-2025 Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-68718
+  const bool visible_in_new_details = ON_ReferencedComponentSettingsImpl::Internal_UpdateBool(
+    previous_referenced_file_layer.PerViewportIsVisibleInNewDetails(),
+    reference_file_layer.PerViewportIsVisibleInNewDetails(),
+    previous_model_layer.PerViewportIsVisibleInNewDetails()
+  );
+  model_layer.SetPerViewportIsVisibleInNewDetails(visible_in_new_details);
+
+
   // Dale Lear August 2017 - RH-39457
   // Saved PerViewport settings need to be applied to model_layer
   //

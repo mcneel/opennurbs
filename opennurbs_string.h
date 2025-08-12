@@ -5340,7 +5340,7 @@ public:
       a positive number
   Example:
       // 1 League = 5556 meters
-      const ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 1.0/5556.0);
+      const ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 5556.0);
   */
   static ON_UnitSystem CreateCustomUnitSystem(
     const wchar_t* custom_unit_name,
@@ -5440,9 +5440,9 @@ public:
   Example:
       // 1 League = 5556 meters
       ON_UnitSystem Leagues;
-      Leagues.SetCustomUnitSystem( L"Leagues", 1.0/5556.0);
+      Leagues.SetCustomUnitSystem( L"Leagues", 5556.0);
       // or
-      ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 1.0/5556.0);
+      ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 5556.0);
   */
   void SetCustomUnitSystem(
     const wchar_t* custom_unit_name,
@@ -5529,7 +5529,7 @@ private:
   // The m_meters_per_custom_unit and m_custom_unit_name values apply when
   // m_unit_system = ON::LengthUnitSystem::CustomUnits.
   // In all other cases they should be ignored.
-  double m_meters_per_custom_unit = 1.0;  // 1 meter = m_meters_per_custom_unit custom units
+  double m_meters_per_custom_unit = 1.0;  // 1 custom-unit = m_meters_per_custom_unit meters.
   ON_wString m_custom_unit_name;   // name of custom units
 };
 #endif

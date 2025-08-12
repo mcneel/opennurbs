@@ -5332,7 +5332,7 @@ private:
   // m_archive_dim_style_table_status values:
   // READING:
   // 0 = not started
-  //   1 = BeginWrite3dmDimStyle() has been called, 
+  //   1 = BeginRead3dmDimStyle() has been called, 
   //       m_archive_text_style_table[] is valid, 
   //       and Read3dmDimStyle() can be called.
   //   2 = All entries of m_archive_text_style_table[] have been read by Read3dmDimStyle().
