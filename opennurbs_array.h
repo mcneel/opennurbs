@@ -152,7 +152,7 @@ public:
                                      // Decrements count by removed items.  Does 
                                      // not change capacity
 
-  void RemoveIf(bool predicate(const T& key));
+  void RemoveIf(bool (*predicate)(const T& key));
                                      // Removes elements for which predicate 
                                      // returns true. Decrements count 
                                      // by removed items.

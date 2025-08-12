@@ -1360,6 +1360,7 @@ int ON_Symmetry::CompareSymmetryTransformation(const ON_Symmetry* lhs, const ON_
     default:
       break;
     }
+    break;
   }
 
   return ON_Symmetry::Compare(lhs, rhs);

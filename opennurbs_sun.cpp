@@ -1519,6 +1519,7 @@ void ON_Sun::SetAzimuthAndAltitudeFromVector(const ON_3dVector& v)
 
 void ON_Sun::SetXMLNode(ON_XMLNode& node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
   _impl->SetModelNode(node);
 }
 

@@ -22235,7 +22235,7 @@ public:
 #if defined(ON_COMPILING_OPENNURBS)
 /*
 The ON_SubDAsUserData class is used to attach a subd to it proxy mesh
-when writing V6 files in commercial rhino.
+when writing prior than V6 files in commercial rhino.
 */
 class ON_SubDMeshProxyUserData : public ON_UserData
 {

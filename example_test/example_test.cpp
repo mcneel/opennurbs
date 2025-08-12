@@ -147,7 +147,8 @@ static const ONX_ErrorCounter Internal_TestModelRead(
 
   ONX_ErrorCounter error_counter = test.ErrorCounter();
 
-  const ONX_Model* source_model = test.SourceModel().get();
+  std::shared_ptr<ONX_Model> source_model_sp = test.SourceModel();
+  const ONX_Model* source_model = source_model_sp.get();
   if (nullptr == source_model)
   {
     text_log.PopIndent();
@@ -156,17 +157,45 @@ static const ONX_ErrorCounter Internal_TestModelRead(
 
   const bool bCompareTestFailed = ONX_ModelTest::Result::Fail == test.TestResult(ONX_ModelTest::Type::ReadWriteReadCompare);
 
-  if ( bVerbose || bCompareTestFailed )
+  if (bCompareTestFailed)
   {
-    for (int i = 0; i < 2; i++)
+    // Dump the text used to generate the hashes that were different
+    // into 2 text files so a human can look at the diffs and decide
+    // what to do.
+
+    ON_wString source_model_hash_log_filename;
+    ON_SHA1_Hash source_model_hash;
+    ON_wString copy_model_hash_log_filename;
+    ON_SHA1_Hash copy_model_hash;
+    const bool bDumpedHashLogs = test.DumpHashLogs(
+      source_model_hash_log_filename,
+      source_model_hash,
+      copy_model_hash_log_filename,
+      copy_model_hash
+    );
+    if (bDumpedHashLogs)
     {
-      if (0 == i)
-        test.DumpSourceModel();
-      else
-        test.DumpReadWriteReadModel();
-      if (false == bCompareTestFailed)
-        break;
+      bVerbose = false;
+      text_log.PushIndent();
+      text_log.PushIndent();
+      text_log.Print(L"Compare these hash logs to see what changed in the temporary file.\n");
+      text_log.PushIndent();
+      text_log.Print(L"Source model hash log:\n");
+      text_log.PushIndent();
+      text_log.Print(L"\"%ls\"\n", static_cast<const wchar_t*>(source_model_hash_log_filename));
+      text_log.PopIndent();
+      text_log.Print(L"Read-Write-Read model hash log:\n", static_cast<const wchar_t*>(copy_model_hash_log_filename));
+      text_log.PushIndent();
+      text_log.Print(L"\"%ls\"\n", static_cast<const wchar_t*>(copy_model_hash_log_filename));
+      text_log.PopIndent();
+      text_log.PopIndent();
+      text_log.PopIndent();
+      text_log.PopIndent();
     }
+  }
+  else if ( bVerbose )
+  {
+    test.DumpSourceModel();
   }
   
   text_log.PrintNewLine();
@@ -404,14 +433,14 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
 
   if (nullptr == directory_path || 0 == directory_path[0])
   {
-    text_log.Print("Empty directory name.\n");
+    text_log.Print("Empty folder name.\n");
   }
 
   ON_FileIterator fit;
   if (false == fit.Initialize(directory_path))
   {
     text_log.Print(
-      "Invalid directory name: %s\n",
+      "Invalid folder name: %s\n",
       directory_path
       );
     error_counter.IncrementFailureCount();
@@ -423,7 +452,7 @@ static const ONX_ErrorCounter Internal_TestReadFolder(
     ? ON_String(directory_path)
     : test_context.TextLogPathFromFullPath(directory_path);
   text_log.Print(
-    "Directory name: %s\n",
+    "Folder name: %s\n",
     static_cast<const char*>(text_log_directory_name)
     );
   text_log.PushIndent();
@@ -523,7 +552,7 @@ static ONX_ErrorCounter Internal_Test(
   {
     if (ON_FileStream::Is3dmFile(full_path, false))
     {
-      text_log.Print("Testing 3dm file: %s\n", static_cast<const char*>(full_path));
+      text_log.PrintNewLine(); // ("Testing 3dm file: %s\n", static_cast<const char*>(full_path));
       err = Internal_TestFileRead(text_log, full_path, ON_String::EmptyString, bVerbose);
       file_count++;
     }
@@ -533,6 +562,7 @@ static ONX_ErrorCounter Internal_Test(
     if ( max_directory_tree_depth > 0 )
     {
       text_log.Print("Testing 3dm files in folder: %s\n", static_cast<const char*>(full_path));
+      text_log.PrintNewLine();
       Internal_CTestContext test_context;
       directory_counter++;
       test_context.SetInitialDirecory(full_path,directory_counter);
@@ -599,16 +629,27 @@ static ON_String Internal_DefaultOutFileName(
   const ON_String exe_stem
   )
 {
-  ON_String default_file_name(exe_stem);
-  default_file_name.TrimLeftAndRight();
-  if (default_file_name.IsEmpty())
-    default_file_name = "example_test";
-  default_file_name += "_log";
+  const ON_String vN = ON_String::FormatToString("v%u", ON::VersionMajor());
 
-  const ON_String platform_id = Internal_PlatformId(false);
-  if (platform_id.IsNotEmpty())
-    default_file_name += ON_String(ON_String("_") + platform_id);
-  default_file_name += ".txt";
+  ON_String file_name(exe_stem);
+  file_name.TrimLeftAndRight();
+  if (file_name.IsEmpty())
+    file_name = "example_test";
+  file_name += "_log";
+
+  ON_String default_file_name = vN + file_name + ON_String(".txt");
+
+  const ON_wString desktop_folder = ON_FileSystemPath::PlatformPath(ON_FileSystemPath::PathId::DesktopDirectory);
+  if (desktop_folder.IsNotEmpty() && ON_FileSystem::IsDirectory(static_cast<const wchar_t*>(desktop_folder)))
+  {
+    const ON_wString wdefault_file_name(default_file_name);
+    const ON_wString desktop_default_file_name = ON_FileSystemPath::CombinePaths(
+      static_cast<const wchar_t*>(desktop_folder), false, 
+      static_cast<const wchar_t*>(wdefault_file_name), true,
+      false);
+    if (desktop_default_file_name.IsNotEmpty())
+      default_file_name = ON_String(desktop_default_file_name);
+  }
 
   return default_file_name;
 }
@@ -829,24 +870,23 @@ static bool Internal_ParseArg_RECURSE(const ON_String arg, unsigned int& N)
 }
 
 
-static const ON_String Internal_ParseArg_PATH(const ON_String arg, unsigned int max_directory_tree_depth)
+static const ON_String Internal_ParseArg_PATH(const ON_String arg, bool& bArgIsDirectory)
 {
+  bArgIsDirectory = false;
   ON_String arg_full_path = ON_FileSystemPath::ExpandUser(static_cast<const char*>(arg));
   arg_full_path.TrimLeftAndRight();
 
   if (ON_FileSystem::IsFile(arg_full_path))
     return arg_full_path;
 
-  if (max_directory_tree_depth > 0)
+  if (arg_full_path.Length() != 1 || false == ON_FileSystemPath::IsDirectorySeparator(arg_full_path[0], true))
   {
-    if (arg_full_path.Length() != 1 || false == ON_FileSystemPath::IsDirectorySeparator(arg_full_path[0], true))
-    {
-      const char dir_seps[3] = { ON_FileSystemPath::DirectorySeparatorAsChar, ON_FileSystemPath::AlternateDirectorySeparatorAsChar, 0 };
-      arg_full_path.TrimRight(dir_seps);
-    }
-    if (ON_FileSystem::IsDirectory(arg_full_path))
-      return arg_full_path;
+    const char dir_seps[3] = { ON_FileSystemPath::DirectorySeparatorAsChar, ON_FileSystemPath::AlternateDirectorySeparatorAsChar, 0 };
+    arg_full_path.TrimRight(dir_seps);
   }
+  bArgIsDirectory = ON_FileSystem::IsDirectory(arg_full_path);
+  if (bArgIsDirectory)
+    return arg_full_path;
 
   return ON_String::EmptyString;
 }
@@ -922,10 +962,11 @@ int main( int argc, const char *argv[] )
   unsigned int directory_arg_counter = 0;
 
   bool bPrintIntroduction = true;
+  ON_String current_output_filename = ON_String::EmptyString;
 
   for ( argi = 1; argi < argc; argi++ ) 
   {
-    arg = argv[argi];
+    arg = (nullptr != argv) ? argv[argi] : ((const char*)nullptr);
     arg.TrimLeftAndRight();
     if (arg.IsEmpty())
       continue;
@@ -952,14 +993,21 @@ int main( int argc, const char *argv[] )
       }
       if ( text_log_fp )
       {
+        if (current_output_filename.IsNotEmpty())
+        {
+          print_to_stdout.Print("Results saved in %s\n", static_cast<const char*>(current_output_filename));
+        }
         ON::CloseFile(text_log_fp);
         text_log_fp = nullptr;
+        current_output_filename = ON_String::EmptyString;
       }
 
       text_log = &print_to_stdout;
 
       if (output_file_name.IsEmpty() || output_file_name.EqualOrdinal("stdout", true))
+      {
         continue;
+      }
 
       if (output_file_name.EqualOrdinal("null", true) || output_file_name.EqualOrdinal("dev/null", true))
       {
@@ -978,6 +1026,11 @@ int main( int argc, const char *argv[] )
       text_log = new ON_TextLog(text_log_fp);
       text_log->SetIndentSize(2);
 
+      current_output_filename = output_file_name;
+      if (current_output_filename.IsNotEmpty())
+      {
+        print_to_stdout.Print("Results will be saved in %s\n", static_cast<const char*>(current_output_filename));
+      }
       continue;
     }
 
@@ -999,15 +1052,33 @@ int main( int argc, const char *argv[] )
       Internal_PrintIntroduction(example_test_exe_path, *text_log);
     }
 
-    const ON_String arg_full_path = Internal_ParseArg_PATH(arg,maximum_directory_depth);
+    bool bArgIsDirectory = false;
+    const ON_String arg_full_path = Internal_ParseArg_PATH(arg, bArgIsDirectory);
     if (arg_full_path.IsEmpty())
     {
       err += Internal_InvalidArg(arg, *text_log);
       break;
     }
 
+    const unsigned directory_recursion_depth = ((0 == maximum_directory_depth && bArgIsDirectory) ? 1 : maximum_directory_depth);
+
+    if (current_output_filename.IsNotEmpty())
+    {
+      if (bArgIsDirectory)
+      {
+        if (directory_recursion_depth > 1)
+          print_to_stdout.Print("Testing folder tree %s ...\n", static_cast<const char*>(arg_full_path));
+        else
+          print_to_stdout.Print("Testing folder %s ...\n", static_cast<const char*>(arg_full_path));
+      }
+      else
+      {
+        print_to_stdout.Print("Testing file %s ...\n", static_cast<const char*>(arg_full_path));
+      }
+    }
+
     err += Internal_Test(
-      maximum_directory_depth,
+      directory_recursion_depth,
       arg_full_path,
       bVerbose,
       *text_log,
@@ -1043,7 +1114,7 @@ int main( int argc, const char *argv[] )
     text_log->Print(" Failures. ");
   else if (err.ErrorCount() > 0) {
     text_log->Print(" Errors:\n");
-    for (int vbli = 0; vbli < verbose_log.Count(); vbli++) {
+    for (unsigned vbli = 0; vbli < verbose_log.Count(); vbli++) {
       text_log->Print("    !! ");
       text_log->Print(verbose_log.Event(vbli).Description());
       text_log->Print("\n");
@@ -1056,18 +1127,18 @@ int main( int argc, const char *argv[] )
   err.Dump(*text_log);
   text_log->PrintNewLine();
 
-  if ( text_log != &print_to_stdout && text_log != &ON_TextLog::Null )
-  {
-    delete text_log;
-  }
-
   text_log = nullptr;
 
   if ( text_log_fp )
   {
+    if (current_output_filename.IsNotEmpty())
+    {
+      print_to_stdout.Print("Results saved in %s\n", static_cast<const char*>(current_output_filename));
+    }
     // close the text text_log file
     ON::CloseFile( text_log_fp );
     text_log_fp = 0;
+    current_output_filename = ON_String::EmptyString;
   }
   
   // OPTIONAL: Call just before your application exits to clean

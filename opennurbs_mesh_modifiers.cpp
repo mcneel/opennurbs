@@ -37,7 +37,10 @@ class ON_MeshModifier::CImpl : public ON_InternalXMLImpl
 {
 public:
   CImpl() { }
-  CImpl(const ON_XMLNode& n) { Node() = n; }
+  CImpl(const ON_XMLNode& n) 
+  { 
+    Node() = n; 
+  }
 };
 
 ON_MeshModifier::ON_MeshModifier()
@@ -61,6 +64,7 @@ ON_XMLNode* ON_MeshModifier::AddChildXML(ON_XMLRootNode& root) const
   ON_XMLNode* mm_node = root.AttachChildNode(new ON_XMLNode(L""));
   if (nullptr != mm_node)
   {
+    std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
     *mm_node = m_impl->Node();
   }
 
@@ -225,6 +229,7 @@ ON_Displacement::ON_Displacement(const ON_XMLNode& dsp_node)
   }
 
   // Copy the new displacement node to our node. It only contains displacement XML with no sub-item nodes.
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   m_impl->Node() = new_dsp_node;
 }
 
@@ -627,6 +632,7 @@ void ON_Displacement::SubItem::SetWhitePoint(double w)
 
 void ON_Displacement::SubItem::ToXML(ON_XMLNode& node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   node = m_impl->Node();
 }
 
@@ -1406,6 +1412,7 @@ ON_ShutLining::ON_ShutLining(const ON_XMLNode& sl_node)
   }
 
   // Copy the new shut-lining node to our node. It only contains shut-lining XML with no curve nodes.
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   m_impl->Node() = new_sl_node;
 }
 
@@ -1536,6 +1543,7 @@ ON_ShutLining::CurveIterator ON_ShutLining::GetCurveIterator(void) const
 
 ON_ShutLining::Curve& ON_ShutLining::AddCurve(void)
 {
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   ON_XMLNode* curve_node = m_impl->Node().AttachChildNode(new ON_XMLNode(ON_SHUTLINING_CURVE));
   Curve* curve = new Curve(*curve_node);
   m_impl_sl->m_curves.Append(curve);

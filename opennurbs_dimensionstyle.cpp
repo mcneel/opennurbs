@@ -3130,17 +3130,29 @@ bool ON_DimStyle::Read(
     rc = true;
     break;
   }
-  // Dale Lear April 8, 2016 
-  //  working on http://mcneel.myjetbrains.com/youtrack/issue/RH-31796
-  //  bSupressPartiallyReadChunkWarning suppresses a partially read chunk warning
-  //  of skipping 16 bytes.
 
-  const bool bSupressPartiallyReadChunkWarning
-    = 60 == file.Archive3dmVersion()
-    && file.ArchiveOpenNURBSVersion() <= 2348833437
-    && 1 == major_version
-    && 0 == minor_version
+  // Fix below for RH-86880 covers this case
+  ////// Dale Lear April 8, 2016 
+  //////  working on http://mcneel.myjetbrains.com/youtrack/issue/RH-31796
+  //////  bSupressPartiallyReadChunkWarning suppresses a partially read chunk warning
+  //////  of skipping 16 bytes.
+  ////const bool bSupressPartiallyReadChunkWarning
+  ////  = 60 == file.Archive3dmVersion()
+  ////  && file.ArchiveOpenNURBSVersion() <= 2348833437
+  ////  && 1 == major_version
+  ////  && 0 == minor_version
+  ////  ;
+
+  // Dale Lear April 3, 2025 - fix for reading the v8 file in RH-86880
+  //   Somebody added UseKerning() (minor_version = 10) and LineSpaceScale() (minor_version = 11)
+  //   to the v9 dimstyle (see 9.x repo) while v9 was writing v8 files. 
+  //   When v8 opennurbs reads this files the chunk is partially read
+  //   This fix also fixes the bug I fixed on April 8, 2016  RH-31796
+  const bool bSupressPartiallyReadChunkWarning 
+    = (file.Archive3dmVersion() < 80)
+    || (80 == file.Archive3dmVersion() && 1 == major_version && minor_version > 9)
     ;
+
   if (!file.EndRead3dmChunk(bSupressPartiallyReadChunkWarning))
     rc = false;
 
