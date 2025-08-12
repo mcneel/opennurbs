@@ -1308,6 +1308,14 @@ bool ON_ForceMatchCurveEnds(
                             int end1
                             );
 
+
+struct CurveJoinSeg
+{
+  int id;
+  bool bRev;
+};
+
+
 /*
 OBSOLETE. Use int ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
                                 ON_SimpleArray<ON_Curve*>& OutCurves,

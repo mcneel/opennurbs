@@ -2545,11 +2545,6 @@ bool ON_CurveArray::Read( ON_BinaryArchive& file )
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-struct CurveJoinSeg {
-  int id;
-  bool bRev;
-};
-
 static void ReverseSegs(ON_SimpleArray<CurveJoinSeg>& SArray)
 
 {
@@ -3614,7 +3609,7 @@ static bool SortEnds(int count,
   return true;
 }
 
-static bool SortEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
+ON_DECL bool SortEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
                      double join_tol, double kink_tol,
                      bool bUseTanAngle,
                      bool bPreserveDirection,

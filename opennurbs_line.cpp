@@ -155,15 +155,30 @@ bool ON_Line::ClosestPointTo( const ON_3dPoint& point, double *t ) const
 
 ON_3dPoint ON_Line::ClosestPointTo( const ON_3dPoint& point ) const
 {
+  return ClosestPointTo(point, false);
+}
+
+ON_3dPoint ON_Line::ClosestPointTo(const ON_3dPoint& point, bool finite_chord) const
+{
   double t;
-  ClosestPointTo( point, &t );
+  ClosestPointTo(point, &t);
+  if (finite_chord)
+  {
+    if (t < 0.0) t = 0.0; if (t > 1.0) t = 1.0;
+  }
   return PointAt(t);
 }
 
 double ON_Line::DistanceTo( ON_3dPoint test_point ) const
 {
-  return test_point.DistanceTo(ClosestPointTo(test_point));
+  return DistanceTo(test_point, false);
 }
+
+double ON_Line::DistanceTo(ON_3dPoint test_point, bool finite_chord) const
+{
+  return test_point.DistanceTo(ClosestPointTo(test_point,finite_chord));
+}
+
 
 
 bool ON_Line::Transform( const ON_Xform& tr )
@@ -404,38 +419,35 @@ double ON_Line::MinimumDistanceTo( const ON_3dPoint& P ) const
 double ON_Line::MinimumDistanceTo( const ON_Line& L ) const
 {
   ON_3dPoint A, B;
-  double a, b, t, x, d;
-  bool bCheckA, bCheckB;
+  double a, b, d;
 
+  // intersects the infinite lines - a and b can be outside the [0..1] domain
   bool bGoodX = ON_Intersect(*this,L,&a,&b);
-
-  bCheckA = true;
-  if ( a < 0.0) a = 0.0; else if (a > 1.0) a = 1.0; else bCheckA=!bGoodX;
-  bCheckB = true;
-  if ( b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0; else bCheckB=!bGoodX;
-
-  A = PointAt(a);
-  B = L.PointAt(b);
-  d = A.DistanceTo(B);
-
-  if ( bCheckA )
+  
+  // intersection fails on co-linear lines
+  if (!bGoodX)
   {
-    L.ClosestPointTo(A,&t);
-    if (t<0.0) t = 0.0; else if (t > 1.0) t = 1.0;
-    x = L.PointAt(t).DistanceTo(A);
-    if ( x < d )
-      d = x;
-  }
+    // check finite-chord distances from endpoints to the line and vice versa
+    constexpr bool finite_chord = true;
+    double d0 = DistanceTo(L.from, finite_chord);
+    double d1 = DistanceTo(L.to, finite_chord);
+    double q0 = L.DistanceTo(from, finite_chord);
+    double q1 = L.DistanceTo(to, finite_chord);
 
-  if ( bCheckB )
-  {
-    ClosestPointTo(B,&t);
-    if (t<0.0) t = 0.0; else if (t > 1.0) t = 1.0;
-    x = PointAt(t).DistanceTo(B);
-    if (x < d )
-      d = x;
+    d = std::min<double>(d0, d1);
+    d = std::min<double>(d, q0);
+    d = std::min<double>(d, q1);
   }
- 
+  else
+  {
+    // clamp to domain of the line itself
+    if (a < 0.0) a = 0.0; else if (a > 1.0) a = 1.0;
+    if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
+
+    A = PointAt(a);
+    B = L.PointAt(b);
+    d = A.DistanceTo(B);
+  }
   return d;
 }
 

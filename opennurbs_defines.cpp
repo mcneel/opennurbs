@@ -1079,7 +1079,7 @@ double ON::UnitScale(
     const double meters_per_custom_unit = us_to.MetersPerUnit(ON_DBL_QNAN);
     if ( meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE )
     {
-      scale *= meters_per_custom_unit;
+      scale /= meters_per_custom_unit;
       us1 = ON::LengthUnitSystem::Meters;
     }
   }
@@ -1125,7 +1125,7 @@ double ON::UnitScale(
     const double meters_per_custom_unit = us_from.MetersPerUnit(ON_DBL_QNAN);
     if ( meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE )
     {
-      scale /= meters_per_custom_unit;
+      scale *= meters_per_custom_unit;
       us0 = ON::LengthUnitSystem::Meters;
     }
   }
@@ -1168,7 +1168,7 @@ double ON::UnitScale(
         && meters_per_unit_from < ON_UNSET_POSITIVE_VALUE
         )
   {
-    scale /= meters_per_unit_from;
+    scale *= meters_per_unit_from;
     us_from = ON::LengthUnitSystem::Meters;
   }
 
@@ -1177,7 +1177,7 @@ double ON::UnitScale(
     && meters_per_unit_to < ON_UNSET_POSITIVE_VALUE 
     )
   {
-    scale *= meters_per_unit_to;
+    scale /= meters_per_unit_to;
     us_to = ON::LengthUnitSystem::Meters;
   }
 

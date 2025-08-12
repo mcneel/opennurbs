@@ -188,6 +188,20 @@ public:
     ) const;
 
   /*
+Description:
+  Find the point on the infinite or finite line that is
+  closest to the test_point.
+Parameters:
+  test_point - [in]
+  finite_chord - [in] if true, the distance is reported to the line as a finite chord
+Returns:
+  The point on the line that is closest to test_point.
+*/
+  ON_3dPoint ClosestPointTo(
+    const ON_3dPoint& test_point, bool finite_chord
+  ) const;
+
+  /*
   Description:
     Find the point on the (infinite) line that is
     closest to the test_point.
@@ -201,6 +215,22 @@ public:
     ON_Line::ClosestPointTo
   */
   double DistanceTo( ON_3dPoint test_point ) const;
+
+  /*
+  Description:
+    Find the point on the infinite or finite line that is
+    closest to the test_point.
+  Parameters:
+    test_point - [in]
+    finite_chord - [in] if true, the distance is reported to the line as a finite chord
+  Returns:
+    distance from the point on the line that is closest
+    to test_point.
+  See Also:
+    ON_3dPoint::DistanceTo
+    ON_Line::ClosestPointTo
+  */
+  double DistanceTo(ON_3dPoint test_point, bool finite_chord) const;
 
 
   /*
