@@ -380,6 +380,12 @@ public:
   */
   void SetArray(T*, int, int);
 
+  //Deleted these two functions because the compiler was actually using pointer
+  //comparison on m_a.  Adding implementations for these in Rhino 8 is cumbersome because
+  //of the template initialization stuff, so use ON_SimpleArray_IsEqual for now.
+  bool operator==(const ON_SimpleArray<T>& other) const = delete;
+  bool operator!=(const ON_SimpleArray<T>& other) const = delete;
+
 protected:
   // implementation //////////////////////////////////////////////////////
   void Move( int /* dest index*/, int /* src index */, int /* element count*/ );
@@ -387,6 +393,24 @@ protected:
 	int  m_count;    // 0 <= m_count <= m_capacity
 	int  m_capacity; // actual length of m_a[]
 };
+
+template <typename T>
+bool ON_SimpleArray_IsEqual(const ON_SimpleArray<T>& first, const ON_SimpleArray<T>& second)
+{
+  if (first.Count() != second.Count())
+    return false;
+
+  const int count = first.Count();
+
+  for (int i = 0; i < count; i++)
+  {
+    //Use operator== because it's more common
+    if (!(first[i] == second[i]))
+      return false;
+  }
+
+  return true;
+}
 
 
 ////////////////////////////////////////////////////////////////
@@ -733,6 +757,14 @@ public:
   */
   void SetArray(T*, int, int);
 
+  //Deleted these two functions because the compiler was actually using pointer
+  //comparison on m_a.  Adding implementations for these in Rhino 8 is cumbersome because
+  //of the template initialization stuff, so use ON_ClassArray_IsEqual for now.
+  bool operator==(const ON_ClassArray<T>& other) const = delete;
+  bool operator!=(const ON_ClassArray<T>& other) const = delete;
+
+  
+
 protected:
   // implementation //////////////////////////////////////////////////////
   void Move( int /* dest index*/, int /* src index */, int /* element count*/ );
@@ -742,6 +774,24 @@ protected:
 	int  m_count;    // 0 <= m_count <= m_capacity
 	int  m_capacity; // actual length of m_a[]
 };
+
+template <typename T>
+bool ON_ClassArray_IsEqual(const ON_ClassArray<T>& first, const ON_ClassArray<T>& second)
+{
+  if (first.Count() != second.Count())
+    return false;
+
+  const int count = first.Count();
+
+  for (int i = 0; i < count; i++)
+  {
+    //Use operator== because it's more common
+    if (!(first[i] == second[i]))
+      return false;
+  }
+
+  return true;
+}
 
 #if defined(ON_DLL_TEMPLATE)
 
