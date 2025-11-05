@@ -1659,12 +1659,12 @@ private:
   unsigned int m_reserved4 = 0;
 };
 
-bool operator==(
+ON_DECL bool operator==(
   const ON_ModelComponentContentMark& lhs,
   const ON_ModelComponentContentMark& rhs
   );
 
-bool operator!=(
+ON_DECL bool operator!=(
   const ON_ModelComponentContentMark& lhs,
   const ON_ModelComponentContentMark& rhs
   );
