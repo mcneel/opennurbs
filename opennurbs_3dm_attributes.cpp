@@ -227,7 +227,7 @@ bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) con
   if ( m_viewport_id != other.m_viewport_id )
     return false;
 
-  if ( m_dmref != other.m_dmref )
+  if (!ON_SimpleArray_IsEqual(m_dmref, other.m_dmref))
     return false;
 
   if (m_object_frame != other.m_object_frame)

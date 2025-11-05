@@ -231,7 +231,7 @@ bool ON_HatchLine::operator==(const ON_HatchLine& src) const
     m_angle_radians == src.m_angle_radians
     && m_base == src.m_base
     && m_offset == src.m_offset
-    && m_dashes == src.m_dashes
+    && ON_SimpleArray_IsEqual(m_dashes, src.m_dashes)
     );
 }
 
@@ -241,7 +241,7 @@ bool ON_HatchLine::operator!=(const ON_HatchLine& src) const
     m_angle_radians != src.m_angle_radians
     || m_base != src.m_base
     || m_offset != src.m_offset
-    || m_dashes != src.m_dashes
+    || !ON_SimpleArray_IsEqual(m_dashes, src.m_dashes)
     );
 }
 
