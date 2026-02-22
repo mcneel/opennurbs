@@ -467,7 +467,7 @@ void FAR *out_desc;
                 RESTORE();
                 if (state->whave < state->wsize)
                     state->whave = state->wsize - left;
-                inflate_fast(strm, state->wsize);
+                jk_inflate_fast(strm, state->wsize);
                 LOAD();
                 break;
             }
