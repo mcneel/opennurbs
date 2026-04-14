@@ -238,7 +238,7 @@
 		1DB028251ED6433600FA9144 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1240;
+				LastUpgradeCheck = 2600;
 				ORGANIZATIONNAME = "OpenNURBS 3dm File IO Toolkit";
 				TargetAttributes = {
 					1DB0282C1ED6433600FA9144 = {

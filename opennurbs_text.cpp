@@ -1729,7 +1729,11 @@ bool ON_TextContent::CreateStackedText(ON_TextRun* run, int cpcount, const ON__U
     stack_width += 2.0 * separator_size;
 
   double top_dy = separator_height + 1.5 * separator_size;
-  double bottom_dy = separator_height - 1.5 * separator_size - (bottom_run->BoundingBox().m_max.y - bottom_run->BoundingBox().m_min.y);
+  // 11 Oct 2025 S. Baer (RH-81827)
+  // Offset for the bottom stacked portion should not take m_min.y into account
+  // Letters that hang below like 'g' were causing the bottom stack offset to be
+  // too large
+  double bottom_dy = separator_height - 1.5 * separator_size - (bottom_run->BoundingBox().m_max.y);// - bottom_run->BoundingBox().m_min.y);
 
   ON_2dPoint box[2];  // total stacked run bounding box
   box[0].Set(top_run->BoundingBox().m_min.x, bottom_dy);
