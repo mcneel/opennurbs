@@ -621,7 +621,7 @@ bool ON_Quaternion::GetYawPitchRoll(double& yaw, double& pitch, double& roll) co
   ON_Xform X;
   bool rc = GetRotation(X);
   if (rc)
-    rc = GetYawPitchRoll(yaw, pitch, roll);
+    rc = X.GetYawPitchRoll(yaw, pitch, roll);
   return rc;
 }
 
@@ -630,7 +630,7 @@ bool  ON_Quaternion::GetEulerZYZ(double& alpha, double& beta, double& gamma) con
   ON_Xform X;
   bool rc = GetRotation(X);
   if (rc)
-    rc = GetEulerZYZ(alpha, beta, gamma);
+    rc = X.GetEulerZYZ(alpha, beta, gamma);
   return rc;
 
 }

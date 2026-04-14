@@ -537,6 +537,14 @@ const ON_wString ON_TextContent::Internal_GetPlainText(bool evaluate_fields, boo
             map.j = plaintext.Length();
             map.k = (int)wcslen(str);
           }
+
+          // December 3, 2025 - Tim
+          // Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-90830
+          // Add a space before the fraction if is not the first 
+          // chunk of text.
+          if (0 < ri && nullptr != wcschr(str, '/'))
+            plaintext += " ";
+
           plaintext += str;
         }
       }

@@ -470,6 +470,7 @@ unsigned int ON_Mesh::SizeOf() const
 {
   unsigned int sz = ON_Geometry::SizeOf();
   sz += m_V.SizeOfArray();
+  sz += m_dV.SizeOfArray();
   sz += m_F.SizeOfArray();
   sz += m_N.SizeOfArray();
   sz += m_FN.SizeOfArray();
