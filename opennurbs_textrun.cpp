@@ -1233,7 +1233,10 @@ int ON_TextRun::WrapTextRun(
           y_offset -= linefeedheight;
         }
 
-        int wrapcount = WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth, newruns);
+        int wrapcount = 0;
+        if (run_length > 0)
+          wrapcount += WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth, newruns);
+
         onfree(temp_display_str);
         return new_count + wrapcount;
       }
