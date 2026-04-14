@@ -31,32 +31,52 @@ public:
   static const ON_SectionStyle Unset;   // index = ON_UNSET_INT_INDEX, id = nil
 
   /*
-    Description:
-      Tests that name is set and there is at least one non-zero length segment
+  Parameters:
+    model_component_reference - [in]
+    none_return_value - [in]
+      value to return if ON_SectionStyle::Cast(model_component_ref.ModelComponent())
+      is nullptr
+  Returns:
+    If ON_SectionStyle::Cast(model_component_ref.ModelComponent()) is not nullptr,
+    that pointer is returned.  Otherwise, none_return_value is returned.
+  */
+  static const ON_SectionStyle* FromModelComponentRef(
+    const class ON_ModelComponentReference& model_component_reference,
+    const ON_SectionStyle* none_return_value
+  );
+
+  bool UpdateReferencedComponents(
+    const class ON_ComponentManifest& source_manifest,
+    const class ON_ComponentManifest& destination_manifest,
+    const class ON_ManifestMap& manifest_map
+  ) override;
+
+  /*
+  Description:
+    Tests that name is set and there is at least one non-zero length segment
   */
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
   void Dump( ON_TextLog& ) const override; // for debugging
 
   /*
-    Description:
-      Write to file (serialize definition to binary archive)
+  Description:
+    Write to file (serialize definition to binary archive)
   */
   bool Write(ON_BinaryArchive&) const override;
 
   /*
-    Description:
-      Read from file (restore definition from binary archive)
+  Description:
+    Read from file (restore definition from binary archive)
   */
   bool Read(ON_BinaryArchive&) override;
 
-
   /*
-    Description:
-      Test only the section style attributes below for equality. Does not
-      perform any testing of the ON_ModelComponent fields
-    Parameters:
-      other: other section style to compare against this
+  Description:
+    Test only the section style attributes below for equality. Does not
+    perform any testing of the ON_ModelComponent fields
+  Parameters:
+    other: other section style to compare against this
   */
   bool SectionAttributesEqual(const ON_SectionStyle& other) const;
 
@@ -88,7 +108,6 @@ public:
   // How a background fill is applied
   SectionBackgroundFillMode BackgroundFillMode() const;
   void SetBackgroundFillMode(SectionBackgroundFillMode mode);
-
 
   // Custom background fill color. If unset (default), the object's color or
   // material is used for a fill

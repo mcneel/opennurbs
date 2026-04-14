@@ -111,6 +111,7 @@ ON_SectionStyle& ON_SectionStyle::operator=(const ON_SectionStyle& other)
   }
   return *this;
 }
+
 bool ON_SectionStyle::IsValid( ON_TextLog* text_log ) const
 {
   if (false == ON_ModelComponent::IsValid(text_log))
@@ -133,6 +134,43 @@ bool ON_SectionStyle::IsValid( ON_TextLog* text_log ) const
 
   return true;
 }
+
+const ON_SectionStyle* ON_SectionStyle::FromModelComponentRef(
+  const class ON_ModelComponentReference& model_component_reference,
+  const ON_SectionStyle* none_return_value
+)
+{
+  const ON_SectionStyle* p = ON_SectionStyle::Cast(model_component_reference.ModelComponent());
+  return (nullptr != p) ? p : none_return_value;
+}
+
+bool ON_SectionStyle::UpdateReferencedComponents(
+  const class ON_ComponentManifest& source_manifest,
+  const class ON_ComponentManifest& destination_manifest,
+  const class ON_ManifestMap& manifest_map
+)
+{
+  bool rc = true;
+  // Update hatch pattern index
+  int hatch_index = HatchIndex();
+  if (hatch_index >= 0)
+  {
+    int destination_hatch_index = -1;
+    if (manifest_map.GetAndValidateDestinationIndex(ON_ModelComponent::Type::HatchPattern, hatch_index, destination_manifest, &destination_hatch_index))
+    {
+      hatch_index = destination_hatch_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update hatch pattern reference.");
+      rc = false;
+      hatch_index = DefaultSectionStylePrivate.m_hatch_index;
+    }
+    SetHatchIndex(hatch_index);
+  }
+  return rc;
+}
+
 
 // 12 Aug 2021 S. Baer
 // When adding new fields written to 3dm files, always add information to this
