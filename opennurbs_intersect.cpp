@@ -286,12 +286,18 @@ bool ON_Intersect( const ON_Line& lineA, const ON_Line& lineB,
   // Line A = (5.4301839655138417, -9.5, 0, -0.6, -9.5, 0)
   // Line B = (5.2373595635311068, 10.5, 0, 5.6603292194932395, 10.5, 0)
   // would be found as intersecting, with pivot ~= 2 * M_zero_tolerance
+  //
+  // 10-SEP-2025 MDvR: RH-89164
+  // I have increased the zero tolerance for the matrix by 10-fold, as the lines
+  // Line A(-502.12241078825264, 463.17458426757145, -2.6515717396328807e-12, - 569.15428634054422, 1336.2761199492861, 0)
+  // Line B(-474.85259053896368, 439.79346146347723, -2.7284841053187847e-12, -543.82881481395043, 1338.2204686719679, 0)
+  // were found as intersecting, with pivot ~= 2 * M_zero_tolerance.
   if (fabs(M[1][1]) > 1.) {
     pr_tolerance = fabs(M[1][1]) * ON_SQRT_EPSILON;
-    M_zero_tol = fabs(M[1][1]) * ON_EPSILON;
+    M_zero_tol = 10*fabs(M[1][1]) * ON_EPSILON;
   } else {
     pr_tolerance = ON_SQRT_EPSILON;
-    M_zero_tol = ON_EPSILON;
+    M_zero_tol = 10*ON_EPSILON;
   }
 
   Y[0] =  ON_DotProduct( A, C );

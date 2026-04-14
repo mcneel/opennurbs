@@ -1717,8 +1717,11 @@ bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox
   bool rc = false;
   if ( m_path.IsValid() && m_profile )
   {
+    ON_Curve* bottom = Profile3d(0, 0.0);
+    ON_Curve* top = Profile3d(0, 1.0);
+
     ON_BoundingBox bbox;
-    if ( m_profile->GetTightBoundingBox(bbox) && GetBoundingBoxHelper(*this,bbox,xform) )
+    if (bottom && bottom->GetTightBoundingBox(bbox, false, xform) && top && top->GetTightBoundingBox(bbox, true, xform))
     {
       if ( bGrowBox )
         tight_bbox.Union(bbox);
@@ -1726,6 +1729,9 @@ bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox
         tight_bbox = bbox;
       rc = true;
     }
+
+    delete bottom;
+    delete top;
   }
   return rc;
 }
