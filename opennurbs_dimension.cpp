@@ -196,7 +196,13 @@ ON_TextContent* ON_Dimension::RebuildDimensionText(
   }
   else
   {
-    displaytext = displaytext + UserText();
+    // October 2, 2025 - Tim
+    // As far as I can tell RebuildDimensionText only gets called with 
+    // expandanglebrackets set to false from the acad export plugin otherwise
+    // I would be jumpy about making these changes.
+    // These changes fix https://mcneel.myjetbrains.com/youtrack/issue/RH-89323
+
+    displaytext = PlainText();
     if (dimstyle->Prefix().IsNotEmpty() || dimstyle->Suffix().IsNotEmpty())
     {
       int ci = displaytext.Find(L"<>");
@@ -206,7 +212,7 @@ ON_TextContent* ON_Dimension::RebuildDimensionText(
         if (displaytext.Length() > ci + 2)
           right = displaytext.Right(displaytext.Length() - ci - 2);
         displaytext = displaytext.Left(ci);
-        displaytext = displaytext + dimstyle->Prefix();
+        displaytext = dimstyle->Prefix() + displaytext;
         displaytext = displaytext + L"<>";
         displaytext = displaytext + dimstyle->Suffix();
         displaytext = displaytext + right;
