@@ -2201,6 +2201,9 @@ double ON_NurbsCurve::GrevilleAbcissa(
   return ON_GrevilleAbcissa( m_order, m_knot+gindex );
 }
 
+// Gets the Greville abscissae. The size of the target array should always be CVCount().
+// NOTE: this does not take into account periodicity and will return parameters
+// outside the domain for periodic curves.
 bool ON_NurbsCurve::GetGrevilleAbcissae( // see ON_GetGrevilleAbcissa() for details
          double* g         // g[m_cv_count]
          ) const

@@ -5645,6 +5645,27 @@ void ON_TextDot::EmergencyDestroy()
   m_display_bits = 0;
 }
 
+unsigned int ON_TextDot::SizeOf() const
+{
+  unsigned int sz = ON_Geometry::SizeOf();
+  sz += (sizeof(*this) - sizeof(ON_Geometry));
+  sz += m_primary_text.SizeOf();
+  sz += m_secondary_text.SizeOf();
+  sz += m_font_face.SizeOf();
+  return sz;
+}
+
+ON__UINT32 ON_TextDot::DataCRC(ON__UINT32 current_remainder) const
+{
+  current_remainder = m_center_point.DataCRC(current_remainder);
+  current_remainder = m_primary_text.DataCRC(current_remainder);
+  current_remainder = m_secondary_text.DataCRC(current_remainder);
+  current_remainder = m_font_face.DataCRC(current_remainder);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_display_bits), &m_display_bits);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_height_in_points), &m_height_in_points);
+  return current_remainder;
+}
+
 bool ON_TextDot::IsValid( 
             ON_TextLog* text_log
             ) const

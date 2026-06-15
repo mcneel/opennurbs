@@ -5241,10 +5241,10 @@ ON_Plane ON_Plane::FromPointList(
   //
   ON_3dVector N(ON_3dVector::ZeroVector);
   ON_3dVector X(ON_3dVector::UnsetVector);
+  const unsigned int index_0123[4] = { 0,1,2,3 };
   if ( point_index_count <= 4 )
   {
     // use "standard" face normal for quads and triangles.
-    const unsigned int index_0123[4] = {0,1,2,3};
     if ( 0 == point_index_list )
       point_index_list = index_0123;
     Pi0 = point_list[point_index_list[point_stride*(point_count-1)]];
