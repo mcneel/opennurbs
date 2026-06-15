@@ -6532,6 +6532,12 @@ bool ON_Brep::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, con
       kct = greville_abcissae.Count();
       for (k = 0; kct > k; k++)
       {
+        // 17 March 2026, Mikko, RH-94035:
+        // Skip isocurves outside the domain. Happens when GetGrevilleAbcissae is called
+        // on a periodic surface.
+        if (!nsrf.Domain(j).Includes(greville_abcissae[k]))
+          continue;
+
         iso_curves.Append(nsrf.IsoCurve(j == 0 ? 1 : 0, greville_abcissae[k]));
       }
     }
