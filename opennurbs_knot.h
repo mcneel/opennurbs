@@ -371,42 +371,42 @@ bool ON_MakePeriodicUniformKnotVector(
           );
 
 ON_DECL
-double ON_GrevilleAbcissa( // get Greville abcissae from knots
-          int,           // order (>=2)
-          const double*  // knot[] array (length = order-1)
+double ON_GrevilleAbcissa(   // get a single Greville abcissa from knots
+          int order,         // order (>=2)
+          const double* knot // knot[] array (length = order-1)
           );
 
 ON_DECL
-bool ON_GetGrevilleAbcissae( // get Greville abcissae from knots
-          int,            // order (>=2)
-          int,            // cv count
-          const double*,  // knot[] array
-          bool,           // true for periodic case
-          double*         // g[] array has length cv_count in non-periodic case
-                          // and cv_count-order+1 in periodic case
+bool ON_GetGrevilleAbcissae(  // get Greville abcissae from knots
+          int order,          // order (>=2)
+          int cv_count,       // cv count
+          const double* knot, // knot[] array
+          bool periodic ,     // true for periodic case
+          double* greville    // g[] array has length cv_count in non-periodic case
+                              // and cv_count-order+1 in periodic case
           );
 
 ON_DECL
 bool ON_GetGrevilleKnotVector( // get knots from Greville abcissa
-          int,           // g[] array stride (>=1)
-          const double*, // g[] array
-                         // if not periodic, length = cv_count
-                         // if periodic, length = cv_count-order+2
-          bool,          // true for periodic knots
-          int,           // order (>=2)
-          int,           // cv_count (>=order)
-          double*        // knot[cv_count+order-2]
+          int g_stride,        // g[] array stride (>=1)
+          const double* grev,  // g[] array
+                               // if not periodic, length = cv_count
+                               // if periodic, length = cv_count-order+2
+          bool periodic,       // true for periodic knots
+          int order,           // order (>=2)
+          int cv_count,        // cv_count (>=order)
+          double* knot         // knot[cv_count+order-2]
           );
 
 ON_DECL
 bool ON_ClampKnotVector(
-        int,       // cv_dim ( = dim+1 for rational cvs )
-        int,       // order (>=2)
-        int,       // cv_count,
-        int,       // cv_stride, 
-        double*,   // cv[] nullptr or array of order many cvs
-        double*,   // knot[] array with room for at least knot_multiplicity new knots
-        int        // end  0 = clamp start, 1 = clamp end, 2 = clamp both ends
+        int dim,       // cv_dim ( = dim+1 for rational cvs )
+        int order,     // order (>=2)
+        int cv_count,  // cv_count,
+        int cv_stride, // cv_stride, 
+        double* cv,    // cv[] nullptr or array of order many cvs
+        double* knots, // knot[] array with room for at least knot_multiplicity new knots
+        int end        // end  0 = clamp start, 1 = clamp end, 2 = clamp both ends
         );
 
 

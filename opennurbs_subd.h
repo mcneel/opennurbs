@@ -11685,7 +11685,7 @@ public:
   // Catmull-Clark limit meshes:
   //   When the original SubD face is a quad, a full fragment is created and
   //   m_face_vertex_index[4] = {0,1,2,3}.
-  //   When the original SuD face is an N-gon with N != 4, a partial fragment 
+  //   When the original SubD face is an N-gon with N != 4, a partial fragment 
   //   is delivered and m_face_vertex_index[2] identifies the face vertex 
   //   for that fragment.  m_face_vertex_index[0,1,3] = a value > ON_SubDFace::MaximumEdgeCount
   unsigned short m_face_vertex_index[4];

@@ -1006,6 +1006,10 @@ public:
            int cv_index  // index (0 <= index < CVCount(dir)
            ) const;
 
+  // Gets the Greville abscissae for the knots in the given direction. 
+  // The size of the target array should always be CVCount(dir).
+  // NOTE: this does not take into account periodicity and will return parameters
+  // outside the domain if the surface is periodic in the given direction.
   bool GetGrevilleAbcissae( // see ON_GetGrevilleAbcissa() for details
            int dir,      // dir
            double* g     // g[cv count]
