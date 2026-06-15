@@ -657,13 +657,21 @@ public:
   // virtual ON_Object overrides
   //
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
+
   bool Write(
          ON_BinaryArchive& binary_archive
        ) const override;
+  
   bool Read(
          ON_BinaryArchive& binary_archive
        ) override;
   ON::object_type ObjectType() const override;
+
+  // virtual ON_Object::SizeOf override
+  unsigned int SizeOf() const override;
+
+  // virtual ON_Object::DataCRC override
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
   /////////////////////////////////////////////////////////////
   //
