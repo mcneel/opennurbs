@@ -677,9 +677,7 @@ bool ON_PlaneSurface::CreatePlaneThroughBox(
   *this = plane;
   uext.Expand(padding * uext.Length() + padding);
   vext.Expand(padding * vext.Length() + padding);
-  SetExtents(0, uext, true);
-  SetExtents(1, vext, true);
-  return true;
+  return SetExtents(0, uext, true) && SetExtents(1, vext, true);
 }
 
 
@@ -1773,6 +1771,14 @@ bool ON_ClippingPlaneSurface::Read( ON_BinaryArchive& file )
   if (!file.EndRead3dmChunk() )
     rc = false;
 
+  return rc;
+}
+
+bool ON_ClippingPlaneSurface::Transform(const ON_Xform& xform)
+{
+  bool rc = ON_PlaneSurface::Transform(xform);
+  if (rc)
+    rc = m_clipping_plane.m_plane.Transform(xform);
   return rc;
 }
 

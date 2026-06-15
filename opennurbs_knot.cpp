@@ -968,9 +968,9 @@ bool ON_MakePeriodicUniformKnotVector(
 
 
 
-double ON_GrevilleAbcissa( // get Greville abcissa
-          int order,          // order (>=2)
-          const double* knot  // knot[order-1] array
+double ON_GrevilleAbcissa(   // get a single Greville abcissa from knots
+          int order,         // order (>=2)
+          const double* knot // knot[order-1] array
           )
 
 {

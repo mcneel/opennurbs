@@ -489,7 +489,9 @@ public:
   /*
   Description:
     Create a plane that contains the projection of a bounding box.
-  Parameters:
+    (You can use CreatePlaneThroughBox is you know that the box
+    intersects with the plane, to make it way tighter)
+    Parameters:
     plane - [in]
     bbox - [in]
     padding - [in]
@@ -506,10 +508,13 @@ public:
 
   /*
   Description:
-    Create a plane that contains the intersection of a bounding box.
+    Create a plane that contains the *intersection* with a bounding box.
     This method uses box edges intersections rather than box vertices
     projections on the plane, which is what CreatePseudoInfinitePlane
     uses.
+    (While the resulting bounding box is tighter, it also means that
+    the plane must intersect with the plane, or no result will be
+    computed.)
   Parameters:
     plane - [in]
     bbox - [in]
@@ -527,10 +532,13 @@ public:
 
     /*
   Description:
-    Create a plane that contains the intersection of a bounding box.
+    Create a plane that contains the *intersection* with a bounding box.
     This method uses box edges intersections rather than box vertices
     projections on the plane, which is what CreatePseudoInfinitePlane
     uses.
+    (While the resulting bounding box is tighter, it also means that
+    the plane must intersect with the plane, or no result will be
+    computed.)
   Parameters:
     plane - [in]
     bbox - [in]
@@ -578,6 +586,7 @@ protected:
 class ON_CLASS ON_ClippingPlaneSurface : public ON_PlaneSurface
 {
   ON_OBJECT_DECLARE(ON_ClippingPlaneSurface);
+
 public:
   ON_ClippingPlaneSurface();
   ON_ClippingPlaneSurface(const ON_Plane& src);
@@ -611,8 +620,13 @@ public:
          ON_BinaryArchive&  // open binary file
        ) override;
 
-  ON_ClippingPlane m_clipping_plane;
-};
+  bool Transform(
+    const ON_Xform&
+  ) override;
 
+public:
+  ON_ClippingPlane m_clipping_plane;
+
+};
 
 #endif
