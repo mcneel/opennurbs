@@ -1761,6 +1761,21 @@ bool ON_InstanceRef::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
+unsigned int ON_InstanceRef::SizeOf() const
+{
+  unsigned int sz = ON_Geometry::SizeOf();
+  sz += (sizeof(*this) - sizeof(ON_Geometry));
+  return sz;
+}
+
+ON__UINT32 ON_InstanceRef::DataCRC(ON__UINT32 current_remainder) const
+{
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_instance_definition_uuid), &m_instance_definition_uuid);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_xform), &m_xform);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_bbox), &m_bbox);
+  return current_remainder;
+}
+
 bool ON_InstanceRef::Write(
        ON_BinaryArchive& binary_archive
      ) const

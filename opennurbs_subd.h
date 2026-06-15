@@ -46,6 +46,7 @@ enum class ON_SubDGetControlNetMeshPriority : unsigned char
 };
 
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDTextureCoordinateType] [Rhino.Geometry.SubDTextureCoordinateType] [byte]
 /// <summary>
 /// ON_SubDTextureCoordinateType identifies the way ON_SubDMeshFragment texture coordinates are set from an ON_SubDFace.
 /// </summary>
@@ -91,6 +92,7 @@ enum class ON_SubDTextureCoordinateType : unsigned char
   ///</summary>
   FromMapping = 7,
 };
+#pragma endregion
 
 #pragma region RH_C_SHARED_ENUM [ON_SubDVertexTag] [Rhino.Geometry.SubDVertexTag] [byte]
 /// <summary>
