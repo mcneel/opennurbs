@@ -132,6 +132,7 @@ void ON_PointCloud::Dump( ON_TextLog& dump ) const
   const bool bHasNormals = HasPointNormals();
   const bool bHasColors = HasPointColors();
   const bool bHasHiddenPoints = (HiddenPointCount() > 0);
+  const bool bHasPointValues = HasPointValues();
   const int point_count = m_P.Count();
   dump.Print("ON_PointCloud: %d points\n",point_count);
   dump.PushIndent();
@@ -155,6 +156,11 @@ void ON_PointCloud::Dump( ON_TextLog& dump ) const
       {
         dump.Print(", color = ");
         dump.PrintRGB(m_C[i]);
+      }
+      if (bHasPointValues) // 20-Jan-2026 show point value
+      {
+        dump.Print(", value = ");
+        dump.Print(m_V[i]);
       }
       if (bHasHiddenPoints && m_H[i])
       {

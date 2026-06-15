@@ -5554,7 +5554,7 @@ const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
           && ssw_dex.j >= 0 && ssw_dex.j < 2
           && ssw_dex.k >= 1 && ssw_dex.k < max_weight_dex
           )
-          ? fonts_by_ssw[ssw_dex.i][ssw_dex.k][ssw_dex.k]
+          ? fonts_by_ssw[ssw_dex.i][ssw_dex.j][ssw_dex.k]
           : nullptr;
         if (nullptr != cleanf)
         {
@@ -7638,7 +7638,7 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
     Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Heavy",         L"Avenir Heavy", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-HeavyOblique",  L"Avenir Heavy", ON_FontFaceQuartet::Member::Italic),
     Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Black",         L"Avenir Black", ON_FontFaceQuartet::Member::Regular),
-    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-BlackOblique",  L"Avenir-Black", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-BlackOblique",  L"Avenir Black", ON_FontFaceQuartet::Member::Italic),
 
     Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-UltraLight", L"Avenir Next Ultralight", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-UltraLightItalic", L"Avenir Next Ultralight", ON_FontFaceQuartet::Member::Italic),
