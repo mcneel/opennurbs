@@ -585,9 +585,11 @@ target_include_directories(opennurbsStatic PUBLIC .)
 target_include_directories(OpenNURBS PUBLIC .)
 
 set(PRECOMPILED_HEADERS opennurbs.h)
-if (BUILD_TESTING)
+# opennurbs_plus_testheader.h is a "plus" header that the public opennurbs does not ship,
+# so only add it to the precompiled headers when the file is actually present.
+if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/opennurbs_plus_testheader.h")
     LIST(APPEND PRECOMPILED_HEADERS opennurbs_plus_testheader.h)
-endif(BUILD_TESTING)
+endif()
 
 target_precompile_headers(opennurbsStatic PRIVATE ${PRECOMPILED_HEADERS})
 target_precompile_headers(OpenNURBS PRIVATE ${PRECOMPILED_HEADERS})
