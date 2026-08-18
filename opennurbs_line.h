@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -272,7 +272,7 @@ Returns:
     P - [in] 
     L - [in] 
   Returns:
-    True if if the shortest distance from this line
+    True if the shortest distance from this line
     to the other object is greater than d.
   */
   bool IsFartherThan( double d, const ON_3dPoint& P ) const;

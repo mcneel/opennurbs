@@ -14346,10 +14346,28 @@ void ON_3dmObjectAttributes::DeleteCustomRenderMeshParameters()
 
 bool ON_3dmObjectAttributes::EnableCustomRenderMeshParameters(bool bEnable)
 {
-  ON_PerObjectMeshParameters* ud = ON_PerObjectMeshParameters::FindOrCreate(this,false);
-  if ( 0 != ud )
+  ON_PerObjectMeshParameters* ud = ON_PerObjectMeshParameters::FindOrCreate(this, false);
+  if (0 != ud)
+  {
+    const bool bWasEnabled = ud->m_mp.CustomSettingsEnabled();
     ud->m_mp.SetCustomSettingsEnabled(bEnable);
+    if (bWasEnabled != bEnable && ud->m_userdata_copycount > 0)
+    {
+      ud->m_userdata_copycount++;
+      if (0 == ud->m_userdata_copycount)
+        ud->m_userdata_copycount = 1;
+    }
+  }
   return (!bEnable || nullptr != ud);
+}
+
+bool ON_3dmObjectAttributes::GetEnableCustomRenderMeshParameters() const
+{
+  ON_PerObjectMeshParameters* ud = ON_PerObjectMeshParameters::FindOrCreate(this, false);
+  if (nullptr == ud)
+    return false;
+
+  return ud->m_mp.CustomSettingsEnabled();
 }
 
 void ON_Mesh::DestroyTree( bool bDeleteTree )

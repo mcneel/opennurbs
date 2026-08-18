@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -66,7 +66,7 @@ public:
 
   // For Rhino V4 the per detail visibility attribute is implemented
   // through a display material reference on an object. This is ONLY
-  // for for detail viewports and only for V4. Keep this uuid around
+  // for detail viewports and only for V4. Keep this uuid around
   // so the per detail attributes in future versions of Rhino can be
   // implemented a different way.
   // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}

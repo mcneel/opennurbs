@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -3843,9 +3843,9 @@ public:
     s - [in]
       string to parse.
       s[0] must be a sign or a digit. It can be the ordinary characters or superscripts.
-      If the first digit is an ordinary digit, the the numerator and denominator must all
+      If the first digit is an ordinary digit, the numerator and denominator must all
       be ordinary digits.
-      If the first digit is a superscript digit, the the numerator must be all superscript
+      If the first digit is a superscript digit, the numerator must be all superscript
       digits and the denominator be all subscript digits.
     len - [in]
       maximum number of characters to parse.

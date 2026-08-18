@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -104,7 +104,7 @@ public:
     ) const; 
 
   /// <summary>
-  /// Convert a a pair of normalized parameter values to 
+  /// Convert a pair of normalized parameter values to 
   /// a pair of interval values.
   /// This interval can be increasing, decreasing, or a singleton.
   /// </summary>
@@ -199,7 +199,7 @@ public:
   /// <param name="t">Input parameter</param>
   /// <returns>
   /// The input parameter in the target interval.
-  /// Returns input paramter unchanged if both intervals are identical.
+  /// Returns input parameter unchanged if both intervals are identical.
   /// Returns ON_DBL_QNAN if either interval is not valid.
   /// </returns>
   double TransformParameterTo(const ON_Interval& target, double t) const;
@@ -2482,7 +2482,7 @@ public:
   /// </summary>
   /// <param name="kappa_style">
   /// Specifies which type curvature (Gaussian, mean, ...) value to calculate from the principal curvatures.
-  /// The Gausian curvature can be positive or negative. The other curvatures are are &gt;= 0.
+  /// The Gausian curvature can be positive or negative. The other curvatures are &gt;= 0.
   /// In particular, ON::curvature_style::mean_curvature return fabs(this->MeanCurvature()).
   /// </param>
   /// <returns>

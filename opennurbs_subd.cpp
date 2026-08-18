@@ -24355,7 +24355,7 @@ const ON_SubDEdgePtr ON_SubDEdgeChain::EdgeChainNeighbor(
 
       // 19 Nov 2024, Mikko, RH-84736:
       // Avoid making sharp turns in the regular two neighbor face case.
-      if (2 == edge->m_face_count)
+      if (bIsSmooth && 2 == edge->m_face_count)
       {
         if (edge->Face(0) == e->Face(0) || edge->Face(1) == e->Face(0))
           continue;

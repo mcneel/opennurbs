@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -537,7 +537,7 @@ public:
 
   /*
   Description:
-    Get the the 3d plane containing the profile curve at a
+    Get the 3d plane containing the profile curve at a
     normalized path parameter.
   Parameters:
     s - [in] 0.0 = starting plane
@@ -558,7 +558,7 @@ public:
 
   /*
   Description:
-    Get the the 3d plane perpendicular to the path at a
+    Get the 3d plane perpendicular to the path at a
     normalized path parameter.
   Parameters:
     s - [in] 0.0 = starting plane
@@ -795,7 +795,7 @@ public:
     Test a polycurve to determine if it meets the necessary 
     conditions to be used as a multi-segment profile in a extrusion.
   Returns:
-    True if the returned polycurve can be used a a multi-segment 
+    True if the returned polycurve can be used as a multi-segment 
     profile in a extrusion.
   */
   static bool IsValidPolyCurveProfile( const ON_PolyCurve& polycurve, ON_TextLog* text_log = 0 );
@@ -805,7 +805,7 @@ public:
     If possible, modify a polycurve so it meets the necessary conditions
     to be used as a multi-segment profile in a extrusion.
   Returns:
-    True if the returned polycurve can be used a a multi-segment 
+    True if the returned polycurve can be used as a multi-segment 
     profile in a extrusion.
   */
   static bool CleanupPolyCurveProfile( ON_PolyCurve& polycurve );

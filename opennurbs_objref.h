@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -90,7 +90,7 @@ public:
   // 
   //  9: A SubD component parameter. 
   //     m_t_ci identifies the SubD component.
-  //     m_t[], m_s[], are used to encode a collection of indicies and doubles
+  //     m_t[], m_s[], are used to encode a collection of indices and doubles
   //     that depend on the SubD component type. 
   //     Use the SetFromSubDComponentParameter() and GetSubDComponentParameter() 
   //     to convert between ON_ObjRefEvaluationParameter 

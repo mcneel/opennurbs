@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -1021,7 +1021,7 @@ public:
   // or application defaults.
   //
   // When CustomSettings() is false, it indicates these mesh
-  // creation parameters were inherited from from model or 
+  // creation parameters were inherited from model or 
   // application defaults and any mesh created with these
   // parameters should be updated when these parameters
   // differ from the current model or application defaults.
@@ -2380,7 +2380,7 @@ Returns:
       mesh face vertex indices.
       If "f" is an ON_MeshFace, then pass (const unsigned int*)f.vi.
   Returns:
-    If the input is valid, the returned ngon pointer is is the 
+    If the input is valid, the returned ngon pointer is the 
     face's triangle or quad.  All returned information is in the
     buffer[].
     null - invalid input.
@@ -3113,7 +3113,7 @@ public:
 
   // The m_mapping_crc is a CRC of a SHA1 hash of the parameters used in 
   // the calculation to set the current texture coordinates and/or vertex colors. 
-  // This CRC is used to detect when the the texture coordinates and/or false colors need to be updated.
+  // This CRC is used to detect when the texture coordinates and/or false colors need to be updated.
   // (Saving the SHA1 hash itself would be better, but changing m_mapping_crc to a SHA1 hash would break the SDK.)
   // 
   // When m_mapping_id = ON_nil_uuid and m_mapping_type = ON_TextureMapping::TYPE::no_mapping, 
@@ -3282,7 +3282,7 @@ public:
   bool IsUnset() const;
 
   /// <summary>
-  /// Get the color the the settings in this ON_SurfaceCurvatureColorMapping assign
+  /// Get the color the settings in this ON_SurfaceCurvatureColorMapping assign
   /// to a pair of principal surface curvatures.
   /// </summary>
   /// <param name="K">
@@ -3465,7 +3465,7 @@ public:
   bool IsUnset() const;
 
   /// <summary>
-  /// Get the color the the settings in this ON_SurfaceDraftAngleColorMapping assign
+  /// Get the color the settings in this ON_SurfaceDraftAngleColorMapping assign
   /// to a surface normal.
   /// </summary>
   /// <param name="surface_normal">
@@ -6085,7 +6085,7 @@ The map is an array of length m_F.Count(), ngon_map[]
   // m_packed_tex_domain[] are all valid and the texture
   // coordinates are based on surface evaluation parameters.
   // In this special situation, this boolean records the 
-  // correspondence between the the surface parameters, (u,v),
+  // correspondence between the surface parameters, (u,v),
   // and the packed texture coordinates, (s,t),
   //
   //   m_packed_tex_rotate = false:
@@ -6602,7 +6602,7 @@ public:
     triangles, quads and explicitly defined ngons.
   Remarks:
     If CurrentNgonIsMeshFace() is true after calling FirstNgon().
-    the the returned ngon references a triangle or
+    the returned ngon references a triangle or
     quad that is not part of an explicitly defined
     ngon in the mesh. If you need the information 
     to persist after any subsequent calls to the iterator
@@ -6619,7 +6619,7 @@ public:
     triangles, quads and explicitly defined ngons.
   Remarks:
     If CurrentNgonIsMeshFace() is true after calling NextNgon().
-    the the returned ngon references a triangle or
+    the returned ngon references a triangle or
     quad that is not part of an explicitly defined
     ngon in the mesh. If you need the information 
     to persist after any subsequent calls to the iterator
@@ -6637,7 +6637,7 @@ public:
     or NextNgon().
   Remarks:
     If CurrentNgonIsMeshFace() is true after calling CurrentNgon().
-    the the returned ngon references a triangle or
+    the returned ngon references a triangle or
     quad that is not part of an explicitly defined
     ngon in the mesh. If you need the information 
     to persist after any subsequent calls to the iterator

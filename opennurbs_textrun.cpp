@@ -43,7 +43,7 @@ ON_TextRun::ON_TextRun(bool bManagedTextRun)
 
 ON_TextRun* ON_TextRun::GetManagedTextRun()
 {
-  // .NET wrappers manage objects with test runs and .NET GC runs in its own thread,
+  // .NET wrappers manage objects with text runs and .NET GC runs in its own thread,
   // so text run allocation/return using the global ON_TextRunPool::thePool resource
   // must be thread safe.
   void* p = ON_TextRunPool::thePool.ThreadSafeAllocateDirtyElement();
@@ -80,7 +80,7 @@ bool ON_TextRun::ReturnManagedTextRun(
     {
       run->Internal_Destroy();
       run->m_active_status = 1;
-      // .NET wrappers manage objects with test runs and .NET GC runs in its own thread,
+      // .NET wrappers manage objects with text runs and .NET GC runs in its own thread,
       // so text run allocation/return using the global ON_TextRunPool::thePool resource
       // must be thread safe.
       ON_TextRunPool::thePool.ThreadSafeReturnElement(run);
@@ -1133,7 +1133,7 @@ private:
     }
     if (0.0 > linewidth)
     {
-      ON_ERROR("WrapTextRun: Linewidtht < 0.");
+      ON_ERROR("WrapTextRun: Linewidth < 0.");
       linewidth = 0.0;
     }
 

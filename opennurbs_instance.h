@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -75,7 +75,7 @@ public:
 
   /*
   Description:
-    Update the mapping from from reference file layer id to runtime model layer id.
+    Update the mapping from reference file layer id to runtime model layer id.
     Typically this is done immediately after the reference file layers are added
     to the runtime model.
   Parameters:

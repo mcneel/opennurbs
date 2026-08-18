@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -45,7 +45,7 @@ public:
   /*
   Returns:
     Current lock value
-    ON_Lock::UnlockedValue indicates the the resource protected by the lock is available.
+    ON_Lock::UnlockedValue indicates the resource protected by the lock is available.
   */
   int IsLocked();
 

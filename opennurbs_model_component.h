@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -446,7 +446,7 @@ public:
   /*
   Returns:
     When a component is in a model as part of the information required
-    for a linked instance definition, this value identifies the the linked
+    for a linked instance definition, this value identifies the linked
     instance definition reference model.
   Remarks:
     Reference components are not saved in .3dm archives.

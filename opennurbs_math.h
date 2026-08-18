@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -934,7 +934,7 @@ Returns:
   nullptr is returned.
 Remarks:
   The ids are invariant under invertable transformations.  
-  Specifically, if one point point set is a rotation of another, then
+  Specifically, if one point set is a rotation of another, then
   the assigned ids will be the same.
 */
 ON_DECL

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -225,7 +225,7 @@ public:
     plane0 - [in]
     plane1 - [in]
   Returns:
-    The unit quaternion that represents the the rotation that maps
+    The unit quaternion that represents the rotation that maps
     plane0.xaxis to plane1.xaxis,
     plane0.yaxis to plane1.yaxis, and 
     plane0.zaxis to plane1.zaxis.
@@ -307,7 +307,7 @@ public:
     where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
     Returns false if this is not a rotation.
   Notes:
-    alpha and gamma are in the range (-pi, pi] while beta in in the range [0, pi]
+    alpha and gamma are in the range (-pi, pi] while beta in the range [0, pi]
   */
   bool GetEulerZYZ(double& alpha, double& beta, double& gamma)const;
 

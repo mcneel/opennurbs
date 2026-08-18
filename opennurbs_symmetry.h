@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -95,7 +95,7 @@ public:
     Unset = 0,
 
     /// <summary>
-    /// The symmetry is associated with an object is is applied to.
+    /// The symmetry is associated with an object is applied to.
     /// If that object is transformed, the symmetry's planes and rotation axes
     /// are also transformed.
     /// </summary>
@@ -175,7 +175,7 @@ public:
     InsideRotateAndReflect = 11,
 
     /// <summary>
-    /// Outside the primary motif region and and on one of the fixed point planes
+    /// Outside the primary motif region and on one of the fixed point planes
     /// Applies to ReflectAndRotate symmetries.
     /// </summary>
     OutsideRotateAndReflect = 12
@@ -279,7 +279,7 @@ public:
     transformation - [in]
     fixed_plane - [in]
   Returns:
-    True if the the transformation and fixed_plane are valid and
+    True if the transformation and fixed_plane are valid and
     the transformation fixes points on the plane.
   Remarks:
     The value ON_Symmetry::ZeroTolerance is used for all "zero tolerances."

@@ -21,22 +21,28 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-class ON_LayerPrivate
+class ON_LayerPrivate final
 {
 public:
+  ON_LayerPrivate(const ON_LayerPrivate& other);
   ON_LayerPrivate() = default;
   ~ON_LayerPrivate() = default;
 
   bool operator==(const ON_LayerPrivate&) const;
   bool operator!=(const ON_LayerPrivate&) const;
 
-  std::shared_ptr<ON_SectionStyle> m_custom_section_style;
+  std::unique_ptr<ON_SectionStyle> m_custom_section_style;
 
   bool m_visible_in_new_details = true;
 };
 
 static const ON_LayerPrivate DefaultLayerPrivate;
 
+ON_LayerPrivate::ON_LayerPrivate(const ON_LayerPrivate& other)
+{
+  m_custom_section_style = other.m_custom_section_style ? std::make_unique<ON_SectionStyle>(*other.m_custom_section_style) : nullptr;
+  m_visible_in_new_details = other.m_visible_in_new_details;
+}
 
 bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
 {
@@ -183,10 +189,7 @@ ON_Layer::ON_Layer( const ON_Layer& src)
   , m_extension_bits(src.m_extension_bits)
 {
   if (src.m_private)
-  {
-    m_private = new ON_LayerPrivate();
-    *m_private = *src.m_private;
-  }
+    m_private = new ON_LayerPrivate(*src.m_private);
 }
 
 ON_Layer& ON_Layer::operator=(const ON_Layer& src)
@@ -205,14 +208,11 @@ ON_Layer& ON_Layer::operator=(const ON_Layer& src)
     m_bExpanded = src.m_bExpanded;
     m_extension_bits = src.m_extension_bits;
 
-    if (m_private)
-      delete m_private;
+    delete m_private;
     m_private = nullptr;
+
     if (src.m_private)
-    {
-      m_private = new ON_LayerPrivate();
-      *m_private = *src.m_private;
-    }
+      m_private = new ON_LayerPrivate(*src.m_private);
   }
   return *this;
 }

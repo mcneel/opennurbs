@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -1421,7 +1421,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -1559,7 +1559,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -1696,7 +1696,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -1833,7 +1833,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -1986,7 +1986,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -2124,7 +2124,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -2274,7 +2274,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -2424,7 +2424,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -2578,7 +2578,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -2744,7 +2744,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -2891,7 +2891,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -3039,7 +3039,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -3187,7 +3187,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -3335,7 +3335,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:
@@ -3483,7 +3483,7 @@ Description:
 
 Parameters:
   bTestByteOrder - [in]
-    If bTestByteOrder is true and the the input buffer is a 
+    If bTestByteOrder is true and the input buffer is a 
     byte order mark (BOM), then the BOM is skipped.  It the value
     of the BOM is byte swapped, then subsequent input elements are
     byte swapped before being decoded. Specifically:

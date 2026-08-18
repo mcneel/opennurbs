@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -535,7 +535,7 @@ public:
       If true, the frustum will be adjusted so top = -bottom.
     target_distance - [in]
       If projection is not perspective or target_distance 
-      is ON_UNSET_VALUE, this this parameter is ignored. 
+      is ON_UNSET_VALUE, this parameter is ignored. 
       If the projection is perspective and target_distance 
       is not ON_UNSET_VALUE, then it must be > 0.0 and
       it is used to determine which plane in the old
@@ -1619,7 +1619,7 @@ public:
     0 = No part of the of the transformed bounding box
         is in the view frustum or the view camera and frustum
         have not been set.
-    1 = A portion of of the transformed bounding box is
+    1 = A portion of the transformed bounding box is
         in the view frustum
     2 = The entire  transformed bounding box is in the
         view frustum.
@@ -1712,7 +1712,7 @@ protected:
 
 private:
   // When this id matches the viewport id saved in an ON_DisplayMaterialRef
-  // list in ON_3dmObjectAttributes, then the the display material is used
+  // list in ON_3dmObjectAttributes, then the display material is used
   // for that object in this view.
   ON_UUID m_viewport_id = ON_nil_uuid;
 

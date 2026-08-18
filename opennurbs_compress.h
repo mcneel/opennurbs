@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -60,7 +60,7 @@ public:
   Returns:
     Current value of the callback function for handling
     the compressed stream.  If the callback function is
-    null, the the virtual Out() function is used to
+    null, the virtual Out() function is used to
     handle
   */
   ON_StreamCallbackFunction CallbackFunction() const;
@@ -237,7 +237,7 @@ public:
   Returns:
     Current value of the callback function for handling
     the uncompressed stream.  If the callback function is
-    null, the the virtual UncompressedStreamOut() function
+    null, the virtual UncompressedStreamOut() function
     is used.
   */
   ON_StreamCallbackFunction CallbackFunction() const;

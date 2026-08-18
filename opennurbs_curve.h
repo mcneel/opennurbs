@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -961,7 +961,7 @@ public:
   Returns 
     true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
-    - The length of the the line segment from the span's initial 
+    - The length of the line segment from the span's initial 
       point to the span's control point is >= min_length.
     - The maximum distance from the line segment to the span
     is <= tolerance and the span increases monotonically

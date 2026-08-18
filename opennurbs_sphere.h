@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -100,7 +100,7 @@ public:
 
   bool Transform( const ON_Xform& );
 
-  // parameterization of NURBS surface does not match sphere's transcendental paramaterization
+  // parameterization of NURBS surface does not match sphere's transcendental parameterization
   int GetNurbForm( ON_NurbsSurface& ) const; // returns 0=failure, 2=success
 
   /*
