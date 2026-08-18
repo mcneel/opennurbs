@@ -264,6 +264,12 @@ ON_Interval ON_PolylineCurve::Domain() const
   ON_Interval d;
   //bool rc = false;
   const int count = PointCount();
+
+  // 14 May 2026 S. Baer
+  // check m_t size before attempting to access it
+  if (m_t.Count() < count)
+    return ON_Interval::EmptyInterval;
+
   if ( count >= 2 && m_t[0] < m_t[count-1] ) {
     d.Set(m_t[0],m_t[count-1]);
   }
@@ -897,7 +903,7 @@ ON_PolylineCurve::Evaluate( // returns false if unable to evaluate
 {
   bool rc = false;
   const int count = PointCount();
-  if ( count >= 2 ) 
+  if ( count >= 2 && m_t.Count() >= count) 
   {
     int segment_index = ON_NurbsSpanIndex(2,count,m_t,t,side,(hint)?*hint:0);
 
@@ -1320,7 +1326,7 @@ int ON_PolylineCurve::GetNurbForm(
 {
   int rc = 0;
   const int count = PointCount();
-  if ( count < 2 )
+  if ( count < 2 || m_t.Count() < count )
     nurb.Destroy();
   else  if ( nurb.Create( Dimension(), false, 2, count) ) {
     int i;
