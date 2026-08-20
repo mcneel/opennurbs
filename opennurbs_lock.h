@@ -45,7 +45,7 @@ public:
   /*
   Returns:
     Current lock value
-    ON_Lock::UnlockedValue indicates the the resource protected by the lock is available.
+    ON_Lock::UnlockedValue indicates the resource protected by the lock is available.
   */
   int IsLocked();
 

@@ -432,7 +432,7 @@ public:
               -1 is returned, otherwise, the search begins
               at m_textures[i0+1].
   Example:
-    Iterate through all the the bitmap textures on
+    Iterate through all the bitmap textures on
     a material.
 
           ON_Material& mat = ...;

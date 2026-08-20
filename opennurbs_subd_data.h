@@ -3263,7 +3263,7 @@ public:
 
   /// <summary>
   /// Initialize this ON_SubDVertexQuadSector topology and component tags
-  /// assuming the the smooth edges attached to the center vertex have
+  /// assuming the smooth edges attached to the center vertex have
   /// a smooth outer ring vertex.
   /// </summary>
   /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
@@ -3318,7 +3318,7 @@ public:
 
   /// <summary>
   /// Initialize this ON_SubDVertexQuadSector topology and component tags
-  /// assuming the the smooth edges attached to the center vertex have
+  /// assuming the smooth edges attached to the center vertex have
   /// a smooth outer ring vertex and are not sharp.
   /// </summary>
   /// If vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
@@ -3366,7 +3366,7 @@ public:
 
   /// <summary>
   /// Initialize this ON_SubDVertexQuadSector topology and component tags
-  /// assuming the the smooth edges attached to the center vertex have
+  /// assuming the smooth edges attached to the center vertex have
   /// a smooth outer ring vertex.
   /// </summary>
   /// If center_vertex_tag is ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,

@@ -96,7 +96,7 @@
 
 
 /* The openNURBS toolkit allows users to write all openNURBS classed that are
-// derived from ON_Object using using TCODE_OPENNURBS_CLASS chunks.
+// derived from ON_Object using TCODE_OPENNURBS_CLASS chunks.
 // In the .3dm file these TCODE_OPENNURBS_CLASS chunks are always have the
 // following format.
 */

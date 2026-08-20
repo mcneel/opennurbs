@@ -420,7 +420,7 @@ public:
   // m_floating_viewport is used to track floating viewport information.
   //  0 = the view is docked in the main application window.
   // >0 = the view is floating. When floating, this corresponds to the
-  //      number of monitors on on the user's computer when the file was saved
+  //      number of monitors on the user's computer when the file was saved
   unsigned char m_floating_viewport;
 private:
   // reserved for future use
@@ -605,7 +605,7 @@ public:
   // After Dec 14, 2010 m_clipping_planes is saved.
   ON_SimpleArray<ON_ClippingPlaneInfo> m_clipping_planes;
 
-  // If true, the the camera location, camera direction,
+  // If true, the camera location, camera direction,
   // and lens angle should not be changed.
   // It is ok to adjust clipping planes.
   bool m_bLockedProjection;
@@ -1151,7 +1151,7 @@ public:
     elevation_unit_system - [in]
       length unit system for returned value.
   Returns:
-    Earth location elevation in in elevation_unit_system.
+    Earth location elevation in elevation_unit_system.
     The value is with
     Can be ON_UNSET_VALUE
   */

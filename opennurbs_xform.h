@@ -1058,7 +1058,7 @@ Details:
 	where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
 	Returns false if this is not a rotation.
 Notes:
-  alpha and gamma are in the range (-pi, pi] while beta in in the range [0, pi]
+  alpha and gamma are in the range (-pi, pi] while beta in the range [0, pi]
 */
 	bool GetEulerZYZ(double& alpha, double& beta, double& gamma )const;
 

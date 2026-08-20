@@ -446,7 +446,7 @@ public:
   /*
   Returns:
     When a component is in a model as part of the information required
-    for a linked instance definition, this value identifies the the linked
+    for a linked instance definition, this value identifies the linked
     instance definition reference model.
   Remarks:
     Reference components are not saved in .3dm archives.

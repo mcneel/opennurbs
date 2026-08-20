@@ -16,7 +16,7 @@
 
 /*
 Description:
-	An ON_Arc is a subcurve of 3d circle. 
+	An ON_Arc is a subcurve of a 3d circle.
 Details:
 	The curve is parameterized by	an angle expressed in radians.   For an IsValid() arc 
 	the total subtended angle 	AngleRadians() = Domain()(1) - Domain()(0) must satisfy
@@ -301,7 +301,7 @@ public:
   // Description:
   //   Checks an arc to make sure it is valid.
 	// Detail:
-	//	 Radius>0 and 0<AngleRadians()<=2 ON_PI
+	//	 Radius>0 and 0<AngleRadians()<=2*ON_PI
   // Returns:
   //   true if the arc is valid.
   bool IsValid() const;
@@ -410,7 +410,7 @@ public:
   // Description:
   //   Set arc's domain as a subdomain of the circle.
   // Parameters:
-  //   domain_radian - [in]   0 < domain_radian[1] - domain_radian[0] <= 2.0 * ON*PI
+  //   domain_radian - [in]   0 < domain_radian[1] - domain_radian[0] <= 2.0 * ON_PI
   //
   bool Trim(
     ON_Interval domain_radian
@@ -508,7 +508,7 @@ public:
 
   // Description:
   //   Reverse the orientation of the arc.  Changes the domain
-  //   from [a,b] to [-b.-a].
+  //   from [a,b] to [-b,-a].
   bool Reverse();
 
   // Description:
@@ -528,7 +528,7 @@ public:
 
   /*
   Description:
-    Convert a NURBS curve arc parameter to a arc radians parameter.
+    Convert a NURBS curve arc parameter to an arc radians parameter.
   Parameters:
     nurbs_parameter - [in]
     arc_radians_parameter - [out]
@@ -540,7 +540,7 @@ public:
           arc.GetRadianFromNurbFormParameter( nurbs_t, &arc_t );
 
           ON_NurbsCurve nurbs_curve;
-          arc.GetNurbsForm( nurbs_curve );
+          arc.GetNurbForm( nurbs_curve );
           arc_pt = arc.PointAt(arc_t);
           nurbs_pt = nurbs_curve.PointAt(nurbs_t);
           // arc_pt and nurbs_pt will be the same
@@ -561,7 +561,7 @@ public:
 
   /*
   Description:
-    Convert a arc radians parameter to a NURBS curve arc parameter.
+    Convert an arc radians parameter to a NURBS curve arc parameter.
   Parameters:
     arc_radians_parameter - [in] 0.0 to 2.0*ON_PI
     nurbs_parameter - [out]
@@ -573,7 +573,7 @@ public:
           arc.GetNurbFormParameterFromRadian( arc_t, &nurbs_t );
 
           ON_NurbsCurve nurbs_curve;
-          arc.GetNurbsForm( nurbs_curve );
+          arc.GetNurbForm( nurbs_curve );
           arc_pt = arc.PointAt(arc_t);
           nurbs_pt = nurbs_curve.PointAt(nurbs_t);
           // arc_pt and nurbs_pt will be the same
@@ -585,7 +585,7 @@ public:
     parameter and radian parameter are the same.  At all other
     values the nurbs and radian parameter values are different.
   See Also:
-    ON_Arc::GetNurbFormParameterFromRadian
+    ON_Arc::GetRadianFromNurbFormParameter
   */
   bool GetNurbFormParameterFromRadian(
         double arc_radians_parameter,
@@ -601,4 +601,3 @@ private:
 };
 
 #endif
-

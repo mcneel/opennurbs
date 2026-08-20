@@ -284,7 +284,7 @@ enum class ON_SubDHashType : unsigned char
   /// <summary>
   /// The Topology hash includes component ids, and all topological relationships 
   /// between vertices, edges, and faces. If two SubDs have the same topology hash,
-  /// then the the have identical labeled control net topology.
+  /// then the have identical labeled control net topology.
   /// </summary>
   Topology = 3,
 
@@ -844,7 +844,7 @@ public:
   /// (vertex_tag = ON_SubDVertexTag::Crease, 2 sectors, EdgeCount() = FaceCount() &gt;= 2),
   /// then interior_crease_vertex_sharpness is the maximum edge sharpness at the
   /// vertex's end of all smooth edges from both sectors. 
-  /// This paramter is important in special situations that occur
+  /// This parameter is important in special situations that occur
   /// in low level SubD evaluation code where information from only one
   /// sector is present. In all other cases, this value doesn't matter as long
   /// as interior_crease_vertex_sharpness &lt;= maximum_edge_sharpness_at_vertex.
@@ -986,7 +986,7 @@ public:
   /// <summary>
   /// If this class was created using the constructor that has a vertex tag
   /// and that tag was ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
-  /// or ON_SubDVertexTag::Crease, then you you must call this function for
+  /// or ON_SubDVertexTag::Crease, then you must call this function for
   /// every sharp edge connected to the vertex. 
   /// </summary>
   /// <param name="sharpness_at_vertex">
@@ -1262,7 +1262,7 @@ public:
   const ON_SubDEdgePtr EdgePtr(const class ON_SubDFace* face, unsigned corner_edge_dex) const;
 
   /// <summary>
-  /// Get the edge of face that goes from the the previous
+  /// Get the edge of face that goes from the previous
   /// face corner to this face corner. The edge pointer 
   /// is oriented from PreviousCornerVertex() to CornerVertex().
   /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
@@ -1295,10 +1295,10 @@ public:
 
   /// <summary>
   /// Create a SubD face parameter that identifies a point on the face. 
-  /// The parameters (0,0) correspond the the corner vertex cdex.Vertex(face). 
+  /// The parameters (0,0) correspond the corner vertex cdex.Vertex(face). 
   /// The corner_s parameter runs from the corner vertex to the midpoint of cdex.RightEdge(face).
   /// The corner_t parameter runs from the corner vertex to the midpoint of cdex.LeftEdge(face).
-  /// The parameters (1/2, 1/2) correspond the the center of the face.
+  /// The parameters (1/2, 1/2) correspond the center of the face.
   /// </summary>
   /// <param name="cdex">
   /// Identifies the face's corner subdivison quad.
@@ -1316,7 +1316,7 @@ public:
   );
 
   /// <summary>
-  /// Create at ON_SubDFaceParameter the corresponds to the the specified quad face parameters.
+  /// Create at ON_SubDFaceParameter the corresponds to the specified quad face parameters.
   /// The quad face parameters for face.Vertex(0) are (0,0).
   /// The quad face parameters for face.Vertex(1) are (1,0).
   /// The quad face parameters for face.Vertex(2) are (1,1).
@@ -2162,7 +2162,7 @@ public:
     point_location - [in]
       Used to select control net or limit surface point.
   Returns:
-    The requested vertex point with with EdgeDirection() taken into account.
+    The requested vertex point with EdgeDirection() taken into account.
     ON_3dPoint::NanPoint if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
   */
   const ON_3dPoint RelativeVertexPoint(
@@ -2200,7 +2200,7 @@ public:
     If (relative_vertex_index = 0), returns Edge()->m_sector_coefficient(1-EdgeDirection())
     Otherwise ON_SubDSectorType::ErrorSectorCoefficient is returned.
   Remarks:
-    The name "sector coefficient" is used because is is a property of the
+    The name "sector coefficient" is used because is a property of the
     vertex's sector (every edge in vertex sector has the same value at the tagged vertex).
     The sector coefficient does not change when a subdivision is applied.
   */
@@ -3976,7 +3976,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If v is in sorted_tags[], the VertexTag() from from sorted_tags[] is returned.
+    If v is in sorted_tags[], the VertexTag() from sorted_tags[] is returned.
     Otherwise v->m_vertex_tag is returned.
   */
   static ON_SubDVertexTag OriginalVertexTag(
@@ -3990,7 +3990,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If vertex_id is in sorted_tags[], the VertexTag() from from sorted_tags[] is returned.
+    If vertex_id is in sorted_tags[], the VertexTag() from sorted_tags[] is returned.
     Otherwise ON_SubDVertexTag::Unset is returned.
   */
   static ON_SubDVertexTag OriginalVertexTag(
@@ -4004,7 +4004,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If e is in sorted_tags[], the EdgeTag() from from sorted_tags[] is returned.
+    If e is in sorted_tags[], the EdgeTag() from sorted_tags[] is returned.
     Otherwise e->m_edge_tag is returned.
   */
   static ON_SubDEdgeTag OriginalEdgeTag(
@@ -4018,7 +4018,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If edge_id is in sorted_tags[], the EdgeTag() from from sorted_tags[] is returned.
+    If edge_id is in sorted_tags[], the EdgeTag() from sorted_tags[] is returned.
     Otherwise ON_SubDEdgeTag::Unset is returned.
   */
   static ON_SubDEdgeTag OriginalEdgeTag(
@@ -4032,7 +4032,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If f is in sorted_tags[], the FaceTag() from from sorted_tags[] is returned.
+    If f is in sorted_tags[], the FaceTag() from sorted_tags[] is returned.
     Otherwise 0 is returned.
   */
   static unsigned char OriginalFaceTag(
@@ -4046,7 +4046,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If face_id is in sorted_tags[], the FaceTag() from from sorted_tags[] is returned.
+    If face_id is in sorted_tags[], the FaceTag() from sorted_tags[] is returned.
     Otherwise ON_SubDFaceTag::Unset is returned.
   */
   static unsigned char OriginalFaceTag(
@@ -4997,19 +4997,19 @@ public:
     Double = 2,
 
     /// <summary>
-    /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+    /// This option applies only when the input is an array of ON_SubDEdgePtrs
     /// that form a single oriented edge chain of manifold interior edges.
     /// A single quad is added to the left of the input edges.
-    /// (The left side of of an oriented interior manifold edge is the face
+    /// (The left side of an oriented interior manifold edge is the face
     /// whose natural boundary orientation is the same as with the ON_SubDEdgePtr direction.)
     /// </summary>
     HalfLeft = 3,
 
     /// <summary>
-    /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+    /// This option applies only when the input is an array of ON_SubDEdgePtrs
     /// that form a single oriented edge chain of manifold interior edges.
     /// A single quad is added to the right of the input edges.
-    /// (The right side of of an oriented interior manifold edge is the face
+    /// (The right side of an oriented interior manifold edge is the face
     /// whose natural boundary orientation is opposite the ON_SubDEdgePtr direction.)
     /// </summary>
     HalfRight = 4,
@@ -5083,7 +5083,7 @@ public:
     const ON_SimpleArray<ON_SubDEdgePtr>& edges
   );
 
-  /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+  /// This option applies only when the input is an array of ON_SubDEdgePtrs
   /// that form a single oriented edge chain. You may use
   /// ON_SubDExpandEdgesParameters::IsValidForVariableOffset() to determine if an
   /// array of ON_SubDEdgePtrs meets the variable offset requirements.
@@ -5093,7 +5093,7 @@ public:
 
   /*
   Description:
-    This option applies only when the the input is an array of ON_SubDEdgePtrs
+    This option applies only when the input is an array of ON_SubDEdgePtrs
     that form a single oriented edge chain. You may use
     ON_SubDExpandEdgesParameters::IsValidForVariableOffset() to determine if an
     array of ON_SubDEdgePtrs meets the variable offset requirements.
@@ -5353,7 +5353,7 @@ public:
   /// In that case, this edge is used.
   /// </summary>
   /// <returns>
-  /// The prefered edge attached to this vertex.
+  /// The preferred edge attached to this vertex.
   /// </returns>
   const ON_SubDComponentId VertexEdge() const;
 
@@ -5362,7 +5362,7 @@ public:
   /// In these cases this face is used.
   /// </summary>
   /// <returns>
-  /// The prefered face attached to this vertex.
+  /// The preferred face attached to this vertex.
   /// </returns>
   const ON_SubDComponentId VertexFace() const;
 
@@ -5416,7 +5416,7 @@ public:
   /// In that case, this face is used.
   /// </summary>
   /// <returns>
-  /// The prefered edge attached to this vertex.
+  /// The preferred edge attached to this vertex.
   /// </returns>
   const ON_SubDComponentId EdgeFace() const;
 
@@ -7290,7 +7290,7 @@ public:
     Sets ON_SubDComponent MarkBits() to
     0: component is not in a symmetry set motif
     n>=1: 
-      The component is the the n-th element in the symmetry set
+      The component is the n-th element in the symmetry set
       with n=1 indicating the component in the primary motif.
   */
   void SetComponentMarkBitsFromSymmetryMotif() const;
@@ -8440,7 +8440,7 @@ public:
       The edge will be on the same level as the vertices.
     sharpness - [in]
       If edge_tag is ON_SubDEdge::Smooth or ON_SubDEdge::SmoothX, then
-      the the edge's sharpness is set to sharpness.
+      the edge's sharpness is set to sharpness.
       Otherwise, the sharpness parameter is ignored.
   Returns:
     Pointer to the allocated edge.
@@ -9691,7 +9691,7 @@ public:
         does not match this->SubDTopologyHash(), then this->FacePackingSubDTopologyHash() is updated
         to the current value of this->SubDTopologyHash().
 
-        If this parameter is false and and this->FacePackingSubDTopologyHash()
+        If this parameter is false and this->FacePackingSubDTopologyHash()
         does not match this->SubDTopologyHash(), then the function returns false.
     Returns:
       True if FacesArePacked() is true, the quad grids meet all the conditions described above,
@@ -10557,7 +10557,7 @@ public:
     double error_return_value
   );
 
-  // This value is is used to set sector angles when the
+  // This value is used to set sector angles when the
   // actual value is not needed. This occurs at both ends
   // of a creased edge and when the end of a smooth edge
   // is a smooth vertex.
@@ -10583,7 +10583,7 @@ public:
   static const double ErrorSectorTheta; // = -9992.0;
 
 
-  // This value is is used to set edge sector coefficients when the
+  // This value is used to set edge sector coefficients when the
   // actual value is not needed. This occurs at both ends
   // of a creased edge and when the end of a smooth edge
   // is a smooth vertex.
@@ -13288,7 +13288,7 @@ private:
 /// <summary>
 /// ON_SubDMesh is used to store a high density traditional quad mesh
 /// of a SubD surface or a mesh of a SubD control net. 
-/// In general, is is better to use an ON_SubDMeshFragmentIterator(subd)
+/// In general, is better to use an ON_SubDMeshFragmentIterator(subd)
 /// that iterates the ON_MeshFragments cached on the ON_SubD. 
 /// </summary>
 class ON_CLASS ON_SubDMesh
@@ -14610,7 +14610,7 @@ public:
   /// The bEndCheck parameter controls what type of sharpness query
   /// is performed.
   /// Note that the vertex subdivision point is affected by attached
-  /// sharp edges when IsSharp(true) is is true (ON_Vertex::VertexSharpness() &gt; 0). 
+  /// sharp edges when IsSharp(true) is true (ON_Vertex::VertexSharpness() &gt; 0). 
   /// The vertex limit surface point is affected by edge sharpenss 
   /// when IsSharp(false) is true.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
@@ -14631,9 +14631,9 @@ public:
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <returns>
-  /// If the vertex is smooth and and two or more attached edges have positive end sharpness
+  /// If the vertex is smooth and two or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
-  /// If the vertex is a dart or crease and and one or more attached edges have positive end sharpness
+  /// If the vertex is a dart or crease and one or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
   /// Otherwise 0.0 is returned.
   /// </returns>
@@ -14707,9 +14707,9 @@ public:
   /// in place of the ordinary subdivision point.
   /// </param>
   /// <returns>
-  /// If the vertex is smooth and and two or more attached edges have positive end sharpness
+  /// If the vertex is smooth and two or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
-  /// If the vertex is a dart or crease and and one or more attached edges have positive end sharpness
+  /// If the vertex is a dart or crease and one or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
   /// Otherwise 0.0 is returned.
   ///< / returns>
@@ -15950,8 +15950,8 @@ public:
   /// Sharp edges are a blend between smooth edges and crease edges. 
   /// The limit surface has a continuous normal along a sharp edge.
   /// A sharp edge has a smooth tag, 
-  /// has sharpness &gt; 0 at at least one end, 
-  /// and has sharpness &lt; ON_SubDEdgeSharpness::MaximumValue at at least one end.
+  /// has sharpness &gt; 0 at least one end, 
+  /// and has sharpness &lt; ON_SubDEdgeSharpness::MaximumValue at least one end.
   /// Sharpness has no meaning for edges with crease tags.
   /// Both sharpness values are zero for an ordinary smooth edge.
   /// Edge sharpness steadily decreases during subdivision and becomes zero after at most ON_SubDEdgeSharpness::MaximumValue subdivisions.
@@ -20186,7 +20186,7 @@ public:
       A positive value increases vertex bias in some situations; otherwise vertex_depth_bias is ignored.
       When pick_type is ON_PickType::PointPick and either
       an edge and a vertex of that edge or a face and a vertex of that face are being compared,
-      then then vertex_depth_bias is added to the vertex hit depth before comparing depths.
+      then vertex_depth_bias is added to the vertex hit depth before comparing depths.
       When the pick is happening in a perspective view, it is important to choose a vertex_depth_bias
       appropriate for the depth in the view frustum.
 
@@ -20194,7 +20194,7 @@ public:
       When in doubt pass 0.0.
       A positive value increases edge bias in some situations; otherwise vertex_depth_bias is ignored.
       When pick_type is ON_PickType::PointPick and a face and an edge of that face are being compared,
-      then then edge_depth_bias is added to the edge hit depth before comparing depths.
+      then edge_depth_bias is added to the edge hit depth before comparing depths.
       When the pick is happening in a perspective view, it is important to choose an edge_depth_bias
       appropriate for the depth in the view frustum.
 
@@ -20216,7 +20216,7 @@ public:
   // m_component_ptr will be face, edge or vertex
   ON_SubDComponentPtr m_component_ptr = ON_SubDComponentPtr::Null;
 
-  //// If the point is on a a face that does not have the ordinary number of 
+  //// If the point is on a face that does not have the ordinary number of 
   //// edges for the subdivision type, then m_face_corner_index identifies the
   //// subfragment corner.
   //unsigned int m_face_corner_index = ON_UNSET_UINT_INDEX;
@@ -20332,7 +20332,7 @@ public:
   // edges E[1], ..., E[N-1] are smooth with sharpness = 0,  
   // and all faces F[i] are quads.
   //
-  // If If "C" is a boundary vertex (m_vertex_tag is crease or corner), the conditions
+  // If "C" is a boundary vertex (m_vertex_tag is crease or corner), the conditions
   // listed above are satisfied except 
   // E[0] and E[N-1] are crease edges, 
   // E[1], ..., E[N-2] are smooth edges with sharpness = 0, 
@@ -20349,7 +20349,7 @@ public:
 
   // m_S = R x R subdivision matrix
   // If (vertexR[0], ..., vertexR[R-1]) is a list of standard vertex ring points,
-  // then then the location of the subdivided ring points
+  // then the location of the subdivided ring points
   // (vertexR1[0], ..., vertexR1[R-1]) can be calculated from m_S.
   // vertexR1[i] = m_S[i][0]*vertexR[0] + ... + m_S[i][R-1]*vertexR[R-1]
   const double* const* m_S = nullptr;

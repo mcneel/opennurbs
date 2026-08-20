@@ -626,7 +626,7 @@ typedef ON__UINT32 wchar_t;
 // Whenever possible use native OS tools for font and glyph support.
 // Things like names, outlines, metrics, UNICODE mapping will generally
 // work better align with user's experiences on that platform.
-// Freetype is basically a platform neutral font file file reading toolkit
+// Freetype is basically a platform neutral font file reading toolkit
 // and has all the limitations that arise from that approach to complex
 // information modern OSs manage in complicated ways.
 

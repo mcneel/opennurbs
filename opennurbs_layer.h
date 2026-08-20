@@ -427,7 +427,7 @@ public:
 
   /*
   Description:
-    Controls layer visibility in  in model viewports.
+    Controls layer visibility in model viewports.
   Parameters:
     bVisible - [in] true to make layer visible,
                     false to make layer invisible

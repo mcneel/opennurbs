@@ -563,7 +563,7 @@ public:
     true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
     - There are full multiplicity knots at each end of the span.
-    - The length of the the line segment from the span's initial 
+    - The length of the line segment from the span's initial 
       control point to the span's final control point is 
       >= min_length.
     - The distance from the line segment to the interior control points

@@ -312,7 +312,7 @@ public:
   // For files written with earlier versions of opennurbs, these
   // values are set from the archive containing the user data. 
   // The purpose of this version information is to have it accompany
-  // unknown user data so that if is is eventually read by the plug-in
+  // unknown user data so that if is eventually read by the plug-in
   // an ON_BinaryArchive with correct version information can be
   // passed to the plug-in's reading code.  In archives, these values
   // are stored in the TCODE_USER_TABLE_RECORD_HEADER chunk.

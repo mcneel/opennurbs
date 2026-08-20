@@ -272,7 +272,7 @@ Returns:
     P - [in] 
     L - [in] 
   Returns:
-    True if if the shortest distance from this line
+    True if the shortest distance from this line
     to the other object is greater than d.
   */
   bool IsFartherThan( double d, const ON_3dPoint& P ) const;

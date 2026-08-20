@@ -222,7 +222,7 @@ public:
     count - [out] number of tiles
     offset - [out] offset of the tile
   Returns:
-    True if if the m_uvw matrix had entries that were compatible
+    True if the m_uvw matrix had entries that were compatible
     with tiling.
   */
   bool IsTiled( int dir, double* count, double* offset ) const;
@@ -531,7 +531,7 @@ public:
 
   // If an ON_Material m_textures[] array has more than
   // one texture, the textures are blended, and the textures
-  // have different m_blend_order values, the the texture 
+  // have different m_blend_order values, the texture 
   // with the smaller m_blend_order is first. 
   int m_blend_order = 0;
 };

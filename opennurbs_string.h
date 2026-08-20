@@ -3843,9 +3843,9 @@ public:
     s - [in]
       string to parse.
       s[0] must be a sign or a digit. It can be the ordinary characters or superscripts.
-      If the first digit is an ordinary digit, the the numerator and denominator must all
+      If the first digit is an ordinary digit, the numerator and denominator must all
       be ordinary digits.
-      If the first digit is a superscript digit, the the numerator must be all superscript
+      If the first digit is a superscript digit, the numerator must be all superscript
       digits and the denominator be all subscript digits.
     len - [in]
       maximum number of characters to parse.

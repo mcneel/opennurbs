@@ -100,7 +100,7 @@ public:
 
   bool Transform( const ON_Xform& );
 
-  // parameterization of NURBS surface does not match sphere's transcendental paramaterization
+  // parameterization of NURBS surface does not match sphere's transcendental parameterization
   int GetNurbForm( ON_NurbsSurface& ) const; // returns 0=failure, 2=success
 
   /*

@@ -166,7 +166,7 @@ Description:
   Brep edge information is stored in ON_BrepEdge classes.
   ON_Brep.m_E[] is an array of all the edges in the brep.
 
-  An ON_BrepEdge is derived from ON_CurveProxy so the the
+  An ON_BrepEdge is derived from ON_CurveProxy so the
   edge can supply easy to use evaluation tools via 
   the ON_Curve virtual member functions.
 
@@ -352,7 +352,7 @@ public:
   // The first occurrence of m_edge_index in m_V[m_vi[0]].m_ei[]
   // is for the closed edge starting the vertex.  The second
   // occurrence of m_edge_index in m_V[m_vi[0]].m_ei[]
-  // is for the closed edge edge ending at the vertex.
+  // is for the closed edge ending at the vertex.
   // C.f. ON_Brep::Next/PrevEdge().
   int m_vi[2];
 
@@ -395,7 +395,7 @@ Description:
   Brep trim information is stored in ON_BrepTrim classes.
   ON_Brep.m_T[] is an array of all the trim in the brep.
 
-  An ON_BrepTrim is derived from ON_CurveProxy so the the
+  An ON_BrepTrim is derived from ON_CurveProxy so the
   trim can supply easy to use evaluation tools via 
   the ON_Curve virtual member functions.
 
@@ -2358,7 +2358,7 @@ public:
         surface must be an ON_PlaneSurface.
     loop_type - [in] type of loop to add.  If loop_type is
         ON_BrepLoop::unknown, then the loop direction is tested
-        and the the new loops type will be set to 
+        and the new loops type will be set to 
         ON_BrepLoop::outer or ON_BrepLoop::inner.  If the loop_type
         is ON_BrepLoop::outer, then the direction of the new loop
         is tested and flipped if it is clockwise. If the loop_type
@@ -2778,7 +2778,7 @@ public:
     Set the loop parameter space bounding box (loop.m_pbox).
   Parameters:
     loop - [in]
-    bLazy - [in] if true and loop trim trim.m_pbox is valid, 
+    bLazy - [in] if true and loop trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if loop ends up with a valid bounding box.
@@ -2793,7 +2793,7 @@ public:
     for every loop and trim in the face 
   Parameters:
     face - [in]
-    bLazy - [in] if true and trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if all the face's loop and trim parameter space bounding 
@@ -2807,7 +2807,7 @@ public:
     Set the loop and trim parameter space bounding boxes
     for every loop and trim in the brep.
   Parameters:
-    bLazy - [in] if true and trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if all the loop and trim parameter space bounding boxes
@@ -3230,7 +3230,7 @@ public:
   /*
   Description:
     Set  m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-    and m_trim_user.i values values to distinguish connected components.
+    and m_trim_user.i values to distinguish connected components.
   Parameters:
   Returns:
     number of connected components
@@ -3319,7 +3319,7 @@ public:
   //   Single face brep.
   // Remarks:
   //   The m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-  //   and m_trim_user.i values of the returned brep are are set to the 
+  //   and m_trim_user.i values of the returned brep are set to the 
   //   indices of the objects they duplicate.
   // See Also:
   //   ON_Brep::DeleteFace, ON_Brep::ExtractFace
@@ -3329,7 +3329,7 @@ public:
     ) const;
 
   // Description:
-  //   Duplicate a a subset of a brep
+  //   Duplicate a subset of a brep
   // Parameters:
   //   face_count - [in] length of face_index[] array
   //   face_index - [in] array of face indices
@@ -3338,7 +3338,7 @@ public:
   //   A brep made by duplicating the faces listed in the face_index[] array.
   // Remarks:
   //   The m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-  //   and m_trim_user.i values of the returned brep are are set to the 
+  //   and m_trim_user.i values of the returned brep are set to the 
   //   indices of the objects they duplicate.
   // See Also:
   //   ON_Brep::DuplicateFace
@@ -4072,7 +4072,7 @@ public:
 
   // topology
   // (all topology is deleted by ~ON_Brep().  Objects can be unreferenced.
-  // Use Compact() to to remove unreferenced geometry.
+  // Use Compact() to remove unreferenced geometry.
   ON_BrepVertexArray  m_V;   // vertices
   ON_BrepEdgeArray    m_E;   // edges
   ON_BrepTrimArray    m_T;   // trims
@@ -4116,7 +4116,7 @@ public:
 
 private:
   // In calculations where multiple threads are using a brep and calling functions
-  // that may modify content, the calling code can use use ON_SleepLockGuard guard(Mutex)
+  // that may modify content, the calling code can use ON_SleepLockGuard guard(Mutex)
   // or similar techniques to make the calculations thread safe.
   // Because Mutex is a public resource, it must be used with great care to
   // prevent lock contention.

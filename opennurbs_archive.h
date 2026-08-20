@@ -638,7 +638,7 @@ public:
       0 or the component's unique runtime serial number (ON_ModelComponent::RuntimeSerialNumber()).
     component_id - [in]
     component_name_hash - [in]
-      If the the component type requires a unique name and the name
+      If the component type requires a unique name and the name
       is not valid or in use, the component will not be added.
   Returns:
     If an item is added to this manifest, then the identification
@@ -668,7 +668,7 @@ public:
     component_id - [in]
       If the id is nil or in use, a new id will be assigned.
     component_name_hash - [in]
-      If the the component type requires a unique name and the name
+      If the component type requires a unique name and the name
       is not valid or in use, the component will not be added.
     original_name - [in/out]
       If a new name needs to be assigned, the input value will be used
@@ -1817,7 +1817,7 @@ public:
   
   /*
   Returns:
-    True if the the target binary archive is set.
+    True if the target binary archive is set.
   */
   bool BinaryArchiveIsSet() const;
   
@@ -3788,7 +3788,7 @@ public:
       goo_3dm_version and goo_opennurbs_version must also be
       set.  In practice, you should use Write3dmAnonymousUserTableRecord()
       to handle writing "goo" and use this function only when
-      the plug-in in present.
+      the plug-in present.
     goo_3dm_version - [in]
       If bSavingGoo is false, this parameter must be zero and
       ON_BinaryArchive::Archive3dmVersion() will be used.
@@ -3802,7 +3802,7 @@ public:
       of the opennurbs the plug-in code used to write the 
       user table.
   Returns:
-    True if the the user information can be written.
+    True if the user information can be written.
     False if user information should not be written.
   */
   bool BeginWrite3dmUserTable(
@@ -4566,7 +4566,7 @@ private:
   // is zero.
   //
   // Read3dmProperties() sets this to the version of OpenNURBS that was
-  // used to write file file.  If the file was created using a version
+  // used to write file.  If the file was created using a version
   // of OpenNURBS before 200012210, this number will be zero.
   //
   // Write3dmProperties() stores the value returned by ON::Version() in

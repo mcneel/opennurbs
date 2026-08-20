@@ -361,7 +361,7 @@ public:
     d - [in] distance (> 0.0)
     P - [in] 
   Returns:
-    True if if the shortest distance from the point P
+    True if the shortest distance from the point P
     to the bounding box is greater than d. 
   */
   bool IsFartherThan( double d, const ON_3dPoint& P ) const;
@@ -419,7 +419,7 @@ public:
     d - [in] distance (> 0.0)
     other - [in] other bounding box
   Returns:
-    True if if the shortest distance from this bounding
+    True if the shortest distance from this bounding
     box to the other bounding box is greater than d. 
   */
   bool IsFartherThan( double d, const ON_BoundingBox& other ) const;

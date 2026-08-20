@@ -1860,7 +1860,7 @@ public:
     id is used to resolve ambiguous unit names.
 
   Parameters:
-    prefered_locale_id - [in]
+    preferred_locale_id - [in]
       The Microsoft locale id that identifies the locale that should
       be used to resolve ambiguous parsing situations.  The default
       value is zero, which means ambiguous situations are not parsed.
@@ -2197,7 +2197,7 @@ Parameters:
     be a null, digit, punctuation, arithmetic operator, or a unicode 
     code point <= 0x0020 (0x0020 = space = 32 decimal).
 
-  prefered_locale_id - [in]
+  preferred_locale_id - [in]
     If the parsed length unit name identifies different length unit systems
     in different locales, then this value is used to resolve the
     ambiguity.  A list of Microsoft locale id values can be found at
@@ -2364,7 +2364,7 @@ Parameters:
     This character can be a null, digit, punctuation, arithmetic operator,
     or a unicode code point <= 0x0020 (0x0020 = space = 32 decimal).
 
-  prefered_locale_id - [in]
+  preferred_locale_id - [in]
     If the parsed angle unit name identifies different angle unit systems
     in different locales, then this value is used to resolve the
     ambiguity.  A list of Microsoft locale id values can be found at

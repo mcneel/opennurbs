@@ -205,7 +205,7 @@ public:
                 2 = north east,
                 3 = north west
     point - [in] point to collapse to.  If point is ON_3dPoint::UnsetPoint,
-                the the current location of the start of the side
+                the current location of the start of the side
                 is used.
   Returns:
     True if successful.
@@ -295,7 +295,7 @@ public:
     be created if the 3d surface where flattened into a rectangle.
   Parameters:
     width - [out]  (corresponds to the first surface parameter)
-    height - [out] (corresponds to the first surface parameter)
+    height - [out] (corresponds to the second surface parameter)
   Remarks:
     overrides virtual ON_Surface::GetSurfaceSize
   Returns:
@@ -570,7 +570,7 @@ public:
           int dir = 1;
           ON_NurbsSurface* south_side = 0;
           ON_NurbsSurface* north_side = 0;
-          srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
+          srf.Split( dir, srf.Domain(dir).Mid(), south_side, north_side );
 
   */
   bool Split(
@@ -762,7 +762,7 @@ public:
   /// control point is active.
   /// </summary>
   /// <param name="dir">
-  /// 0: first surface paramter 
+  /// 0: first surface parameter 
   /// 1: second surface parameter
   /// </param>
   /// <param name="control_point_index">
@@ -773,7 +773,7 @@ public:
   /// then the spans in the specified parameter direction whose index satisfies 
   /// ON_2dex.i &lt;= span_index &lt; ON_2dex.j
   /// use the specified control points.
-  /// If the iput is not valid, then ON_2dex(0,0) is returned.
+  /// If the input is not valid, then ON_2dex(0,0) is returned.
   /// </returns>
   const ON_2dex ControlPointSpans(
     int dir,
@@ -789,7 +789,7 @@ public:
   /// is false, then surface->PointAt(u,v) does not depend on the location of CV(i,j).
   /// </summary>
   /// <param name="dir">
-  /// 0: first surface paramter 
+  /// 0: first surface parameter 
   /// 1: second surface parameter
   /// </param>
   /// <param name="control_point_index">

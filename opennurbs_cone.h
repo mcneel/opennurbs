@@ -77,7 +77,7 @@ public:
   double AngleInRadians() const;
 
   // Returns:
-  //   The angle Iin degrees) between the axis and the side.
+  //   The angle (in degrees) between the axis and the side.
   //   The angle and the height have the same sign.
   double AngleInDegrees() const;           
 
@@ -169,11 +169,11 @@ public:
 
   /*
   Description:
-    Creates a surface of revolution definition of the cylinder.
+    Creates a surface of revolution definition of the cone.
   Parameters:
     srf - [in] if not nullptr, then this srf is used.
   Result:
-    A surface of revolution or nullptr if the cylinder is not 
+    A surface of revolution or nullptr if the cone is not 
     valid or is infinite.
   */
   ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = nullptr ) const;

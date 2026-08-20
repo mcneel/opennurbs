@@ -1959,7 +1959,7 @@ public:
   /*
   Description:
     This is a debugging tool to test the code that starts with a font and 
-    Unicode code point and and finds a glyph in the font definition for 
+    Unicode code point and finds a glyph in the font definition for 
     that code point.
   Parameters:
     text_log - [in]
@@ -5271,7 +5271,7 @@ public:
   
     Currently opennurbs and Rhino work on Microsoft Windows and Apple
     platforms and use FreeType to access font information. When a font 
-    is not "tricky", the "font design" units are the the units FreeType
+    is not "tricky", the "font design" units are the units FreeType
     uses when a font is loaded with FT_LOAD_NO_SCALE.
   
     When working with fonts and glyhphs in opennurbs and Rhino, 
@@ -6333,10 +6333,10 @@ public:
       of the three names, postscript_name, windows_logfont_name, 
       or family_name.
     
-    prefered_face_name - [in]
-    prefered_weight - [in]      
-    prefered_stretch - [in]
-    prefered_style - [in]
+    preferred_face_name - [in]
+    preferred_weight - [in]      
+    preferred_stretch - [in]
+    preferred_style - [in]
       Preferred font properties.
 
     bRequireFaceMatch - [in]
@@ -6345,8 +6345,8 @@ public:
       or the family and face name pair.
 
     bRequireStyleMatch - [in]
-      If true and prefered_stretch is not unset, then the returned
-      font will have prefered_style
+      If true and preferred_stretch is not unset, then the returned
+      font will have preferred_style
   Remarks:
     Ignores underlined, strikethrough, and point size settings when looking for a match.
   */
@@ -6371,10 +6371,10 @@ public:
       of the three names, postscript_name, windows_logfont_name, 
       or family_name.
     
-    prefered_face_name - [in]
-    prefered_weight - [in]      
-    prefered_stretch - [in]
-    prefered_style - [in]
+    preferred_face_name - [in]
+    preferred_weight - [in]      
+    preferred_stretch - [in]
+    preferred_style - [in]
       Preferred font properties.
 
     bRequireFaceMatch - [in]
@@ -6383,8 +6383,8 @@ public:
       or the family and face name pair.
 
     bRequireStyleMatch - [in]
-      If true and prefered_stretch is not unset, then the returned
-      font will have prefered_style
+      If true and preferred_stretch is not unset, then the returned
+      font will have preferred_style
 
     bUnderlined - [in]
       Exact match required.

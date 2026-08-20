@@ -821,7 +821,7 @@ public:
     fp - [in]
       FILE pointer returned by ON_FileStream::Open().
     file_size - [out]
-      If file_size is not null, the the size of the file
+      If file_size is not null, the size of the file
       in bytes returned here
     file_metadata_last_modified_time - [out]
       If file_metadata_last_modified_time is not null, then the time the 

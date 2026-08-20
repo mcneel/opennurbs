@@ -75,7 +75,7 @@ public:
 
   /*
   Description:
-    Update the mapping from from reference file layer id to runtime model layer id.
+    Update the mapping from reference file layer id to runtime model layer id.
     Typically this is done immediately after the reference file layers are added
     to the runtime model.
   Parameters:

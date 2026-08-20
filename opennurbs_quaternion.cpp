@@ -501,7 +501,7 @@ bool ON_Quaternion::Unitize()
   }
   else if ( x > 0.0 )
   {
-    ON_Quaternion q(a*1.0e300,b*1.0e300,c*1.0e300,c*1.0e300);
+    ON_Quaternion q(a*1.0e300,b*1.0e300,c*1.0e300,d*1.0e300);
     if ( !q.Unitize() )
       return false;
     a = q.a; 
