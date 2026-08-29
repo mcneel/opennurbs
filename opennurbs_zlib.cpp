@@ -527,7 +527,7 @@ bool ON_BinaryArchive::ReadInflate(
       // no compressed input is left - switch to finish mode
       flush = Z_FINISH;
     }
-    zrc = z_inflate( &m_zlib.m_strm, flush );
+    zrc = jk_z_inflate( &m_zlib.m_strm, flush );
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
@@ -1341,7 +1341,7 @@ bool ON_CompressedBuffer::InflateHelper(
       // no compressed input is left - switch to finish mode
       flush = Z_FINISH;
     }
-    zrc = z_inflate( &m_zlib.m_strm, flush );
+    zrc = jk_z_inflate( &m_zlib.m_strm, flush );
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.

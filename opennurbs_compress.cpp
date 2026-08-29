@@ -470,7 +470,7 @@ bool ON_UncompressStream::In( ON__UINT64 size, const void* compressed_buffer )
     // calculate compression
     ON__UINT32 avail_in0 = strm.avail_in;
     ON__UINT32 avail_out0 = strm.avail_out;
-    zrc = z_inflate( &strm, Z_NO_FLUSH ); 
+    zrc = jk_z_inflate( &strm, Z_NO_FLUSH ); 
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
@@ -557,7 +557,7 @@ bool ON_UncompressStream::End()
     strm.avail_out = sizeof_out_buffer;
 
     // finish compression calculation
-    zrc = z_inflate( &strm, Z_FINISH ); 
+    zrc = jk_z_inflate( &strm, Z_FINISH ); 
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.

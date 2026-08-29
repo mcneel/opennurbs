@@ -950,7 +950,7 @@ int flush;
         case LEN:
             if (have >= 6 && left >= 258) {
                 RESTORE();
-                inflate_fast(strm, out);
+                jk_inflate_fast(strm, out);
                 LOAD();
                 break;
             }

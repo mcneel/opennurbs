@@ -105,7 +105,7 @@ int r )
       if (m >= 258 && n >= 10)
       {
         UPDATE
-        r = inflate_fast(c->lbits, c->dbits, c->ltree, c->dtree, s, z);
+        r = jk_inflate_fast(c->lbits, c->dbits, c->ltree, c->dtree, s, z);
         LOAD
         if (r != Z_OK)
         {
