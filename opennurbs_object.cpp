@@ -1496,7 +1496,9 @@ ON_UserData* ON_Object::TransferUserDataItem(
     // make sure we have valid user data - the first beta release of Rhino 2.0 
     // created empty user data.
     const ON_UnknownUserData* uud = ON_UnknownUserData::Cast(source_ud);
-    if (nullptr == uud && false == uud->IsValid())
+    // RH-97211: guard must be OR, not AND. As written with &&, a null uud short-circuits into
+    // uud->IsValid() (null dereference), and the invalid-userdata case never returns.
+    if (nullptr == uud || false == uud->IsValid())
     {
       return nullptr;
     }
