@@ -7097,13 +7097,15 @@ ON_Brep::IsManifold( bool* pbIsOriented, bool* pbHasBoundary ) const
               other_ti = edge.m_ti[0];
               if ( other_ti == ti )
                 other_ti = edge.m_ti[1];
-              if ( other_ti == ti )
+              if ( other_ti == ti || other_ti < 0 || other_ti >= brep_trim_count )
               {
+                if ( other_ti != ti )
+                  ON_ERROR("Bogus trim index in edge.m_ti[]");
                 bIsManifold = false;
                 if (!pbHasBoundary)
                   bKeepGoing = false;
               }
-              else 
+              else
               {
                 const ON_BrepTrim& other_trim = m_T[other_ti];
 
