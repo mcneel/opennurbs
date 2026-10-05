@@ -16,6 +16,10 @@ ON__QSORT_FASTER_THAN_HSORT.
 
 #define ON_COMPILING_OPENNURBS_SORT_CPP
 
+// ON::sort_algorithm::parallel_sort. Not included by opennurbs.h - see the
+// notes at the top of the header.
+#include "opennurbs_parallel_sort.h"
+
 #if defined(ON_RUNTIME_WIN) && defined(ON_COMPILER_MSC)
 
 #pragma optimize("t", on)
@@ -221,6 +225,8 @@ void ON_SortDoubleArray(
 {
   if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_double(a,nel);
+  else if ( ON::sort_algorithm::parallel_sort == sort_algorithm )
+    ON_ParallelSort(a,a+nel);
   else
     ON_qsort_double(a,nel);
 }
@@ -259,6 +265,8 @@ void ON_SortFloatArray(
 {
   if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_float(a,nel);
+  else if ( ON::sort_algorithm::parallel_sort == sort_algorithm )
+    ON_ParallelSort(a,a+nel);
   else
     ON_qsort_float(a,nel);
 }
@@ -281,6 +289,8 @@ void ON_SortIntArray(
 {
   if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_int(a,nel);
+  else if ( ON::sort_algorithm::parallel_sort == sort_algorithm )
+    ON_ParallelSort(a,a+nel);
   else
     ON_qsort_int(a,nel);
 }
@@ -303,6 +313,8 @@ void ON_SortUnsignedIntArray(
 {
   if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_uint(a,nel);
+  else if ( ON::sort_algorithm::parallel_sort == sort_algorithm )
+    ON_ParallelSort(a,a+nel);
   else
     ON_qsort_uint(a,nel);
 }
@@ -317,6 +329,102 @@ void ON_SortUnsignedIntArray(
 #undef ON_QSORT_FNAME
 #undef ON_HSORT_FNAME
 
+
+ON_SortKeyIndex* ON_RadixSortKeyIndex(
+  ON_SortKeyIndex* a,
+  ON_SortKeyIndex* b,
+  size_t count,
+  unsigned int key_byte_count
+  )
+{
+  if ( nullptr == a || nullptr == b || key_byte_count < 1 || key_byte_count > 8 )
+    return nullptr;
+
+  if ( count < 2 )
+    return a;
+
+  ON_SortKeyIndex* src = a;
+  ON_SortKeyIndex* dst = b;
+
+  for (unsigned int pass = 0; pass < key_byte_count; pass++)
+  {
+    const unsigned int shift = pass * 8;
+
+    size_t offset[256];
+
+    for (int digit = 0; digit < 256; digit++)
+      offset[digit] = 0;
+
+    for (size_t i = 0; i < count; i++)
+      offset[(size_t)((src[i].m_key >> shift) & 0xFF)]++;
+
+    size_t sum = 0;
+
+    for (int digit = 0; digit < 256; digit++)
+    {
+      const size_t c = offset[digit];
+      offset[digit] = sum;
+      sum += c;
+    }
+
+    for (size_t i = 0; i < count; i++)
+      dst[ offset[(size_t)((src[i].m_key >> shift) & 0xFF)]++ ] = src[i];
+
+    ON_SortKeyIndex* t = src;
+    src = dst;
+    dst = t;
+  }
+
+  return src;
+}
+
+bool ON_CountingSortIndices(
+  const unsigned int* keys,
+  unsigned int key_range,
+  const unsigned int* in_order,
+  unsigned int* out_order,
+  size_t count,
+  unsigned int* counts
+  )
+{
+  if ( nullptr == keys || nullptr == out_order || nullptr == counts || key_range < 1 )
+    return false;
+
+  if ( count < 1 )
+    return true;
+
+  for (unsigned int k = 0; k <= key_range; k++)
+    counts[k] = 0;
+
+  // counts[key + 1] counts the items with that key, so the prefix sum below
+  // leaves counts[key] holding where that key's run begins.
+  for (size_t i = 0; i < count; i++)
+  {
+    const unsigned int item = (nullptr != in_order) ? in_order[i] : (unsigned int)i;
+    const unsigned int key = keys[item];
+
+    if ( key >= key_range )
+      return false;
+
+    counts[key + 1]++;
+  }
+
+  for (unsigned int k = 0; k < key_range; k++)
+    counts[k + 1] += counts[k];
+
+  // Walking the input in order and appending to each key's run is what makes
+  // this stable, which is what lets it be used a pass at a time on a composite
+  // key.
+  for (size_t i = 0; i < count; i++)
+  {
+    const unsigned int item = (nullptr != in_order) ? in_order[i] : (unsigned int)i;
+
+    out_order[ counts[keys[item]]++ ] = item;
+  }
+
+  return true;
+}
+
 void ON_SortUINT64Array(
         ON::sort_algorithm sort_algorithm,
         ON__UINT64* a,
@@ -325,6 +433,8 @@ void ON_SortUINT64Array(
 {
   if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_uint64(a,nel);
+  else if ( ON::sort_algorithm::parallel_sort == sort_algorithm )
+    ON_ParallelSort(a,a+nel);
   else
     ON_qsort_uint64(a,nel);
 }

@@ -40,6 +40,7 @@ public:
   ON_Arc& operator=( const ON_Circle& );
 
   static const ON_Arc UnitCircle; // unit circle in the xy plane
+  static const ON_Arc UnsetArc; // invalide arc with ON_Circle::Unset and ON_UNSET_VALUE angle
 
   /*
   Description:
@@ -204,6 +205,28 @@ public:
     radius - [in]
     angle_in_radians - [in]
   */
+
+
+  /// <summary>
+  /// Create an arc parallel to the world XY plane from a
+  /// center point, radius, and angle in radians.
+  /// The arc starts at center + ON_3dVector(radius, 0, 0).
+  /// </summary>
+  /// <param name="center">
+  /// The center of the arc.
+  /// </param>
+  /// <param name="radius">
+  /// The radius of the arc. (radius &gt; 0)
+  /// </param>
+  /// <param name="angle_in_radians">
+  /// The angle of the arc in radians.
+  /// 0 &lt; angle_in_radians &lt;= ON_2PI)
+  /// </param>
+  /// <returns>
+  /// If the center, radius and angle_in_radians parameters are valid, true is returned.
+  /// Otherwise false is returned and the ON_Arc instance contains an arc that is the 
+  /// best interpretation of the invalid input.
+  /// </returns>
   bool Create(
     const ON_3dPoint& center,
     double radius,

@@ -184,6 +184,11 @@ bool ON_SHA1_Hash::IsEmptyContentHash() const
   return 0 == ON_SHA1_Hash::Compare(*this, ON_SHA1_Hash::EmptyContentHash);
 }
 
+bool ON_SHA1_Hash::IsNotEmptyContentHash() const
+{
+  return 0 != ON_SHA1_Hash::Compare(*this, ON_SHA1_Hash::EmptyContentHash);
+}
+
 bool ON_SHA1_Hash::IsZeroDigestOrEmptyContentHash() const
 {
   return IsZeroDigest() || IsEmptyContentHash();
@@ -691,6 +696,14 @@ void ON_SHA1::AccumulateSubHash(
   )
 {
   AccumulateBytes(sub_hash.m_digest, 20);
+}
+
+void ON_SHA1::AccumulateNonemptySubHash(
+  const class ON_SHA1_Hash& sub_hash
+)
+{
+  if (sub_hash.IsNotEmptyContentHash())
+    AccumulateSubHash(sub_hash);
 }
 
 void ON_SHA1::AccumulateDouble(

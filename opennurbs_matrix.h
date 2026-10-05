@@ -16,6 +16,368 @@
 
 class ON_Xform;
 
+class ON_CLASS ON_2x2Matrix
+{
+public:
+  ON_2x2Matrix() = default;
+  ~ON_2x2Matrix() = default;
+  ON_2x2Matrix(const ON_2x2Matrix&) = default;
+  ON_2x2Matrix& operator=(const ON_2x2Matrix&) = default;
+
+  /// <summary>
+  /// Default zero tolerance that can be used when a nonzero tolerance 
+  /// is needed and you don't know what to pass.
+  /// 1.0e-12.
+  /// </summary>
+  static const double ZeroTolerance;
+
+  /// <summary>
+  /// All coefficients are 0.
+  /// </summary>
+  static const ON_2x2Matrix Zero;
+
+  /// <summary>
+  /// The diagonal coefficients are 1 and the off diagonal coefficients are 0.
+  /// </summary>
+  static const ON_2x2Matrix Identity;
+
+  /// <summary>
+  /// Every coefficient is ON_DBL_QNAN.
+  /// </summary>
+  static const ON_2x2Matrix Nan;
+
+  ON_2x2Matrix(double M[2][2]);
+
+  ON_2x2Matrix(const double M[2][2]);
+
+  ON_2x2Matrix(double d);
+
+  ON_2x2Matrix(double d0, double d1);
+
+  ON_2x2Matrix(double a, double b, double c, double d);
+
+  ON_2x2Matrix(const class ON_Matrix& M);
+
+  /// <param name="zero_tolerance">
+  /// Coefficients and determinants with absolute value &lt;= zero_tolerance are treated as 0.  /// 
+  /// </param>
+  /// <returns>
+  /// If this matrix is valid, the rank is returned. Otherwise -1 is returned.
+  /// </returns>
+  int Rank(double zero_tolerance) const;
+
+  /// <returns>
+  /// Rank(0.0).
+  /// </returns>
+  int Rank() const;
+
+  const ON_2x2Matrix Transpose() const;
+
+  const ON_2x2Matrix SwapRows() const;
+
+  const ON_2x2Matrix SwapColumns() const;
+
+  const ON_2x2Matrix SwapRowsAndColumns() const;
+
+  /// <summary>
+  /// Get a rotation matrix that acts on the left (rotated point = R * point).
+  /// If you want a rotation matrix that acts on the right, then use the
+  /// transpose of the returned matrix.
+  /// </summary>
+  /// <param name="V">
+  /// </param>
+  /// <returns>
+  /// The matrix R such that V = R * ON_2dVector::XAxis.
+  /// </returns>
+  static const ON_2x2Matrix Rotation(ON_2dVector V);
+
+  /// <summary>
+  /// Get a rotation matrix that acts on the left (rotated point = R * point).
+  /// If you want a rotation matrix that acts on the right, then use the
+  /// transpose of the returned matrix.
+  /// </summary>
+  /// <param name="cos_angle"></param>
+  /// <param name="sin_angle"></param>
+  /// <returns>
+  /// The matrix R such that ON_2dVector(cos_angle, sin_angle) = R * ON_2dVector::XAxis.
+  /// </returns>
+  static const ON_2x2Matrix Rotation(double cos_angle, double sin_angle);
+
+  /// <summary>
+  /// Get a rotation matrix that acts on the left (rotated point = R * point).
+  /// If you want a rotation matrix that acts on the right, then use the
+  /// transpose of the returned matrix.
+  /// </summary>
+  /// <param name="angle_radians"></param>
+  /// <returns>
+  /// The matrix R such that R * P rotates P counterclockwise by angle_radians.
+  /// </returns>
+  static const ON_2x2Matrix RotationRadians(double angle_radians);
+
+  /// <summary>
+  /// Get a rotation matrix that acts on the left (rotated point = R * point).
+  /// If you want a rotation matrix that acts on the right, then use the
+  /// transpose of the returned matrix.
+  /// </summary>
+  /// <param name="angle_degrees"></param>
+  /// <returns>
+  /// The matrix R such that R * P rotates P counterclockwise by angle_degrees.
+  /// </returns>
+  static const ON_2x2Matrix RotationDegrees(double angle_degrees);
+
+  double MaximumDigonalAbsoluteValue() const;
+
+  double MinimumDigonalAbsoluteValue() const;
+
+  double MaximumOffDigonalAbsoluteValue() const;
+
+  double MinimumOffDigonalAbsoluteValue() const;
+
+  double MaximumCoefficientAbsoluteValue() const;
+
+  double MinimumCoefficientAbsoluteValue() const;
+
+  bool IsValid() const;
+
+  /// <param name="zero_tolerance"></param>
+  /// <returns>
+  /// True if the absolute values of all four coefficients are &lt;= zero_tolerance.
+  /// </returns>
+  bool IsZero(double zero_tolerance) const;
+
+  /// <returns>
+  /// True if the absolute values of all four coefficients are 0.
+  /// </returns>
+  bool IsZero() const;
+
+  /// <param name="zero_tolerance"></param>
+  /// <returns>
+  /// True if the absolute value of at least one coefficient is &gt; zero_tolerance 
+  /// and coefficients are valid.
+  /// </returns>
+  bool IsNotZero(double zero_tolerance) const;
+
+  /// <param name="zero_tolerance"></param>
+  /// <returns>
+  /// True if at least one coefficient is not zero and all coefficients are valid.
+  /// </returns>
+  bool IsNotZero() const;
+
+  /// <param name="tolerance">
+  /// </param>
+  /// <returns>
+  /// True if fabs(x - 1.0) &lt;= tolerance for both diagonal coefficients and
+  /// fabs(x) &lt;= tolerance for both off diagonal coefficients.
+  /// </returns>
+  bool IsIdentity(double tolerance) const;
+
+  /// <returns>
+  /// True if the diagonal coefficients are 1 and the off diagonal coefficients are 0.
+  /// </returns>
+  bool IsIdentity() const;
+
+  bool IsDiagonal(double relative_tolerance) const;
+
+  bool IsDiagonal() const;
+
+  /// <summary>
+  /// M is an orthoganal matrix if M * Transpose(M) = Identity.
+  /// </summary>
+  /// <param name="tolerance">
+  /// If every coefficient of (M * Transpose(M) - Idenity) has absolute
+  /// value &lt;= tolerance, then true is returned.
+  /// </param>
+  /// <returns>
+  /// True if this matrix is orthoganal.
+  /// </returns>
+  bool IsOrthoganal(double tolerance) const;
+
+  bool IsOrthoganal() const;
+
+  double Determinant() const;
+
+  double Trace() const;
+
+  const ON_2x2Matrix Inverse() const;
+
+  /// <summary>
+  /// Use the singular value decomposition to get the pseudo inverse.
+  /// </summary>
+  /// <returns>
+  /// V*Diagonal(1/sigma0, 1/sigma1)*Transpose(U) where
+  /// U * Diagonal(sigma0, sigma1) * Transpose(V) is the singular value decomposistion.
+  /// </returns>
+  const ON_2x2Matrix PseudoInverse() const;
+
+  double Coefficient(int i, int j) const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="i">
+  /// 0 &lt;= i &lt; 1
+  /// </param>
+  /// <returns>
+  /// If i is 0 or 1, the pointer to the i-th row is returned.
+  /// Otherwise nullptr is returned.
+  /// </returns>
+  const double* operator[](int i) const;
+
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="i">
+  /// 0 &lt;= i &lt; 1
+  /// </param>
+  /// <returns>
+  /// If i is 0 or 1, the pointer to the i-th row is returned.
+  /// Otherwise nullptr is returned.
+  /// </returns>
+  double* operator[](int i);
+
+  /// <summary>
+  /// Get the singular vaue decomposition of this matrix
+  /// = U * Diagonal(singular_values[0], singular_values[1]) * Transpose(V).
+  /// </summary>
+  /// <param name="U">
+  /// The returned U will be an orthoganal matrix.
+  /// </param>
+  /// <param name="singular_values">
+  /// The singular values are returned in increasing order
+  /// 0 &lt;=  singular_values[0] &lt;= singular_values[1].
+  /// </param>
+  /// <param name="V">
+  /// The returned V will be an orthoganal matrix.
+  /// </param>
+  /// <returns></returns>
+  bool SVD(
+    ON_2x2Matrix& U,
+    double singular_values[2],
+    ON_2x2Matrix& V
+  ) const;
+
+  static const ON_2x2Matrix CombineSVD(
+    const ON_2x2Matrix& U,
+    double s0,
+    double s1,
+    const ON_2x2Matrix& V
+  );
+
+  /// <summary>
+  /// If P[] and Q[] are sets of N 2d points, 
+  /// N %gt;= 3,
+  /// P[0] + ... + P[N-1] = (0,0) and
+  /// Q[0] + ... + Q[N-1] = (0,0),
+  /// then the Procrustes left rotation R is the rotation matrix that minimizes
+  /// |R*P[0] - Q[0]|^2 + ... + |R*P[N-1] - Q[N-1]|^2.
+  /// </summary>
+  /// <param name="H">
+  /// H = P * Transpose(Q), where P is the 2xN matrix whose columns are P[0], ..., P[N-1]
+  /// and Q is the 2xN matrix whose columns are Q[0], ..., Q[N-1].
+  /// </param>
+  /// <returns>
+  /// The Procrustes rotation matrix that acts on the left of points.
+  /// </returns>
+  static const ON_2x2Matrix ProcrustesRotation(const ON_2x2Matrix& H);
+
+  /// <summary>
+  /// Use theKabsch-Umeyama algorithm to calculate the rotation matrix R that minimizes
+  /// |R*P0 - Q0|^2 + |R*P1 - Q1|^2 + |R*P2 - Q2|^2.  
+  /// The input must satisfy P0 + P1 + P2 = (0,0) and  Q0 + Q1 + Q2 = (0,0).
+  /// Typically, by the time you are calculating this rotation,
+  /// the P and Q triangles have the same orientation.
+  /// If you want a rotation matrix that acts on the right, take the transpose of the returned value.
+  /// If you have more than 3 points, use the version of ProcrustesRotation() that takes
+  /// a 2x2 matrix H = P * Transpose(Q).
+  /// </summary>
+  /// <param name="P0"></param>
+  /// <param name="P1"></param>
+  /// <param name="P2"></param>
+  /// <param name="Q0"></param>
+  /// <param name="Q1"></param>
+  /// <param name="Q2"></param>
+  /// <returns>
+  /// The Procrustes rotation matrix that acts on the left of points. 
+  /// </returns>
+  static const ON_2x2Matrix ProcrustesRotation(
+    const ON_2dPoint& P0,
+    const ON_2dPoint& P1,
+    const ON_2dPoint& P2,
+    const ON_2dPoint& Q0,
+    const ON_2dPoint& Q1,
+    const ON_2dPoint& Q2
+  );
+
+  /// <summary>
+  /// Test a ON_2x2Matrix::SVD(), ON_2x2Matrix::Determinant(), 
+  /// ON_2x2Matrix::Rank() and ON_2x2Matrix::Inverse() on every matrix
+  /// returned by the version of TestList() with a callback parameter
+  /// </summary>
+  /// <param name="text_log">
+  /// A description of any failure and the number of successful tests
+  /// is sent to text_log.
+  /// </param>
+  /// <returns>
+  /// True if every test passes.
+  /// </returns>
+  static bool Test(ON_TextLog& text_log);
+
+  /// <summary>
+  /// Iterates through a sequence of test matrices.
+  /// </summary>
+  /// <param name="context">
+  /// Value passed as the first parameter to Callback()
+  /// </param>
+  /// <param name="Callback">
+  /// This function is called for each test matrix.
+  /// A is the matrix being tested.
+  /// If the A_rank paratmer is &gt;=0, then A
+  /// was computed in a way that if arithmetic was perfect,
+  /// then A.rank() would be A_rank. Otherwise A_rank = -1
+  /// and the rank of A is unknown.
+  /// Return true to continue testing
+  /// </param>
+  /// <returns>
+  /// Number of times Callback() returned true.
+  /// </returns>
+  static unsigned TestList(
+    ON__UINT_PTR context,
+    bool (*Callback)(ON__UINT_PTR context, int A_rank, const ON_2x2Matrix A)
+  );
+
+
+public:
+  double m[2][2];
+
+private:
+  int RankAndDeterminantHelper(double zero_tolerance, double& det) const;
+};
+
+ON_DECL
+const ON_2x2Matrix operator*(const ON_2x2Matrix& A, const ON_2x2Matrix& B);
+
+ON_DECL
+const ON_2x2Matrix operator+(const ON_2x2Matrix& A, const ON_2x2Matrix& B);
+
+ON_DECL
+const ON_2x2Matrix operator-(const ON_2x2Matrix& A, const ON_2x2Matrix& B);
+
+ON_DECL
+const ON_2x2Matrix operator-(const ON_2x2Matrix& A);
+
+ON_DECL
+const ON_2dVector operator*(const ON_2x2Matrix& A, const ON_2dVector& V);
+
+ON_DECL
+const ON_2dVector operator*(const ON_2dVector& V, const ON_2x2Matrix& A);
+
+ON_DECL
+const ON_2dPoint operator*(const ON_2x2Matrix& A, const ON_2dPoint& V);
+
+ON_DECL
+const ON_2dPoint operator*(const ON_2dPoint& V, const ON_2x2Matrix& A);
+
+
 class ON_CLASS ON_Matrix
 {
 public:
@@ -23,6 +385,11 @@ public:
   ON_Matrix( 
     int row_count,
     int col_count
+     );
+  ON_Matrix( 
+    int row_count,
+    int col_count,
+    double fill_value
      );
   ON_Matrix( // see ON_Matrix::Create(int,int,int,int) for details
      int, // first valid row index
@@ -114,6 +481,12 @@ public:
      int  // number of columns
      );
 
+  bool Create(
+     int, // number of rows
+     int,  // number of columns
+     double // fill value
+     );
+
   bool Create( // E.g., Create(1,5,1,7) creates a 5x7 sized matrix that with
                // "top" row = m[1][1],...,m[1][7] and "bottom" row
                // = m[5][1],...,m[5][7].  The result of Create(0,m,0,n) is
@@ -152,6 +525,7 @@ public:
   void Destroy();
 
   void Zero();
+  void Fill(double); // sets every coefficient to fill_value
 
   void SetDiagonal(double); // sets diagonal value and zeros off diagonal values
   void SetDiagonal(const double*); // sets diagonal values and zeros off diagonal values

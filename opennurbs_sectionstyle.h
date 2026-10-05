@@ -29,6 +29,7 @@ public:
   ON_SectionStyle& operator=(const ON_SectionStyle& other);
 
   static const ON_SectionStyle Unset;   // index = ON_UNSET_INT_INDEX, id = nil
+  static const ON_SectionStyle Default; // index = -1, unique and persistent id.
 
   /*
   Parameters:
@@ -127,6 +128,19 @@ public:
   double BoundaryWidthScale() const;
   void SetBoundaryWidthScale(double scale);
 
+  // Plot width of the boundary curves.
+  //    values less than -1 (-10 is default): plot weight is determined by the
+  //                                          object's attributes
+  //   -1: do not plot
+  //    0: use default weight defined by the print dialog
+  //    positive values are thicknesses in millimeters to print to
+  // 
+  // NOTE: if a linetype is assigned to this section style that has a physical
+  // width (not pixels), then this value is ignored and the linetype value is
+  // used
+  double BoundaryPlotWeightMillimeters() const;
+  void SetBoundaryPlotWeightMillimeters(double weight);
+
   // When to fill/hatch the sections for an object can depend on the type of
   // object being sectioned. See ON_SectionFillRule for the choices of
   // when to generate hatches.
@@ -146,6 +160,15 @@ public:
   double HatchRotation() const;
   void SetHatchRotation(double rotation);
 
+  // Plot width of the hatch pattern curves for a section.
+  //    values less than -1 (-10 is default): plot weight is determined by the
+  //                                          object's attributes
+  //   -1: do not plot
+  //    0: use default weight defined by the print dialog
+  //    positive values are thicknesses in millimeters to print to
+  double HatchPatternPlotWeightMillimeters() const;
+  void SetHatchPatternPlotWeightMillimeters(double weight);
+
   // Custom hatch pattern color for a section. If unset (default), the object's
   // color is used
   ON_Color HatchColor(bool print) const;
@@ -155,6 +178,15 @@ public:
   // from the parent layer or attributes
   const ON_Linetype* BoundaryLinetype() const;
   void SetBoundaryLinetype(const ON_Linetype& linetype);
+
+  // If the boundary linetype needs to come from the document, then set the
+  // index using an index in the document's linetype table. Default is
+  // ON_UNSET_INT_INDEX which means the linetype is not set to a document linetype
+  // and is instead derived from the locally held custom linetype or the object's
+  // linetype
+  void SetBoundaryLinetypeIndex(int index);
+  int BoundaryLinetypeIndex() const;
+
   void RemoveBoundaryLinetype();
 private:
   class ON_SectionStylePrivate* m_private = nullptr;

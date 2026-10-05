@@ -1127,10 +1127,10 @@ void ON_SubDEdge::ClearSavedSubdivisionPoints(bool bClearNeighborhood) const
 const ON_SubDMeshFragment * ON_SubDFace::MeshFragments() const
 {
   // NOTE:
-  // Clearing the ON_SubDComponentBase::SavedPointsFlags::SurfacePointBit bit
-  // on m_saved_points_flags is used to mark mesh fragments as dirty.
+  // Clearing the ON_SubDComponentBase::SavedOrModifiedPointsFlags::SurfacePointBit bit
+  // on m_saved_modified_points_flags is used to mark mesh fragments as dirty.
   // They need to be regenerated before being used.
-  return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_points_flags)) ? m_mesh_fragments : nullptr;
+  return (0 != ON_SUBD_CACHE_LIMITLOC_FLAG(m_saved_modified_points_flags)) ? m_mesh_fragments : nullptr;
 }
 
 void ON_SubDFace::ClearSavedSubdivisionPoints() const
@@ -1420,11 +1420,11 @@ int ON_SubDFaceCornerDex::CompareAll(const ON_SubDFaceCornerDex& lhs, const ON_S
 {
   // invalids go to the end
   int i = lhs.IsSet() ? 0 : 1;
-  int j = lhs.IsSet() ? 0 : 1;
+  int j = rhs.IsSet() ? 0 : 1;
   if (i < j)
     return -1;
   if (i > j)
-    return -1;
+    return 1;
 
   if (lhs.m_edge_count < rhs.m_edge_count)
     return -1;
@@ -1526,7 +1526,7 @@ const ON_SubDEdgePtr ON_SubDFaceCornerDex::EdgePtr(const ON_SubDFace* face, unsi
   if (0 == corner_edge_dex)
     return this->LeftEdgePtr(face);
 
-  if (0 == corner_edge_dex)
+  if (1 == corner_edge_dex)
     return this->RightEdgePtr(face);
 
   return ON_SubDEdgePtr::Null;
@@ -1594,18 +1594,6 @@ ON_SubDFaceParameter::ON_SubDFaceParameter(ON_SubDFaceCornerDex cdex, double s, 
   , m_s((0.0 <= s && s <= 1.0) ? s : ON_DBL_QNAN)
   , m_t((0.0 <= t && t <= 1.0) ? t : ON_DBL_QNAN)
 {}
-
-bool ON_SubDFaceParameter::IsSet()
-{
-  return m_cdex.IsSet() && 0.0 <= m_s && m_s <= 0.5 && 0.0 <= m_t && m_t <= 0.5;
-}
-
-/// <returns>True if all values are not valid.</returns>
-bool ON_SubDFaceParameter::IsNotSet()
-{
-  return ON_SubDFaceParameter::IsSet() ? false : true;
-}
-
 
 const ON_SubDFaceParameter ON_SubDFaceParameter::CreateFromQuadFaceParameteters(double quad_face_s, double quad_face_t)
 {
@@ -2132,6 +2120,119 @@ const ON_SubDFaceParameter ON_SubDComponentParameter::FaceParameter() const
     }
   }
   return ON_SubDFaceParameter::Nan;
+}
+
+// Pick the face a vertex or edge parameter should be evaluated on.
+// The parameter's active face is used when it is attached to the component.
+// Otherwise the component's first face is used.
+static const ON_SubDFace* Internal_ActiveFace(
+  const ON_SubD* subd,
+  ON_SubDComponentId active_face_id,
+  const ON_SubDComponentPtr cptr
+)
+{
+  const ON_SubDVertex* v = cptr.Vertex();
+  const ON_SubDEdge* e = cptr.Edge();
+  if (nullptr == v && nullptr == e)
+    return nullptr;
+
+  if (active_face_id.IsFaceId())
+  {
+    const ON_SubDFace* f = active_face_id.Face(subd);
+    if (nullptr != f)
+    {
+      const unsigned fi = (nullptr != v)
+        ? v->FaceArrayIndex(f)
+        : e->FaceArrayIndex(f);
+      if (fi < ON_UNSET_UINT_INDEX)
+        return f;
+    }
+  }
+
+  return (nullptr != v) ? v->Face(0) : e->Face(0);
+}
+
+bool ON_SubDComponentParameter::GetFaceAndFaceParameter(
+  const ON_SubD* subd,
+  const ON_SubDFace*& face,
+  ON_SubDFaceParameter& face_parameter
+) const
+{
+  face = nullptr;
+  face_parameter = ON_SubDFaceParameter::Nan;
+
+  if (false == this->IsSet())
+    return false;
+
+  if (this->IsFaceParameter())
+  {
+    const ON_SubDFace* f = this->Face(subd);
+    const ON_SubDFaceParameter fp = this->FaceParameter();
+    if (nullptr == f || fp.IsNotSet() || f->EdgeCount() != fp.FaceCornerDex().EdgeCount())
+      return false;
+    face = f;
+    face_parameter = fp;
+    return true;
+  }
+
+  if (this->IsVertexParameter())
+  {
+    const ON_SubDVertex* v = this->Vertex(subd);
+    if (nullptr == v)
+      return false;
+    const ON_SubDFace* f = Internal_ActiveFace(subd, this->VertexFace(), v->ComponentPtr());
+    if (nullptr == f)
+      return false;
+    const unsigned fvi = f->VertexIndex(v);
+    if (fvi >= f->EdgeCount())
+      return false;
+
+    // The vertex is the (0,0) parameter of its own face corner.
+    const ON_SubDFaceParameter fp(ON_SubDFaceCornerDex(fvi, f->EdgeCount()), 0.0, 0.0);
+    if (fp.IsNotSet())
+      return false;
+    face = f;
+    face_parameter = fp;
+    return true;
+  }
+
+  if (this->IsEdgeParameter())
+  {
+    const ON_SubDEdge* e = this->Edge(subd);
+    const double s = this->EdgeParameter();
+    if (nullptr == e || false == (s >= 0.0 && s <= 1.0))
+      return false;
+    const ON_SubDFace* f = Internal_ActiveFace(subd, this->EdgeFace(), e->ComponentPtr());
+    if (nullptr == f)
+      return false;
+    const unsigned edge_count = f->EdgeCount();
+    const unsigned fei = f->EdgeArrayIndex(e);
+    if (fei >= edge_count)
+      return false;
+
+    // this->EdgeParameter() is measured along the edge as this parameter
+    // orients it. Convert to the face's orientation of the same edge.
+    const ON_SubDEdgePtr this_eptr = this->EdgePtr(subd);
+    const ON_SubDEdgePtr face_eptr = f->EdgePtr(fei);
+    const double face_s = (this_eptr.EdgeDirection() == face_eptr.EdgeDirection())
+      ? s
+      : 1.0 - s;
+
+    // The corner at the start of face_eptr reaches the first half of the edge
+    // with its s parameter; the corner at the end reaches the second half with
+    // its t parameter, measured backwards from that corner.
+    const ON_SubDFaceCornerDex cdex(fei, edge_count);
+    const ON_SubDFaceParameter fp = (face_s <= 0.5)
+      ? ON_SubDFaceParameter(cdex, face_s, 0.0)
+      : ON_SubDFaceParameter(cdex.NextCornerDex(), 0.0, 1.0 - face_s);
+    if (fp.IsNotSet())
+      return false;
+    face = f;
+    face_parameter = fp;
+    return true;
+  }
+
+  return false;
 }
 
 const ON_SubDComponentId ON_SubDComponentParameter::VertexEdge() const

@@ -41,7 +41,7 @@
 #endif
 #endif
 
-#if defined(ON_RUNTIME_APPLE)
+#if defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_LINUX)
 #include "unistd.h" //for unlink
 #endif
 
@@ -560,7 +560,7 @@ const ON_wString ON_FileSystemPath::CurrentDirectory(
     fullpath += ON_FileSystemPath::DirectorySeparator;
   return fullpath;
 
-#elif defined(ON_RUNTIME_APPLE)
+#elif defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_LINUX)
 
   char sz[PATH_MAX];
   getcwd(sz, PATH_MAX);
@@ -3383,13 +3383,13 @@ void ON_ContentHash::Dump(
     const ON_wString content_time
       = ( m_content_time <= 0 )
       ? L"unknown"
-      : SecondsSinceJanOne1970UTCToString(m_content_time);
+      : static_cast<const wchar_t*>(SecondsSinceJanOne1970UTCToString(m_content_time));
     text_log.Print(L"Content last modified time = %ls\n",static_cast<const wchar_t*>(content_time));
 
     const ON_wString hash_time
       = ( m_hash_time <= 0 )
       ? L"unknown"
-      : SecondsSinceJanOne1970UTCToString(m_hash_time);
+      : static_cast<const wchar_t*>(SecondsSinceJanOne1970UTCToString(m_hash_time));
     text_log.Print(L"Content hash calculated time = %ls\n",static_cast<const wchar_t*>(content_time));
 
     text_log.PopIndent();
@@ -3678,55 +3678,9 @@ ON_FileReference::FindFilePreference ON_FileReference::Internal_FindFile(
         base_path = local_base_path;
       }
     }
-    
-
-    // Clean up file preferences and append defaults
-    ON_FileReference::FindFilePreference default_pref[] =
-    {
-      ON_FileReference::FindFilePreference::RelativePath,
-      ON_FileReference::FindFilePreference::FullPath,
-      ON_FileReference::FindFilePreference::ContentMatch,
-      ON_FileReference::FindFilePreference::BasePath,
-      ON_FileReference::FindFilePreference::MostRecent
-    };
-    ON_FileReference::FindFilePreference pref[10 + (sizeof(default_pref) / sizeof(default_pref[0]))];
-    unsigned int pref_capacity = (unsigned int)(sizeof(pref) / sizeof(pref[0]));
-    unsigned int pref_count = 0;
-    for (unsigned int pass = 0; pass < 2; pass++)
-    {
-      const ON_FileReference::FindFilePreference* pref_source = nullptr;
-      unsigned int pref_source_count = 0;
-      if (0 == pass)
-      {
-        pref_source = file_preference;
-        pref_source_count = file_preference_count;
-      }
-      else if (1 == pass)
-      {
-        pref_source = default_pref;
-        pref_source_count = (unsigned int)(sizeof(default_pref) / sizeof(default_pref[0]));
-      }
-      if (nullptr != pref_source)
-        continue;
-      for (unsigned int i = 0; i < pref_source_count && pref_count < pref_capacity; i++)
-      {
-        if (ON_FileReference::FindFilePreference::None == pref_source[i])
-          continue;
-        unsigned int j;
-        for (j = 0; j < i; j++)
-        {
-          if (pref[j] == pref_source[i])
-            break;
-        }
-        if (j < i)
-          continue; // don't add duplicate
-        if (pref_count < i)
-          pref[pref_count] = pref[i];
-        pref_count++;
-      }
-    }
-
-
+    // Matthew 4/23: the code to establish a preference order was entirely broken, leaving the preference
+    // order table completely uninitialized regardless of input. I'm removing it entirely, lest the
+    // compiler find some tasty undefined behavior to optimize in clever ways.
     ON_wString candidate_file_name[3];  // full path, base path + relative path, base path + file_name
     ON_FileReference::FindFilePreference candidate_file_pref[3] = { ON_FileReference::FindFilePreference::None, ON_FileReference::FindFilePreference::None, ON_FileReference::FindFilePreference::None };
     unsigned int candidate_count = 0;
@@ -3759,16 +3713,7 @@ ON_FileReference::FindFilePreference ON_FileReference::Internal_FindFile(
         continue;
       if ( false == ON_FileSystem::IsFile(name) )
         continue;
-      if (ffp == pref[0])
-      {
-        // got lucky
-        return Internal_FindFileResult(
-          name,
-          ON_ContentHash::Unset,
-          ffp,
-          found_file_full_path,
-          found_file_content_hash);
-      }
+      // Matthew 4/23: removed an almost-always-false comparison looking at uninitialized memory
       candidate_file_name[candidate_count] = name;
       candidate_file_pref[candidate_count] = ffp;
       candidate_count++;
@@ -3778,126 +3723,11 @@ ON_FileReference::FindFilePreference ON_FileReference::Internal_FindFile(
     if (0 == candidate_count)
       break;
 
-    if ( 1 == candidate_count )
-    {
-      return Internal_FindFileResult(
-        candidate_file_name[0],
-        ON_ContentHash::Unset,
-        candidate_file_pref[0],
-        found_file_full_path,
-        found_file_content_hash);
-    }
-
-
-    ON_ContentHash candidate_file_content[3] = { ON_ContentHash::Unset, ON_ContentHash::Unset, ON_ContentHash::Unset };
-    ON__UINT64 candidate_file_time[3] = { 0 };
-
-    for (unsigned int i = 0; i < pref_count; i++)
-    {
-      switch (pref[i])
-      {
-      case ON_FileReference::FindFilePreference::None:
-        break;
-
-      case ON_FileReference::FindFilePreference::FullPath:
-      case ON_FileReference::FindFilePreference::RelativePath:
-      case ON_FileReference::FindFilePreference::BasePath:
-        for (unsigned int j = 0; j < candidate_count; j++)
-        {
-          if (pref[i] == candidate_file_pref[j])
-          {
-            return Internal_FindFileResult(
-              candidate_file_name[j],
-              candidate_file_content[j],
-              candidate_file_pref[j],
-              found_file_full_path,
-              found_file_content_hash);
-          }
-        }
-        break;
-
-      case ON_FileReference::FindFilePreference::ContentMatch:
-        for (unsigned int j = 0; j < candidate_count; j++)
-        {
-          if (candidate_file_content[j].IsNotSet())
-          {
-            for (unsigned int k = 0; k < j; k++)
-            {
-              if (ON_wString::EqualPath(candidate_file_name[j], candidate_file_name[k]))
-              {
-                candidate_file_content[j] = candidate_file_content[k];
-                break;
-              }
-            }
-            if (candidate_file_content[j].IsNotSet())
-            {
-              // Use EqualFileNameSizeAndTime() to avoid expensive content calculation.
-              if (ON_FileReference::FindFilePreference::FullPath == candidate_file_pref[j]
-                && m_content_hash.EqualFileNameSizeAndTime(candidate_file_name[j]))
-                candidate_file_content[j] = m_content_hash;
-              else
-                candidate_file_content[j] = ON_ContentHash::CreateFromFile(candidate_file_name[j]);
-            }
-          }
-          if (candidate_file_content[j].IsSet())
-          {
-            if (ON_ContentHash::EqualContent(m_content_hash, candidate_file_content[j]))
-              return Internal_FindFileResult(
-                candidate_file_name[j],
-                candidate_file_content[j],
-                ON_FileReference::FindFilePreference::ContentMatch,
-                found_file_full_path,
-                found_file_content_hash);
-            candidate_file_time[j] = candidate_file_content[j].ContentLastModifiedTime();
-          }
-        }
-        break;
-
-      case ON_FileReference::FindFilePreference::MostRecent:
-        {
-          unsigned int most_recent_dex = candidate_count;
-          ON__UINT64 most_recent_time = 0;
-          for (unsigned int j = 0; j < candidate_count; j++)
-          {
-            if (candidate_file_time[j] <= 0)
-            {
-              ON__UINT64 t = 0;
-              for (unsigned int k = 0; k < j; k++)
-              {
-                if (ON_wString::EqualPath(candidate_file_name[j], candidate_file_name[k]))
-                {
-                  t = candidate_file_time[k];
-                  break;
-                }
-              }
-              if (t <= 0)
-                ON_FileStream::GetFileInformation(candidate_file_name[j], nullptr, nullptr, &t);
-              candidate_file_time[j] = t;
-            }
-            if (candidate_file_time[j] > most_recent_time)
-            {
-              most_recent_dex = j;
-              most_recent_time = candidate_file_time[j];
-            }
-          }
-          if (most_recent_time > 0 && most_recent_dex < candidate_count)
-            return Internal_FindFileResult(
-            candidate_file_name[most_recent_dex],
-            candidate_file_content[most_recent_dex],
-            ON_FileReference::FindFilePreference::MostRecent,
-            found_file_full_path,
-            found_file_content_hash);
-        }
-        break;
-
-      default:
-        break;
-      }
-    }
-
+    // Matthew 4/23: per our previous conclusion, we never initialize the preference table, and the pref_count is always 0.
+    // We can delete an entire loop here!
     return Internal_FindFileResult(
       candidate_file_name[0],
-      candidate_file_content[0],
+      ON_ContentHash::Unset,
       candidate_file_pref[0],
       found_file_full_path,
       found_file_content_hash);
@@ -4321,11 +4151,25 @@ public:
 
   bool Open(const wchar_t* filename, const wchar_t* mode)
   {
-    _file = ON_FileStream::Open(filename, mode);  
+    // Close any file this object already holds, or its FILE leaks.
+    Close();
+
+    _file = ON_FileStream::Open(filename, mode);
     return nullptr != _file;
   }
 
-  bool Close(void)                                const { return ON_FileStream::Close(_file) == 0; }
+  bool Close(void)
+  {
+    const bool ok = ON_FileStream::Close(_file) == 0;
+
+    // Always clear the pointer, even if fclose() failed: the FILE is freed either way.
+    // Otherwise the destructor's Close() calls fclose() on it a second time, and because
+    // fopen() reuses freed FILEs, that closes some other file that is open at that moment.
+    _file = nullptr;
+
+    return ok;
+  }
+
   bool SeekFromCurrentPosition(ON__INT64 offset)  const { return ON_FileStream::SeekFromCurrentPosition(_file, offset); }
   bool SeekFromStart(ON__INT64 offset)            const { return ON_FileStream::SeekFromStart(_file, offset); }
   bool SeekFromEnd(ON__INT64 offset)              const { return ON_FileStream::SeekFromEnd(_file, offset); }

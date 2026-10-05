@@ -110,28 +110,8 @@ public:
   class TextProps
   {
   public:
-    TextProps()
-    {}
-    TextProps(
-      double height,
-      double stackscale,
-      ON_Color color,
-      ON_DimStyle::stack_format stackformat,
-      bool bold,
-      bool italic,
-      bool underlined,
-      bool strikethrough,
-      unsigned int charset)
-      : m_height(height)
-      , m_stackscale(stackscale)
-      , m_color(color)
-      , m_stackformat(stackformat)
-      , m_bold(bold)
-      , m_italic(italic)
-      , m_underlined(underlined)
-      , m_strikethrough(strikethrough)
-      , m_codepage(1252)
-    {}
+    TextProps(){}
+
     double Height() const
     {
       return m_height;
@@ -198,6 +178,31 @@ public:
     {
       m_strikethrough = strikethrough;
     }
+    bool IsKerningEnabled() const
+    {
+      return m_kerning;
+    }
+    void SetKerningEnabled(bool kerning)
+    {
+      m_kerning = kerning;
+    }
+    double LineSpaceScale() const
+    {
+      return m_linespace_scale;
+    }
+    void SetLineSpaceScale(double scale)
+    {
+      m_linespace_scale = scale;
+    }
+    double HeightScaleFactor() const
+    {
+      return m_height_scale_factor;
+    }
+    void SetHeightScaleFactor(double factor)
+    {
+      if (factor > 0.0 && factor <= 10.0)
+        m_height_scale_factor = factor;
+    }
     unsigned int CodePage()
     {
       return m_codepage;
@@ -240,11 +245,13 @@ public:
     unsigned int              m_codepage = 1252;
     unsigned int              m_charset = 0;   // Charset isn't really needed but is here to make debugging a little easier
     bool                      m_format_pending = false;
+    bool                      m_kerning = false;
+    double                    m_linespace_scale = 1.0;
+    double                    m_height_scale_factor = 1.0;
   };
 
   ON_ClassArray< TextProps >  m_prop_stack;
   TextProps                   m_current_props;
-  TextProps                   m_pending_props;
 
   // Rtf uses UTF-16 encoding and surrogate pairs need to be properly handled.
   // For example, the single UNICODE code point ON_UnicodeCodePoint::Wastebasket U+1F5D1 (decimal 128465)
@@ -410,6 +417,11 @@ public:
   void ParagraphDefaults() override;
   void Section() override;
   void Tab() override;
+  // superclasses doesn't contain the next 4 methods to avoid virtual methods that break the SDK
+  void ListBegin(bool isOrdered);
+  void ListEnd();
+  void ListItemBegin(int depth);
+  void ListItemEnd();
 
   void Bold(const wchar_t* value) override;
   void Italic(const wchar_t* value) override;
@@ -858,6 +870,39 @@ public:
   ON_RtfParser(ON_TextIterator& iter, ON_TextBuilder& builder);
   bool Parse();
 
+  /*
+  Pure static helper: parse a Rhino RTF string into a run array.
+  Does NOT touch any ON_TextContent instance state, does NOT call
+  MeasureTextContent, does NOT re-compose the RTF, and does NOT
+  consult or modify the RtfComposer::RecomposeRTF() flag.
+
+  Parameters:
+    rtf_string - [in]
+      A Rhino RTF string. Empty input returns false.
+    dimstyle - [in]
+      Used to resolve the default font and the text position
+      properties hash. nullptr is treated as ON_DimStyle::Default.
+    out_runs - [out]
+      Cleared and refilled with the parsed runs on success.
+    out_text_position_hash - [out]
+      Set to the text-position-properties hash derived from dimstyle.
+    out_default_font - [out]
+      Set to the parent-dim-style font derived from dimstyle on success.
+  Returns:
+    True on successful parse, false otherwise.
+  */
+  // ON_CLASS on this individual static is required because the
+  // enclosing ON_RtfParser class is deliberately not dll-exported;
+  // without it the symbol is not visible from rhcommon_c or other
+  // consumers outside the OpenNURBS DLL. Marking just this static
+  // does not change class layout or vtable, so it is ABI-safe.
+  static ON_CLASS bool ParseToRuns(
+    const wchar_t* rtf_string,
+    const ON_DimStyle* dimstyle,
+    ON_TextRunArray& out_runs,
+    ON_SHA1_Hash& out_text_position_hash,
+    const ON_Font*& out_default_font);
+
 private:
   ON__UINT32 Internal_ParseMBCSString(
     const ON__UINT32 windows_code_page
@@ -899,6 +944,37 @@ public:
 
   static bool Compose(
     const ON_TextContent* text,
+    ON_wString& rtf,
+    bool bForceRtf);
+
+  /*
+  Pure static helper: compose a Rhino RTF string from a run array and
+  an explicit default (style) font. Does NOT consult ON_TextContent
+  state and does NOT consult the RtfComposer::RecomposeRTF() flag --
+  this is the straight "runs in, rtf out" path.
+
+  Parameters:
+    runs - [in/out]
+      The run array to compose. The array is not mutated, but the
+      parameter is non-const because the existing internal run access
+      path (GetRunText / ON_TextRunArray::operator[]) uses non-const
+      run pointers.
+    style_font - [in]
+      The annotation's default / style font. Used to decide whether
+      to emit per-run font/bold/italic/underline overrides.
+    rtf - [out]
+      On success, contains the composed RTF (or a plain-text fallback
+      when no formatting differs from the style and bForceRtf is false).
+    bForceRtf - [in]
+      When true, always emit RTF even if no formatting differs from
+      the style.
+  Returns:
+    True on success, false if style_font has no rich-text name or a
+    per-run font fails the same check.
+  */
+  static bool ComposeFromRuns(
+    ON_TextRunArray& runs,
+    const ON_Font& style_font,
     ON_wString& rtf,
     bool bForceRtf);
 

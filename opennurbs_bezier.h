@@ -1146,11 +1146,10 @@ public:
     );
 
   ON_Interval Domain(
-    int // 0 = "u" domain, 1 = "v" domain
+    int // 0 = "u" domain, 1 = "v" domain, always returns [0..1]
     ) const;
 
   bool Reverse( int );  // reverse parameterizatrion
-                        // Domain changes from [a,b] to [-b,-a]
   
   bool Transpose(); // transpose surface parameterization (swap "s" and "t")
 
@@ -1160,6 +1159,22 @@ public:
          int,            // array stride (>=Dimension())
          double*         // array of length stride*(ndir+1)*(ndir+2)/2
          ) const;
+                        
+  // Description:
+  //   Calculate the normal direction at the specified parameters.
+  // Parameters:
+  //   u, v   - [in] the parameters to evaluate the surface on [0..1]
+  //   p      - [out] the point on the surface at (u,v)
+  //   normal - [out] the normal direction (unitized)
+  // Returns:
+  //   true if surface evalaluation is successful.
+  // Remarks:
+  //   Uses ON_EvNormal when |ON_CrossProduct(du, dv)| is close to zero.
+  bool NormalAt(
+    double u, double v,
+    ON_3dPoint& p,
+    ON_3dVector& normal
+  ) const;
 
   ON_3dPoint PointAt(double s, double t) const;
 

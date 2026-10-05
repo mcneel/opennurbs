@@ -3227,7 +3227,6 @@ bool ON_Brep::CollapseEdge( int edge_index, bool bCloseTrimGap, int vertex_index
   ON_BrepEdge* edge = Edge(edge_index);
   if ( 0 == edge )
     return false;
-  edge_index = edge->m_edge_index; // clear high bit
 
   int orig_vid0 = edge->m_vi[0];
   int orig_vid1 = edge->m_vi[1];
@@ -3838,7 +3837,7 @@ bool ON_BrepMergeFaces(ON_Brep& B)
 }
 
 
-static int MergeAdjacentEdge(ON_Brep& B, int eid)
+static int MergeAdjacentEdge(ON_Brep& B, int eid, double angle_tolerance_radians)
 
 {
   ON_BrepEdge& E = B.m_E[eid];
@@ -3857,7 +3856,7 @@ static int MergeAdjacentEdge(ON_Brep& B, int eid)
   for (i=0; i<2; i++){
     int neid = B.NextEdge(eid, i);
     if (neid >= 0){
-      ON_BrepEdge* pE = B.CombineContiguousEdges(eid, neid);
+      ON_BrepEdge* pE = B.CombineContiguousEdges(eid, neid, angle_tolerance_radians);
       if (pE)
         return pE->m_edge_index;
     }
@@ -3868,21 +3867,22 @@ static int MergeAdjacentEdge(ON_Brep& B, int eid)
 
 //Merges all possible edges
 void ON_BrepMergeAllEdges(ON_Brep& B)
-
 {
-  int i;
-  int count = B.m_E.Count();
-  for (i=0; i<count; i++){
+  ON_BrepMergeAllEdges(B, ON_PI / 180.0);
+}
+
+void ON_BrepMergeAllEdges(ON_Brep& B, double angle_tolerance_radians)
+{
+  const int count = B.m_E.Count();
+  for (int i = 0; i < count; i++) {
     int eid = i;
     int j = 0;
-    while (eid >= 0 && j < count){
-      eid = MergeAdjacentEdge(B, eid);
+    while (eid >= 0 && j < count) {
+      eid = MergeAdjacentEdge(B, eid, angle_tolerance_radians);
       j++;
     }
   }
-  return;
 }
-
 
 //returns false if a naked edge is found.
 static bool OrderEdgesAroundClosedVertex(const ON_Brep& B, int vid, ON_2dex* trim_ends)

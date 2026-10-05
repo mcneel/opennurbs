@@ -35,6 +35,7 @@ class ON_MeshParameters;
 class ON_PolyCurve;
 class ON_CurveProxy;
 class ON_Surface;
+class ON_Extrusion;
 
 
 /* Return codes to be used in operations that attempt to fit to a tolerance.  
@@ -376,6 +377,22 @@ public:
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
+  /*
+  Description:
+    Determine if the surface is an extrusion.
+  Parameters:
+    extrusion - [out] if not nullptr and true is returned,
+      then the extrusion definition is returned.
+    tolerance - [in]
+      tolerance to use when checking
+  Returns:
+    True if the surface is an extrusion.
+  */
+  bool IsExtrusion(
+        ON_Extrusion* extrusion = nullptr,
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
+
   virtual 
   bool IsClosed(   // true if surface is closed in direction
         int        // dir  0 = "s", 1 = "t"
@@ -390,6 +407,10 @@ public:
   bool IsSingular( // true if surface side is collapsed to a point
         int        // side of parameter space to test
                    // 0 = south, 1 = east, 2 = north, 3 = west
+        ) const;
+
+  
+  bool HasSingularEdge ( // true if one or more surface sides is collapsed to a point
         ) const;
 
   /*
@@ -680,6 +701,26 @@ public:
          int dir,
          double c
          ) const;
+
+
+  /*
+  Description:
+    Get isoparametric curve. This is a quick way to invoke ON_Surface::IsoCurve
+  Parameters:
+    iso - [in] ON_Surface::ISO::north returns the curve where U varies and V is V_max
+               ON_Surface::ISO::east  returns the curve where V varies and U is U_max
+               ON_Surface::ISO::south returns the curve where U varies and V is V_min
+               ON_Surface::ISO::west  returns the curve where V varies and U is U_min
+               ON_Surface::ISO::x_iso returns the curve where V varies and U is p and p is inside the U-domain
+               ON_Surface::ISO::y_iso returns the curve where U varies and V is p and p is inside the V-domain
+               Any other ON_Surface::ISO value will return NULL
+               
+    p - [in]   The parameter to use when iso is x_iso or y_iso
+               Parameter values outside the U- or V-domain will return NULL if iso is x_iso or y_iso, respectively
+  Returns:
+    Isoparametric curve or NULL if input is invalid
+  */
+  ON_Curve* CurveIso(ON_Surface::ISO iso, double p = ON_UNSET_VALUE) const;
 
 
   /*

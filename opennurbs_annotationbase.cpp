@@ -74,7 +74,13 @@ void ON_Annotation::Internal_CopyFrom(const ON_Annotation& src)
 
 void ON_Annotation::Internal_Destroy()
 {
-  ClearText();
+  // Free m_text directly (not via ClearText) so the dimension-template
+  // preservation in ClearText() does not leak on destruction.
+  if (nullptr != m_text)
+  {
+    delete m_text;
+    m_text = nullptr;
+  }
   Internal_DeleteOverrideDimstyle();
 }
 
@@ -1112,18 +1118,41 @@ void ON_Annotation::SetText(ON_TextContent*& text) const
 {
   if (text == m_text)
     return;
-  ClearText();
+  // Free the existing content directly (not via ClearText) -- we are replacing
+  // it wholesale, and ClearText now preserves a dimension's authored template.
+  if (nullptr != m_text)
+    delete m_text;
   m_text = text;
   text = nullptr;
 }
 
+void ON_Annotation::SetText(const ON_TextRunArray& runs) const
+{
+  if (m_text == nullptr)
+    m_text = new ON_TextContent;
+  if (m_text->TextRuns(true) == &runs)
+    return;
+  m_text->CreateFromRuns(runs);
+}
+
 void ON_Annotation::ClearText() const
 {
-  if (nullptr != m_text)
-  {
-    delete m_text;
-    m_text = nullptr;
-  }
+  if (nullptr == m_text)
+    return;
+
+  // V9: text runs are the source of truth and must not be destroyed by a
+  // "refresh". A dimension carrying an authored template (user runs + the "<>"
+  // measurement marker, with run-only attributes like super/subscript) keeps
+  // its runs here; ON_Dimension::UpdateDimensionText re-substitutes the current
+  // measurement into them. When the authored text actually changes,
+  // ON_Dimension::SetUserText clears the template first, so callers that mean
+  // to replace the text (e.g. ReplaceTextString) still rebuild. The destructor
+  // and SetText() free m_text directly, so this no-op does not leak.
+  if (nullptr != ON_Dimension::Cast(this) && m_text->HasDimensionTemplate())
+    return;
+
+  delete m_text;
+  m_text = nullptr;
 }
 
 double ON_Annotation::TextRotationRadians() const
@@ -1265,6 +1294,46 @@ bool ON_Annotation::Internal_GetBBox_TextGlyphBox(
   return text_glyph_box.IsNotEmpty();
 }
 
+bool ON_Annotation::GetTextGlyphBoxCorners(
+  const ON_Viewport* vp,
+  const ON_DimStyle* dimstyle,
+  double dimscale,
+  ON_3dPoint corners[8]
+) const
+{
+  if (nullptr == corners || nullptr == m_text)
+    return false;
+
+  ON_Xform txf;
+  // GetTextXform can change cached information. Make sure this
+  // is called before m_text->BoundingBox() (see RH-39835).
+  const bool b = GetTextXform(vp, dimstyle, dimscale, txf);
+
+  ON_BoundingBox text_glyph_box = m_text->BoundingBox();
+  if (!text_glyph_box.IsNotEmpty())
+    return false;
+
+  // if mask, grow 2d bbox (matches Internal_GetBBox_TextGlyphBox)
+  if (DimstyleHasMask(dimstyle))
+  {
+    const double d = dimstyle->MaskBorder();
+    text_glyph_box.m_min.x -= d;
+    text_glyph_box.m_min.y -= d;
+    text_glyph_box.m_max.x += d;
+    text_glyph_box.m_max.y += d;
+  }
+
+  // Keep the corners oriented to the text plane instead of collapsing them
+  // into a world axis-aligned box, so a tight box can be computed for any frame.
+  text_glyph_box.GetCorners(corners);
+  if (b)
+  {
+    for (int i = 0; i < 8; i++)
+      corners[i] = txf * corners[i];
+  }
+  return true;
+}
+
 bool ON_Annotation::Internal_GetBBox_Begin(
   const ON_SHA1_Hash& hash,
   double* boxmin,
@@ -1401,7 +1470,7 @@ bool ON_Annotation::RunReplaceString(
     return false;
   bool rc = text_content->RunReplaceString(repl_str, start_run_idx, start_run_pos, end_run_idx, end_run_pos);
 
-  text_content->ComposeText();
+  //text_content->ComposeText(); //^^ RunReplaceString sets rtf string as dirty. It will recompose itself on demand
   
   text_content->RebuildRuns(Type(), dimstyle);
 
@@ -1782,6 +1851,39 @@ void ON_Annotation::SetTextHeight(const ON_DimStyle* parent_style, double height
   }
 }
 
+bool ON_Annotation::UseKerning(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::Kerning).UseKerning();
+}
+void ON_Annotation::SetUseKerning(const ON_DimStyle* parent_style, bool enabled)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = enabled != parent_style->UseKerning();
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetUseKerning(enabled);
+    override_style->SetFieldOverride(ON_DimStyle::field::Kerning, bCreate);
+  }
+}
+
+double ON_Annotation::LineSpaceScale(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::LineSpaceScale).LineSpaceScale();
+}
+void ON_Annotation::SetLineSpaceScale(const ON_DimStyle* parent_style, double scale)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = Internal_DimStyleDoubleChanged(scale, parent_style->LineSpaceScale());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetLineSpaceScale(scale);
+    override_style->SetFieldOverride(ON_DimStyle::field::LineSpaceScale, bCreate);
+  }
+}
+
+
 double ON_Annotation::LengthFactor(const ON_DimStyle* parent_style) const
 {
   return Internal_StyleForFieldQuery(parent_style,ON_DimStyle::field::LengthFactor).LengthFactor();
@@ -1949,6 +2051,40 @@ void ON_Annotation::SetSuppressExtension2(const ON_DimStyle* parent_style, bool 
   {
     override_style->SetSuppressExtension2(suppress);
     override_style->SetFieldOverride(ON_DimStyle::field::SuppressExtension2, bCreate);
+  }
+}
+
+bool ON_Annotation::SuppressDimLine1(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::SuppressDimLine1).SuppressDimLine1();
+}
+
+void ON_Annotation::SetSuppressDimLine1(const ON_DimStyle* parent_style, bool suppress)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (suppress != parent_style->SuppressDimLine1());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetSuppressDimLine1(suppress);
+    override_style->SetFieldOverride(ON_DimStyle::field::SuppressDimLine1, bCreate);
+  }
+}
+
+bool ON_Annotation::SuppressDimLine2(const ON_DimStyle* parent_style) const
+{
+  return Internal_StyleForFieldQuery(parent_style, ON_DimStyle::field::SuppressDimLine2).SuppressDimLine2();
+}
+
+void ON_Annotation::SetSuppressDimLine2(const ON_DimStyle* parent_style, bool suppress)
+{
+  parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+  bool bCreate = (suppress != parent_style->SuppressDimLine2());
+  ON_DimStyle* override_style = Internal_GetOverrideStyle(bCreate);
+  if (nullptr != override_style)
+  {
+    override_style->SetSuppressDimLine2(suppress);
+    override_style->SetFieldOverride(ON_DimStyle::field::SuppressDimLine2, bCreate);
   }
 }
 
@@ -2676,6 +2812,20 @@ void ON_Annotation::SetTextVerticalAlignment(const ON_DimStyle* parent_style, ON
     override_style->SetTextVerticalAlignment(value);
     override_style->SetFieldOverride(ON_DimStyle::field::TextVerticalAlignment, bCreate);
   }
+  // Keep the text content's own m_v_align in sync. Without this, alignment
+  // changes via this setter only update the dim style override; the text
+  // content's m_v_align stays stale, and MeasureTextRunArray (which reads
+  // m_v_align directly) doesn't reflect the change until some other
+  // operation rebuilds the content from the dim style.
+  ON_TextContent* text = Text();
+  if (nullptr != text)
+  {
+    ON::TextHorizontalAlignment cur_h;
+    ON::TextVerticalAlignment cur_v;
+    text->GetAlignment(cur_h, cur_v);
+    if (cur_v != value)
+      text->SetAlignment(cur_h, value);
+  }
 }
 
 ON::TextVerticalAlignment ON_Annotation::LeaderTextVerticalAlignment(const ON_DimStyle* parent_style) const
@@ -2692,6 +2842,18 @@ void ON_Annotation::SetLeaderTextVerticalAlignment(const ON_DimStyle* parent_sty
   {
     override_style->SetLeaderTextVerticalAlignment(value);
     override_style->SetFieldOverride(ON_DimStyle::field::LeaderTextVerticalAlignment, bCreate);
+  }
+  if (Type() == ON::AnnotationType::Leader)
+  {
+    ON_TextContent* text = Text();
+    if (nullptr != text)
+    {
+      ON::TextHorizontalAlignment cur_h;
+      ON::TextVerticalAlignment cur_v;
+      text->GetAlignment(cur_h, cur_v);
+      if (cur_v != value)
+        text->SetAlignment(cur_h, value);
+    }
   }
 }
 
@@ -2812,6 +2974,20 @@ void ON_Annotation::SetTextHorizontalAlignment(const ON_DimStyle* parent_style, 
     override_style->SetTextHorizontalAlignment(value);
     override_style->SetFieldOverride(ON_DimStyle::field::TextHorizontalAlignment, bCreate);
   }
+  // Keep the text content's own m_h_align in sync. Without this, alignment
+  // changes via this setter only update the dim style override; the text
+  // content's m_h_align stays stale, and MeasureTextRunArray (which reads
+  // m_h_align, not the dim style) doesn't reflect the change until some
+  // other operation rebuilds the content. Most visibly affects Justify.
+  ON_TextContent* text = Text();
+  if (nullptr != text)
+  {
+    ON::TextHorizontalAlignment cur_h;
+    ON::TextVerticalAlignment cur_v;
+    text->GetAlignment(cur_h, cur_v);
+    if (cur_h != value)
+      text->SetAlignment(value, cur_v);
+  }
 }
 
 ON::TextHorizontalAlignment ON_Annotation::LeaderTextHorizontalAlignment(const ON_DimStyle* parent_style) const
@@ -2828,6 +3004,20 @@ void ON_Annotation::SetLeaderTextHorizontalAlignment(const ON_DimStyle* parent_s
   {
     override_style->SetLeaderTextHorizontalAlignment(value);
     override_style->SetFieldOverride(ON_DimStyle::field::LeaderTextHorizontalAlignment, bCreate);
+  }
+  // Sync the leader's text content with the new alignment -- see comment on
+  // SetTextHorizontalAlignment for the rationale.
+  if (Type() == ON::AnnotationType::Leader)
+  {
+    ON_TextContent* text = Text();
+    if (nullptr != text)
+    {
+      ON::TextHorizontalAlignment cur_h;
+      ON::TextVerticalAlignment cur_v;
+      text->GetAlignment(cur_h, cur_v);
+      if (cur_h != value)
+        text->SetAlignment(value, cur_v);
+    }
   }
 }
 
@@ -3343,6 +3533,34 @@ bool ON_Annotation::SetAnnotationFont(const ON_Font* font, const ON_DimStyle* pa
     }
   }
   return false;
+}
+
+// RH-92502
+bool ON_Annotation::SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style, bool keep_overrides)
+{
+  return SetAnnotationFont(font, parent_style, keep_overrides, nullptr);
+}
+
+bool ON_Annotation::SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style, bool keep_overrides, const ON_Font* old_font)
+{
+  if (nullptr == font)
+    return false;
+
+  ON_TextContent* text = this->Text();
+
+  if (nullptr != text)
+    text->Internal_SetRunsFont(font, keep_overrides, old_font);
+
+  SetFont(parent_style, *font);
+
+  if (nullptr != text)
+  {
+    parent_style = &ON_DimStyle::DimStyleOrDefault(parent_style);
+    const ON_DimStyle& effective_style = DimensionStyle(*parent_style);
+    text->SetDimStyleTextPositionPropertiesHash(effective_style.TextPositionPropertiesHash());
+  }
+
+  return true;
 }
 
 bool ON_Annotation::SetAnnotationFacename(bool set_or_clear, const wchar_t* facename, const ON_DimStyle* parent_style)

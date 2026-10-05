@@ -794,6 +794,54 @@ public:
   ) const;
 
   /// <summary>
+  /// The total number of control points.
+  /// Note that if a NURBS curve is closed with clamped end knots,
+  /// then the first and last control points are equal and
+  /// if a NURBS curve is periodic, then the first and last Degree() many
+  /// control points are pairwise equal.
+  /// </summary>
+  /// <returns>
+  /// If the NURBS curve is valid, then the total number of control
+  /// points is returned. Otherwise 0 is returned.
+  /// </returns>
+  int ControlPointCount() const;
+
+
+  /// <summary>
+  /// If a NURBS curve has a distinct start and end point, then
+  /// thre ar no duplicate control points.
+  /// If a NURBS curve is closed with clamped end knots, then the first
+  /// and last control points are equal and the number of duplicate
+  /// control points is 1.
+  /// If a NURBS curve is periodic, then the first and last Degree() many
+  /// control points are pairwise equal and the number of duplicate control points
+  /// is Degree(). 
+  /// </summary>
+  /// <returns>
+  /// If the NURBS curve's control point count, degree, and control point locations
+  /// are valid, then the number of duplicate control points is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  int DuplicateControlPointCount() const;
+
+  /// <summary>
+  /// If a NURBS curve has a distinct start and end point, then
+  /// every control point is independent.
+  /// If a NURBS curve is closed with clamped end knots, then the first
+  /// and last control points are equal and the number of independent
+  /// control points is CVCount() -1. 
+  /// If a NURBS curve is periodic, then the first and last Degree() many
+  /// control points are pairwise equal and the number of independent control points
+  /// is CVCount() - Degree(). 
+  /// </summary>
+  /// <returns>
+  /// If the NURBS curve's control point count, degree, and control point locations
+  /// are valid, then the number of independent control points
+  /// (CVCount() - DuplicateControlPointCount()) is returned.
+  /// Otherwise 0 is returned.
+  /// </returns>
+  int IndependentControlPointCount() const;
+
   /// Get the indices of the spans where the specified 
   /// control point is active.
   /// Note that a NURBS curve with n control points has (n-degree) many spans.
@@ -1123,6 +1171,12 @@ public:
   //////////
   // returns the length of the control polygon
   double ControlPolygonLength() const;
+
+  /// <returns>
+  /// If the NURBS curve is valid, the centroid of its control points is returned.
+  /// Otherwise ON_3dPoint::NanPoint is returned.
+  /// </returns>
+  const ON_3dPoint ControlPolygonCentroid() const;
 
   ////////
   // Converts a span of the NURBS curve into a bezier.  If

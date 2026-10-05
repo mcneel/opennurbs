@@ -311,9 +311,33 @@ public:
     ON_TextLog* error_log = nullptr
     );
 
-  bool Read( 
+  bool Read(
     const wchar_t* filename,
     ON_TextLog* error_log = nullptr
+    );
+
+  /*
+  Description:
+    Open the file, create an ON_BinaryArchive, and read only the
+    start section, properties, and settings (the first three
+    required steps of IncrementalReadBegin), then close the file.
+    Use this when you need the document settings without reading
+    the rest of the model.
+  Parameters:
+    filename - [in]
+      Name of the .3dm file to read.
+  Returns:
+    True if the start section, properties, and settings were read.
+  See Also:
+    ONX_Model::Read
+    ONX_Model::IncrementalReadBegin
+  */
+  bool ReadSettings(
+    const char* filename
+    );
+
+  bool ReadSettings(
+    const wchar_t* filename
     );
 
   /*
@@ -1321,6 +1345,37 @@ public:
     const ON_Font& font_characteristics,
     double model_space_text_scale
     );
+
+  /*
+  Description:
+    Get a section style from its model index.
+  Parameters:
+    section_style_index - [in]
+  Returns:
+    An ON_ModelComponentReference to the section style.
+  Remarks:
+    Model index and Manifest() manifest item index are the same.
+  */
+  ON_ModelComponentReference SectionStyleFromIndex(
+    int section_style_index
+  ) const;
+  ON_ModelComponentReference SectionStyleFromId(
+    ON_UUID section_style_id
+  ) const;
+  ON_ModelComponentReference SectionStyleFromName(
+    const wchar_t* section_style_name
+  ) const;
+  ON_ModelComponentReference SectionStyleFromNameHash(
+    ON_NameHash section_style_name_hash
+  ) const;
+
+  /*
+  Returns:
+    A system section style that is the default for this model
+    and is used when a referenced section style is missing from
+    this model.
+  */
+  ON_ModelComponentReference DefaultSectionStyle() const;
 
   /*
   Description:

@@ -645,6 +645,16 @@ ON_UuidList& ON_UuidList::operator=(const ON_UuidList& src)
   return *this;
 }
 
+#if defined(ON_HAS_RVALUEREF)
+ON_UuidList& ON_UuidList::operator=(ON_UuidList&& src) ON_NOEXCEPT
+{
+  ON_SimpleArray<ON_UUID>::operator=(std::move(src));
+  m_sorted_count = src.m_sorted_count;
+  m_removed_count = src.m_removed_count;
+  return *this;
+}
+#endif
+
 bool ON_UuidList::operator==(const ON_UuidList& other) const
 {
   int thisCount = Count();
@@ -1192,17 +1202,7 @@ ON_UuidPtr* ON_UuidPtrList::SearchHelper(const ON_UUID* uuid) const
 template <typename T>
 struct ON_UuidList2_Private
 {
-  struct UuidHasher
-  {
-    inline size_t operator()(const ON_UUID& uuid) const
-    {
-      // We have to copy two 32-bit words into a 64-bit word. Just casting to size_t can cause
-      // a problem on Mac because size_t is required to be aligned on an 8-byte boundary and UUID
-      // is only aligned on a 4-byte boundary.
-      const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&uuid.Data1);
-      return (size_t(d[0]) << 32) | size_t(d[1]);
-    }
-  };
+  using UuidHasher = ON_UuidHasher; // canonical hasher in opennurbs_uuid.h
 
   std::unordered_map<ON_UUID, T, UuidHasher> map;
 };
@@ -1873,57 +1873,63 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
   return p;
 }
 
-ON_2dexMap::ON_2dexMap() : m_bSorted(0)
+class ON_2dexMap_Private
+{
+public:
+  std::unordered_map<int, ON_2dex> map; //It's this way to support the Find the returns a pointer to ON_2dex
+};
+
+ON_2dexMap::ON_2dexMap() : m_private(new ON_2dexMap_Private)
+{
+}
+
+ON_2dexMap::ON_2dexMap(int capacity)
 {}
 
-ON_2dexMap::ON_2dexMap(int capacity) 
-            : ON_SimpleArray<ON_2dex>(capacity), 
-            m_bSorted(0)
-{}
-
-ON_2dexMap::~ON_2dexMap()
-{}
+ON_2dexMap::~ON_2dexMap() = default;
 
 int ON_2dexMap::Count() const
 {
-  return m_count;
+  return (int)m_private->map.size();
 }
 
 const ON_2dex* ON_2dexMap::Array() const
 {
-  return m_a;
+  return nullptr;
+}
+
+int ON_2dexMap::ToArray(ON_SimpleArray<ON_2dex>& aArrayOut) const
+{
+  const int iStart = aArrayOut.Count();
+  for (auto& pair : m_private->map)
+  {
+    aArrayOut.Append(pair.second);
+  }
+  return aArrayOut.Count() - iStart;
 }
 
 void ON_2dexMap::Reserve(size_t capacity )
 {
-  ON_SimpleArray<ON_2dex>::Reserve(capacity);
 }
 
 ON_2dex ON_2dexMap::operator[](int i) const
 {
-  return m_a[i];
+  return m_private->map[i];
 }
 
 void ON_2dexMap::Create(int count, int i0, int j)
 {
   if ( count <= 0 )
   {
-    m_count = 0;
+    m_private->map.clear();
   }
   else
   {
-    ON_SimpleArray<ON_2dex>::Reserve(count);
-    m_count = count;
-    ON_2dex* a = m_a;
-    ON_2dex d;
-    d.j = j;
-    count += i0;
-    for ( d.i = i0; d.i < count; d.i++ )
+    for (int i = 0; i < count; i++)
     {
-      *a++ = d;
+      AddIndex(i0 + i, j);
     }
   }
-  m_bSorted = true;
 }
 
 const ON_2dex* ON_BinarySearch2dexArray( int key_i, const ON_2dex* base, size_t nel )
@@ -2022,88 +2028,53 @@ const ON_2udex* ON_BinarySearch2udexArray(unsigned int key_i, const ON_2udex* ba
   return 0;
 }
 
-static
-int compare_2dex_i(const void* a, const void* b)
-{
-  const int ai = *((const int*)a);
-  const int bi = *((const int*)b);
-  if ( ai < bi )
-    return -1;
-  if ( ai > bi )
-    return 1;
-  return 0;
-}
-
 const ON_2dex* ON_2dexMap::Find2dex(int i) const
 {
-  const ON_2dex* e = 0;
-  if ( m_count > 0 )
-  {
-    if ( !m_bSorted )
-    {
-      ON_qsort(m_a,m_count,sizeof(m_a[0]),compare_2dex_i);
-      const_cast<ON_2dexMap*>(this)->m_bSorted = true;
-    }
-    e = ON_BinarySearch2dexArray(i,m_a,m_count);
-  }
-  return e;
+  const auto it = m_private->map.find(i);
+  if (it == m_private->map.end())
+    return nullptr;
+
+  return &it->second;
 }
 
 int ON_2dexMap::FindIndex( int i, int not_found_rc) const
 {
-  const ON_2dex* e = Find2dex(i);
-  return e ? e->j : not_found_rc;
+  const auto it = m_private->map.find(i);
+  if (it == m_private->map.end())
+    return not_found_rc;
+
+  return it->second.j;
 }
 
 bool ON_2dexMap::AddIndex(  int i, int j )
 {
-  bool rc = (0 == Find2dex(i));
-  if ( rc )
-  {
-    ON_2dex& d = AppendNew();
-    d.i = i;
-    d.j = j;
-    m_bSorted = ( m_count < 2 || (m_bSorted && m_a[m_count-2].i < i) );
-  }
-  return rc;
+  const auto ret = m_private->map.insert(std::make_pair(i, ON_2dex(i, j)));
+  return ret.second;
 }
 
-bool ON_2dexMap::SetIndex( int i, int j )
+bool ON_2dexMap::SetIndex(int i, int j)
 {
-  ON_2dex* e = const_cast<ON_2dex*>(Find2dex(i));
-  if ( e )
-  {
-    e->j = j;
-  }
-  return (0!=e);
+  const auto it = m_private->map.find(i);
+  if (it == m_private->map.end())
+    return false;
+
+  m_private->map[i].j = j;
+  return true;
 }
 
 void ON_2dexMap::SetOrAddIndex( int i, int j )
 {
-  ON_2dex* e = const_cast<ON_2dex*>(Find2dex(i));
-  if ( e )
-  {
-    e->j = j;
-  }
-  else
-  {
-    ON_2dex& d = AppendNew();
-    d.i = i;
-    d.j = j;
-    m_bSorted = ( m_count < 2 || (m_bSorted && m_a[m_count-2].i < i) );
-  }
+  m_private->map[i] = ON_2dex(i,j);
 }
 
 bool ON_2dexMap::RemoveIndex( int i )
 {
-  const ON_2dex* e = Find2dex(i);
-  if (e)
-  {
-    int n = (int)(m_a-e);
-    for( m_count--; n < m_count; n++ )
-      m_a[n] = m_a[n+1];
-  }
-  return (0 != e);
+  const auto it = m_private->map.find(i);
+  if (it == m_private->map.end())
+    return false;
+
+  m_private->map.erase(i);
+  return true;
 }
 
 

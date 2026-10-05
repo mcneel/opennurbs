@@ -222,13 +222,17 @@ public:
   ON_COMPONENT_INDEX m_component_index;
   int m_geometry_type;
 
-  // If m_runtime_sn > 0, then it is the value of a Rhino object's
-  // CRhinoObject::m_runtime_object_serial_number field.
-  // The serial number is used instead of the pointer to
-  // prevent crashes in cases when the CRhinoObject is deleted
-  // but an ON_ObjRef continues to reference the Rhino object.
-  // The value of m_runtime_sn is not saved in archives because
-  // it generally changes if you save and reload an archive.
+  /// <summary>
+  /// If m_runtime_sn > 0, then it is the value of a Rhino object's
+  /// CRhinoObject::m_runtime_object_serial_number field.
+  /// The serial number is used instead of the pointer to
+  /// prevent crashes in cases when the CRhinoObject is deleted
+  /// but an ON_ObjRef continues to reference the Rhino object.
+  /// The value of m_runtime_sn is not saved in archives because
+  /// it generally changes if you save and reload an archive.
+  /// The Rhino document containing the CRhinoObject is identified
+  /// by the m_rhino_doc_sn field below.
+  /// </summary>
   unsigned int m_runtime_sn;
 
   // If m_point != ON_3dPoint::UnsetPoint, then the ObjRef resolves to 
@@ -239,6 +243,13 @@ public:
   // If the point was the result of some type of object snap, then
   // the object snap is recorded here. 
   ON::osnap_mode m_osnap_mode;
+
+  /// <summary>
+  /// If m_rhino_doc_sn > 0, then is the value of ofthe Rhino doc
+  /// CRhinoDoc::m_rhino_doc_sn that contains the object with m_runtime_sn
+  /// or the document that should be searched for the object with id = m_uuid.
+  /// </summary>
+  unsigned m_rhino_doc_sn = 0;
 
   // If m_point != ON_3dPoint::UnsetPoint and m_evp.m_t_type != 0, then
   // m_evp records the records the m_geometry evaluation

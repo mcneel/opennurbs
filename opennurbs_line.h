@@ -142,6 +142,9 @@ public:
   //   ON_Line::Direction
   ON_3dVector Tangent() const;
 
+  /// <returns> The midpoint between from and to - PointAt(0.5). </returns>
+  const ON_3dPoint Midpoint() const;
+
   /*
   Description:
     Evaluate point on (infinite) line.

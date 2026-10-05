@@ -26,6 +26,106 @@
 
 static ON_4dPoint UNSET_4D_POINT = ON_4dPoint(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 
+static ON_XMLNode* FindDecalNodeByCRC(const ON_XMLNode& decals_node, ON_DECAL_CRC decal_crc)
+{
+  auto it = decals_node.GetChildIterator();
+  ON_XMLNode* decal_node = nullptr;
+  while (nullptr != (decal_node = it.GetNextChild()))
+  {
+    if (decal_crc == ON_DecalCRCFromNode(*decal_node))
+      break;
+  }
+
+  return decal_node;
+}
+
+static double PrincipalValueAngleRad(double angleRad)
+{
+  // Returns the given angle modulo 2 * PI.
+
+  if (angleRad >= ON_2PI)
+  {
+    angleRad = angleRad - floor(angleRad / ON_2PI) * ON_2PI;
+  }
+  else
+  if (angleRad <= 0.0)
+  {
+    angleRad = angleRad + ceil(-angleRad / ON_2PI) * ON_2PI;
+  }
+
+  if (angleRad < 1e-12)
+    angleRad = 0.0;
+
+  if (angleRad > ON_2PI)
+    angleRad = ON_2PI;
+
+  return angleRad;
+}
+
+static double ScaleFactorForDirection(const ON_Xform& xform, const ON_3dVector& direction)
+{
+  const double original_length = direction.Length();
+  if (!(ON_IsValid(original_length) && original_length > ON_ZERO_TOLERANCE))
+    return ON_UNSET_VALUE;
+
+  ON_3dVector transformed_direction = direction;
+  transformed_direction.Transform(xform);
+
+  const double transformed_length = transformed_direction.Length();
+  if (!ON_IsValid(transformed_length))
+    return ON_UNSET_VALUE;
+
+  return transformed_length / original_length;
+}
+
+static void UpdateValuesForTransformation(
+            const ON_Xform& xform, ON_Decal::Mappings mapping, double& radius, double& height,
+            ON_3dPoint& ptOrigin, ON_3dVector& vecUp, ON_3dVector& vecAcross)
+{
+  const ON_3dVector original_up = vecUp;
+  const ON_3dVector original_across = vecAcross;
+
+  ptOrigin.Transform(xform);
+  vecUp.Transform(xform);
+  vecAcross.Transform(xform);
+
+  if ((ON_Decal::Mappings::Cylindrical == mapping) || (ON_Decal::Mappings::Spherical == mapping))
+  {
+    // Measure scale in the decal's local frame instead of assuming it is aligned to world axes.
+    if (ON_Decal::Mappings::Cylindrical == mapping)
+    {
+      const double radius_scale = ScaleFactorForDirection(xform, original_across);
+      if (ON_IsValid(radius_scale))
+        radius *= radius_scale;
+
+      const double height_scale = ScaleFactorForDirection(xform, original_up);
+      if (ON_IsValid(height_scale))
+        height *= height_scale;
+    }
+    else
+    {
+      const double radius_scale = ScaleFactorForDirection(xform, original_across);
+      if (ON_IsValid(radius_scale))
+        radius *= radius_scale;
+    }
+
+    vecUp.Unitize();
+    vecAcross.Unitize();
+  }
+}
+
+static ON_Decal::Mappings MappingFromString(const ON_wString& s)
+{
+       if (s == ON_RDK_DECAL_MAPPING_PLANAR)      return ON_Decal::Mappings::Planar;
+  else if (s == ON_RDK_DECAL_MAPPING_SPHERICAL)   return ON_Decal::Mappings::Spherical;
+  else if (s == ON_RDK_DECAL_MAPPING_CYLINDRICAL) return ON_Decal::Mappings::Cylindrical;
+  else if (s == ON_RDK_DECAL_MAPPING_UV)          return ON_Decal::Mappings::UV;
+  else if (s == ON_RDK_DECAL_MAPPING_NONE)        return ON_Decal::Mappings::None;
+
+  ON_ASSERT(false);
+  return ON_Decal::Mappings::None;
+}
+
 class ON_Decal::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -33,8 +133,8 @@ public:
   CImpl(ON_DecalCollection* dc,       ON_XMLNode& node);
   CImpl(ON_DecalCollection* dc, const ON_XMLNode& node);
 
-  ON_UUID TextureInstanceId(void) const;
-  void SetTextureInstanceId(const ON_UUID& id);
+  ON_UUID AssetInstanceId(void) const;
+  void SetAssetInstanceId(const ON_UUID& id);
   Mappings Mapping(void) const;
   void SetMapping(Mappings v);
   Projections Projection(void) const;
@@ -53,8 +153,12 @@ public:
   void SetHeight(double d);
   double Radius(void) const;
   void SetRadius(double d);
+  void GetSavedVectorLengths(double& across, double& up) const;
+  void SetSavedVectorLengths(double across, double up);
   bool IsVisible(void) const;
   void SetIsVisible(bool b);
+  bool IsTemporary(void) const;
+  void SetIsTemporary(bool b);
   void GetHorzSweep(double& sta, double& end) const;
   void SetHorzSweep(double sta, double end);
   void GetVertSweep(double& sta, double& end) const;
@@ -66,7 +170,18 @@ public:
   ON_XMLVariant GetParameter(const wchar_t* param_name, const ON_XMLVariant& def) const;
   void SetParameter(const wchar_t* param_name, const ON_XMLVariant& value);
   ON_XMLNode* FindCustomNodeForRenderEngine(const ON_UUID& renderEngineId) const;
+
+  bool GetTextureMapping(ON_TextureMapping& mappingOut) const;
+
+  void SetCollectionChanged(void);
+
+  bool HitTest(const ON_3dPoint& point, const ON_3dVector& normal, ON_2dPoint& uvOut) const;
+
+  void ApplyTransformation(const ON_Xform& xform);
+
   virtual ON_wString NameOfRootNode(void) const override { return ON_RDK_DECAL; }
+
+  ON_3dVector GetOriginOffset(void) const;
 
   static const int unset_bool = 2;
   mutable struct Cache
@@ -74,37 +189,35 @@ public:
     double radius       = ON_UNSET_VALUE;
     double height       = ON_UNSET_VALUE;
     double transparency = ON_UNSET_VALUE;
-    ON_UUID texture_instance_id = ON_nil_uuid;
-    ON_3dPoint origin = ON_3dPoint::UnsetPoint;
-    ON_3dVector vector_up = ON_3dVector::UnsetVector;
+    ON_UUID asset_instance_id = ON_nil_uuid;
+    ON_3dPoint origin         = ON_3dPoint ::UnsetPoint;
+    ON_3dVector vector_up     = ON_3dVector::UnsetVector;
     ON_3dVector vector_across = ON_3dVector::UnsetVector;
-    ON_2dPoint horz_sweep  = ON_2dPoint::UnsetPoint;
-    ON_2dPoint vert_sweep  = ON_2dPoint::UnsetPoint;
-    ON_4dPoint uv_bounds   = UNSET_4D_POINT;
+    ON_2dPoint horz_sweep     = ON_2dPoint ::UnsetPoint;
+    ON_2dPoint vert_sweep     = ON_2dPoint ::UnsetPoint;
+    ON_4dPoint uv_bounds      = UNSET_4D_POINT;
     Mappings mapping = Mappings::None;
     Projections projection = Projections::None;
-    bool texture_instance_id_set = false;
+    bool asset_instance_id_set = false;
+    bool temporary = false;
     int visible = unset_bool;
     int map_to_inside = unset_bool;
   }
   _cache;
 
-private:
   ON_DecalCollection* _collection = nullptr;
   ON_UUID _decal_id;
+  bool _read_only = false;
+  bool _cache_only = false;
+
+private:
+  bool HitTestUV(const ON_3dPoint& point, ON_3dPoint& uvwOut) const;
+  bool HitTestPlanar(const ON_3dVector& normal, const ON_3dPoint& point, ON_3dPoint& uvwOut) const;
+  bool HitTestCylindrical(const ON_3dVector& normal, const ON_3dPoint& point, ON_3dPoint& uvwOut) const;
+  bool HitTestSpherical(const ON_3dVector& normal, const ON_3dPoint& point, ON_3dPoint& uvwOut) const;
+  bool Writeable(void) const { ON_ASSERT(!_read_only); return !_read_only; }
+
 };
-
-static ON_Decal::Mappings MappingFromString(const ON_wString& s)
-{
-       if (s == ON_RDK_DECAL_MAPPING_PLANAR)      return ON_Decal::Mappings::Planar;
-  else if (s == ON_RDK_DECAL_MAPPING_SPHERICAL)   return ON_Decal::Mappings::Spherical;
-  else if (s == ON_RDK_DECAL_MAPPING_CYLINDRICAL) return ON_Decal::Mappings::Cylindrical;
-  else if (s == ON_RDK_DECAL_MAPPING_UV)          return ON_Decal::Mappings::UV;
-  else if (s == ON_RDK_DECAL_MAPPING_NONE)        return ON_Decal::Mappings::None;
-
-  ON_ASSERT(false);
-  return ON_Decal::Mappings::None;
-}
 
 ON_Decal::CImpl::CImpl()
 {
@@ -122,6 +235,7 @@ ON_Decal::CImpl::CImpl(ON_DecalCollection* dc, ON_XMLNode& node)
 ON_Decal::CImpl::CImpl(ON_DecalCollection* dc, const ON_XMLNode& node)
   :
   _collection(dc),
+  _read_only(true),
   ON_InternalXMLImpl(&const_cast<ON_XMLNode&>(node))
 {
   ON_CreateUuid(_decal_id);
@@ -134,34 +248,43 @@ ON_XMLVariant ON_Decal::CImpl::GetParameter(const wchar_t* param_name, const ON_
 
 void ON_Decal::CImpl::SetParameter(const wchar_t* param_name, const ON_XMLVariant& value)
 {
-  if (nullptr != _collection)
-    _collection->SetChanged();
+  ON_ASSERT(!_cache_only);
+  ON_ASSERT(!_read_only);
 
   ON_InternalXMLImpl::SetParameter(L"", param_name, value);
 }
 
-ON_UUID ON_Decal::CImpl::TextureInstanceId(void) const
+ON_UUID ON_Decal::CImpl::AssetInstanceId(void) const
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
-  if (!_cache.texture_instance_id_set)
+  if (!_cache.asset_instance_id_set)
   {
-    _cache.texture_instance_id = GetParameter(ON_RDK_DECAL_TEXTURE_INSTANCE, ON_nil_uuid).AsUuid();
-    _cache.texture_instance_id_set = true;
+    _cache.asset_instance_id = GetParameter(ON_RDK_DECAL_ASSET_INSTANCE, ON_nil_uuid).AsUuid();
+    _cache.asset_instance_id_set = true;
   }
 
-  return _cache.texture_instance_id;
+  return _cache.asset_instance_id;
 }
 
-void ON_Decal::CImpl::SetTextureInstanceId(const ON_UUID& id)
+void ON_Decal::CImpl::SetAssetInstanceId(const ON_UUID& id)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
-  if (!_cache.texture_instance_id_set || (_cache.texture_instance_id != id))
+  if (!Writeable())
+    return;
+
+  if (!_cache.asset_instance_id_set || (_cache.asset_instance_id != id))
   {
-    _cache.texture_instance_id = id;
-    _cache.texture_instance_id_set = true;
-    SetParameter(ON_RDK_DECAL_TEXTURE_INSTANCE, id);
+    _cache.asset_instance_id = id;
+    _cache.asset_instance_id_set = true;
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_ASSET_INSTANCE, id);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -182,22 +305,30 @@ void ON_Decal::CImpl::SetMapping(Mappings m)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.mapping != m)
   {
     _cache.mapping = m;
 
     const wchar_t* s = L"";
-    switch (m)
+    if (!_cache_only)
     {
-    default: ON_ASSERT(false);
-    case Mappings::None:        s = ON_RDK_DECAL_MAPPING_NONE;        break;
-    case Mappings::Planar:      s = ON_RDK_DECAL_MAPPING_PLANAR;      break;
-    case Mappings::Spherical:   s = ON_RDK_DECAL_MAPPING_SPHERICAL;   break;
-    case Mappings::Cylindrical: s = ON_RDK_DECAL_MAPPING_CYLINDRICAL; break;
-    case Mappings::UV:          s = ON_RDK_DECAL_MAPPING_UV;          break;
+      switch (m)
+      {
+      default: ON_ASSERT(false);
+      case Mappings::None:        s = ON_RDK_DECAL_MAPPING_NONE;        break;
+      case Mappings::Planar:      s = ON_RDK_DECAL_MAPPING_PLANAR;      break;
+      case Mappings::Spherical:   s = ON_RDK_DECAL_MAPPING_SPHERICAL;   break;
+      case Mappings::Cylindrical: s = ON_RDK_DECAL_MAPPING_CYLINDRICAL; break;
+      case Mappings::UV:          s = ON_RDK_DECAL_MAPPING_UV;          break;
+      }
+
+      SetParameter(ON_RDK_DECAL_MAPPING, s);
     }
 
-    SetParameter(ON_RDK_DECAL_MAPPING, s);
+    SetCollectionChanged();
   }
 }
 
@@ -222,21 +353,29 @@ void ON_Decal::CImpl::SetProjection(Projections v)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.projection != v)
   {
     _cache.projection = v;
 
     const wchar_t* s = L"";
-    switch (v)
+    if (!_cache_only)
     {
-    default: ON_ASSERT(false);
-    case ON_Decal::Projections::None:     s = ON_RDK_DECAL_PROJECTION_NONE;     break;
-    case ON_Decal::Projections::Forward:  s = ON_RDK_DECAL_PROJECTION_FORWARD;  break;
-    case ON_Decal::Projections::Backward: s = ON_RDK_DECAL_PROJECTION_BACKWARD; break;
-    case ON_Decal::Projections::Both:     s = ON_RDK_DECAL_PROJECTION_BOTH;     break;
+      switch (v)
+      {
+      default: ON_ASSERT(false);
+      case ON_Decal::Projections::None:     s = ON_RDK_DECAL_PROJECTION_NONE;     break;
+      case ON_Decal::Projections::Forward:  s = ON_RDK_DECAL_PROJECTION_FORWARD;  break;
+      case ON_Decal::Projections::Backward: s = ON_RDK_DECAL_PROJECTION_BACKWARD; break;
+      case ON_Decal::Projections::Both:     s = ON_RDK_DECAL_PROJECTION_BOTH;     break;
+      }
+
+      SetParameter(ON_RDK_DECAL_PROJECTION, s);
     }
 
-    SetParameter(ON_RDK_DECAL_PROJECTION, s);
+    SetCollectionChanged();
   }
 }
 
@@ -256,11 +395,20 @@ void ON_Decal::CImpl::SetMapToInside(bool b)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   const int i = b ? 1 : 0;
   if (_cache.map_to_inside != i)
   {
     _cache.map_to_inside = i;
-    SetParameter(ON_RDK_DECAL_MAP_TO_INSIDE_ON, b);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_MAP_TO_INSIDE_ON, b);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -280,10 +428,19 @@ void ON_Decal::CImpl::SetTransparency(double v)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.transparency != v)
   {
     _cache.transparency = v;
-    SetParameter(ON_RDK_DECAL_TRANSPARENCY, v);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_TRANSPARENCY, v);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -303,10 +460,19 @@ void ON_Decal::CImpl::SetOrigin(const ON_3dPoint& pt)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.origin != pt)
   {
     _cache.origin = pt;
-    SetParameter(ON_RDK_DECAL_ORIGIN, pt);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_ORIGIN, pt);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -326,10 +492,19 @@ void ON_Decal::CImpl::SetVectorUp(const ON_3dVector& v)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.vector_up != v)
   {
     _cache.vector_up = v;
-    SetParameter(ON_RDK_DECAL_VECTOR_UP, ON_3dPoint(v));
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_VECTOR_UP, ON_3dPoint(v));
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -349,10 +524,19 @@ void ON_Decal::CImpl::SetVectorAcross(const ON_3dVector& v)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.vector_across != v)
   {
     _cache.vector_across = v;
-    SetParameter(ON_RDK_DECAL_VECTOR_ACROSS, ON_3dPoint(v));
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_VECTOR_ACROSS, ON_3dPoint(v));
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -372,10 +556,19 @@ void ON_Decal::CImpl::SetHeight(double v)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.height != v)
   {
     _cache.height = v;
-    SetParameter(ON_RDK_DECAL_HEIGHT, v);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_HEIGHT, v);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -395,11 +588,41 @@ void ON_Decal::CImpl::SetRadius(double v)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   if (_cache.radius != v)
   {
     _cache.radius = v;
-    SetParameter(ON_RDK_DECAL_RADIUS, v);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_RADIUS, v);
+    }
+
+    SetCollectionChanged();
   }
+}
+
+void ON_Decal::CImpl::GetSavedVectorLengths(double& across, double& up) const
+{
+  across = GetParameter(ON_RDK_DECAL_SAVED_VECTOR_LENGTH_ACROSS, 0.0);
+  up     = GetParameter(ON_RDK_DECAL_SAVED_VECTOR_LENGTH_UP, 0.0);
+}
+
+void ON_Decal::CImpl::SetSavedVectorLengths(double across, double up)
+{
+  SetParameter(ON_RDK_DECAL_SAVED_VECTOR_LENGTH_ACROSS, across);
+  SetParameter(ON_RDK_DECAL_SAVED_VECTOR_LENGTH_UP, up);
+}
+
+ON_3dVector ON_Decal::CImpl::GetOriginOffset(void) const
+{
+  ON_3dVector vec = { };
+  vec.x = 0.5 * VectorAcross().Length();
+  vec.y = 0.5 * VectorUp().Length();
+
+  return vec;
 }
 
 bool ON_Decal::CImpl::IsVisible(void) const
@@ -418,11 +641,38 @@ void ON_Decal::CImpl::SetIsVisible(bool b)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
+  if (!Writeable())
+    return;
+
   const int i = b ? 1 : 0;
   if (_cache.visible != i)
   {
     _cache.visible = i;
-    SetParameter(ON_RDK_DECAL_IS_VISIBLE, b);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_IS_VISIBLE, b);
+    }
+
+    SetCollectionChanged();
+  }
+}
+
+bool ON_Decal::CImpl::IsTemporary(void) const
+{
+  return _cache.temporary;
+}
+
+void ON_Decal::CImpl::SetIsTemporary(bool b)
+{
+  if (!Writeable())
+    return;
+
+  if (_cache.temporary != b)
+  {
+    _cache.temporary = b;
+
+    SetCollectionChanged();
   }
 }
 
@@ -444,12 +694,21 @@ void ON_Decal::CImpl::SetHorzSweep(double sta, double end)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
-  const auto sweep = ON_2dPoint(sta, end);
+  if (!Writeable())
+    return;
+
+  const ON_2dPoint sweep = ON_2dPoint(sta, end);
   if (_cache.horz_sweep != sweep)
   {
     _cache.horz_sweep = sweep;
-    SetParameter(ON_RDK_DECAL_HORZ_SWEEP_STA, sta);
-    SetParameter(ON_RDK_DECAL_HORZ_SWEEP_END, end);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_HORZ_SWEEP_STA, sta);
+      SetParameter(ON_RDK_DECAL_HORZ_SWEEP_END, end);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -471,12 +730,21 @@ void ON_Decal::CImpl::SetVertSweep(double sta, double end)
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
-  const auto sweep = ON_2dPoint(sta, end);
+  if (!Writeable())
+    return;
+
+  const ON_2dPoint sweep = ON_2dPoint(sta, end);
   if (_cache.vert_sweep != sweep)
   {
     _cache.vert_sweep = sweep;
-    SetParameter(ON_RDK_DECAL_VERT_SWEEP_STA, sta);
-    SetParameter(ON_RDK_DECAL_VERT_SWEEP_END, end);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_VERT_SWEEP_STA, sta);
+      SetParameter(ON_RDK_DECAL_VERT_SWEEP_END, end);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -502,14 +770,23 @@ void ON_Decal::CImpl::SetUVBounds(double min_u, double min_v, double max_u, doub
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
-  const auto bounds = ON_4dPoint(min_u, min_v, max_u, max_v);
+  if (!Writeable())
+    return;
+
+  const ON_4dPoint bounds = ON_4dPoint(min_u, min_v, max_u, max_v);
   if (_cache.uv_bounds != bounds)
   {
     _cache.uv_bounds = bounds;
-    SetParameter(ON_RDK_DECAL_MIN_U, min_u);
-    SetParameter(ON_RDK_DECAL_MIN_V, min_v);
-    SetParameter(ON_RDK_DECAL_MAX_U, max_u);
-    SetParameter(ON_RDK_DECAL_MAX_V, max_v);
+
+    if (!_cache_only)
+    {
+      SetParameter(ON_RDK_DECAL_MIN_U, min_u);
+      SetParameter(ON_RDK_DECAL_MIN_V, min_v);
+      SetParameter(ON_RDK_DECAL_MAX_U, max_u);
+      SetParameter(ON_RDK_DECAL_MAX_V, max_v);
+    }
+
+    SetCollectionChanged();
   }
 }
 
@@ -523,6 +800,9 @@ ON_XMLNode* ON_Decal::CImpl::FindCustomNodeForRenderEngine(const ON_UUID& render
   {
     if (child_node->TagName() == ON_RDK_DECAL_CUSTOM)
     {
+      if (ON_UuidIsNil(renderEngineId))
+        return child_node;
+
       const ON_XMLProperty* prop = child_node->GetNamedProperty(ON_RDK_DECAL_CUSTOM_RENDERER);
       if ((nullptr != prop) && (prop->GetValue().AsUuid() == renderEngineId))
         return child_node;
@@ -532,52 +812,356 @@ ON_XMLNode* ON_Decal::CImpl::FindCustomNodeForRenderEngine(const ON_UUID& render
   return nullptr;
 }
 
+bool ON_Decal::CImpl::GetTextureMapping(ON_TextureMapping& mappingOut) const
+{
+  using M = ON_Decal::Mappings;
+
+  switch (Mapping())
+  {
+  case M::Cylindrical:
+    {
+    // Orthogonal vectors in the end plane of cylinder.
+    const ON_3dVector vecPlaneXAxis = VectorAcross();
+    const ON_3dVector vecPlaneYAxis = ON_CrossProduct(VectorAcross(), -VectorUp());
+
+    // Center for the end of the cylinder.
+    const ON_3dPoint ptCylinderEndCenter = Origin() - VectorUp() * Height() * 0.5;
+
+    // Plane for the end of the cylinder.
+    ON_Plane plane(ptCylinderEndCenter, vecPlaneXAxis, vecPlaneYAxis);
+
+    // Circle for the end of the cylinder.
+    ON_Circle circle(plane, Radius());
+
+    // The cylinder itself..
+    ON_Cylinder cylinder(circle, Height());
+
+    // Cylindrical mapping without caps.
+    mappingOut.SetCylinderMapping(cylinder, false);
+
+    return true;
+    }
+
+  case M::Spherical:
+    {
+    // Orthogonal vectors in the equatorial plane.
+    const ON_3dVector vecPlaneXAxis = VectorAcross();
+    const ON_3dVector vecPlaneYAxis = ON_CrossProduct(VectorAcross(), -VectorUp());
+
+    // Equatorial plane.
+    ON_Plane plane(Origin(), vecPlaneXAxis, vecPlaneYAxis);
+
+    // The sphere itself.
+    ON_Sphere sphere;
+    sphere.plane = plane;
+    sphere.radius = Radius();
+
+    // Spherical mapping.
+    mappingOut.SetSphereMapping(sphere);
+
+    return true;
+    }
+
+  case M::Planar:
+    {
+    const ON_3dVector vecAcross = VectorAcross();
+    const ON_3dVector vecUp = VectorUp();
+    const ON_Plane plane(Origin(), vecAcross, vecUp);
+    const ON_Interval xInterval(0.0, vecAcross.Length());
+    const ON_Interval yInterval(0.0, vecUp.Length());
+    const ON_Interval zInterval(0.0, 1.0);
+    mappingOut.SetPlaneMapping(plane, xInterval, yInterval, zInterval);
+
+    return true;
+    }
+
+  default: break;
+  }
+
+  return false;
+}
+
+void ON_Decal::CImpl::SetCollectionChanged(void)
+{
+  if (nullptr != _collection)
+  {
+    _collection->SetChanged();
+  }
+}
+
+bool ON_Decal::CImpl::HitTest(const ON_3dPoint& point, const ON_3dVector& normal, ON_2dPoint& uvOut) const
+{
+  bool hit = false;
+
+  ON_3dPoint uvw(0.0, 0.0, 0.0);
+
+  switch (Mapping())
+  {
+  case Mappings::UV:          hit = HitTestUV         (        point, uvw); break;
+  case Mappings::Planar:      hit = HitTestPlanar     (normal, point, uvw); break;
+  case Mappings::Cylindrical: hit = HitTestCylindrical(normal, point, uvw); break;
+  case Mappings::Spherical:   hit = HitTestSpherical  (normal, point, uvw); break;
+  default: break;
+  }
+
+  if (hit)
+  {
+    uvOut.x = uvw.x;
+    uvOut.y = uvw.y;
+  }
+
+  return hit;
+}
+
+void ON_Decal::CImpl::ApplyTransformation(const ON_Xform& xform)
+{
+  if (!Writeable())
+    return;
+
+  if (xform.IsIdentity())
+    return;
+
+  const ON_Decal::Mappings mapping = Mapping();
+  ON_ASSERT(ON_Decal::Mappings::UV != mapping);
+
+  ON_3dPoint origin = Origin();
+  ON_3dVector up = VectorUp();
+  ON_3dVector across = VectorAcross();
+
+  double radius = 0.0, height = 0.0;
+
+  if ((Mappings::Cylindrical == mapping) || (Mappings::Spherical == mapping))
+  {
+    radius = Radius();
+
+    if (Mappings::Cylindrical == mapping)
+    {
+      height = Height();
+    }
+  }
+
+  UpdateValuesForTransformation(xform, mapping, radius, height, origin, up, across);
+
+  SetOrigin(origin);
+  SetVectorUp(up);
+  SetVectorAcross(across);
+
+  if ((Mappings::Cylindrical == mapping) || (Mappings::Spherical == mapping))
+  {
+    SetRadius(radius);
+
+    if (Mappings::Cylindrical == mapping)
+    {
+      SetHeight(height);
+    }
+  }
+}
+
+bool ON_Decal::CImpl::HitTestUV(const ON_3dPoint& point, ON_3dPoint& uvwOut) const
+{
+  double minU = 0.0, maxU = 1.0, minV = 0.0, maxV = 1.0;
+  GetUVBounds(minU, minV, maxU, maxV);
+
+  if ((minU <= point.x) && (maxU >= point.x) && (minV <= point.y) && (maxV >= point.y))
+  {
+    uvwOut.x = (point.x - minU) / (maxU - minU);
+    uvwOut.y = (point.y - minV) / (maxV - minV);
+
+    return true;
+  }
+
+  return false;
+}
+
+bool ON_Decal::CImpl::HitTestPlanar(const ON_3dVector& normal,
+                                    const ON_3dPoint& point, ON_3dPoint& uvwOut) const
+{
+  const ON_3dVector vecAcross = VectorAcross();
+  const ON_3dVector vecUp = VectorUp();
+  const ON_Decal::Projections projection = Projection();
+
+  const ON_3dVector vecCrossProduct = ON_CrossProduct(vecAcross, vecUp);
+  const double dotProduct = ON_DotProduct(vecCrossProduct, normal);
+
+  if ((projection == ON_Decal::Projections::Forward) && (dotProduct < 0))
+    return false;
+
+  if ((projection == ON_Decal::Projections::Backward) && (dotProduct > 0))
+    return false;
+
+  if (dotProduct == 0.0)
+    return false;
+
+  // Map world coordinates to uvw.
+  ON_TextureMapping m;
+  GetTextureMapping(m);
+  m.Evaluate(point, normal, &uvwOut);
+
+  if ((uvwOut.x >= 0.0) && (uvwOut.x <= 1.0) && (uvwOut.y >= 0.0) && (uvwOut.y <= 1.0))
+    return true;
+
+  return false;
+}
+
+bool ON_Decal::CImpl::HitTestCylindrical(const ON_3dVector& normal,
+                                         const ON_3dPoint& point, ON_3dPoint& uvwOut) const
+{
+  // Check that the face normal is pointing to correct direction.
+  const double faceNormalDotOriginDirection = ON_DotProduct(normal, point - Origin());
+
+  const bool bInside = faceNormalDotOriginDirection < 0.0;
+  const bool bMapToInside = MapToInside();
+
+  if (bInside && !bMapToInside)
+    return false;
+
+  if (!bInside && bMapToInside)
+    return false;
+
+  // Map world coordinates to uvw.
+  ON_TextureMapping m;
+  GetTextureMapping(m);
+  m.Evaluate(point, normal, &uvwOut);
+
+  // Map u coordinate to longitude.
+  const double point_horz = uvwOut.x * ON_2PI;
+
+  // Check if decal gets hit.
+  double horz_sta = 0.0, horz_end = 0.0;
+  GetHorzSweep(horz_sta, horz_end);
+
+  // Longitude relative to decal start longitude.
+  const double relative_sta_horz = 0.0;
+  double relative_end_horz = PrincipalValueAngleRad(horz_end - horz_sta);
+  const double relative_point_horz = PrincipalValueAngleRad(point_horz - horz_sta);
+
+  // If end and start longitudes have same value then decal is supposed to go around the cylinder.
+  if (relative_end_horz == 0.0)
+    relative_end_horz = ON_2PI;
+
+  if ((relative_sta_horz <= relative_point_horz) &&
+      (relative_end_horz >= relative_point_horz))
+  {
+    // Scale longitude to texture u-coordinate
+    uvwOut.x = relative_point_horz / relative_end_horz;
+    if (uvwOut.x >= 0.0 && uvwOut.x <= 1.0 && uvwOut.y >= 0.0 && uvwOut.y <= 1.0)
+      return true;
+  }
+
+  return false;
+}
+
+bool ON_Decal::CImpl::HitTestSpherical(const ON_3dVector& normal,
+                                       const ON_3dPoint& point, ON_3dPoint& uvwOut) const
+{
+  // Check that the face normal is pointing to correct direction.
+  const double faceNormalDotOriginDirection = ON_DotProduct(normal, point - Origin());
+
+  const bool bInside = faceNormalDotOriginDirection < 0.0;
+  const bool bMapToInside = MapToInside();
+
+  if (bInside && !bMapToInside)
+    return false;
+
+  if (!bInside && bMapToInside)
+    return false;
+
+  // Map world coordinates to uvw.
+  ON_TextureMapping m;
+  GetTextureMapping(m);
+  m.Evaluate(point, normal, &uvwOut);
+
+  double horz_sta = 0.0, horz_end = 0.0;
+  GetHorzSweep(horz_sta, horz_end);
+
+  // Map u coordinate to longitude.
+  const double point_horz = uvwOut.x * ON_2PI;
+
+  // Longitudes (horz) relative to decal start horz.
+  const double relative_horz_sta = 0.0;
+  double relative_horz_end = PrincipalValueAngleRad(horz_end - horz_sta);
+  const double relative_point_horz = PrincipalValueAngleRad(point_horz - horz_sta);
+
+  // If end and start horz have same value then decal is supposed to go full circle around the vertical axis.
+  if (relative_horz_end == 0.0)
+    relative_horz_end = ON_2PI;
+
+  double vert_sta = 0.0, vert_end = 0.0;
+  GetVertSweep(vert_sta, vert_end);
+
+  const double sta = vert_sta / ON_PI + 0.5;
+  const double end = vert_end / ON_PI + 0.5;
+
+  // If the mapped texture coordinate is contained in the decal area we have to do some more calculations.
+  if ((relative_horz_sta <= relative_point_horz) &&
+      (relative_horz_end >= relative_point_horz) &&
+      ((sta <= uvwOut.y) && (end >= uvwOut.y)))
+  {
+    // These are the texture coordinates inside the decal area.
+    const double uDecal = relative_point_horz / relative_horz_end;
+    const double vDecal = (uvwOut.y - sta) / (end - sta);
+
+    // Now we should have (uDecal,vDecal) in [0,1]x[0,1].
+    // We have to store the correct calculated values of u and v to uvwOut.
+    uvwOut.x = uDecal;
+    uvwOut.y = vDecal;
+
+    // Decal is hit.
+    return true;
+  }
+
+  return false;
+}
+
 ON_Decal::ON_Decal()
 {
-  _impl = new CImpl;
+  _private = new CImpl;
 }
 
 ON_Decal::ON_Decal(ON_XMLNode& node)
 {
   ON_ASSERT(node.TagName() == ON_RDK_DECAL);
-
-  _impl = new CImpl(nullptr, node);
+  _private = new CImpl(nullptr, node);
 }
 
 ON_Decal::ON_Decal(const ON_XMLNode& node)
 {
   ON_ASSERT(node.TagName() == ON_RDK_DECAL);
-
-  _impl = new CImpl(nullptr, node);
+  _private = new CImpl(nullptr, node);
 }
 
-ON_Decal::ON_Decal(ON_DecalCollection& dc, ON_XMLNode& node)
+ON_Decal::ON_Decal(ON_DecalCollection& coll, ON_XMLNode& node)
 {
   ON_ASSERT(node.TagName() == ON_RDK_DECAL);
-
-  _impl = new CImpl(&dc, node);
+  _private = new CImpl(&coll, node);
 }
 
-ON_Decal::ON_Decal(const ON_Decal& d)
+ON_Decal::ON_Decal(const ON_Decal& other)
 {
-  _impl = new CImpl;
-  operator = (d);
+  _private = new CImpl;
+  operator = (other);
+}
+
+ON_Decal::ON_Decal(ON_DecalCollection& coll, const ON_Decal& other)
+{
+  _private = new CImpl;
+  _private->_collection = &coll;
+  operator = (other);
 }
 
 ON_Decal::~ON_Decal()
 {
-  delete _impl;
-  _impl = nullptr;
+  delete _private;
+  _private = nullptr;
 }
 
 const ON_Decal& ON_Decal::operator = (const ON_Decal& d)
 {
   if (this != &d)
   {
-    std::lock_guard<std::recursive_mutex> lg1(_impl->_mutex);
-    std::lock_guard<std::recursive_mutex> lg2(d._impl->_mutex);
-
-    _impl->Node() = d._impl->Node();
+    // Copy the node even if _cache_only is true; otherwise the object won't be made truly equal.
+    _private->Node() = d._private->Node();
+    _private->_cache = d._private->_cache;
   }
 
   return *this;
@@ -587,19 +1171,16 @@ bool ON_Decal::operator == (const ON_Decal& d) const
 {
   // This only checks if the basic parameters are equal. It ignores any custom data.
 
-  std::lock_guard<std::recursive_mutex> lg1(_impl->_mutex);
-  std::lock_guard<std::recursive_mutex> lg2(d._impl->_mutex);
-
-  if (TextureInstanceId() != d.TextureInstanceId()) return false;
-  if (Mapping()           != d.Mapping())           return false;
-  if (Projection()        != d.Projection())        return false;
-  if (MapToInside()       != d.MapToInside())       return false;
-  if (Transparency()      != d.Transparency())      return false;
-  if (Origin()            != d.Origin())            return false;
-  if (VectorUp()          != d.VectorUp())          return false;
-  if (VectorAcross()      != d.VectorAcross())      return false;
-  if (Height()            != d.Height())            return false;
-  if (Radius()            != d.Radius())            return false;
+  if (AssetInstanceId()   != d.AssetInstanceId()) return false;
+  if (Mapping()           != d.Mapping())         return false;
+  if (Projection()        != d.Projection())      return false;
+  if (MapToInside()       != d.MapToInside())     return false;
+  if (Transparency()      != d.Transparency())    return false;
+  if (Origin()            != d.Origin())          return false;
+  if (VectorUp()          != d.VectorUp())        return false;
+  if (VectorAcross()      != d.VectorAcross())    return false;
+  if (Height()            != d.Height())          return false;
+  if (Radius()            != d.Radius())          return false;
 
   double sta1 = 0.0, end1 = 0.0, sta2 = 0.0, end2 = 0.0;
     GetHorzSweep(sta1, end1);
@@ -629,160 +1210,191 @@ bool ON_Decal::operator != (const ON_Decal& d) const
   return !(operator == (d));
 }
 
-ON_UUID ON_Decal::TextureInstanceId(void) const
+void ON_Decal::SetCacheOnly(void)
 {
-  return _impl->TextureInstanceId();
+  _private->_cache_only = true;
 }
 
-void ON_Decal::SetTextureInstanceId(const ON_UUID& id)
+ON_DEPRECATED ON_UUID ON_Decal::TextureInstanceId(void) const
 {
-  _impl->SetTextureInstanceId(id);
+  return AssetInstanceId();
+}
+
+ON_UUID ON_Decal::AssetInstanceId(void) const
+{
+  return _private->AssetInstanceId();
+}
+
+ON_DEPRECATED void ON_Decal::SetTextureInstanceId(const ON_UUID& id)
+{
+  SetAssetInstanceId(id);
+}
+
+void ON_Decal::SetAssetInstanceId(const ON_UUID& id)
+{
+  _private->SetAssetInstanceId(id);
 }
 
 ON_Decal::Mappings ON_Decal::Mapping(void) const
 {
-  return _impl->Mapping();
+  return _private->Mapping();
 }
 
 void ON_Decal::SetMapping(Mappings m)
 {
-  _impl->SetMapping(m);
+  _private->SetMapping(m);
 }
 
 ON_Decal::Projections ON_Decal::Projection(void) const
 {
-  return _impl->Projection();
+  return _private->Projection();
 }
 
 void ON_Decal::SetProjection(Projections p)
 {
-  _impl->SetProjection(p);
+  _private->SetProjection(p);
 }
 
 bool ON_Decal::MapToInside(void) const
 {
-  return _impl->MapToInside();
+  return _private->MapToInside();
 }
 
 void ON_Decal::SetMapToInside(bool b)
 {
-  _impl->SetMapToInside(b);
+  _private->SetMapToInside(b);
 }
 
 double ON_Decal::Transparency(void) const
 {
-  return _impl->Transparency();
+  return _private->Transparency();
 }
 
 void ON_Decal::SetTransparency(double d)
 {
-  _impl->SetTransparency(d);
+  _private->SetTransparency(d);
 }
 
 ON_3dPoint ON_Decal::Origin(void) const
 {
-  return _impl->Origin();
+  return _private->Origin();
 }
 
 void ON_Decal::SetOrigin(const ON_3dPoint& pt)
 {
-  _impl->SetOrigin(pt);
+  _private->SetOrigin(pt);
 }
 
 ON_3dVector ON_Decal::VectorUp(void) const
 {
-  return _impl->VectorUp();
+  return _private->VectorUp();
 }
 
 void ON_Decal::SetVectorUp(const ON_3dVector& vec)
 {
-  _impl->SetVectorUp(vec);
+  _private->SetVectorUp(vec);
 }
 
 ON_3dVector ON_Decal::VectorAcross(void) const
 {
-  return _impl->VectorAcross();
+  return _private->VectorAcross();
 }
 
 void ON_Decal::SetVectorAcross(const ON_3dVector& vec)
 {
-  _impl->SetVectorAcross(vec);
+  _private->SetVectorAcross(vec);
 }
 
 double ON_Decal::Height(void) const
 {
-  return _impl->Height();
+  return _private->Height();
 }
 
 void ON_Decal::SetHeight(double d)
 {
-  _impl->SetHeight(d);
+  _private->SetHeight(d);
 }
 
 double ON_Decal::Radius(void) const
 {
-  return _impl->Radius();
+  return _private->Radius();
 }
 
 void ON_Decal::SetRadius(double d)
 {
-  _impl->SetRadius(d);
+  _private->SetRadius(d);
 }
 
 void ON_Decal::GetHorzSweep(double& sta, double& end) const
 {
-  _impl->GetHorzSweep(sta, end);
+  _private->GetHorzSweep(sta, end);
 }
 
 void ON_Decal::SetHorzSweep(double sta, double end)
 {
-  _impl->SetHorzSweep(sta, end);
+  _private->SetHorzSweep(sta, end);
 }
 
 void ON_Decal::GetVertSweep(double& sta, double& end) const
 {
-  _impl->GetVertSweep(sta, end);
+  _private->GetVertSweep(sta, end);
 }
 
 void ON_Decal::SetVertSweep(double sta, double end)
 {
-  _impl->SetVertSweep(sta, end);
+  _private->SetVertSweep(sta, end);
 }
 
 void ON_Decal::GetUVBounds(double& min_u, double& min_v, double& max_u, double& max_v) const
 {
-  _impl->GetUVBounds(min_u, min_v, max_u, max_v);
+  _private->GetUVBounds(min_u, min_v, max_u, max_v);
 }
 
 void ON_Decal::SetUVBounds(double min_u, double min_v, double max_u, double max_v)
 {
-  _impl->SetUVBounds(min_u, min_v, max_u, max_v);
+  _private->SetUVBounds(min_u, min_v, max_u, max_v);
 }
 
 bool ON_Decal::IsVisible(void) const
 {
-  return _impl->IsVisible();
+  return _private->IsVisible();
 }
 
 void ON_Decal::SetIsVisible(bool b)
 {
-  _impl->SetIsVisible(b);
+  _private->SetIsVisible(b);
+}
+
+bool ON_Decal::IsTemporary(void) const
+{
+  return _private->IsTemporary();
+}
+
+void ON_Decal::SetIsTemporary(bool b)
+{
+  _private->SetIsTemporary(b);
 }
 
 ON_UUID ON_Decal::Id(void) const
 {
-  return _impl->Id();
+  return _private->Id();
+}
+
+// Copied from IRhRdkDecal::GetTextureMapping -- TODO: Refactor. [JOHN-DECAL-FIX]
+bool ON_Decal::GetTextureMapping(ON_TextureMapping& mappingOut) const
+{
+  return _private->GetTextureMapping(mappingOut);
 }
 
 void ON_Decal::GetCustomXML(const ON_UUID& renderEngineId, ON_XMLNode& custom_param_node) const
 {
-  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
 
   custom_param_node.Clear();
   custom_param_node.SetTagName(ON_RDK_DECAL_CUSTOM_PARAMS);
 
   // Find the node for 'renderEngineId'.
-  const ON_XMLNode* custom_node = _impl->FindCustomNodeForRenderEngine(renderEngineId);
+  const ON_XMLNode* custom_node = _private->FindCustomNodeForRenderEngine(renderEngineId);
   if (nullptr != custom_node)
   {
     // Get the parameter node and copy it to 'custom_param_node'.
@@ -800,7 +1412,7 @@ bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& cus
     return false;
 
   // If there is already a custom node for 'renderEngineId' then delete it.
-  ON_XMLNode* custom_node = _impl->FindCustomNodeForRenderEngine(renderEngineId);
+  ON_XMLNode* custom_node = _private->FindCustomNodeForRenderEngine(renderEngineId);
   if (nullptr != custom_node)
   {
     ON_XMLNode* parent = custom_node->Parent();
@@ -811,11 +1423,7 @@ bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& cus
   }
 
   // Attach the new custom node and set its 'renderer' property to be the render engine id.
-  {
-    std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
-
-    custom_node = _impl->Node().AttachChildNode(new ON_XMLNode(ON_RDK_DECAL_CUSTOM));
-  }
+  custom_node = _private->Node().AttachChildNode(new ON_XMLNode(ON_RDK_DECAL_CUSTOM));
 
   ON_XMLProperty prop(ON_RDK_DECAL_CUSTOM_RENDERER, renderEngineId);
   custom_node->SetProperty(prop);
@@ -824,6 +1432,23 @@ bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& cus
   custom_node->AttachChildNode(new ON_XMLNode(custom_param_node));
 
   return true;
+}
+
+void ON_Decal::GetEntireCustomXML(ON_XMLNode& custom_xml) const
+{
+  // This function only exists to support the RDK.
+
+  const ON_XMLNode& decal_node = _private->Node();
+
+  auto it = decal_node.GetChildIterator();
+  ON_XMLNode* child_node = nullptr;
+  while (nullptr != (child_node = it.GetNextChild()))
+  {
+    if (child_node->TagName() == ON_RDK_DECAL_CUSTOM)
+    {
+      custom_xml.AttachChildNode(new ON_XMLNode(*child_node));
+    }
+  }
 }
 
 void ON_Decal::AppendCustomXML(const ON_XMLNode& custom_node)
@@ -835,83 +1460,35 @@ void ON_Decal::AppendCustomXML(const ON_XMLNode& custom_node)
   ON_XMLNode* child = custom_node.FirstChild();
   while (nullptr != child)
   {
-    std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
-
-    _impl->Node().AttachChildNode(new ON_XMLNode(*child));
+    _private->Node().AttachChildNode(new ON_XMLNode(*child));
 
     child = child->NextSibling();
   }
 }
 
-// Copied from IRhRdkDecal::GetTextureMapping -- TODO: Refactor. [JOHN-DECAL-FIX]
-bool ON_Decal::GetTextureMapping(ON_TextureMapping& mappingOut) const
+bool ON_Decal::HitTest(const ON_3dPoint& point, const ON_3dVector& normal, ON_2dPoint& uvOut) const
 {
-  const auto& decal = *this;
-  using M = ON_Decal::Mappings;
+  return _private->HitTest(point, normal, uvOut);
+}
 
-  switch (decal.Mapping())
-  {
-  case M::Cylindrical:
-    {
-    // Orthogonal vectors in the end plane of cylinder.
-    const auto vecPlaneXAxis = decal.VectorAcross();
-    const auto vecPlaneYAxis = ON_CrossProduct(decal.VectorAcross(), -decal.VectorUp());
+void ON_Decal::ApplyTransformation(const ON_Xform& xform)
+{
+  _private->ApplyTransformation(xform);
+}
 
-    // Center for the end of the cylinder.
-    const auto ptCylinderEndCenter = decal.Origin() - decal.VectorUp() * decal.Height() * 0.5;
+void ON_Decal::GetSavedVectorLengths(double& across, double& up) const
+{
+  _private->GetSavedVectorLengths(across, up);
+}
 
-    // Plane for the end of the cylinder.
-    ON_Plane plane(ptCylinderEndCenter, vecPlaneXAxis, vecPlaneYAxis);
+void ON_Decal::SetSavedVectorLengths(double across, double up)
+{
+  _private->SetSavedVectorLengths(across, up);
+}
 
-    // Circle for the end of the cylinder.
-    ON_Circle circle(plane, decal.Radius());
-
-    // The cylinder itself..
-    ON_Cylinder cylinder(circle, decal.Height());
-
-    // Cylindrical mapping without caps.
-    mappingOut.SetCylinderMapping(cylinder, false);
-
-    return true;
-    }
-
-  case M::Spherical:
-    {
-    // Orthogonal vectors in the equatorial plane.
-    const auto vecPlaneXAxis = decal.VectorAcross();
-    const auto vecPlaneYAxis = ON_CrossProduct(decal.VectorAcross(), -decal.VectorUp());
-
-    // Equatorial plane.
-    ON_Plane plane(decal.Origin(), vecPlaneXAxis, vecPlaneYAxis);
-
-    // The sphere itself.
-    ON_Sphere sphere;
-    sphere.plane = plane;
-    sphere.radius = decal.Radius();
-
-    // Spherical mapping.
-    mappingOut.SetSphereMapping(sphere);
-
-    return true;
-    }
-
-  case M::Planar:
-    {
-    const auto vecAcross = decal.VectorAcross();
-    const auto vecUp = decal.VectorUp();
-    const ON_Plane plane(decal.Origin(), vecAcross, vecUp);
-    const ON_Interval xInterval(0.0, vecAcross.Length());
-    const ON_Interval yInterval(0.0, vecUp.Length());
-    const ON_Interval zInterval(0.0, 1.0);
-    mappingOut.SetPlaneMapping(plane, xInterval, yInterval, zInterval);
-
-    return true;
-    }
-
-  default: break;
-  }
-
-  return false;
+ON_3dVector ON_Decal::GetOriginOffset(void) const
+{
+  return _private->GetOriginOffset();
 }
 
 /* Class ON_DecalNodeReader
@@ -931,7 +1508,7 @@ public:
   ON_XMLVariant Projection(void) const        { return Value(ON_RDK_DECAL_PROJECTION, ON_RDK_DECAL_PROJECTION_NONE); }
   ON_XMLVariant MapToInside(void) const       { return Value(ON_RDK_DECAL_MAP_TO_INSIDE_ON, _def.MapToInside()); } 
   ON_XMLVariant Transparency(void) const      { return Value(ON_RDK_DECAL_TRANSPARENCY    , _def.Transparency()); }
-  ON_XMLVariant TextureInstanceId(void) const { return Value(ON_RDK_DECAL_TEXTURE_INSTANCE, _def.TextureInstanceId()); }
+  ON_XMLVariant AssetInstanceId(void) const   { return Value(ON_RDK_DECAL_ASSET_INSTANCE  , _def.AssetInstanceId()); }
   ON_XMLVariant Height(void) const            { return Value(ON_RDK_DECAL_HEIGHT          , _def.Height()); }
   ON_XMLVariant Radius(void) const            { return Value(ON_RDK_DECAL_RADIUS          , _def.Radius()); }
   ON_XMLVariant Origin(void) const            { return Value(ON_RDK_DECAL_ORIGIN          , _def.Origin()); }
@@ -945,7 +1522,6 @@ public:
   ON_XMLVariant MinV(void) const              { return Value(ON_RDK_DECAL_MIN_V           , DefaultMinV()); }
   ON_XMLVariant MaxU(void) const              { return Value(ON_RDK_DECAL_MAX_U           , DefaultMaxU()); }
   ON_XMLVariant MaxV(void) const              { return Value(ON_RDK_DECAL_MAX_V           , DefaultMaxV()); }
-  ON_XMLVariant IsTemporary(void) const       { return Value(ON_RDK_DECAL_IS_TEMPORARY    , false); }
   ON_XMLVariant IsVisible(void) const         { return Value(ON_RDK_DECAL_IS_VISIBLE      , _def.IsVisible()); }
   ON_XMLVariant InstanceId(void) const        { return Value(ON_RDK_DECAL_INSTANCE_ID     , _def.Id()); }
 
@@ -1075,7 +1651,7 @@ static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XMLNo
     DecalUpdateCRC(crc, d.Mapping()            ON_DECAL_PROP_NAME(L"mapping"));
     DecalUpdateCRC(crc, d.IsVisible()          ON_DECAL_PROP_NAME(L"visible"));
     DecalUpdateCRC(crc, d.Transparency()       ON_DECAL_PROP_NAME(L"transparency"));
-    DecalUpdateCRC(crc, d.TextureInstanceId()  ON_DECAL_PROP_NAME(L"texture_id"));
+    DecalUpdateCRC(crc, d.AssetInstanceId()    ON_DECAL_PROP_NAME(L"texture_id"));
 
     const ON_Decal::Mappings mapping = MappingFromString(d.Mapping().AsString());
 
@@ -1134,32 +1710,38 @@ ON_DECAL_CRC ON_DecalCRCFromNode(const ON_XMLNode& node)
 
 ON_DECAL_CRC ON_Decal::DecalCRC(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
 
-  return ComputeDecalCRC(0, _impl->Node());
+  return ComputeDecalCRC(0, _private->Node());
 }
 
 ON__UINT32 ON_Decal::DataCRC(ON__UINT32 current_remainder) const
 {
-  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
+  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
 
-  return ComputeDecalCRC(current_remainder, _impl->Node());
+  return ComputeDecalCRC(current_remainder, _private->Node());
 }
 
 // ON_DecalCollection
+
+ON_DecalCollection::ON_DecalCollection(ON_3dmObjectAttributes& attr)
+  :
+  m_attr(attr)
+{
+}
 
 ON_DecalCollection::~ON_DecalCollection()
 {
   ClearDecalArray();
 }
 
-int ON_DecalCollection::FindDecalIndex(const ON_UUID& id) const
+int ON_DecalCollection::FindDecalIndex(const ON_DECAL_CRC decal_crc) const
 {
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
   for (int i = 0; i < m_decals.size(); i++)
   {
-    if (m_decals[i]->Id() == id)
+    if (m_decals[i]->DecalCRC() == decal_crc)
       return i;
   }
 
@@ -1197,9 +1779,6 @@ std::shared_ptr<ON_Decal> ON_DecalCollection::AddDecal(void)
 
 bool ON_DecalCollection::RemoveDecal(const ON_Decal& decal)
 {
-  // Ensure the array is populated before deleting a decal.
-  GetDecalArray();
-
   // Remove the decal from the XML by finding the XML node with the same decal CRC
   // and then deleting that node.
   const ON__UINT32 decal_crc = decal.DecalCRC();
@@ -1220,16 +1799,8 @@ bool ON_DecalCollection::RemoveDecal(const ON_Decal& decal)
     }
   }
 
-  // Find the decal in the array.
-  const int index = FindDecalIndex(decal.Id());
-  if (index < 0)
-    return false;
-
-  // Delete it.
-  {
-    std::lock_guard<std::recursive_mutex> lg(_mutex);
-    m_decals.erase(m_decals.begin() + index);
-  }
+  // Invalidate the cache so it gets rebuilt.
+  m_cache_valid = false;
 
   return true;
 }
@@ -1258,75 +1829,92 @@ void ON_DecalCollection::ClearDecalArray(void)
     SetChanged();
   }
 
-  m_populated = false;
+  m_cache_valid = false;
 }
 
-const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollection& dc)
+const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollection& coll)
 {
-  std::lock_guard<std::recursive_mutex> lg(_mutex);
+  ClearDecalArray(); // Critical.
 
-  ClearDecalArray();
-
-  for (const auto& decal : dc.m_decals)
-  {
-    if (decal)
-    {
-      m_decals.push_back(std::make_shared<ON_Decal>(*decal));
-    }
-  }
-
-  m_populated = dc.m_populated;
+  // 25th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-64608
+  // The commented out code below is, in my opinion, correct. It copies the incoming collection's decals to
+  // this collection, and also copies the 'cache valid' flag. This should result in this collection being
+  // identical to the incoming one, which is what the purpose of operator = is. However, it doesn't work and
+  // caused my changes for RH-64608 to fail under certain conditions. After hours and hours of debugging I
+  // finally ended up carefuly reading the code at the calling site in CRhinoDoc::ModifyObjectAttributes() and
+  // found a ton of complex jiggery-pokery involving not copying the user data when one would expect so as not
+  // to copy stuff that 'shouldn't be copied' etc., etc. -- optimizations no doubt. It seems that these
+  // optimizations stop client code from working as one would expect -- I'm not sure because it's too complex
+  // for me to understand, but I'm going to assume the following:
+  //
+  // TLDR; don't copy the decal array because doing so somehow causes it to get out of sync with the underlying
+  // user data (XML). But still clear the array (above) so it gets re-populated the next time it's used.
+  //
+  //for (const auto& decal : coll.m_decals)
+  //{
+  //  if (decal)
+  //  {
+  //    m_decals.push_back(std::make_shared<ON_Decal>(*decal));
+  //  }
+  //}
+  //
+  //m_cache_valid = coll.m_cache_valid;
 
   return *this;
 }
 
-const std::vector<std::shared_ptr<ON_Decal>>& ON_DecalCollection::GetDecalArray(void) const
+const std::vector<std::shared_ptr<ON_Decal>>& ON_DecalCollection::GetDecalArray(void)
 {
-  // 19th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-86089
-  // The m_populated flag is an optimization designed to make sure we only populate the array when
-  // something changes. Unfortunately, in Rhino 8, I forgot to add code to detect when a decal changes
-  // externally to this class, and the array (which is essentially a cache) becomes invalid. This is
-  // fixed in Rhino 9 but the fix is too complicated to backport to Rhino 8, so to get around this I'm
-  // just going to remove the optimization.
-
   std::lock_guard<std::recursive_mutex> lg(_mutex);
 
-//if (!m_populated) // Always repopulate the array.
+  if (!m_cache_valid)
   {
-    m_decals.clear();
-
+    ClearDecalArray();
     Populate();
 
-    m_populated = true;
+    m_cache_valid = true;
   }
 
   return m_decals;
 }
 
-void ON_DecalCollection::Populate(void) const
+void ON_DecalCollection::Populate(void)
 {
-  if (nullptr == m_attr)
-    return;
+  ON_DecalObjectAttributesWrapper w(m_attr);
 
-  std::lock_guard<std::recursive_mutex> lg(_mutex);
+  // 25th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-64608
+  // I'm calling DecalsNodeForWrite() deliberately to circumvent the problem with the user data copy count.
+  // See the comments in ON_XMLUserData::XMLRootForWrite(). If I don't do this, the Python use of this code
+  // doesn't work. I know, it's a hack, but I'm literally at my wits' end trying to work around this problem.
 
-  if (GetEntireDecalXML(*m_attr, m_root_node))
+  const ON_XMLNode* decals_node = w.DecalsNodeForWrite(); // <---- Yes, ForWrite.
+  if (nullptr != decals_node)
   {
-    const wchar_t* path = ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS;
-    ON_XMLNode* decals_node = m_root_node.GetNodeAtPath(path);
-    if (nullptr != decals_node)
+    // Iterate over the decals under the decals node adding a new decal for each one.
+    ON_ASSERT(m_decals.size() == 0);
+    auto it = decals_node->GetChildIterator();
+    ON_XMLNode* decal_node = nullptr;
+    while (nullptr != (decal_node = it.GetNextChild()))
     {
-      // Iterate over the decals under the decals node adding a new decal for each one.
-      ON_ASSERT(m_decals.size() == 0);
-      auto it = decals_node->GetChildIterator();
-      ON_XMLNode* child_node = nullptr;
-      while (nullptr != (child_node = it.GetNextChild()))
-      {
-        auto decal = std::make_shared<ON_Decal>(*const_cast<ON_DecalCollection*>(this), *child_node);
-        m_decals.push_back(decal);
-      }
+      auto decal = std::make_shared<ON_Decal>(*this, *decal_node);
+      m_decals.push_back(decal);
     }
   }
+}
+
+bool ON_DecalCollection::FastHasDecals(const ON_3dmObjectAttributes& attr) // Static.
+{
+  // 4th May 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-94477
+  // Fast check to see if there are any decals on the object attributes.
+  const ON_XMLNode* decals_node = ON_DecalObjectAttributesWrapper::FastDecalsNode(attr);
+  if (nullptr != decals_node)
+  {
+    auto it = decals_node->GetChildIterator();
+    if (nullptr != it.GetNextChild())
+      return true;
+  }
+
+  return false;
 }
 
 void ON_DecalCollection::SetChanged(void)
@@ -1334,17 +1922,366 @@ void ON_DecalCollection::SetChanged(void)
   m_changed = true;
 }
 
-void ON_DecalCollection::UpdateUserData(unsigned int archive_3dm_version) const
+void ON_DecalCollection::InvalidateCache(void)
 {
-  if (m_changed)
-  {
-    // 12th July 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-75697
-    // For there to be something useful in the XML, the root node must have at least one child node.
-    if (m_root_node.ChildCount() > 0)
-    {
-      SetRDKObjectInformation(*m_attr, m_root_node.String(), archive_3dm_version);
-    }
+  m_cache_valid = false;
+}
 
-    m_changed = false;
+// ON_DecalObjectAttributesWrapper
+
+static const wchar_t* decals_path = ON_RDK_USER_DATA_ROOT ON_XML_SLASH ON_RDK_DECALS;
+
+class ON_DecalObjectAttributesWrapperPrivate
+{
+public:
+  ON_DecalObjectAttributesWrapperPrivate(      ON_3dmObjectAttributes& a) : _read_only(false), _attr(a) { }
+  ON_DecalObjectAttributesWrapperPrivate(const ON_3dmObjectAttributes& a) : _read_only(true) , _attr(const_cast<ON_3dmObjectAttributes&>(a)) { }
+
+  const ON_RdkUserData* UserDataForRead(void) const;
+        ON_RdkUserData* UserDataForWrite(void);
+
+  ON_3dmObjectAttributes& _attr;
+  bool _read_only;
+};
+
+ON_DecalObjectAttributesWrapper::ON_DecalObjectAttributesWrapper(ON_3dmObjectAttributes& attr)
+{
+  _private = new ON_DecalObjectAttributesWrapperPrivate(attr);
+}
+
+ON_DecalObjectAttributesWrapper::ON_DecalObjectAttributesWrapper(const ON_3dmObjectAttributes& attr)
+{
+  _private = new ON_DecalObjectAttributesWrapperPrivate(attr);
+  _private->_read_only = true;
+}
+
+const ON_RdkUserData* ON_DecalObjectAttributesWrapperPrivate::UserDataForRead(void) const
+{
+  return static_cast<const ON_RdkUserData*>(_attr.GetUserData(ON_RdkUserData::Uuid()));
+}
+
+ON_RdkUserData* ON_DecalObjectAttributesWrapperPrivate::UserDataForWrite(void)
+{
+  if (_read_only)
+  {
+    ON_ASSERT(false); // Attempt to modify read-only decal user data.
+    return nullptr;
   }
+
+  ON_RdkUserData* user_data = static_cast<ON_RdkUserData*>(_attr.GetUserData(ON_RdkUserData::Uuid()));
+  if (nullptr == user_data)
+  {
+    user_data = new ON_RdkUserData;
+
+    if (!_attr.AttachUserData(user_data))
+    {
+      delete user_data;
+      return nullptr;
+    }
+  }
+
+  return user_data;
+}
+
+const ON_XMLNode* ON_DecalObjectAttributesWrapper::FastDecalsNode(const ON_3dmObjectAttributes& attr) // Static.
+{
+  // 4th May 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-94477
+  // Get the decals node as quickly as possible.
+  const ON_RdkUserData* user_data = static_cast<const ON_RdkUserData*>(attr.GetUserData(ON_RdkUserData::Uuid()));
+  if (nullptr == user_data)
+    return nullptr;
+
+  return user_data->XMLRootForRead().GetNodeAtPath(decals_path);
+}
+
+const ON_XMLNode* ON_DecalObjectAttributesWrapper::DecalsNodeForRead(void) const
+{
+  const ON_RdkUserData* user_data = _private->UserDataForRead();
+  if (nullptr == user_data)
+    return nullptr;
+
+  return user_data->XMLRootForRead().GetNodeAtPath(decals_path);
+}
+
+ON_XMLNode* ON_DecalObjectAttributesWrapper::DecalsNodeForWrite(void)
+{
+  // 22nd January 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-67878
+  // Per conversation with Dale Lear, this is bad because we are actually going to change the
+  // user data while it's already attached to the attributes. We're actually expected to delete
+  // the old user data and create new user data with the changes in it, because otherwise Rhino
+  // can't know that it was changed. However, Dale suggested I change ON_XMLUserData instead.
+
+  ON_RdkUserData* user_data = _private->UserDataForWrite();
+  if (nullptr == user_data)
+    return nullptr;
+
+  ON_XMLNode* node = user_data->XMLRootForWrite().CreateNodeAtPath(decals_path);
+  if (nullptr != node)
+  {
+    _private->_attr.UserDataChanged(ON_3dmObjectAttributes::UserDataType::Decals);
+  }
+
+  return node;
+}
+
+ON_DecalObjectAttributesWrapper::AddDecalResults ON_DecalObjectAttributesWrapper::AddDecal(const ON_Decal& decal_in)
+{
+  if (_private->_read_only)
+    return AddDecalResults::ReadOnly;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr == decals_node)
+    return AddDecalResults::Failure;
+
+  if (nullptr != FindDecalNodeByCRC(*decals_node, decal_in.DecalCRC()))
+    return AddDecalResults::Duplicate; // A decal for this decal CRC already exists.
+
+  // Create a new XML node for the new decal.
+  ON_XMLNode* decal_node = decals_node->AttachChildNode(new ON_XMLNode(ON_RDK_DECAL));
+  if (nullptr == decal_node)
+    return AddDecalResults::Failure;
+
+  // Wrap a decal around the new XML node and copy the incoming decal data into it.
+  ON_Decal decal(*decal_node);
+  decal = decal_in;
+
+  // Move the new XML node to the head of the list so the decal is created on top of any others.
+  ON_XMLNode* first_node = decals_node->FirstChild();
+  if (nullptr != first_node)
+  {
+    decal_node->MoveBefore(*first_node);
+  }
+
+  return AddDecalResults::Success;
+}
+
+bool ON_DecalObjectAttributesWrapper::UpdateDecal(ON_DECAL_CRC decal_crc, const ON_Decal& decal_in)
+{
+  if (_private->_read_only)
+    return false;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr == decals_node)
+    return false;
+
+  ON_XMLNode* decal_node = FindDecalNodeByCRC(*decals_node, decal_crc);
+  if (nullptr == decal_node)
+    return false;
+
+  // Wrap a decal around the new XML node and copy the incoming decal data into it.
+  ON_Decal decal(*decal_node);
+  decal = decal_in;
+
+  return true;
+}
+
+bool ON_DecalObjectAttributesWrapper::RemoveDecal(ON_DECAL_CRC decal_crc)
+{
+  if (ON_NIL_DECAL_CRC == decal_crc)
+    return false;
+
+  if (_private->_read_only)
+    return false;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr == decals_node)
+    return false;
+
+  ON_XMLNode* decal_node = FindDecalNodeByCRC(*decals_node, decal_crc);
+  if (nullptr == decal_node)
+    return false;
+
+  decal_node->Remove();
+
+  return true;
+}
+
+bool ON_DecalObjectAttributesWrapper::RemoveAllDecals(void)
+{
+  if (_private->_read_only)
+    return false;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr != decals_node)
+  {
+    decals_node->RemoveAllChildren();
+    decals_node->RemoveAllProperties();
+  }
+
+  return true;
+}
+
+int ON_DecalObjectAttributesWrapper::CountDecalsOnAttributesUserData(void) const
+{
+  const ON_XMLNode* decals_node = DecalsNodeForRead();
+  if (nullptr == decals_node)
+    return 0;
+
+  return decals_node->ChildCount();
+}
+
+bool ON_DecalObjectAttributesWrapper::CullIdenticalDecals(void)
+{
+  if (_private->_read_only)
+    return false;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr == decals_node)
+    return false;
+
+  auto it = decals_node->GetChildIterator();
+  ON_XMLNode* decal_node1 = nullptr;
+  while (nullptr != (decal_node1 = it.GetNextChild()))
+  {
+    const ON_DECAL_CRC decal_crc = ON_DecalCRCFromNode(*decal_node1);
+
+    auto it2 = decals_node->GetChildIterator();
+    ON_XMLNode* decal_node2 = nullptr;
+    while (nullptr != (decal_node2 = it2.GetNextChild()))
+    {
+      if (decal_node1 == decal_node2)
+        continue;
+
+      if (decal_crc == ON_DecalCRCFromNode(*decal_node2))
+      {
+        decal_node2->Remove();
+
+        CullIdenticalDecals();
+
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+ON_XMLNode* ON_DecalObjectAttributesWrapper::FindDecalNodeByCRC(
+            ON_XMLNode& decals_node, ON_DECAL_CRC decal_crc) // Static.
+{
+  return ::FindDecalNodeByCRC(decals_node, decal_crc);
+}
+
+const ON_XMLNode* ON_DecalObjectAttributesWrapper::FindDecalNodeByCRC(
+      const ON_XMLNode& decals_node, ON_DECAL_CRC decal_crc) // Static.
+{
+  return ::FindDecalNodeByCRC(decals_node, decal_crc);
+}
+
+void ON_DecalObjectAttributesWrapper::GetDecalCRCs(ON_SimpleArray<ON_DECAL_CRC>& crcs) const
+{
+  crcs.Destroy();
+
+  const ON_XMLNode* decals_node = DecalsNodeForRead();
+  if (nullptr != decals_node)
+  {
+    auto it = decals_node->GetChildIterator();
+    ON_XMLNode* decal_node = nullptr;
+    while (nullptr != (decal_node = it.GetNextChild()))
+    {
+      const ON_DECAL_CRC decal_crc = ON_DecalCRCFromNode(*decal_node);
+      ON_ASSERT(ON_NIL_DECAL_CRC != decal_crc);
+      crcs.Append(decal_crc);
+    }
+  }
+}
+
+const ON_Decal* ON_DecalObjectAttributesWrapper::NewDecalForRead(ON_DECAL_CRC decal_crc) const
+{
+  if (ON_NIL_DECAL_CRC == decal_crc)
+    return nullptr;
+
+  const ON_XMLNode* decals_node = DecalsNodeForRead();
+  if (nullptr == decals_node)
+    return nullptr;
+
+  const ON_XMLNode* decal_node = FindDecalNodeByCRC(*decals_node, decal_crc);
+  if (nullptr == decal_node)
+    return nullptr;
+
+  return new ON_Decal(*decal_node);
+}
+
+ON_Decal* ON_DecalObjectAttributesWrapper::NewDecalForWrite(ON_DECAL_CRC decal_crc)
+{
+  if (_private->_read_only)
+    return nullptr;
+
+  if (ON_NIL_DECAL_CRC == decal_crc)
+    return nullptr;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr == decals_node)
+    return nullptr;
+
+  ON_XMLNode* decal_node = FindDecalNodeByCRC(*decals_node, decal_crc);
+  if (nullptr == decal_node)
+    return nullptr;
+
+  return new ON_Decal(*decal_node);
+}
+
+bool ON_DecalObjectAttributesWrapper::MoveDecalAfter(ON_DECAL_CRC decal_crc, ON_DECAL_CRC decal_crc_after)
+{
+  if (_private->_read_only)
+    return false;
+
+  ON_XMLNode* decals_node = DecalsNodeForWrite();
+  if (nullptr == decals_node)
+    return false;
+
+  ON_XMLNode* decal_node_from = FindDecalNodeByCRC(*decals_node, decal_crc);
+  if (nullptr == decal_node_from)
+    return false;
+
+  // Nil 'decal_crc_after' means move to head of list.
+  if (ON_NIL_DECAL_CRC == decal_crc_after)
+  {
+    ON_XMLNode* first_child = decals_node->FirstChild();
+    if (nullptr != first_child)
+    {
+      decal_node_from->MoveBefore(*first_child);
+    }
+  }
+  else
+  {
+    ON_XMLNode* decal_node_to = FindDecalNodeByCRC(*decals_node, decal_crc_after);
+    if (nullptr != decal_node_to)
+    {
+      decal_node_from->MoveAfter(*decal_node_to);
+    }
+  }
+
+  return true;
+}
+
+bool ON_DecalObjectAttributesWrapper::RemoveValue(ON_DECAL_CRC decal_crc, const wchar_t* param_name)
+{
+  if (_private->_read_only)
+    return false;
+
+  const auto* decals_node = DecalsNodeForRead();
+  if (nullptr == decals_node)
+    return false;
+
+  const auto* decal_node = FindDecalNodeByCRC(*decals_node, decal_crc);
+  if (nullptr == decal_node)
+    return false;
+
+  const auto* param_node = decals_node->GetNamedChild(param_name);
+  if (nullptr == param_node)
+    return false;
+
+  // Only get node for write once we are certain the node needs to be removed.
+  auto* decals_node_write = DecalsNodeForWrite();
+  if (nullptr == decals_node_write)
+    return false;
+
+  auto* decal_node_write = FindDecalNodeByCRC(*decals_node_write, decal_crc);
+  if (nullptr == decal_node)
+    return false;
+
+  decal_node_write->GetNamedChild(param_name)->Remove();
+
+  return true;
 }

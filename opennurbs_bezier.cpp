@@ -2468,6 +2468,28 @@ bool ON_BezierSurface::Transpose()
   return true;
 }
 
+bool ON_BezierSurface::NormalAt( // returns false if unable to evaluate
+  double u, double v,                  // evaluation parameters
+  ON_3dPoint& p,                       // location at parameters
+  ON_3dVector& normal                  // returned normal (unitized)
+) const
+{
+  ON_3dVector ev[6];
+  memset(ev[0], 0, sizeof(double) * 18);
+  if (!this->Evaluate(u, v, 1, 3, ev[0]))
+    return false;
+
+  p = ev[0];
+
+  normal = ON_CrossProduct(ev[1], ev[2]);
+  if (normal.IsTiny(ON_ZERO_TOLERANCE))
+  {
+    int limit = ON_NormalLimitDir(u, v);
+    return ON_EvNormal(limit, ev[1], ev[2], ev[3], ev[4], ev[5], normal);
+  }
+  return normal.Unitize();
+}
+
 bool ON_BezierSurface::Evaluate( // returns false if unable to evaluate
        double s, double t,       // evaluation parameter
        int der_count,            // number of derivatives (>=0)

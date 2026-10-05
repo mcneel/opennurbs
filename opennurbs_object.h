@@ -608,7 +608,9 @@ public:
     the object.  This CRC can be used as a quick way to see
     if two objects are not identical.
   Parameters:
-    current_remainder - [in];
+    current_remainder - [in]; use zero for starting a DataCRC
+                              computation, and use the result of
+                              another DataCRC to compose computations.
   Returns:
     CRC of the information the defines the object.
   */
@@ -672,7 +674,15 @@ public:
   virtual
   ON::object_type ObjectType() const;
 
+  /*
+  Description:
+    Get a string description of the object type.
 
+  Returns: 
+    ON_wString value of ObjectType().
+  */
+  //virtual
+  ON_wString ObjectTypeStr() const;
 
   /*
   Description:

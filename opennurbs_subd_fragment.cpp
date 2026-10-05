@@ -2346,7 +2346,7 @@ unsigned int ON_SubDMeshFragmentGrid::PointIndexFromGrid2dex(
     if (0 == side_segment_count)
       break;
     const unsigned int grid_side_point_count = side_segment_count + 1;
-    if (i >= grid_side_point_count && j >= grid_side_point_count)
+    if (i >= grid_side_point_count || j >= grid_side_point_count)
       break;
     // BAD BUG Oct 2020 // return grid_side_point_count * i + j;
     // Fixed Oct 13, 2020
@@ -3842,6 +3842,22 @@ unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(
   unsigned subd_face_count
 )
 {
+  // DEPRECATED. DO NOT USE THIS FUNCTION.
+  const bool bHasSharpEdges = false;
+
+  return ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDProperties(
+    adaptive_subd_display_density,
+    subd_face_count,
+    bHasSharpEdges
+  );
+}
+
+unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDProperties(
+    unsigned adaptive_subd_display_density,
+    unsigned subd_face_count,
+    bool bHasSharpEdges
+  )
+{
   // The returned density must always be >= 2 so we can reliably calculate 
   // NURBS curve forms of SubD edge curves in that begin/end at an
   // extraordinary vertex. This is done in
@@ -3858,38 +3874,45 @@ unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(
   // I'm changing this to ON_SubDDisplayParameters::MinimumAdaptiveDensity (== 1) to 
   // have some explanation for the value, and setting an absolute display density
   // of 2 in SubD to NURBS code.
-  const unsigned min_display_density = ON_SubDDisplayParameters::MinimumAdaptiveDensity; // adaptive cutoff
+  const unsigned min_display_density = ON_SubDDisplayParameters::MinimumAdaptiveDensity;
 
-#if 1
-  if (adaptive_subd_display_density <= min_display_density)
-    // 2022-06-08. Pierre, RH-62025. This used to return adaptive_subd_display_density,
-    // completely obviating the point of min_display_density.
-    return min_display_density;
-  if (adaptive_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
+
+  if (adaptive_subd_display_density < min_display_density)
+    adaptive_subd_display_density = min_display_density;
+  else if (adaptive_subd_display_density > ON_SubDDisplayParameters::MaximumDensity)
     adaptive_subd_display_density = ON_SubDDisplayParameters::DefaultDensity;
 
-  const unsigned max_mesh_quad_count = ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum;
   unsigned absolute_display_density = adaptive_subd_display_density;
+  
+  // 2025 May 21 RH-86272
+  // Increase density when sharp edges are present so the regions around
+  // sharp edges are rendered more accurately.
+  const unsigned sharp_edges_delta
+    = (bHasSharpEdges && absolute_display_density < ON_SubDDisplayParameters::ExtraFineDensity)
+    ? 1
+    : 0;
+  absolute_display_density += sharp_edges_delta;
+
+  if (absolute_display_density == min_display_density)
+  {
+    // absolute_display_density can't get any smaller 
+    return absolute_display_density;
+  }
+
+  // 2025 May 21 RH-86272 
+  // ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum increased from 512000 to 2048000
+  // This increase has nothing to do with sharp edges. This increase is a test to see if v9
+  // rendering technology has improved enough to handle larger rendering meshes.
+  const unsigned max_mesh_quad_count = ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum;
+
   unsigned mesh_quad_count = (1 << (2 * absolute_display_density)) * subd_face_count;
   while (absolute_display_density > min_display_density && mesh_quad_count > max_mesh_quad_count)
   {
     --absolute_display_density;
     mesh_quad_count /= 4;
   }
+
   return absolute_display_density;
-#else
-
-#if !defined(ON_DEBUG)
-  // This insures an accidental commit will never get merged.
-#error NEVER COMMIT THIS CODE!
-#endif
-
-  // used to test contanst densities when debugging.
-  return min_display_density;
-  //return 3;
-  //return ON_SubDDisplayParameters::DefaultDensity;
-
-#endif
 }
 
 unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(
@@ -3900,8 +3923,19 @@ unsigned int ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD(
   // If this function changes, then a parallel change must be made in
   // ON_SubDLevel::CopyEvaluationCacheForExperts(const ON_SubDLevel& src, ON_SubDHeap& this_heap)
   // so it uses the same automatic density value.
-  unsigned int display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDFaceCount(adaptive_subd_display_density, subd.FaceCount());
-  return display_density;
+  unsigned int absolute_display_density = ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDProperties(
+    adaptive_subd_display_density, 
+    subd.FaceCount(),
+    subd.HasSharpEdges()
+  );
+
+  if (0 == absolute_display_density && false == subd.AllActiveFacesAreQuads())
+  {
+    // ngons require a minimum density of 1
+    ++absolute_display_density;
+  }
+
+  return absolute_display_density;
 }
 
 const ON_SubDDisplayParameters ON_SubDDisplayParameters::CreateFromDisplayDensity(
@@ -3994,22 +4028,40 @@ unsigned int ON_SubDDisplayParameters::DisplayDensity(const ON_SubD& subd) const
     : display_density
     ;
 
-  if (0 == absolute_display_density)
+  if (0 == absolute_display_density && false == subd.AllActiveFacesAreQuads())
   {
-    // If subd has ngons with n != 4, then the display density has to be >= 1.
-    ON_SubDFaceIdIterator fit(subd);
-    for (const ON_SubDFace* f = fit.FirstFace(); nullptr != f; f = fit.NextFace())
-    {
-      if (4 != f->m_edge_count && f->m_edge_count > 3 && f->m_edge_count <= ON_SubDFace::MaximumEdgeCount)
-      {
-        // This face will have f->m_edge_count subd mesh fragments of density 0.
-        // That's why the default quad face density must be >= 1.
-        return 1u;
-      }
-    }
+    // When a subd has n-gons with n !- 4, the absolute density must be >= 1.
+    return 1u;
   }
 
   return absolute_display_density;
+}
+
+int ON_SubDDisplayParameters::CompareDisplayDensity(
+  const class ON_SubD& subd,
+  const ON_SubDDisplayParameters& a,
+  const ON_SubDDisplayParameters& b,
+  bool bCompareComputeCurvature
+)
+{
+  unsigned int da
+    = a.DisplayDensityIsAbsolute()
+    ? a.DisplayDensity(ON_SubD::Empty)
+    : a.DisplayDensity(subd);
+  unsigned int db
+    = b.DisplayDensityIsAbsolute()
+    ? b.DisplayDensity(ON_SubD::Empty)
+    : b.DisplayDensity(subd);
+  if (da == db && bCompareComputeCurvature)
+  {
+    da = a.ComputeCurvature() ? 1 : 0;
+    db = b.ComputeCurvature() ? 1 : 0;
+  }
+  if (da < db)
+    return -1;
+  if (da > db)
+    return 1;
+  return 0;
 }
 
 const unsigned char ON_SubDDisplayParameters::GetRawDisplayDensityForExperts() const

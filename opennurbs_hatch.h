@@ -99,9 +99,19 @@ public:
   */
   void SetType( eLoopType type);
 
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+
 protected:
   friend class ON_Hatch;
   eLoopType m_type;         // loop type flag - inner or outer
+
+public:
+  mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
+
+protected:
+  char m_reserved0 = 0;
+  char m_reserved1 = 0;
+
   ON_Curve* m_p2dCurve;     // 2d closed curve bounding the hatch
                             // This is really a 3d curve with z coordinates = 0
 };
@@ -411,6 +421,9 @@ public:
 private:
   bool WriteV5(ON_BinaryArchive&) const;
   bool ReadV5(ON_BinaryArchive&);
+
+  bool WriteV8(ON_BinaryArchive&) const;
+  bool ReadV8(ON_BinaryArchive&);
 public:
 
   //////////////////////////////////////////////////////////////////////
@@ -435,7 +448,7 @@ public:
 
   /*
   Description:
-    Set the name of the pattern
+    Set the short description of the pattern
   Parameters:
     pDescription - [in] the new description
   Returns:
@@ -534,10 +547,41 @@ public:
 
   const ON_ClassArray<ON_HatchLine>& HatchLines() const;
 
+  /*
+    Description:
+      When ON::LengthUnitSystem::None, pattern hatch lines are always in models distances
+      Else, hatch lines are definied using the returned unit system.
+  */
+  ON::LengthUnitSystem PatternUnitSystem() const;
+
+  /*
+    Description:
+      Set how hatch lines lengths are defined.
+  */
+  bool SetPatternUnitSystem(ON::LengthUnitSystem us);
+
+  /*
+    Description:
+      When true, pattern hatch lines are displayed always in models distances
+      When false (default), lengths and widths are interpreted as lengths
+      and widths on a page layout or in actual output prints
+  */
+  bool AlwaysModelDistances() const;
+
+  /*
+    Description:
+      Set how hatch lines are interpreted when displayed in layouts
+      or printed
+  */
+  void SetAlwaysModelDistances(bool on);
+
 private:
-  ON_HatchPattern::HatchFillType m_type = ON_HatchPattern::HatchFillType::Solid;
-  
   ON_wString m_description = ON_wString::EmptyString;  // String description of the pattern
+
+  ON::LengthUnitSystem m_pattern_us = ON::LengthUnitSystem::None;
+  bool m_always_model_distances = false;
+  bool m_unnused = false;
+  ON__UINT8 m_type = static_cast<ON__UINT8>(ON_HatchPattern::HatchFillType::Solid);
 
   // Represents a collection of ON_HatchLine's to make a complete pattern
   // This is the definition of a hatch pattern.
@@ -598,6 +642,7 @@ public:
   bool Write( ON_BinaryArchive&) const override;
   bool Read( ON_BinaryArchive&) override;
   ON::object_type ObjectType() const override;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
   // ON_Geometry overrides
   /////////////////////////////////////////////////////////////////
@@ -612,6 +657,51 @@ public:
   // virtual ON_Geometry GetTightBoundingBox override		
   bool GetTightBoundingBox( class ON_BoundingBox& tight_bbox, bool bGrowBox = false, const class ON_Xform* xform = nullptr ) const override;
 
+  /////////////////////////////////////////////////////////////////
+  //
+  // Component status interface
+  //
+  //
+
+  //virtual
+  unsigned int ClearComponentStates(
+    ON_ComponentStatus states_to_clear
+  ) const override;
+
+  //virtual
+  unsigned int GetComponentsWithSetStates(
+    ON_ComponentStatus states_filter,
+    bool bAllEqualStates,
+    ON_SimpleArray< ON_COMPONENT_INDEX >& components
+  ) const override;
+
+  //virtual
+  unsigned int SetComponentStates(
+    ON_COMPONENT_INDEX component_index,
+    ON_ComponentStatus states_to_set
+  ) const override;
+
+  //virtual
+  unsigned int ClearComponentStates(
+    ON_COMPONENT_INDEX component_index,
+    ON_ComponentStatus states_to_clear
+  ) const override;
+
+  //virtual
+  unsigned int SetComponentStatus(
+    ON_COMPONENT_INDEX component_index,
+    ON_ComponentStatus status_to_copy
+  ) const override;
+
+  //virtual
+  ON_AggregateComponentStatus AggregateComponentStatus() const override;
+
+  //virtual
+  bool DeleteComponents(
+    const ON_COMPONENT_INDEX* ci_list,
+    size_t ci_count
+  ) override;
+
   /*
     Description:
       Transform the object by a 4x4 xform matrix
@@ -625,6 +715,7 @@ public:
       The object has been transformed when the function returns.
   */
   bool Transform( const ON_Xform&) override;
+
 
   /*
     Description:
@@ -793,6 +884,16 @@ public:
     true if success
   */
   bool RemoveLoop( int index);
+
+  /*
+  Description:
+    Remove multiple loops in the hatch
+  Parameters:
+    loop_indices - [in] zero based indices of the loops to remove.
+  Returns:
+    true if success
+  */
+  bool RemoveLoops(ON_SimpleArray<int> loop_indices);
 
   /*
   Description:

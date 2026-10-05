@@ -560,6 +560,11 @@ void ON_SubDComponentRefList::Internal_CopyFrom(const ON_SubDComponentRefList& s
   }
 }
 
+ON_SubDComponentRefList::ON_SubDComponentRefList(size_t size)
+  : m_list{size}
+{
+}
+
 ON_SubDComponentRefList::~ON_SubDComponentRefList()
 {
   Internal_Destroy();
@@ -767,12 +772,29 @@ const ON_SubDComponentRef& ON_SubDComponentRefList::AppendForExperts(
 
 int ON_SubDComponentRefList::Clean()
 {
+  return Clean(nullptr);
+}
+
+
+int ON_SubDComponentRefList::Clean(ON_SimpleArray<unsigned int>* sorted_index)
+{
   if (m_bIsClean)
     return m_list.UnsignedCount();
 
   const unsigned dirty_count = m_list.UnsignedCount();
 
-  ((ON_SimpleArray< const ON_SubDComponentRef* > *)(&m_list))->QuickSort(ON_SubDComponentRef::Compare2);
+  if (sorted_index == nullptr) {
+    ((ON_SimpleArray< const ON_SubDComponentRef* > *)(&m_list))->QuickSort(ON_SubDComponentRef::Compare2);
+  }
+  else {
+    sorted_index->Empty();
+    sorted_index->SetCount(dirty_count);
+    ((ON_SimpleArray< const ON_SubDComponentRef* > *)(&m_list))->Sort(
+      ON::sort_algorithm::quick_sort,
+      sorted_index->Array(),
+      &ON_SubDComponentRef::Compare2
+    );
+  }
 
   m_subd_count = 0;
   m_subd_vertex_smooth_count = 0;
@@ -787,12 +809,13 @@ int ON_SubDComponentRefList::Clean()
   const ON_SubDComponentRef* prev_scr = nullptr;
   for (unsigned int i = 0; i < dirty_count; i++)
   {
-    ON_SubDComponentRef* scr = m_list[i];
+    const unsigned int index{ (nullptr == sorted_index) ? i : (*sorted_index)[i] };
+    ON_SubDComponentRef* scr = m_list[index];
     if (nullptr == scr)
       continue;
     if (
       0 == ON_SubDComponentRef::Compare(prev_scr, scr)
-      || false == Internal_UpdateCount(*scr,1)
+      || false == Internal_UpdateCount(*scr, 1)
       )
     {
       delete scr;
@@ -800,11 +823,27 @@ int ON_SubDComponentRefList::Clean()
     }
     if (nullptr == prev_scr || prev_scr->SubD().RuntimeSerialNumber() != scr->SubD().RuntimeSerialNumber())
       m_subd_count++;
-    m_list[clean_count++] = scr;
+    if (nullptr == sorted_index)
+    {
+      m_list[clean_count++] = scr;
+    }
+    else
+    {
+      (*sorted_index)[clean_count++] = index;
+    }
     prev_scr = scr;
+  }
+  if (nullptr != sorted_index)
+  {
+    ON_SimpleArray<ON_SubDComponentRef*> list = m_list;
+    for (unsigned int i = 0; i < clean_count; i++)
+    {
+      m_list[i] = list[(*sorted_index)[i]];
+    }
   }
   for (unsigned i = clean_count; i < dirty_count; i++)
     m_list[i] = nullptr;
+
   m_list.SetCount(clean_count);
   m_bIsClean = true;
   return clean_count;
@@ -828,6 +867,11 @@ ON_SubDComponentRef * ON_SubDComponentRefList::TransferForExperts(int i)
   if (p != nullptr)
   {
     Internal_UpdateCount(*p, -1);
+    // 24 Aug 2026 Pierre C (RH-90184)
+    // The caller owns p now, so its slot has to leave m_list. Otherwise m_list[i] is
+    // left dangling, Count() keeps reporting it, and the next Clean() reads the freed
+    // ref and deletes it a second time.
+    m_list.Remove(i);
     m_bIsClean = false;
   }
   return p;
@@ -909,4 +953,9 @@ int ON_SubDComponentRefList::FaceCount() const
 int ON_SubDComponentRefList::ComponentCount() const
 {
   return m_list.Count();
+}
+
+const ON_SimpleArray< class ON_SubDComponentRef* > ON_SubDComponentRefList::List() const
+{
+  return m_list;
 }

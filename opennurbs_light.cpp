@@ -42,6 +42,7 @@ void ON_Light::Default()
   m_hotspot = 1.0;
   m_attenuation = ON_3dVector(1.0,0.0,0.0);
   m_shadow_intensity = 1.0;
+  m_bShadowIntensityFixed = true; // only lights read from pre-fix archives need fixing
   m_light_index = 0;
   memset(&m_light_id,0,sizeof(m_light_id));
 }
@@ -152,7 +153,7 @@ bool ON_Light::Write(
      ) const
 {
   int i;
-  bool rc = file.Write3dmChunkVersion(1,2);
+  bool rc = file.Write3dmChunkVersion(1,3);
   // version 1.0 fields
   if ( rc ) rc = file.WriteInt( m_bOn?1:0 );
   i = m_style;
@@ -176,6 +177,8 @@ bool ON_Light::Write(
   if ( rc ) rc = file.WriteVector( m_width );
   // version 1.2 added m_hotspot support
   if ( rc ) rc = file.WriteDouble( m_hotspot );
+  // version 1.3 added m_bShadowIntensityFixed (RH-96952)
+  if ( rc ) rc = file.WriteBool( m_bShadowIntensityFixed );
   return rc;
 }
 
@@ -188,6 +191,8 @@ bool ON_Light::Read(
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( rc && major_version == 1 ) {
+    // pre-1.3 archives predate the shadow-intensity fix (RH-96952)
+    m_bShadowIntensityFixed = false;
     int i;
     // version 1.0 fields
     i = 0;
@@ -228,6 +233,10 @@ bool ON_Light::Read(
       if ( minor_version >= 2 ) {
         // version 1.2 fields
         if ( rc ) rc = file.ReadDouble( &m_hotspot );
+        if ( minor_version >= 3 ) {
+          // version 1.3 fields
+          if ( rc ) rc = file.ReadBool( &m_bShadowIntensityFixed );
+        }
       }
     }
   }
@@ -264,6 +273,16 @@ bool ON_Light::GetBBox( // returns true if successful
   case ON::camera_point_light:
   case ON::world_point_light:
     points.Append(m_location);
+    {
+      // include the emitter radius so the drawn sphere is inside the bounding
+      // box (pick culling, zoom, selection - RH-96953)
+      const double r = Radius();
+      if ( r > 0.0 )
+      {
+        points.Append(m_location + ON_3dVector(r, r, r));
+        points.Append(m_location - ON_3dVector(r, r, r));
+      }
+    }
     break;
 
   case ON::camera_spot_light:
@@ -396,11 +415,22 @@ bool ON_Light::Transform(
   if ( vlen > 0.0 ) {
     m_length = v;
   }
-  
-  v = xform*m_width;
-  vlen = v.Length();
-  if ( vlen > 0.0 ) {
-    m_width = v;
+
+  if ( IsPointLight() || IsSpotLight() )
+  {
+    // Point/spot radius lives in m_width; scale it by the uniform-equivalent factor.
+    const double s = RadiusScaleFactor(xform);
+    if ( ON_IsValid(s) && s > 0.0 ) {
+      SetRadius(m_radius * s);
+    }
+  }
+  else
+  {
+    v = xform*m_width;
+    vlen = v.Length();
+    if ( vlen > 0.0 ) {
+      m_width = v;
+    }
   }
   return true;
 }
@@ -718,6 +748,76 @@ void ON_Light::SetWidth( const ON_3dVector& v )
 ON_3dVector ON_Light::Width() const
 {
   return m_width;
+}
+
+double ON_Light::RadiusScaleFactor( const ON_Xform& xform )
+{
+  // The determinant is the transform's volume scale; its cube root is the equivalent
+  // per-axis (linear) scale - e.g. a uniform scale by s has det s^3, cube-rooted back
+  // to s. That single factor scales the point/spot emitter radius, so any-axis drag
+  // maps onto it. Shared by Transform() and the gumball preview (cmdTransform.cpp) so
+  // the preview and the committed scale can't diverge.
+  return pow(fabs(xform.Determinant()), 1.0/3.0);
+}
+
+void ON_Light::SetRadius( double r )
+{
+  // Point and spot lights store the emitter radius in the m_width union.
+  // Write the whole vector so the aliased y/z bytes stay zero.
+  m_width = ON_3dVector(r, 0.0, 0.0);
+}
+
+double ON_Light::Radius() const
+{
+  return m_radius;
+}
+
+void ON_Light::MigrateLegacyShadowIntensity()
+{
+  if (m_bShadowIntensityFixed)
+    return;
+  m_bShadowIntensityFixed = true;
+
+  // R8 baked softness as (1-SI)^3. SI is preserved for every type (it drives the
+  // Rendered-display shadow now); scaling is one-shot via m_bShadowIntensityFixed.
+  // Point/spot SET idempotently; rect/linear multiply (an R8 round-trip re-scales).
+  double si = ShadowIntensity();
+  si = si < 0.0 ? 0.0 : (si > 1.0 ? 1.0 : si);
+  const double t = 1.0 - si;
+  const double t3 = t * t * t;
+
+  if (!IsRectangularLight() && !IsLinearLight())
+  {
+    // Point/spot (1-SI)^3*100; directional angle (1-SI)^3*1.5rad, in degrees. RH-96952.
+    if (IsPointLight() || IsSpotLight())
+      SetRadius(t3 * 100.0);
+    else if (IsDirectionalLight())
+      SetRadius(t3 * 1.5 * 180.0 / ON_PI);
+    return;
+  }
+
+  if (1.0 == si)
+    return;
+  if (si < 0.05)
+    return; // shadowless: no penumbra to bake, leave geometry alone
+
+  if (IsRectangularLight())
+  {
+    // Cycles scaled the rectangle about its center; light is normalized, so brightness is unchanged.
+    const double f = 1.0 + t3 * 10.0;
+    m_location -= 0.5 * (f - 1.0) * (m_width + m_length);
+    m_width *= f;
+    m_length *= f;
+  }
+  else
+  {
+    // Cycles scaled the cylinder radius and dimmed emission (emissive mesh, not normalized) by clamp(si,0.1)^2.
+    const double f = 1.0 + t3 * 100.0;
+    m_width *= f;
+    const double s = si > 0.1 ? si : 0.1;
+    m_intensity *= s * s;
+  }
+  // SI intentionally preserved (Rendered-display shadow); scaling gated by the flag.
 }
 
 

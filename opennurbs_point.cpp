@@ -581,7 +581,8 @@ void ON_Interval::Set(double t0,double t1)
 double ON_Interval::ParameterAt(double x) const
 {
   if (m_t[0] == m_t[1])
-    x = 0.0;
+    return (ON_IS_VALID(x) ? m_t[0] : ON_UNSET_VALUE);
+
   return (ON_IS_VALID(x) ? ((1.0-x)*m_t[0] + x*m_t[1]) : ON_UNSET_VALUE);
 }
 
@@ -1304,20 +1305,52 @@ ON_3dVector::PerpendicularTo(
   return true;
 }
 
-/*
-  This formula does not suffer loss of accuracy in parallel, anti-parallel or perpendicular cases
-  see https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
-  To verify the formula consider a rhombus with sides A.Unitize() and B.unitize().
-*/
+
 double ON_3dVector::Angle(const ON_3dVector& A, const ON_3dVector& B)
 {
-  double lenA = A.Length();
-  double lenB = B.Length();
-  ON_3dVector sum =  lenB * A + lenA * B;
-  ON_3dVector diff = lenB * A - lenA * B;
-  return 2.0 * atan(diff.Length() / sum.Length());
+  return ON_3dVector::AngleRadians(A, B);
 }
 
+double ON_3dVector::AngleRadians(const ON_3dVector& A, const ON_3dVector& B)
+{
+  // January 2025 - Dale Lear added tests so ON_DBL_QNAN is returned
+  // when invalid input is provided.
+  const double lenA = A.Length();
+  if (false == (lenA > 0.0 && lenA < ON_UNSET_POSITIVE_VALUE))
+    return ON_DBL_QNAN;
+
+  const double lenB = B.Length();
+  if (false == (lenB > 0.0 && lenB < ON_UNSET_POSITIVE_VALUE))
+    return ON_DBL_QNAN;
+
+  const double sum = (lenB * A + lenA * B).Length();
+  if (0.0 == sum)
+  {
+    // January 2025 - Dale Lear added this to prevent division by zero
+    // creating a floating point divide by zero exception in the case
+    // when A = -B and the angle is pi.
+    return ON_PI;
+  }
+
+  const double diff = (lenB * A - lenA * B).Length();
+  if (sum < 1.0 && diff > ON_DBL_MAX * sum)
+  {
+    // January 2025 - Dale Lear added this to prevent 
+    // a floating point overflow exception.
+    return ON_PI;
+  }
+
+
+  // This formula does not suffer loss of accuracy in parallel, anti-parallel or perpendicular cases
+  // see https://people.eecs.berkeley.edu/~wkahan/Mindless.pdf
+  // To verify the formula consider a rhombus with sides A.Unitize() and B.unitize().
+  return 2.0 * atan(diff / sum);
+}
+
+double ON_3dVector::AngleDegrees(const ON_3dVector& A, const ON_3dVector& B)
+{
+  return ON_DegreesFromRadians(ON_3dVector::AngleRadians(A, B));
+}
 
 void ON_2dPoint::Transform( const ON_Xform& xform )
 {
@@ -10057,3 +10090,222 @@ ON_2dPoint ON_LiftInverse(ON_2dPoint P, ON_Interval dom[2], bool closed[2])
 	return Q;
 }
 
+ON_2fSize::ON_2fSize(float cxValue, float cyValue)
+  : cx(cxValue)
+  , cy(cyValue)
+{}
+
+bool ON_2fSize::IsSet() const
+{
+  return (ON_UNSET_FLOAT != cx && ON_UNSET_FLOAT != cy);
+}
+
+bool ON_2fSize::IsZero() const
+{
+  return (0 == cx && 0 == cy);
+}
+
+// ON_4fRect
+ON_4fRect::ON_4fRect(float leftValue, float topValue, float rightValue, float bottomValue)
+  : left(leftValue)
+  , top(topValue)
+  , right(rightValue)
+  , bottom(bottomValue)
+{}
+
+ON_4fRect::ON_4fRect(const ON_2fPoint topLeft, const ON_2fPoint& bottomRight)
+	: left(topLeft.x)
+	, top(topLeft.y)
+	, right(bottomRight.x)
+	, bottom(bottomRight.y)
+{}
+
+ON_4fRect::ON_4fRect(const ON_2fPoint& point, const ON_2fSize& size)
+{
+	left = point.x;
+	top = point.y;
+	right = left + size.cx;
+	bottom = top + size.cy;
+}
+
+bool ON_4fRect::IsSet() const
+{
+  return (
+    ON_UNSET_FLOAT != left
+    && ON_UNSET_FLOAT != top
+    && ON_UNSET_FLOAT != right
+    && ON_UNSET_FLOAT != bottom
+    );
+}
+
+float ON_4fRect::Width(void) const { return fabsf(right - left); }
+
+float ON_4fRect::Height(void) const { return fabsf(bottom - top); }
+
+const ON_2fSize ON_4fRect::Size(void) const { return ON_2fSize(Width(), Height()); }
+
+const ON_2fPoint ON_4fRect::CenterPoint(void) const { return ON_2fPoint((left + right) / 2.0f, (top + bottom) / 2.0f); }
+
+const ON_2fPoint ON_4fRect::TopLeft(void) const { return ON_2fPoint(left, top); }
+
+const ON_2fPoint ON_4fRect::BottomRight(void) const { return ON_2fPoint(right, bottom); }
+
+bool ON_4fRect::IntersectRect(const ON_4fRect * r1, const ON_4fRect * r2)
+{
+  // Uses the same implementation as ON_4dRect::IntersectRect and ON_4iRect::Intersect.
+  left = ON_Max(r1->left, r2->left);
+  right = ON_Min(r1->right, r2->right);
+  if (right > left)
+  {
+    top = ON_Max(r1->top, r2->top);
+    bottom = ON_Min(r1->bottom, r2->bottom);
+    if (bottom > top)
+      return true;
+  }
+
+  // degenerate rectangle at this point...
+  SetRectEmpty();
+  return false;
+}
+
+bool ON_4fRect::IntersectRect(const ON_4fRect & r1, const ON_4fRect & r2) { return IntersectRect(&r1, &r2); }
+
+bool ON_4fRect::IsRectEmpty(void) const
+{
+	return 0 == Width() || 0 == Height();
+}
+
+bool ON_4fRect::IsRectNull(void) const
+{
+	return 0.0f == left &&
+		   0.0f == top  &&
+		   0.0f == bottom &&
+		   0.0f == right;
+}
+
+void ON_4fRect::SetRect(float l, float t, float r, float b) { left = l; top = t; right = r; bottom = b; }
+
+bool ON_4fRect::PtInRect(const ON_2fPoint & pt) const
+{
+	return pt.x >= left && pt.y >= top && pt.x < right && pt.y < bottom;
+}
+
+void ON_4fRect::OffsetRect(float x, float y)
+{
+	left += x;
+	right += x;
+	top += y;
+	bottom += y;
+}
+
+void ON_4fRect::OffsetRect(const ON_2fVector& v)
+{
+	left += v.x;
+	right += v.x;
+	top += v.y;
+	bottom += v.y;
+}
+
+void ON_4fRect::InflateRect(float x, float y)
+{
+	left -= x;
+	top -= y;
+	right += x;
+	bottom += y;
+}
+
+void ON_4fRect::InflateRect(float l, float t, float r, float b)
+{
+	left -= l;
+	top -= t;
+	right += r;
+	bottom += b;
+}
+
+void ON_4fRect::DeflateRect(float x, float y)
+{
+	left += x;
+	top += y;
+	right -= x;
+	bottom -= y;
+}
+
+bool ON_4fRect::SubtractRect(const ON_4fRect* rect1, const ON_4fRect* rect2)
+{
+	if (rect1 == nullptr)
+		return false;
+
+	*this = *rect1;
+
+	if (rect1->IsRectEmpty() || rect2 == nullptr || rect2->IsRectEmpty())
+	{
+		return true;
+	}
+
+	if (rect2->top <= rect1->top && rect2->bottom >= rect1->bottom)
+	{
+		if (left < rect2->right)
+		{
+			left = ON_Min(rect2->right, right);
+		}
+		if (right > rect2->left)
+		{
+			right = ON_Max(left, rect2->left);
+		}
+	}
+
+	if (rect2->left <= rect1->left && rect2->right >= rect1->right)
+	{
+		if (top < rect2->bottom)
+		{
+			top = ON_Min(rect2->bottom, bottom);
+		}
+		if (bottom > rect2->top)
+		{
+			bottom = ON_Max(top, rect2->top);
+		}
+	}
+
+	return true;
+}
+
+void ON_4fRect::NormalizeRect()
+{
+	float nTemp;
+	if (left > right)
+	{
+		nTemp = left;
+		left = right;
+		right = nTemp;
+	}
+	if (top > bottom)
+	{
+		nTemp = top;
+		top = bottom;
+		bottom = nTemp;
+	}
+}
+
+bool ON_4fRect::IsZero() const
+{
+  return (0.0f == left && 0.0f == top && 0.0f == right && 0.0f == bottom);
+}
+
+void ON_4fRect::SetZero() { *this = Zero; }
+
+
+bool operator==(const ON_4fRect& lhs, const ON_4fRect& rhs)
+{
+  return (lhs.left == rhs.left
+    && lhs.top == rhs.top
+    && lhs.right == rhs.right
+    && lhs.bottom == rhs.bottom);
+}
+
+bool operator!=(const ON_4fRect& lhs, const ON_4fRect& rhs)
+{
+  return (lhs.left != rhs.left
+    || lhs.top != rhs.top
+    || lhs.right != rhs.right
+    || lhs.bottom != rhs.bottom);
+}

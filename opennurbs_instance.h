@@ -125,6 +125,61 @@ public:
     const ON_Layer*(*ModelLayerFromIdFunc)(void* context, const ON_UUID&)
   );
 
+  const ON_Layer* FindReferenceFileLayer(ON_UUID model_layer_id) const;
+
+  /*
+  Description:
+    Remove all nested linked instance definition settings from this
+    ON_ReferencedComponentSettings.
+  Remarks:
+    Nested linked instance definitions (a linked file that itself contains
+    linked instance definitions) are not saved in the archive of the model
+    that references the top level linked file. Layer settings (color,
+    visibility, ...) that the model applies to layers from a nested linked
+    file are persisted by saving the nested instance definition's
+    ON_ReferencedComponentSettings on its immediate parent's
+    ON_ReferencedComponentSettings, which is saved in the model archive.
+  */
+  void ClearNestedLinkedIdefSettings();
+
+  /*
+  Description:
+    Save a copy of a nested linked instance definition's layer settings
+    on this (the immediate parent's) ON_ReferencedComponentSettings so the
+    settings persist in the archive of the model that references the top
+    level linked file.
+  Parameters:
+    nested_idef_id - [in]
+      Id of the nested linked instance definition. This id comes from the
+      instance definition table record in the immediate linked file, so it
+      is stable across readings of that file.
+    nested_idef_settings - [in]
+      The nested linked instance definition's current settings. A copy is
+      stored. If nested_idef_settings.IsEmpty(), nothing is stored.
+  Remarks:
+    See ClearNestedLinkedIdefSettings() remarks.
+  */
+  void SetNestedLinkedIdefSettings(
+    ON_UUID nested_idef_id,
+    const ON_ReferencedComponentSettings& nested_idef_settings
+  );
+
+  /*
+  Description:
+    Get the saved layer settings for a nested linked instance definition.
+  Parameters:
+    nested_idef_id - [in]
+      Id of the nested linked instance definition as read from the
+      instance definition table record in the immediate linked file.
+  Returns:
+    The stored settings or nullptr if none are stored for nested_idef_id.
+  Remarks:
+    See ClearNestedLinkedIdefSettings() remarks.
+  */
+  const ON_ReferencedComponentSettings* NestedLinkedIdefSettings(
+    ON_UUID nested_idef_id
+  ) const;
+
 private:
   class ON_ReferencedComponentSettingsImpl* Impl(
     bool bCreateIfNull

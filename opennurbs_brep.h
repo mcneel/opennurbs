@@ -253,6 +253,24 @@ public:
   int TrimCount() const;
 
   /*
+    Puts the face indices that this edge bounds.
+    returns the number of indices added to the array.
+  */
+  int AdjacentFaceIndices(ON_SimpleArray<int>& faceIndices) const;
+  
+  /*
+    Puts the faces that this edge bounds in the faces array.
+    returns the number of faces added to the array.
+  */
+  int AdjacentFaces(ON_SimpleArray<const ON_BrepFace*>& faces) const;
+
+  /*
+  Puts the faces that this edge bounds in the faces array.
+  returns the number of faces added to the array.
+  */
+  int AdjacentFaces(ON_SimpleArray<ON_BrepFace*>& faces);
+
+  /*
   Parameters:
     evi - [in] 0 or 1
   Returns:
@@ -1006,6 +1024,43 @@ public:
     Outer boundary loop for this face.
   */
   ON_BrepLoop* OuterLoop() const;
+
+  /*
+    Puts the trims on each of the face's loops in the array.
+    Returns the number of trims added to the array.
+  */
+  int AdjacentTrims(ON_SimpleArray<const ON_BrepTrim*>&) const;
+
+
+  /*
+  Puts the trims on each of the face's loops in the array.
+  Returns the number of trims added to the array.
+  */
+  int AdjacentTrims(ON_SimpleArray<ON_BrepTrim*>&);
+
+  /*
+    Puts the trim indices on each of the face's loops in the array.
+    Returns the number of trim indicess added to the array.
+  */
+  int AdjacentTrimIndices(ON_SimpleArray<int>&) const;
+
+  /*
+    Puts the edges on the face boundaries in the array.
+    Returns the number of trims added to the array.
+  */
+  int AdjacentEdges(ON_SimpleArray<const ON_BrepEdge*>&) const;
+
+  /*
+  Puts the edges on the face boundaries in the array.
+  Returns the number of trims added to the array.
+  */
+  int AdjacentEdges(ON_SimpleArray<ON_BrepEdge*>&);
+
+  /*
+    Puts the edges on the face boundaries in the array.
+    Returns the number of trims added to the array.
+  */
+  int AdjacentEdgeIndices(ON_SimpleArray<int>&) const;
 
   /*
   Parameters:
@@ -2136,13 +2191,13 @@ public:
     );
 
   ON_BrepEdge& NewEdge(
-                  int = -1              // 3d curve index
+                  int c3i = -1              // 3d curve index
                   );
   ON_BrepEdge& NewEdge( 
-                  ON_BrepVertex&, // start vertex
-                  ON_BrepVertex&, // end vertex
-                  int = -1,       // 3d curve index
-                  const ON_Interval* = nullptr, // sub_domain
+                  ON_BrepVertex& v0, // start vertex
+                  ON_BrepVertex& v1, // end vertex
+                  int c3i = -1,       // 3d curve index
+                  const ON_Interval* edomain = nullptr, // sub_domain
                   double edge_tolerance = ON_UNSET_VALUE
                   );
 
@@ -2778,7 +2833,7 @@ public:
     Set the loop parameter space bounding box (loop.m_pbox).
   Parameters:
     loop - [in]
-    bLazy - [in] if true and loop trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if loop ends up with a valid bounding box.
@@ -3069,6 +3124,7 @@ public:
   bool LoopIsSurfaceBoundary(  // returns true if the loop's trims all run
          int // index of loop  // along the edge's of the underlying surface's
          ) const;              // parameter space.
+
 
   /////////////////////////////////////////////////////////////////
   // Modification Interface
@@ -3509,6 +3565,33 @@ public:
   /*
   Description:
     Sometimes the ON_Surface used by a face extends far
+    beyond the face's outer boundary.  CanShrinkSurface determines if portions
+    of the surface that extend beyond the face's outer boundary loop can be removed
+  Parameters:
+    face        - [in] face to test and whose surface should be shrunk.
+    outer       - [out] outer loop intervals
+    srf         - [out] surface intervals
+    DisableSide - [in] This is a bit field.  A set bit indicates not to shrink
+                the surface on a given side.  The default of 0 enables shrinking
+                on all four sides.
+      @table
+      value       meaning
+      0x0001     Don't shrink on the west side of domain.
+      0x0002     Don't shrink on the south side of domain.
+      0x0004     Don't shrink on the east side of domain.
+      0x0008     Don't shrink on the north side of domain.
+  Returns:
+    @untitled table
+    true        successful
+    false       failure
+  See Also:
+    ON_Brep::ShrinkSurfaces
+  */
+  bool CanShrinkSurface(const ON_BrepFace& face, ON_Interval outer[2], ON_Interval srf[2], int DisableSide = 0) const;
+
+  /*
+  Description:
+    Sometimes the ON_Surface used by a face extends far
     beyond the face's outer boundary.  ShrinkSurfaces calls
     ON_Shrink::ShrinkSurface on each face to remove portions
     of surfaces that extend beyond their face's outer boundary
@@ -3916,6 +3999,9 @@ public:
     to call ON_Brep::Compact() to remove unused edge,
     trim, and vertex information from the brep's m_E[], 
     m_V[], m_T[], m_C2[], and m_C3[] arrays.
+    Also, you need to call ON_Brep::SetTolerancesBoxesAndFlags(true,true)
+    to redo the vertex tolerances. These get set to ON_UNSET_VALUE
+    after CollapseEdge.
   */
   bool CollapseEdge(
     int edge_index,
@@ -4822,6 +4908,9 @@ bool ON_BrepRemoveSlits(ON_BrepFace& F);
 //Merges all possible edges
 ON_DECL
 void ON_BrepMergeAllEdges(ON_Brep& B);
+
+ON_DECL
+void ON_BrepMergeAllEdges(ON_Brep& B, double angle_tolerance_radians);
 
 /*
 Description:

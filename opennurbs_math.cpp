@@ -13,6 +13,10 @@
 
 #include "opennurbs.h"
 
+// ON::sort_algorithm::parallel_sort. Not included by opennurbs.h - see the
+// notes at the top of the header.
+#include "opennurbs_parallel_sort.h"
+
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
@@ -275,19 +279,10 @@ double ON_DegreesFromRadians(
 
   double d = angle_in_radians*ON_RADIANS_TO_DEGREES;
   
-  const double scale[] = { 1.0, 2.0, 4.0, 8.0, 0.0 };
-  for (int i = 0; scale[i] > 0.0; i++)
-  {
-    double ds = d*scale[i];
-    double f = floor(ds);
-    if (f + 0.5 < ds)
-      f += 1.0;
-    if (fabs(f - ds) < ON_EPSILON*scale[i])
-    {
-      d = f/scale[i];
-      break;
-    }
-  }
+  const double ds = d * 4.0;
+  const double f = floor(ds + 0.25);
+  if (fabs(f - ds) < ON_EPSILON * 4.0)
+    d = f / 4.0;
 
   return d;
 }
@@ -686,6 +681,35 @@ ON_GetParameterTolerance(
   return rc;
 }
 
+int 
+ON_NormalLimitDir(double u, double v, ON_Interval* puDom, ON_Interval* pvDom)
+{
+  const ON_Interval& uDom = puDom ? *puDom : ON_Interval::ZeroToOne;
+  const ON_Interval& vDom = pvDom ? *pvDom : ON_Interval::ZeroToOne;
+
+  int quad(0);
+  if (std::abs(u - uDom.Min()) < ON_EPSILON)
+  {
+    quad = 4;
+    if (std::abs(v - vDom.Min()) < ON_EPSILON)
+      quad = 1;
+  }
+  else if (std::abs(u - uDom.Max()) < ON_EPSILON)
+  {
+    quad = 3;
+    if (std::abs(v - vDom.Min()) < ON_EPSILON)
+      quad = 2;
+  }
+  else if (std::abs(v - vDom.Min()) < ON_EPSILON)
+  {
+    quad = 1;
+  }
+  else if (std::abs(v - vDom.Max()) < ON_EPSILON)
+  {
+    quad = 3;
+  }
+  return quad;
+}
 
 bool
 ON_EvNormal(int limit_dir,
@@ -1981,6 +2005,42 @@ ON_IsPointListClosed(
 }
 
 
+// A rational point list and a constant multiple of it are the same curve, so closure
+// needs a constant weight ratio. ON_ComparePointList's second check dehomogenizes and
+// re-compares with is_rat==false, discarding every weight difference. Without this, a
+// loft of curves differing only in weight report closed and are built as one-edge
+// solids (RH-72307).
+static bool ON_WeightsAreProportional(
+        int dim,
+        int count,
+        int stride,
+        const double* p0,
+        const double* p1
+        )
+{
+  if ( dim < 1 || dim > 3 )
+    return true; // ON_ComparePointList already compared the weights
+
+  bool bHaveRatio = false;
+  double r0 = 0.0;
+  for ( int i = 0; i < count; i++, p0 += stride, p1 += stride )
+  {
+    const double w0 = p0[dim];
+    const double w1 = p1[dim];
+    if ( !ON_IsValid(w0) || !ON_IsValid(w1) || 0.0 == w0 || 0.0 == w1 )
+      continue;
+    const double r = w0/w1;
+    if ( !bHaveRatio )
+    {
+      r0 = r;
+      bHaveRatio = true;
+    }
+    else if ( fabs(r-r0) > ON_SQRT_EPSILON*(fabs(r)+fabs(r0)) )
+      return false;
+  }
+  return true;
+}
+
 bool 
 ON_IsPointGridClosed(
         int dim,
@@ -2009,12 +2069,11 @@ ON_IsPointGridClosed(
       stride = point_stride1;
     }
     rc = (0==ON_ComparePointList( dim, is_rat, count, stride, p0, stride, p1 ))?true:false;
+    if ( rc && is_rat )
+      rc = ON_WeightsAreProportional( dim, count, stride, p0, p1 ); // RH-72307
   }
   return rc;
 }
-
-
-
 
 int
 ON_SolveQuadraticEquation(
@@ -3258,7 +3317,17 @@ ON_Sort(ON::sort_algorithm method,
   context.qdata = (const unsigned char*)data;
   context.compar2 = compar;
   idx = index;
-  if ( ON::sort_algorithm::quick_sort == method )
+  if ( ON::sort_algorithm::parallel_sort == method )
+  {
+    // The index array holds byte offsets at this point, hence comparing
+    // through qicompar2 rather than on the values themselves. The context is
+    // read-only for the duration, and the caller has undertaken that compar
+    // is safe to call concurrently - see ON::sort_algorithm::parallel_sort.
+    ON_ParallelSort(idx, idx + count,
+      [&context](unsigned int a, unsigned int b)
+      { return qicompar2(&context, &a, &b) < 0; });
+  }
+  else if ( ON::sort_algorithm::quick_sort == method )
   {
     ON_qsort(idx,count,sizeof(idx[0]),qicompar2,&context);
   }
@@ -3370,7 +3439,14 @@ ON_Sort( ON::sort_algorithm method,
   context.qdata = (const unsigned char*)data;
   context.compar3 = compar;
   idx = index;
-  if ( ON::sort_algorithm::quick_sort == method )
+  if ( ON::sort_algorithm::parallel_sort == method )
+  {
+    // See the note in the compar2 overload above.
+    ON_ParallelSort(idx, idx + count,
+      [&context](unsigned int a, unsigned int b)
+      { return qicompar3(&context, &a, &b) < 0; });
+  }
+  else if ( ON::sort_algorithm::quick_sort == method )
   {
     ON_qsort(idx,count,sizeof(idx[0]),qicompar3,&context);
   }
@@ -4236,28 +4312,190 @@ void ON_EPC_WARNING(const char* msg)
 
 #endif
 
+bool ON_EstimatePrincipalCurvatures(
+  int sample_count,
+  const ON_3dVector& Ds,
+  const ON_3dVector& Dt,
+  const ON_3dVector& Dss,
+  const ON_3dVector& Dst,
+  const ON_3dVector& Dtt,
+  const ON_3dVector& N,
+  double* gauss,
+  double* mean,
+  double* kappa1,
+  double* kappa2,
+  ON_3dVector& K1,
+  ON_3dVector& K2
+)
+{
+  double k1 = ON_DBL_QNAN;
+  double k2 = ON_DBL_QNAN;
+  ON_3dVector T1 = ON_3dVector::ZeroVector;
+  ON_3dVector T2 = ON_3dVector::ZeroVector;
+  for (;;)
+  {
+    if (sample_count <= 0)
+      sample_count = 8;
+    if (sample_count < 4)
+      sample_count = 4;
+    // Two facts about principal curvatures kappa1, K1 and kappa2, K2.
+    // 
+    // 1) kappa1 and kappa2 are the extreme values (minimum and maximum) of normal curvatures
+    // as the surface tangent rotates around the normal.
+    // 
+    // 2) The tangents that produce K1 and K2 are always perpendicular.
+    // 
+    // If ON_EvPrincipalCurvatures() fails, we know the normal and derivatives are junky.
+    // (One problem might be that the first derviatives are nearly parallel or antiparallel.)
+    // The purpose of this function is to approximate principal curvatures
+    // for use in the curvature analysis command. So, we'll sample some normal
+    // curvatures, take the biggest one we find and call it K1.
+    // Then we'll rotate T1 by 90 degrees around N and calculate K2.
+    // This will be good enough for false color curvature analysis 
+    // that is already based on a bezier that is often not right
+    // to begin with because it's normals often do not 
+    // agree with the SubD's normal.
+
+    ON_3dVector normal(N);
+    if (false == normal.IsUnitVector())
+    {
+      normal = N.UnitVector();
+      if (false == normal.IsUnitVector())
+      {
+        if (false == ON_EvNormal(0, Ds, Dt, Dss, Dst, Dtt, normal))
+          break;
+        if (false == normal.IsUnitVector())
+          break;
+      }
+    }
+
+    ON_Xform rotT;
+    rotT.Rotation(ON_HALFPI, normal, ON_3dPoint::Origin);
+    const ON_Xform rotHalfPi = rotT; // rotHalfPi rotates T1 to T2
+
+    // rotT rotates sample tangent
+    // rotT using ON_HALFPI/sample_count is correct beause 
+    // normal curvature in the direction T = 
+    // normal curvature in the direction -T.
+    // This, to sample all 360 degrees around N we only need T to rotate through 90 degrees.
+    rotT.Rotation(ON_HALFPI / sample_count, normal, ON_3dPoint::Origin); 
+
+    ON_3dVector T = (Ds.Length() >= Dt.Length()) ? Ds.UnitVector() : Dt.UnitVector();
+    if (false == T.IsUnitVector() || false == T.IsPerpendicularTo(N))
+    {
+      T = normal.Perpendicular(ON_3dVector::NanVector).UnitVector();
+      if (false == T.IsUnitVector())
+        break;
+    }
+
+    T1 = T;
+    T2 = rotHalfPi * T1;
+
+    // See if the 2nd derivatives are essentially zero. The cs, ct scaling normalizes the
+    // first derivatives so that the short2nd test is independent of parameterization.
+    const double short2nd = 1e-8;
+    double cs = Ds.Length();
+    double ct = Dt.Length();
+    if (false == (cs > 0.0))
+      cs = 1.0;
+    if (false == (ct > 0.0))
+      ct = 1.0;
+    if (Dss.Length() <= short2nd*cs*cs && Dst.Length() <= short2nd*cs*ct && Dtt.Length() <= short2nd*ct*ct)
+    {
+      // No 2nd deivatives to speak of.
+      // Set the curvature to zero and move on.
+      k1 = 0.0;
+      k2 = 0.0;
+      break;
+    }
+
+    k1 = ON_NormalCurvature(Ds, Dt, Dss, Dst, Dtt, normal, T1) * normal;
+    k2 = ON_NormalCurvature(Ds, Dt, Dss, Dst, Dtt, normal, T2) * normal;
+    bool bValidKappas = ON_IsValid(k1) && ON_IsValid(k2);
+
+    // rot is used during sampling
+    for (int i = 1; i < sample_count; ++i)
+    {
+      T = rotT * T;
+      const double a1 = ON_NormalCurvature(Ds, Dt, Dss, Dst, Dtt, normal, T) * normal;
+      const double a2 = ON_NormalCurvature(Ds, Dt, Dss, Dst, Dtt, normal, rotHalfPi * T) * normal;
+      if (false == bValidKappas || fabs(a1 - a2) > fabs(k1 - k2))
+      {
+        // we found a better candidate for the principal curvatures.
+        T1 = T;
+        T2 = rotHalfPi * T;
+        k1 = a1;
+        k2 = a2;
+        if (false == bValidKappas)
+          bValidKappas = ON_IsValid(k1) && ON_IsValid(k2);
+      }
+    }
+
+    break;
+  }
+
+  if (ON_IsValid(k1) && ON_IsValid(k2) && T1.IsUnitVector() && T2.IsUnitVector())
+  {
+    if (fabs(k1) < fabs(k2))
+    {
+      const double tmpk = k1;
+      k1 = k2;
+      k2 = tmpk;
+      const ON_3dVector tmpT = T1;
+      T1 = T2;
+      T2 = -tmpT;
+    }
+    K1 = T1;
+    K2 = T2;
+    if (nullptr != gauss)
+      *gauss = k1 * k2;
+    if (nullptr != mean)
+      *mean = 0.5 * (k1 + k2);
+    if (nullptr != kappa1)
+      *kappa1 = k1;
+    if (nullptr != kappa2)
+      *kappa2 = k2;
+    return true;
+  }
+
+  // The estimate failed because the input is garbage.
+  if (nullptr != gauss)
+    *gauss = ON_DBL_QNAN;
+  if (nullptr != mean)
+    *mean = ON_DBL_QNAN;
+  if (nullptr != kappa1)
+    *kappa1 = ON_DBL_QNAN;
+  if (nullptr != kappa2)    
+    *kappa2 = ON_DBL_QNAN;
+
+  K1 = ON_3dVector::ZeroVector;
+  K2 = ON_3dVector::ZeroVector;
+  return false;
+}
+
 bool ON_EvPrincipalCurvatures( 
         const ON_3dVector& Ds,
         const ON_3dVector& Dt,
         const ON_3dVector& Dss,
         const ON_3dVector& Dst,
         const ON_3dVector& Dtt,
-        const ON_3dVector& N, // unit normal (use TL_EvNormal())
-        double* gauss,        // = Gaussian curvature = kappa1*kappa2
-        double* mean,         // = mean curvature = (kappa1+kappa2)/2
-        double* kappa1,       // = largest (in absolute value) principal curvature (may be negative)
-        double* kappa2,       // = smallest (in absolute value) principal curvature(may be negative)
-        ON_3dVector& K1,      // kappa1 unit principal curvature direction
-        ON_3dVector& K2       // kappa2 unit principal curvature direction
-                              // output K1,K2,N is right handed frame
+        const ON_3dVector& N,
+        double* gauss,
+        double* mean,
+        double* kappa1,
+        double* kappa2,
+        ON_3dVector& K1,
+        ON_3dVector& K2
         )
 {
   const double l = N.x*Dss.x + N.y*Dss.y + N.z*Dss.z;
   const double m = N.x*Dst.x + N.y*Dst.y + N.z*Dst.z;
   const double n = N.x*Dtt.x + N.y*Dtt.y + N.z*Dtt.z;
 
-	return ON_EvPrincipalCurvatures(  Ds, Dt, l, m, n, N, 
-											gauss, mean,  kappa1, kappa2,   K1,  K2 );   
+	return ON_EvPrincipalCurvatures(  
+    Ds, Dt, l, m, n, N, 
+    gauss, mean,  kappa1, kappa2,   
+    K1,  K2 );   
 }
 
 bool ON_EvPrincipalCurvatures( 

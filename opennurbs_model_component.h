@@ -88,6 +88,10 @@ public:
     ObsoleteValue = 16,
     ///<summary>Section style attributes</summary>
     SectionStyle = 17,
+    ///<summary>Markup entity</summary>
+    Markup = 18,
+    /// <summary>Page view group.</summary>
+    PageViewGroup = 19,
 
     // If you add any more, add them here, above NumOf.
 
@@ -442,6 +446,38 @@ public:
        >1000: worksession reference model serial number
   */
   unsigned int ReferenceModelSerialNumber() const;
+
+  /*
+  Description:
+    Move this component to a different worksession model.
+  Parameters:
+    reference_model_serial_number - [in]
+      0: the active model.
+      1: an unidentified worksession reference model.
+      2-1000: reserved, and rejected.
+      > 1000: a worksession reference model serial number.
+  Returns:
+    True if the reference model serial number was set.
+  Remarks:
+    This is the one setter that ignores the ModelSerialNumber attribute lock, and it exists
+    because there is no other way to express the operation. Every document table locks the
+    attribute when it adds a component, and CopyFrom masks locked attributes, so no copy and
+    no table Modify call can move a component between worksession models.
+
+    That lock is right for every other caller: a component added to a document belongs to
+    that document, and should not drift between models by accident. A worksession
+    active-model change is the one case where a component legitimately moves - the model it
+    belongs to is exactly what is changing - so this says so explicitly rather than
+    unlocking the attribute and leaving it unlocked.
+
+    Nothing else is changed. The managing model and the linked instance definition serial
+    number are untouched, and the content version number is left alone because this is
+    attribution rather than content: whoever changes a component's model is responsible for
+    whatever invalidation that role change implies.
+  */
+  bool SetWorksessionReferenceModelSerialNumber(
+    unsigned int reference_model_serial_number
+    );
 
   /*
   Returns:

@@ -73,11 +73,6 @@ public:
   static const ON_UUID m_invisible_in_detail_id;
 };
 
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_DisplayMaterialRef>;
-
-#endif
 //////////////////////////////////////////////////////////////////////
 // class ON_LinetypeSegment
 
@@ -126,11 +121,5 @@ public:
 private:
   unsigned int m_reserved2 = 0;
 };
-
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_LinetypeSegment>;
-
-#endif
 
 #endif

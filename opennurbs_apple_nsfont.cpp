@@ -197,6 +197,79 @@ ON_PANOSE1 ON_Font::AppleCTFontPANOSE1(CTFontRef apple_font)
   return panose1;
 }
 
+// Returns the OpenType OS/2 usWeightClass (typically 100..900) for the font,
+// or 0 if unavailable.
+//
+// For variable font instances (e.g. Roboto's wdth+wght variable font), the
+// 'wght' axis value is read from CTFontCopyVariation -- this is the canonical
+// per-instance weight (100, 200, 300, ... 900). For static fonts (which return
+// nullptr from CTFontCopyVariation), the usWeightClass is read directly from
+// the font's OS/2 table.
+//
+// This bypasses Apple's kCTFontWeightTrait normalization, which compresses the
+// 9 named OpenType weight values onto a narrower [-1, 1] float range and
+// causes weight collisions (multiple distinct named instances reporting the
+// same trait). Empirically on macOS, Roboto's Thin/ExtraLight/Light cluster
+// near trait -0.6..-0.4 instead of spanning -0.8..-0.4, and ExtraBold/Black
+// cluster near 0.6..0.62 -- so any closest-anchor scheme over the trait scale
+// cannot fully disambiguate them.
+static unsigned int Internal_AppleFontUSWeightClass(CTFontRef apple_font)
+{
+  if (nullptr == apple_font)
+    return 0;
+
+  // 1. Variable font instances: read the 'wght' axis value from the variation dictionary.
+  CFDictionaryRef variation = CTFontCopyVariation(apple_font);
+  if (nullptr != variation)
+  {
+    // OpenType 'wght' axis tag = FourCharCode('wght') = 0x77676874.
+    const SInt32 wght_tag = 0x77676874;
+    CFNumberRef wght_key = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &wght_tag);
+    unsigned int result = 0;
+    if (nullptr != wght_key)
+    {
+      const CFNumberRef wght_value = (CFNumberRef)CFDictionaryGetValue(variation, wght_key);
+      double wght = 0.0;
+      if (nullptr != wght_value
+          && CFNumberGetValue(wght_value, kCFNumberFloat64Type, &wght)
+          && wght >= 1.0 && wght <= 1000.0)
+      {
+        result = (unsigned int)(wght + 0.5);
+      }
+      CFRelease(wght_key);
+    }
+    CFRelease(variation);
+    if (0 != result)
+      return result;
+    // Variation dict exists but no 'wght' axis (only width-axis font, etc.) --
+    // fall through to OS/2 table read below.
+  }
+
+  // 2. Static fonts (and variable fonts without a 'wght' axis): read usWeightClass
+  //    from the OS/2 table.
+  CFDataRef os2 = CTFontCopyTable(apple_font, kCTFontTableOS2, kCTFontTableOptionNoOptions);
+  if (nullptr != os2)
+  {
+    const UInt8* data = CFDataGetBytePtr(os2);
+    const CFIndex len = CFDataGetLength(os2);
+    unsigned int result = 0;
+    if (nullptr != data && len >= 6)
+    {
+      // OS/2 table layout (start of table):
+      //   uint16  version
+      //   int16   xAvgCharWidth
+      //   uint16  usWeightClass    <-- bytes 4..5, big-endian
+      const unsigned int u = ((unsigned int)data[4] << 8) | (unsigned int)data[5];
+      if (u >= 1 && u <= 1000)
+        result = u;
+    }
+    CFRelease(os2);
+    return result;
+  }
+
+  return 0;
+}
+
 bool ON_Font::SetFromAppleCTFont(CTFontRef apple_font, bool bAnnotationFont)
 {
   if (nullptr == apple_font)
@@ -279,8 +352,9 @@ bool ON_Font::SetFromAppleCTFont(CTFontRef apple_font, bool bAnnotationFont)
             // Use the kCTFontWeightTrait key to access the normalized weight trait from the font traits dictionary.
             // The value returned is a CFNumberRef representing a float value between -1.0 and 1.0 for normalized weight.
             // The value of 0.0 corresponds to the regular or medium font weight.
+            // The actual weight enum is set below via SetAppleFontWeightTrait, which routes
+            // through WeightFromAppleFontWeightTrait. Just record the raw trait here.
             apple_font_weight_trait = x;
-            ON_Font::WeightFromAppleFontWeightTrait(apple_font_weight_trait);
           }
         }
         
@@ -319,10 +393,29 @@ bool ON_Font::SetFromAppleCTFont(CTFontRef apple_font, bool bAnnotationFont)
       CFRelease(descriptor);
     }
     
-    if (-1.0 <= apple_font_weight_trait && apple_font_weight_trait <= 1.0)
+    // Prefer the OpenType OS/2 usWeightClass (or 'wght' variation axis value for
+    // variable font instances) over Apple's kCTFontWeightTrait. The trait is a
+    // normalized [-1, 1] float that loses precision at the extremes, especially
+    // for variable-font named instances; the OS/2 value is the canonical, lossless
+    // OpenType weight (100..900). The trait double is still stored in
+    // m_apple_font_weight_trait below for cross-platform serialization fidelity.
+    const unsigned int os2_us_weight_class = Internal_AppleFontUSWeightClass(apple_font);
+    const ON_Font::Weight os2_weight = (os2_us_weight_class > 0)
+      ? ON_Font::WeightFromWindowsLogfontWeight((int)os2_us_weight_class)
+      : ON_Font::Weight::Unset;
+
+    if (ON_Font::Weight::Unset != os2_weight)
+    {
+      SetFontWeight(os2_weight);
+    }
+    else if (-1.0 <= apple_font_weight_trait && apple_font_weight_trait <= 1.0)
+    {
       SetAppleFontWeightTrait(apple_font_weight_trait);
+    }
     else
+    {
       SetFontWeight(weight);
+    }
     
     m_font_style = style;
     m_font_stretch = stretch;
@@ -1206,5 +1299,118 @@ void ON_Font::DumpCTFont(
   text_log.PopIndent();
 }
 
+int ON_FontGlyph::GetGlyphListKerningOffsetsFromCoreText
+(
+  unsigned int code_point_count,
+  ON__UINT32* code_points,
+  const class ON_Font* font,
+  ON_SimpleArray<double>& kerning_offsets
+ )
+{
+  kerning_offsets.SetCount(0);
+  if (code_point_count < 2 || nullptr == code_points || nullptr == font)
+    return 0;
+
+  ON_SimpleArray<wchar_t> characters((int)code_point_count+1);
+  characters.SetCount((int)code_point_count + 1);
+  ON_ConvertUTF32ToWideChar(0, code_points, (int)code_point_count, characters.Array(), characters.Count(), nullptr, 0xFFFFFFFF, ON_UnicodeCodePoint::ON_ReplacementCharacter, nullptr);
+  ON_wString text = characters.Array();
+  int characterCount = text.Length();
+  if (characterCount > 1)
+  {
+    CFStringRef str = text.ToAppleCFString();
+    if (nullptr == str)
+      return 0;
+    bool isSubstitute = false;
+    CTFontRef fontref = font->AppleCTFont(ON_Font::Constants::AnnotationFontCellHeight, isSubstitute);
+    if (nullptr == fontref)
+    {
+      CFRelease(str);
+      return 0;
+    }
+
+    CFRange range;
+    range.length = 0;
+    range.location = 0;
+    {
+      CFStringRef keysWithKerning[] = { kCTFontAttributeName };
+      CFTypeRef valuesWithKerning[] = { fontref };
+      CFDictionaryRef attributesWithKerning = CFDictionaryCreate(NULL,
+        (const void**)&keysWithKerning, (const void**)&valuesWithKerning, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+      CFAttributedStringRef attributedStringKerned = CFAttributedStringCreate(nullptr, str, attributesWithKerning);
+      CTTypesetterRef typesetter = CTTypesetterCreateWithAttributedString(attributedStringKerned);
+      CTLineRef line = CTTypesetterCreateLine(typesetter, range);
+      CFArrayRef runs = CTLineGetGlyphRuns(line);
+
+      int glyphCount = 0;
+      const CGPoint* positions = nullptr;
+      if (nullptr != runs && CFArrayGetCount(runs) > 0)
+      {
+        CTRunRef run = (CTRunRef)CFArrayGetValueAtIndex(runs, 0);
+        glyphCount = (int)CTRunGetGlyphCount(run);
+        positions = CTRunGetPositionsPtr(run);
+      }
+
+      // positions include kerning info
+      if (nullptr != positions && glyphCount > 1)
+      {
+        int loopCount = (characterCount < glyphCount) ? characterCount : glyphCount;
+        for (int i = 1; i < loopCount; i++)
+        {
+          double advance = positions[i].x - positions[i - 1].x;
+          kerning_offsets.Append(advance);
+        }
+      }
+      CFRelease(line);
+      CFRelease(typesetter);
+      CFRelease(attributedStringKerned);
+      CFRelease(attributesWithKerning);
+    }
+
+    if (kerning_offsets.Count() > 0)
+    {
+      CFStringRef keysNoKerning[] = { kCTFontAttributeName, kCTKernAttributeName };
+      double d = 0;
+      CFNumberRef zero = CFNumberCreate(NULL, kCFNumberDoubleType, &d);
+      CFTypeRef valuesNoKerning[] = { fontref, zero };
+      CFDictionaryRef attributesNoKerning = CFDictionaryCreate(NULL,
+        (const void**)&keysNoKerning, (const void**)&valuesNoKerning, 2, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+      CFAttributedStringRef attributedStringNoKerning = CFAttributedStringCreate(nullptr, str, attributesNoKerning);
+      CTTypesetterRef typesetter = CTTypesetterCreateWithAttributedString(attributedStringNoKerning);
+      CTLineRef line = CTTypesetterCreateLine(typesetter, range);
+      CFArrayRef runs = CTLineGetGlyphRuns(line);
+
+      int glyphCount = 0;
+      const CGPoint* positions = nullptr;
+      if (nullptr != runs && CFArrayGetCount(runs) > 0)
+      {
+        CTRunRef run = (CTRunRef)CFArrayGetValueAtIndex(runs, 0);
+        glyphCount = (int)CTRunGetGlyphCount(run);
+        positions = CTRunGetPositionsPtr(run);
+      }
+
+      // positions do not include kerning info
+      if (nullptr != positions && glyphCount > 1)
+      {
+        int loopCount = kerning_offsets.Count();
+        if (loopCount > glyphCount - 1)
+          loopCount = glyphCount - 1;
+        for (int i = 0; i < loopCount; i++)
+        {
+          double advance = positions[i + 1].x - positions[i].x;
+          kerning_offsets[i] = kerning_offsets[i] - advance;
+        }
+      }
+      CFRelease(line);
+      CFRelease(typesetter);
+      CFRelease(attributedStringNoKerning);
+      CFRelease(attributesNoKerning);
+    }
+
+    CFRelease(fontref);
+    CFRelease(str);
+  }
+  return kerning_offsets.Count();
+}
 
 #endif

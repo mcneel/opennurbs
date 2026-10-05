@@ -709,6 +709,8 @@ bool ON_Mesh::IsValidNewNgonInformation(
 
 void ON_Mesh::RemoveNgonMap()
 {
+  // The map is cached information. It is created again when it is needed, so it
+  // is good practice to call this after modifying m_Ngon[] or m_F[].
   m_NgonMap.Destroy();
 }
 
@@ -754,13 +756,77 @@ unsigned int ON_Mesh::NgonIndexFromFaceIndex(
   return ngon_index;
 }
 
+// m_NgonMap[] holds one unsigned int per m_F[] face: the m_Ngon[] index of the
+// n-gon that face belongs to, or ON_UNSET_UINT_INDEX. A length that is not
+// m_F.Count() means there is no map, which is how an invalid map is expressed.
+// Returns the array only when it is completely built. The acquire fence keeps
+// the array read from moving ahead of the length test.
+static const unsigned int* Internal_PublishedNgonMap(
+  const ON_Mesh& mesh
+  )
+{
+  if ( mesh.m_Ngon.UnsignedCount() <= 0 )
+    return nullptr;
+  const unsigned int mesh_F_count = mesh.m_F.UnsignedCount();
+  if ( 0 == mesh_F_count || mesh_F_count != mesh.m_NgonMap.UnsignedCount() )
+    return nullptr;
+  std::atomic_thread_fence(std::memory_order_acquire);
+  return mesh.m_NgonMap.Array();
+}
+
+// Fills one m_NgonMap[] entry per m_F[] face and sets the length last, so another
+// thread sees the map as missing or as complete. Because the length is what makes
+// the map valid, it is published with a single SetCount() after the entries are
+// written. The caller must hold mesh.m_ngon_map_lock.
+static const unsigned int* Internal_BuildNgonMap(
+  const ON_Mesh& mesh
+  )
+{
+  ON_SimpleArray<unsigned int>& ngon_map = const_cast<ON_SimpleArray<unsigned int>&>(mesh.m_NgonMap);
+  const unsigned int mesh_F_count = mesh.m_F.UnsignedCount();
+  if ( 0 == mesh_F_count )
+    return nullptr;
+  ngon_map.SetCount(0);
+  ngon_map.Reserve(mesh_F_count);
+  if ( nullptr == ngon_map.Array() )
+    return nullptr;
+  if ( false == mesh.CreateNgonMap(ngon_map.Array()) )
+    return nullptr;
+  std::atomic_thread_fence(std::memory_order_release);
+  ngon_map.SetCount(mesh_F_count);
+  return Internal_PublishedNgonMap(mesh);
+}
+
 const unsigned int* ON_Mesh::NgonMap(
   bool bCreateIfNeeded
   )
 {
-  const unsigned int* fdex_to_ndex_map = NgonMap();
-  if ( 0 == fdex_to_ndex_map && bCreateIfNeeded )
-    fdex_to_ndex_map = CreateNgonMap();
+  // One implementation for both overloads.
+  return static_cast<const ON_Mesh*>(this)->NgonMap(bCreateIfNeeded);
+}
+
+const unsigned int* ON_Mesh::NgonMap(
+  bool bCreateIfNeeded
+  ) const
+{
+  const unsigned int* fdex_to_ndex_map = Internal_PublishedNgonMap(*this);
+  if ( 0 != fdex_to_ndex_map || false == bCreateIfNeeded )
+    return fdex_to_ndex_map;
+
+  // A face -> n-gon map is meaningless without n-gons, and NgonMap() would keep
+  // reporting it as missing, so creating one would be repeated wasted work.
+  if ( m_Ngon.UnsignedCount() <= 0 || m_F.UnsignedCount() <= 0 )
+    return nullptr;
+
+  // RH-96694: creates cached information on a const mesh, like Topology() does,
+  // so serialize it the way Topology() serializes creating the topology.
+  ON_SleepLockGuard ngon_map_lock_guard(m_ngon_map_lock);
+
+  // A thread this one waited for may have created the map.
+  fdex_to_ndex_map = Internal_PublishedNgonMap(*this);
+  if ( 0 == fdex_to_ndex_map )
+    fdex_to_ndex_map = Internal_BuildNgonMap(*this);
+
   return fdex_to_ndex_map;
 }
 
@@ -1172,6 +1238,28 @@ unsigned int ON_Mesh::AddNgons(
   }
 
   return new_ngon_count;
+}
+
+bool ON_Mesh::AddTriangle(int a, int b, int c)
+{
+  return AddQuad(a, b, c, c);
+}
+
+bool ON_Mesh::AddQuad(int a, int b, int c, int d)
+{
+  const int size = m_V.Count();
+  if (a < 0 || a >= size) return false;
+  if (b < 0 || b >= size) return false;
+  if (c < 0 || c >= size) return false;
+  if (d < 0 || d >= size) return false;
+
+  ON_MeshFace& tri = m_F.AppendNew();
+  tri.vi[0] = a;
+  tri.vi[1] = b;
+  tri.vi[2] = c;
+  tri.vi[3] = d;
+
+  return true;
 }
 
 int ON_Mesh::AddNgon(const ON_SimpleArray<unsigned int>& ngon_fi)
@@ -5361,7 +5449,7 @@ ON_MeshNgonIterator::ON_MeshNgonIterator(
   )
 {
   if ( 0 != mesh )
-    SetMesh(mesh,mesh->NgonMap());
+    SetMesh(mesh,nullptr);
 }
 
 ON_MeshNgonIterator::ON_MeshNgonIterator(
@@ -5414,8 +5502,11 @@ void ON_MeshNgonIterator::SetMesh(
 {
   *this = ON_MeshNgonIterator::EmptyMeshNgonIterator;
   m_mesh = mesh;
+  // RH-96694: NextNgon() needs this map to skip the faces that are interior to
+  // an n-gon, Count() does not, and a mesh with n-gons does not necessarily have
+  // a map. Without it the two disagree and every interior face is returned.
   m_facedex_to_ngondex_map = (0 != m_mesh && 0 == meshfdex_to_meshngondex_map)
-                            ? m_mesh->NgonMap()
+                            ? m_mesh->NgonMap(true)
                             : meshfdex_to_meshngondex_map;
   if ( 0 != m_mesh )
   {

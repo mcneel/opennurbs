@@ -25,6 +25,80 @@ ON_OBJECT_IMPLEMENT(ON_PlaneSurface,ON_Surface,"4ED7D4DF-E947-11d3-BFE5-00108301
 ON_OBJECT_IMPLEMENT(ON_ClippingPlaneSurface,ON_PlaneSurface,"DBC5A584-CE3F-4170-98A8-497069CA5C36");
 
 
+//-------- ON_ClippingPlaneSurfaceUserData class ---------
+class ON_CLASS ON_ClippingPlaneSurfaceUserData : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_ClippingPlaneSurfaceUserData);
+
+public:
+  ON_ClippingPlaneSurfaceUserData();
+  ON_ClippingPlaneSurfaceUserData(const ON_ClippingPlaneSurfaceUserData& src);
+  ~ON_ClippingPlaneSurfaceUserData() = default;
+  ON_ClippingPlaneSurfaceUserData& operator=(const ON_ClippingPlaneSurfaceUserData& src);
+
+  static ON_ClippingPlaneSurfaceUserData* Get(const ON_ClippingPlaneSurface* cps, bool createIfMissing);
+
+  bool GetDescription(ON_wString& description) override;
+  bool Archive() const override;
+
+  ON_UUID m_dimstyle_id = ON_nil_uuid;
+};
+
+//--------Implementation of ON_ClippingPlaneSurfaceUserData class ---------
+ON_OBJECT_IMPLEMENT(ON_ClippingPlaneSurfaceUserData, ON_UserData, "51C1C907-956E-4714-AC2F-1315EBA102B9");
+
+ON_ClippingPlaneSurfaceUserData::ON_ClippingPlaneSurfaceUserData()
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_ClippingPlaneSurfaceUserData);
+  m_userdata_copycount = 1; // enable copying
+}
+
+ON_ClippingPlaneSurfaceUserData::ON_ClippingPlaneSurfaceUserData(const ON_ClippingPlaneSurfaceUserData& src)
+: ON_UserData(src)
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_ClippingPlaneSurfaceUserData);
+  m_dimstyle_id = src.m_dimstyle_id;
+}
+
+ON_ClippingPlaneSurfaceUserData& ON_ClippingPlaneSurfaceUserData::operator=(const ON_ClippingPlaneSurfaceUserData& src)
+{
+  if (this != &src)
+  {
+    ON_UserData::operator=(src);
+    m_dimstyle_id = src.m_dimstyle_id;
+  }
+  return *this;
+}
+
+bool ON_ClippingPlaneSurfaceUserData::GetDescription(ON_wString& description)
+{
+  description = L"Attach DimStyle to ON_ClippingPlaneSurface";
+  return true;
+}
+
+bool ON_ClippingPlaneSurfaceUserData::Archive() const
+{
+  return false;
+}
+
+ON_ClippingPlaneSurfaceUserData* ON_ClippingPlaneSurfaceUserData::Get(const ON_ClippingPlaneSurface* cps, bool createIfMissing)
+{
+  if (nullptr == cps)
+    return nullptr;
+  
+  //check if the user data already exists
+  ON_UserData* ud = cps->GetUserData(ON_CLASS_ID(ON_ClippingPlaneSurfaceUserData));
+  ON_ClippingPlaneSurfaceUserData* dimStyleData = ON_ClippingPlaneSurfaceUserData::Cast(ud);
+  if (nullptr == dimStyleData && createIfMissing)
+  {
+    dimStyleData = new ON_ClippingPlaneSurfaceUserData();
+    ON_ClippingPlaneSurface* pCPS = const_cast<ON_ClippingPlaneSurface*>(cps);
+    pCPS->AttachUserData(dimStyleData);
+  }
+  return dimStyleData;
+}
+
+
 ON_PlaneSurface::ON_PlaneSurface()
 {}
 
@@ -659,24 +733,58 @@ bool ON_PlaneSurface::CreatePlaneThroughBox(
   if (!plane.IsValid() || !bbox.IsValid())
     return false;
 
-  ON_Interval uext(ON_DBL_PINF, ON_DBL_NINF);
-  ON_Interval vext(ON_DBL_PINF, ON_DBL_NINF);
-  double t, u, v;
+  // At most 2 points per edge (both endpoints, when the edge lies in the plane).
+  ON_3dPoint hits[24];
+  int hit_count = 0;
+  double t;
   for (int i = 0; i < 12; i++)
   {
     ON_Line edge = bbox.Edge(i);
-    if (!ON_Intersect(edge, plane.plane_equation, &t)) continue;
+    if (!ON_Intersect(edge, plane.plane_equation, &t))
+    {
+      // Edge parallel to the plane. It contributes extents only when it lies
+      // in the plane; then the entire edge is part of the intersection. This
+      // is the only contact boxes degenerate in the plane normal direction
+      // have (e.g. the bounding box of a planar mesh intersected with the
+      // mesh's own plane, RH-80450), so without it the extents come up empty.
+      if (0.0 == plane.plane_equation.ValueAt(edge.from)
+        && 0.0 == plane.plane_equation.ValueAt(edge.to))
+      {
+        hits[hit_count++] = edge.from;
+        hits[hit_count++] = edge.to;
+      }
+      continue;
+    }
     if (t < 0.0 || t > 1.0) continue;
-    ON_3dPoint pt = edge.PointAt(t);
-    plane.ClosestPointTo(pt, &u, &v);
+    hits[hit_count++] = edge.PointAt(t);
+  }
+  if (hit_count < 1)
+  {
+    // Best effort for callers that ignore the return value; cannot fail for a
+    // valid plane and box. The return value stays false.
+    CreatePseudoInfinitePlane(plane, bbox, padding);
+    return false; // plane does not intersect the box
+  }
+
+  ON_Interval uext(ON_DBL_PINF, ON_DBL_NINF);
+  ON_Interval vext(ON_DBL_PINF, ON_DBL_NINF);
+  double u, v;
+  for (int i = 0; i < hit_count; i++)
+  {
+    plane.ClosestPointTo(hits[i], &u, &v);
     if (u < uext[0]) uext[0] = u;
     if (u > uext[1]) uext[1] = u;
     if (v < vext[0]) vext[0] = v;
     if (v > vext[1]) vext[1] = v;
   }
-  *this = plane;
   uext.Expand(padding * uext.Length() + padding);
   vext.Expand(padding * vext.Length() + padding);
+  if (!uext.IsIncreasing() || !vext.IsIncreasing())
+  {
+    CreatePseudoInfinitePlane(plane, bbox, padding); // best effort, see above
+    return false; // degenerate contact (point or line) and no padding to widen it
+  }
+  *this = plane;
   return SetExtents(0, uext, true) && SetExtents(1, vext, true);
 }
 
@@ -1705,7 +1813,10 @@ void ON_ClippingPlaneSurface::Dump( ON_TextLog& text_log ) const
 
 bool ON_ClippingPlaneSurface::Write( ON_BinaryArchive& file ) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  // 8 Dec 2025 S. Baer (RH-77206)
+  //  minor_version == 1 : add support for reading/writing DimStyle id
+  const int minor_version = 1;
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,minor_version);
   if (!rc)
     return false;
 
@@ -1721,7 +1832,11 @@ bool ON_ClippingPlaneSurface::Write( ON_BinaryArchive& file ) const
     if (!rc) break;
 
     rc = m_clipping_plane.Write(file);
-    if (rc) break;
+    if (!rc) break;
+
+    ON_UUID dimStyleId = DimensionStyleId();
+    rc = file.WriteUuid(dimStyleId);
+    if (!rc) break;
 
     break;
   }
@@ -1763,7 +1878,16 @@ bool ON_ClippingPlaneSurface::Read( ON_BinaryArchive& file )
     if (!rc) break;
 
     rc = m_clipping_plane.Read(file);
-    if (rc) break;
+    if (!rc) break;
+
+    if (minor_version >= 1)
+    {
+      ON_UUID dimStyleId;
+      rc = file.ReadUuid(dimStyleId);
+      if (!rc) break;
+
+      SetDimensionStyleId(dimStyleId);
+    }
 
     break;
   }
@@ -1780,5 +1904,22 @@ bool ON_ClippingPlaneSurface::Transform(const ON_Xform& xform)
   if (rc)
     rc = m_clipping_plane.m_plane.Transform(xform);
   return rc;
+}
+
+void ON_ClippingPlaneSurface::SetDimensionStyleId(ON_UUID styleId)
+{
+  ON_ClippingPlaneSurfaceUserData* dimStyleData = ON_ClippingPlaneSurfaceUserData::Get(this, true);
+  if (dimStyleData)
+    dimStyleData->m_dimstyle_id = styleId;
+}
+
+ON_UUID ON_ClippingPlaneSurface::DimensionStyleId() const
+{
+  ON_ClippingPlaneSurfaceUserData* dimStyleData = ON_ClippingPlaneSurfaceUserData::Get(this, false);
+  if (dimStyleData)
+  {
+    return dimStyleData->m_dimstyle_id;
+  }
+  return ON_nil_uuid;
 }
 

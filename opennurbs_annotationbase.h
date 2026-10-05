@@ -98,6 +98,33 @@ public:
     ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& text_contours
   ) const;
 
+  /*
+  Description:
+    Like GetAnnotationBoundingBox() for the text glyph box, but returns the
+    eight corners of the box in world space without collapsing them into a
+    world axis-aligned box. The corners stay oriented to the text plane so a
+    caller can compute a tight bounding box for an arbitrary frame (for
+    example a plane-aligned bounding box) without it being oversized for
+    tilted or skewed frames.
+  Parameters:
+    vp - [in]
+      nullptr or viewport where annotation object is displayed
+    dimstyle - [in]
+      &this->DimensionStyle(const ON_DimStyle& parent_dimstyle)
+    dimscale - [in]
+      annotation scale to apply
+    corners - [out]
+      The eight oriented corners of the text glyph box in world coordinates.
+  Returns:
+    True if the text glyph box is non-empty and corners[] is set.
+  */
+  bool GetTextGlyphBoxCorners(
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_3dPoint corners[8]
+  ) const;
+
 protected:
 
   /*
@@ -365,6 +392,13 @@ public:
     double scale
   );
 
+  void ScaleOverrideDimstyle(
+    const ON_DimStyle* parent_dimstyle,
+    double scale, bool only_overrides
+  );
+
+  bool AnyLengthFieldIsOverridden() const;
+
 protected:
   static bool Internal_IsOverrideDimStyleCandidate(
     const ON_DimStyle* override_style_candidate,
@@ -381,6 +415,7 @@ public:
   const ON_TextContent* Text() const;
   ON_TextContent* Text();
   void SetText(ON_TextContent*& text) const;
+  void SetText(const ON_TextRunArray& runs) const;
   void ClearText() const;
 
   // return angle in radians between text plane and object plane
@@ -577,6 +612,12 @@ public:
   double TextHeight(const ON_DimStyle* parent_style) const;
   void SetTextHeight(const ON_DimStyle* parent_style, double height);
 
+  bool UseKerning(const ON_DimStyle* parent_style) const;
+  void SetUseKerning(const ON_DimStyle* parent_style, bool enabled);
+
+  double LineSpaceScale(const ON_DimStyle* parent_style) const;
+  void SetLineSpaceScale(const ON_DimStyle* parent_style, double scale);
+
   // Scale factor for displayed distances
   double LengthFactor(const ON_DimStyle* parent_style) const;
   void SetLengthFactor(const ON_DimStyle* parent_style, double);
@@ -616,6 +657,16 @@ public:
   // Suppress second dimension extension line
   bool SuppressExtension2(const ON_DimStyle* parent_style) const;
   void SetSuppressExtension2(const ON_DimStyle* parent_style, bool b);
+
+  // Suppress the dimension line and arrowhead between the first
+  // extension line and the text.
+  bool SuppressDimLine1(const ON_DimStyle* parent_style) const;
+  void SetSuppressDimLine1(const ON_DimStyle* parent_style, bool b);
+
+  // Suppress the dimension line and arrowhead between the second
+  // extension line and the text.
+  bool SuppressDimLine2(const ON_DimStyle* parent_style) const;
+  void SetSuppressDimLine2(const ON_DimStyle* parent_style, bool b);
 
   // Extension of dimension line past extension lines
   double DimExtension(const ON_DimStyle* parent_style) const;
@@ -898,6 +949,8 @@ public:
   bool SetAnnotationUnderline(bool underline, const ON_DimStyle* dimstyle);
   bool SetAnnotationFacename(bool set_or_clear, const wchar_t* facename, const ON_DimStyle* parent_style);
   bool SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style);
+  bool SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style, bool keep_overrides);
+  bool SetAnnotationFont(const ON_Font* font, const ON_DimStyle* parent_style, bool keep_overrides, const ON_Font* old_font);
 
   static bool SetAnnotationTextFormat(ON_wString& rtf_in, const wchar_t* fmt_str_on, const wchar_t* fmt_str_off, bool set_on);
 

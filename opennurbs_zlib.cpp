@@ -1484,4 +1484,15 @@ bool ON_CompressedBuffer::CompressionEnd( struct ON_CompressedBufferHelper* help
   return rc;
 }
 
+// 11-Mar-2025 Dale Fugier
+// Added so unreferenced zlib functions are not discard by optimization
 
+int ON_Compress(Bytef* dest, uLongf* destLen, const Bytef *source, uLong sourceLen)
+{
+  return compress(dest, destLen, source, sourceLen);
+}
+
+uLong ON_CompressBound(uLong sourceLen)
+{
+  return compressBound(sourceLen);
+}

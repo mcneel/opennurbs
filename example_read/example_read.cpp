@@ -149,17 +149,13 @@ static int ReadDirectoryHelper(
 
     // read files in this directory
     ON_FileIterator file_it;
-    bool bFoundDirectory = false;
     for ( bool bHaveFileSystemItem = (file_it.Initialize( directory_name, file_name_filter ) && file_it.FirstItem());
           bHaveFileSystemItem;
           bHaveFileSystemItem = file_it.NextItem()
         )
     {
       if (file_it.CurrentItemIsDirectory())
-      {
-        bFoundDirectory = true;
         continue;
-      }
 
       if ( false == file_it.CurrentItemIsFile() )
         continue;      
@@ -179,7 +175,7 @@ static int ReadDirectoryHelper(
     }
 
     // read files in subdirectories
-    if ( bFoundDirectory && directory_depth < maximum_directory_depth )
+    if ( directory_depth < maximum_directory_depth )
     {
       ON_FileIterator dir_it;
       for ( bool bHaveFileSystemItem = (dir_it.Initialize( directory_name, nullptr ) && dir_it.FirstItem());

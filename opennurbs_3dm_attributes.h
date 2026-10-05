@@ -14,6 +14,8 @@
 #if !defined(OPENNURBS_3DM_ATTRIBUTES_INC_)
 #define OPENNURBS_3DM_ATTRIBUTES_INC_
 
+class ON_MeshModifiers;
+
 /*
 Description: 
   Top level OpenNURBS objects have geometry and attributes.  The
@@ -87,6 +89,29 @@ public:
     True if the object is part of an instance definition.
   */
   bool IsInstanceDefinitionObject() const;
+
+  // Returns true if the object "exists" in a certain viewport
+  bool IsActiveInViewport(const ON_UUID& viewportId) const;
+
+  // Returns true if the object "exists" in model space
+  bool IsActiveInModelSpace() const;
+  // Returns true if the object "exists" in all viewports
+  bool IsActiveInAllModelViewports() const;
+  // Specify that an object "exists" in all viewports
+  bool SetActiveInAllModelViewports();
+
+  // Get list of specific viewports set for this object's activity
+  const ON_UuidList& GetActiveInViewportOverrides(bool& active) const;
+  // Specify that an object "exists" only in a specified set of viewports
+  bool SetActiveInViewportOverrides(const ON_UuidList& viewportIds, bool active);
+  bool SetActiveInViewportOverrides(ON_UuidList&& viewportIds, bool active);
+
+  // Checks if the specified viewport has an activity override
+  bool HasActiveInViewportOverride(const ON_UUID& viewportId, bool& active) const;
+  // Adds the specified activity override to the specified viewport
+  bool AddActiveInViewportOverride(const ON_UUID& viewportId, bool active);
+  // Removes the specified activity override to the specified viewport
+  bool RemoveActiveInViewportOverride(const ON_UUID& viewportId, bool active);
 
   /*
   Returns:
@@ -379,6 +404,9 @@ public:
   ON::SectionAttributesSource SectionAttributesSource() const;
   void SetSectionAttributesSource(ON::SectionAttributesSource source);
 
+  int SectionStyleIndex() const;
+  void SetSectionStyleIndex(int index);
+  
   /*
   Description:
     Attributes can have optional custom section style associated with them.
@@ -433,9 +461,44 @@ public:
 #pragma region Hatch Specific Attributes
   ON_Color HatchBackgroundFillColor() const;
   void SetHatchBackgroundFillColor(const ON_Color& color);
+  ON_Color HatchBackgroundFillColor(bool print) const;
+  void SetHatchBackgroundFillColor(const ON_Color& color, bool print);
   bool HatchBoundaryVisible() const;
   void SetHatchBoundaryVisible(bool on);
+
+  // Description:
+  //   Hatch boundary color override. Default is unset color which means use
+  //   the standard attributes and layer colors to determine the boundary color
+  ON_Color HatchBoundaryColor(bool print) const;
+  void SetHatchBoundaryColor(const ON_Color& color, bool print);
+
+  // Description:
+  //   Source for the hatch boundary color. Determines whether the boundary
+  //   color is read from the layer, from the object's main attribute color,
+  //   inherited from the parent, or read from the per-item override color
+  //   stored via SetHatchBoundaryColor (color_custom). The 'print' argument
+  //   selects between the display source and the print/plot source,
+  //   mirroring HatchBoundaryColor(bool print).
+  ON::item_color_source HatchBoundaryColorSource(bool print) const;
+  void SetHatchBoundaryColorSource(ON::item_color_source source, bool print);
+
+  // Plot width of hatch boundary curves.
+  //   values less than -1 (-10 is default): plot weight is determined by the
+  //                                         m_plot_weight
+  //   -1: do not plot
+  //    0: use default weight defined by the print dialog
+  //    positive values are thicknesses in millimeters to print to
+  double HatchBoundaryPlotWeightMillimeters() const;
+  void SetHatchBoundaryPlotWeightMillimeters(double weight);
+
 #pragma endregion
+  
+  // Description:
+  //   Detail backgrounds are by default transparent. This setting allows
+  //   details to specify that they really want to be drawn with their display
+  //   mode background settings.
+  bool DetailBackgroundVisible() const;
+  void SetDetailBackgroundVisible(bool visible);
 
   ON::SectionLabelStyle ClippingPlaneLabelStyle() const;
   void SetClippingPlaneLabelStyle(ON::SectionLabelStyle style);
@@ -443,6 +506,9 @@ public:
   ON_Plane ObjectFrame(const ON_COMPONENT_INDEX& ci) const;
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Xform& wcs_to_ocs);
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Plane& plane);
+
+  void SetMarkupId(const ON_UUID& markupId);
+  const ON_UUID& MarkupId() const;
 
 private:
   bool m_bVisible = true;
@@ -464,6 +530,8 @@ private:
 private:
   void CopyHelper(const ON_3dmObjectAttributes& src);
   mutable class ON_3dmObjectAttributesPrivate* m_private = nullptr;
+
+  ON_3dmObjectAttributesPrivate& Private(); //Non-const - creates m_private if it is null.
 
 public:
   // group interface
@@ -518,6 +586,31 @@ public:
   // Removes object from all groups.
   void RemoveFromAllGroups();
 
+#if defined(OPENNURBS_TAG_WIP)
+  // tag interface
+
+  // Returns number of tags this object belongs to.
+  int TagCount() const;
+
+  // Returns TagCount() and puts a list of zero based tag indices into the array.
+  int GetTagList(ON_SimpleArray<int>& tag_list) const;
+  const int* TagList() const;
+
+  // Returns true if object is in the tag with the specified index.
+  bool IsInTag(int tag_index) const; // zero based tag index
+
+  // Adds object to the tag with specified index by appending index to tag list.
+  // If the object is already in the tag, nothing is changed.
+  void AddToTag(int tag_index) const; // zero based tag index
+
+  // Removes object from the tag with specified index.
+  // If the object is not in the tag, nothing is changed.
+  void RemoveFromTag(int tag_index) const; // zero based tag index
+
+  // Removes object from all tags.
+  void RemoveFromAllTags();
+#endif // OPENNURBS_TAG_WIP
+
   // Decals.
 
   // This method is deprecated in favor of the one below.
@@ -527,7 +620,8 @@ public:
   Description:
     Get an array of decals that are stored on this attributes object.
     Param array_out is first cleared and then filled with shared pointers to decals (if any).
-    Do not store or delete raw pointers from the array.
+    Do not store or delete raw pointers from the array. Each time this method is called, pointers
+    from the previous call might be invalidated.
   */
   void GetDecalArray(std::vector<std::shared_ptr<ON_Decal>>& array_out) const;
 
@@ -536,16 +630,16 @@ public:
 
   /*
   Description:
-    Add a new decal to this attributes object. The returned pointer points to an object
-    that is owned by the attributes. Do not store or delete it.
+    Add a new decal to this attributes object.
   */
-  const std::shared_ptr<ON_Decal> AddDecalEx(void);
+  const std::shared_ptr<ON_Decal> AddDecalEx(void); // Note const here is a mistake. [SDK_UNFREEZE]
 
   /*
   Description:
     Remove a decal from this attributes object. Returns true if successful, else false.
   */
-  bool RemoveDecal(ON_Decal& decal);
+  ON_DEPRECATED bool RemoveDecal(ON_Decal& decal);
+  bool RemoveDecal(ON_DECAL_CRC decal_crc);
 
   /*
   Description:
@@ -559,7 +653,24 @@ public:
   Description:
     Get the mesh modifiers that are stored on this attributes object.
   */
-  class ON_MeshModifiers& MeshModifiers(void) const;
+  const ON_MeshModifiers& MeshModifiers(void) const;
+
+  ON_MeshModifiers& MeshModifiers(void);
+
+  /* Used by UserDataChanged(). */
+  enum class UserDataType
+  {
+    Decals, // Decal user data was changed.
+    All,    // The user data was replaced wholesale and the caller does not know what changed.
+  };
+
+  /*
+  Description:
+    This method should be called to notify the object that some user data has been changed.
+    At the moment, this is only used by decals. Callers that replace the user data without
+    knowing what was in it should pass UserDataType::All.
+  */
+	void UserDataChanged(UserDataType type);
 
   // Display material references.
 

@@ -1319,4 +1319,12 @@ int ON_Intersect( const ON_Sphere& sphere0,
   return 2;
 }
 
+int ON_CurveMeshHit::CompareByT(const ON_CurveMeshHit* a, const ON_CurveMeshHit* b)
+{
+  if (!a || !b) return 0;
+  if (a->m_t[0] < b->m_t[0]) return -1;
+  if (a->m_t[0] > b->m_t[0]) return 1;
+  return 0;
+}
+
 

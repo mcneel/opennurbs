@@ -273,6 +273,7 @@ ON::point_style ON_NurbsSurface::CVStyle() const
   return m_is_rat ? ON::homogeneous_rational : ON::not_rational;
 }
 
+
 double ON_NurbsSurface::Weight( int i, int j ) const
 {
   return (m_cv && m_is_rat) ? m_cv[i*m_cv_stride[0] + j*m_cv_stride[1] + m_dim] : 1.0;
@@ -673,7 +674,14 @@ bool ON_NurbsSurface::IsValid( ON_TextLog* text_log ) const
           for (int k = 0; cvdim > k; ++k)
           {
             if (false == ON_CV_COORDINATE_IS_VALID(cv[k]))
-              return false;
+            {
+              if (text_log)
+              {
+                text_log->Print("ON_NurbsSurface.m_cv[%d, %d] = %g is not valid.\n", i, j, cv[k]);
+              }
+              rc = false;
+              break; // from dim-loop
+            }
           }
         }
       }
@@ -1338,6 +1346,8 @@ int ON_NurbsSurface::GetNurbForm(
   return 1;
 }
 
+#if !defined(OPENNURBS_PLUS)
+
 ON_Surface* ON_NurbsSurface::Offset(
       double offset_distance, 
       double tolerance, 
@@ -1348,6 +1358,8 @@ ON_Surface* ON_NurbsSurface::Offset(
   // may provide a working offset here.
   return nullptr;
 }
+
+#endif
 
 
 bool ON_NurbsSurface::IsPlanar(
@@ -1476,6 +1488,82 @@ ON_NurbsSurface::IsClosed( int dir ) const
     }
   }
   return bIsClosed;
+}
+
+bool
+ON_NurbsSurface::MakeClosed(int dir, double tolerance)
+{
+  ClampEnd(dir, 2);
+
+  int i;
+  int ids[2][2];
+  ids[0][dir] = 0;
+  ids[1][dir] = CVCount(dir)-1;
+  ON_4dPointArray M(CVCount(1 - dir));
+  for (i = 0; i < CVCount(1 - dir); ++i)
+  {
+    ids[0][1 - dir] = ids[1][1 - dir] = i;
+    ON_4dPoint P, Q;
+    GetCV(ids[0][0], ids[0][1], P);
+    GetCV(ids[1][0], ids[1][1], Q);
+
+    ON_3dPoint P3(P), Q3(Q);
+    if (P3.DistanceTo(Q3) > tolerance)
+      return false;
+
+    // average in 3-space, then apply the averaged weight
+    ON_4dPoint avg = 0.5 * (P3 + Q3);
+    double w = 0.5 * (P.w + Q.w);
+    avg.x *= w; avg.y *= w; avg.z *= w; avg.w = w;
+
+    M.Append(avg);
+  }
+
+  for (i = 0; i < CVCount(1 - dir); ++i)
+  {
+    ids[0][1 - dir] = ids[1][1 - dir] = i;
+    SetCV(ids[0][0], ids[0][1], M[i]);
+    SetCV(ids[1][0], ids[1][1], M[i]);
+  }
+
+  return true;
+}
+
+bool
+ON_NurbsSurface::IsClosable(
+  int dir,
+  double tolerance,
+  double min_abs_size,
+  double min_rel_size
+) const
+{
+
+  if (IsPeriodic(dir) || !IsClamped(dir))
+    return false;
+
+  if (IsClosed(dir))
+    return true;
+
+  int ncv = CVCount(1 - dir), order = Order(1 - dir);
+
+  ON_SimpleArray<double> gv(ncv, 0);
+  if (IsPeriodic(1 - dir))
+    gv.SetCount(ncv-order+1);
+  ON_GetGrevilleAbcissae(order, ncv, m_knot[1 - dir], IsPeriodic(1 - dir), gv);
+
+  bool closable{true};
+  for(int i = 0; closable && i < gv.Count(); ++i)
+  {
+    double t = gv[i];
+    ON_Curve* iso = IsoCurve(dir, t);
+    if (!iso->IsClosable(tolerance, min_abs_size, min_rel_size))
+    {
+      closable = false;
+    }
+    delete iso;
+  }
+
+  return closable;
 }
 
 
@@ -2712,7 +2800,8 @@ bool ON_NurbsSurface::ChangeDimension(
     const int cv_size = m_is_rat ? (desired_dimension + 1) : desired_dimension;
     int new_stride0 = old_stride0;
     int new_stride1 = old_stride1;
-    if ( cv_size > old_stride0 && cv_size > old_stride1 )
+    // 25-MAR-2025 MDvR: changed && to || in the line below
+    if ( cv_size > old_stride0 || cv_size > old_stride1 )
     {      
       new_stride0 = (old_stride0 <= old_stride1) ? cv_size : (cv_size*m_cv_count[1]);
       new_stride1 = (old_stride0 <= old_stride1) ? (cv_size*m_cv_count[0]) : cv_size;

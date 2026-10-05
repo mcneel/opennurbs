@@ -794,6 +794,9 @@ public:
   // this intersection can result in curves as well as hatches for the
   // closed curves generated
 
+  int SectionStyleIndex() const;
+  void SetSectionStyleIndex(int index);
+  
   /*
   Description:
     Layers can have optional custom section style associated with them.
@@ -824,6 +827,49 @@ public:
   */
   bool PerViewportIsVisibleInNewDetails() const;
   void SetPerViewportIsVisibleInNewDetails(bool bVisible);
+
+  /*
+  Description:
+    Gets the short description of the layer.
+  Returns:
+    string - The short desciption or ON_wString::EmptyString.
+  */
+  ON_wString Description() const;
+
+  /*
+  Description:
+    Sets the short description of the layer.
+  Parameters:
+    description - [in] the short description, can be nullptr.
+  */
+  void SetDescription(const wchar_t* description);
+
+  /*
+  Description:
+    Styles of layers.
+  */
+  enum class Style : unsigned char
+  {
+    // Unset, or normal, layer.
+    Unset = 0,
+    // Markup layer.
+    Markup = 1,
+  };
+  static ON_Layer::Style LayerStyleFromUnsigned(unsigned int layer_style_as_unsigned);
+
+  /*
+  Description:
+    Gets the layer style.
+  */
+  ON_Layer::Style LayerStyle() const;
+
+  /*
+  Description:
+    Sets the layer style.
+  Parameters:
+    layer_style - [in] the layer style.
+  */
+  void SetLayerStyle(ON_Layer::Style layer_style);
 
 private:
   // The following information may not be accurate and is subject

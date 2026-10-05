@@ -1330,7 +1330,7 @@ ON__UINT32 ON_Sun::DataCRC(ON__UINT32 crc) const
   return crc;
 }
 
-#define SUN_ASSERT(x) ON_ASSERT(x); if (!(x)) return false;
+#define SUN_ASSERT__RETURN_FALSE_ON_FAIL(x) ON_ASSERT(x); if (!(x)) return false;
 
 bool ON_Sun::IsValid(void) const
 {
@@ -1339,32 +1339,32 @@ bool ON_Sun::IsValid(void) const
   double hours = 0.0;
   int year = 0, month = 0, day = 0;
   LocalDateTime(year, month, day, hours);
-  SUN_ASSERT(year >= MinYear());
-  SUN_ASSERT(year <= MaxYear());
-  SUN_ASSERT(month >= 1);
-  SUN_ASSERT(month <= 12);
-  SUN_ASSERT(day >= 1);
-  SUN_ASSERT(day <= ON_SunEngine::DaysInMonth(month, year));
-  SUN_ASSERT(hours >= 0.0);
-  SUN_ASSERT(hours <= 24.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(year >= MinYear());
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(year <= MaxYear());
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(month >= 1);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(month <= 12);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(day >= 1);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(day <= ON_SunEngine::DaysInMonth(month, year));
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(hours >= 0.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(hours <= 24.0);
 
-  SUN_ASSERT(Azimuth() >= 0.0);
-  SUN_ASSERT(Azimuth() <= 360.0)
-  SUN_ASSERT(Altitude() >= -90.0);
-  SUN_ASSERT(Altitude() <= +90.0);
-  SUN_ASSERT(North() >= 0.0);
-  SUN_ASSERT(North() <= 360.0)
-  SUN_ASSERT(Latitude() >= -90.0);
-  SUN_ASSERT(Latitude() <= +90.0);
-  SUN_ASSERT(Longitude() >= -180.0);
-  SUN_ASSERT(Longitude() <= +180.0);
-  SUN_ASSERT(TimeZone() >= -12.0);
-  SUN_ASSERT(TimeZone() <= +13.0);
-  SUN_ASSERT(DaylightSavingMinutes() >= 0);
-  SUN_ASSERT(DaylightSavingMinutes() <= 120);
-  SUN_ASSERT(Intensity() >= 0.0);
-  SUN_ASSERT(ShadowIntensity() >= 0.0);
-  SUN_ASSERT(ShadowIntensity() <= 1.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Azimuth() >= 0.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Azimuth() <= 360.0)
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Altitude() >= -90.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Altitude() <= +90.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(North() >= 0.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(North() <= 360.0)
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Latitude() >= -90.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Latitude() <= +90.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Longitude() >= -180.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Longitude() <= +180.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(TimeZone() >= -12.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(TimeZone() <= +13.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(DaylightSavingMinutes() >= 0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(DaylightSavingMinutes() <= 120);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(Intensity() >= 0.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(ShadowIntensity() >= 0.0);
+  SUN_ASSERT__RETURN_FALSE_ON_FAIL(ShadowIntensity() <= 1.0);
 
   return true;
 }

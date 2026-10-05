@@ -462,6 +462,44 @@ private:
 ON_DECL
 int ON_ConvexHull2d(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_SimpleArray<ON_2dPoint>& Hull, ON_SimpleArray< int>* PntInd = nullptr);
 
+
+
+
+class ON_CLASS ON_Rectangle
+{
+public:
+  ON_Rectangle()
+    : extents{0,0}
+    , area(0)
+  {
+
+  }
+  ON_Plane p;
+  double extents[2];
+  double area;
+};
+
+/*
+  Compute the minimum bounding rectangle of 2d points
+  Parameters:
+   Pnt [in]  - array of points
+   mbr [out] - the resulting coordinates of the mininum bounding rectangle
+   pntsAreConvexHull [in] - set this to true if the input points are the result of ON_ConvexHull. If false
+                            ON_ConvexHull will be run on the input points first.
+  Returns:
+   2 - points are a 2d convex hull and the mbr was calculated successfully
+   1 - points are a line segment and the mbr is collapsed in one direction
+   0 - points are all coincident and the mbr is collapsed in both directions
+   <0 error
+
+  Notes:
+   This is a O(n^2) algorithm that works well on modest number of points.
+   An O(n) algorithm - `Rotating Calipers` - exists as well but needs implementing.
+*/
+
+ON_DECL
+int ON_MinimumBoundingRectangle(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_Rectangle& rect, bool pntsAreConvexHull = false);
+
 #endif
 
 

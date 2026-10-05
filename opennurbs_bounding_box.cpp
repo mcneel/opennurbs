@@ -1924,6 +1924,13 @@ bool ON_BoundingBox::Expand(ON_3dVector delta)
   return IsValid();
 }
 
+bool ON_BoundingBox::Expand(double margin)
+{
+  for (int i = 0; i < 3; ++i) m_min[i] -= margin;
+  for (int i = 0; i < 3; ++i) m_max[i] += margin;
+  return IsValid();
+}
+
 bool ON_BoundingBox::Shrink(ON_3dVector delta)
 {
   m_min += delta;
@@ -1937,21 +1944,26 @@ bool ON_BoundingBox::Shrink(ON_3dVector delta)
 
 bool ON_BoundingBox::IsDisjoint( const ON_BoundingBox& other_bbox ) const
 {
-  if ( m_min.x > m_max.x || other_bbox.m_min.x > other_bbox.m_max.x 
-       || m_min.x > other_bbox.m_max.x 
-       || m_max.x < other_bbox.m_min.x )
+  return IsDisjoint(other_bbox, 0.0);
+}
+
+bool ON_BoundingBox::IsDisjoint( const ON_BoundingBox& other_bbox, double tolerance ) const
+{
+  if ( m_min.x > m_max.x || other_bbox.m_min.x > other_bbox.m_max.x
+       || m_min.x > other_bbox.m_max.x + tolerance
+       || m_max.x + tolerance < other_bbox.m_min.x )
   {
     return true;
   }
-  if ( m_min.y > m_max.y || other_bbox.m_min.y > other_bbox.m_max.y 
-       || m_min.y > other_bbox.m_max.y 
-       || m_max.y < other_bbox.m_min.y )
+  if ( m_min.y > m_max.y || other_bbox.m_min.y > other_bbox.m_max.y
+       || m_min.y > other_bbox.m_max.y + tolerance
+       || m_max.y + tolerance < other_bbox.m_min.y )
   {
     return true;
   }
-  if ( m_min.z > m_max.z || other_bbox.m_min.z > other_bbox.m_max.z 
-       || m_min.z > other_bbox.m_max.z 
-       || m_max.z < other_bbox.m_min.z )
+  if ( m_min.z > m_max.z || other_bbox.m_min.z > other_bbox.m_max.z
+       || m_min.z > other_bbox.m_max.z + tolerance
+       || m_max.z + tolerance < other_bbox.m_min.z )
   {
     return true;
   }

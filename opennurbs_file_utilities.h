@@ -1605,6 +1605,10 @@ private:
   ON_FileReference::Status m_full_path_status = ON_FileReference::Status::Unknown;
 
 private:
+  // Matthew 2026: The implementation of this function has been very wrong since ~2015 and had
+  // some undefined behavior allowing a new compiler to optimize it very agressively in release mode
+  // and crash. I fixed the undefined behavior, but it still doesn't do what it says on the tin.
+  // If you see this in 2036, please write a working version.
   ON_FileReference::FindFilePreference Internal_FindFile(
     const wchar_t* base_path,
     bool bBasePathIncludesFileName,

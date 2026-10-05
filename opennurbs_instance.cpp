@@ -55,7 +55,7 @@ public:
 
   bool IsNotEmptyImpl() const
   {
-    return HasLayerInformationImpl();
+    return (HasLayerInformationImpl() || m_nested_idef_settings.Count() > 0);
   }
 
   bool HasLayerInformationImpl() const
@@ -105,6 +105,28 @@ public:
     void* context,
     const ON_Layer*(*ModelLayerFromIdFunc)(void* context, const ON_UUID&)
     );
+
+  const ON_Layer* FindReferenceFileLayerImpl(ON_UUID model_layer_id) const;
+
+  /*
+  See ON_ReferencedComponentSettings::ClearNestedLinkedIdefSettings comment.
+  */
+  void ClearNestedLinkedIdefSettingsImpl();
+
+  /*
+  See ON_ReferencedComponentSettings::SetNestedLinkedIdefSettings comment.
+  */
+  void SetNestedLinkedIdefSettingsImpl(
+    ON_UUID nested_idef_id,
+    const ON_ReferencedComponentSettings& nested_idef_settings
+  );
+
+  /*
+  See ON_ReferencedComponentSettings::NestedLinkedIdefSettings comment.
+  */
+  const ON_ReferencedComponentSettings* NestedLinkedIdefSettingsImpl(
+    ON_UUID nested_idef_id
+  ) const;
 
 private:
   /*
@@ -229,6 +251,28 @@ private:
   ON_UuidPairList2 m_runtime_layer_id_map;
 
 private:
+  // Nested linked instance definitions are not saved in the archive of
+  // the model that references the top level linked file (they are
+  // reconstructed by reading the linked files), so any layer settings the
+  // model applies to layers from a nested linked file must be persisted
+  // here, on the immediate parent's settings, which are saved.
+  // The id is the nested instance definition's id as read from the
+  // instance definition table record in the immediate linked file.
+  // The settings pointers are owned by this class.
+  //
+  // This list survives the layer table read/write cycles that destroy
+  // m_layer_model_copy[] (see InternalDestroyListsHelper) because it is
+  // consumed later, when the nested instance definitions are created
+  // while reading the immediate linked file's instance definition table.
+  class NestedIdefSettings
+  {
+  public:
+    ON_UUID m_nested_idef_id;
+    ON_ReferencedComponentSettings* m_settings; // owned
+  };
+  ON_SimpleArray<NestedIdefSettings> m_nested_idef_settings;
+
+private:
   static void InternalDestroyLayerArray(
     ON_SimpleArray<ON_Layer*>& a
   )
@@ -276,6 +320,18 @@ private:
 
     m_runtime_layer_id_map = src.m_runtime_layer_id_map;
     m_runtime_layer_id_map.ImproveSearchSpeed();
+
+    // Deep copy nested linked idef settings
+    m_nested_idef_settings.Reserve(src.m_nested_idef_settings.Count());
+    for (int i = 0; i < src.m_nested_idef_settings.Count(); i++)
+    {
+      const NestedIdefSettings& src_nested = src.m_nested_idef_settings[i];
+      if (ON_UuidIsNil(src_nested.m_nested_idef_id) || nullptr == src_nested.m_settings)
+        continue;
+      NestedIdefSettings& nested = m_nested_idef_settings.AppendNew();
+      nested.m_nested_idef_id = src_nested.m_nested_idef_id;
+      nested.m_settings = new ON_ReferencedComponentSettings(*src_nested.m_settings);
+    }
   }
 
 private:
@@ -297,6 +353,10 @@ private:
     }
 
     InternalDestroyListsHelper();
+
+    // RH-88248: nested linked idef settings are deliberately not destroyed
+    // by InternalDestroyListsHelper() - see the m_nested_idef_settings comment.
+    ClearNestedLinkedIdefSettingsImpl();
   }
 };
 
@@ -480,6 +540,38 @@ void ON_ReferencedComponentSettings::BeforeLinkedDefinitionWrite(
     m_impl->BeforeLinkedDefinitionWriteImpl(model_manifest,destination_archive_manifest,model_to_archive_map,linked_definition_parent_layer,context,ModelLayerFromIdFunc);
 }
 
+const ON_Layer* ON_ReferencedComponentSettings::FindReferenceFileLayer(ON_UUID model_layer_id) const
+{
+  const ON_Layer* reference_file_layer = nullptr;
+  if (m_impl)
+    reference_file_layer = m_impl->FindReferenceFileLayerImpl(model_layer_id);
+  return reference_file_layer;
+}
+
+void ON_ReferencedComponentSettings::ClearNestedLinkedIdefSettings()
+{
+  if (nullptr != m_impl)
+    m_impl->ClearNestedLinkedIdefSettingsImpl();
+}
+
+void ON_ReferencedComponentSettings::SetNestedLinkedIdefSettings(
+  ON_UUID nested_idef_id,
+  const ON_ReferencedComponentSettings& nested_idef_settings
+)
+{
+  if (ON_UuidIsNil(nested_idef_id))
+    return;
+  if (nested_idef_settings.IsEmpty())
+    return;
+  Impl(true)->SetNestedLinkedIdefSettingsImpl(nested_idef_id, nested_idef_settings);
+}
+
+const ON_ReferencedComponentSettings* ON_ReferencedComponentSettings::NestedLinkedIdefSettings(
+  ON_UUID nested_idef_id
+) const
+{
+  return (nullptr != m_impl) ? m_impl->NestedLinkedIdefSettingsImpl(nested_idef_id) : nullptr;
+}
 
 void ON_ReferencedComponentSettingsImpl::AfterReferenceLayerTableReadImpl(
   const class ON_ComponentManifest& source_archive_manifest,
@@ -635,6 +727,94 @@ void ON_ReferencedComponentSettingsImpl::BeforeLinkedDefinitionWriteImpl(
   {
     InternalDestroyHelper();
   }
+}
+
+const ON_Layer* ON_ReferencedComponentSettingsImpl::FindReferenceFileLayerImpl(ON_UUID model_layer_id) const
+{
+  if (ON_nil_uuid == model_layer_id)
+    return nullptr;
+
+  // m_runtime_layer_id_map maps reference file layer ids (id1) to model layer
+  // ids (id2). ON_UuidPairList2 can only be searched by id1, so to find the
+  // reference file layer for a given model layer we walk the reference file
+  // copies and compare their mapped model layer id against model_layer_id.
+  // Note: when a reference file layer id collides with an existing model layer
+  // id on import, the model layer is assigned a new id (id1 != id2), so a
+  // direct FindId1(model_layer_id) lookup misses those remapped layers.
+  const int count = m_layer_referenced_file_copy.Count();
+  for (int i = 0; i < count; i++)
+  {
+    const ON_Layer* layer_referenced_file_copy = m_layer_referenced_file_copy[i];
+    if (nullptr == layer_referenced_file_copy)
+      continue;
+    ON_UUID mapped_model_layer_id = ON_nil_uuid;
+    if (m_runtime_layer_id_map.FindId1(layer_referenced_file_copy->Id(), &mapped_model_layer_id)
+      && 0 == ON_UuidCompare(mapped_model_layer_id, model_layer_id))
+    {
+      return layer_referenced_file_copy;
+    }
+  }
+  return nullptr;
+}
+
+void ON_ReferencedComponentSettingsImpl::ClearNestedLinkedIdefSettingsImpl()
+{
+  const int count = m_nested_idef_settings.Count();
+  for (int i = 0; i < count; i++)
+  {
+    ON_ReferencedComponentSettings* settings = m_nested_idef_settings[i].m_settings;
+    if (nullptr == settings)
+      continue;
+    m_nested_idef_settings[i].m_settings = nullptr;
+    delete settings;
+  }
+  m_nested_idef_settings.SetCount(0);
+  m_nested_idef_settings.Destroy();
+}
+
+void ON_ReferencedComponentSettingsImpl::SetNestedLinkedIdefSettingsImpl(
+  ON_UUID nested_idef_id,
+  const ON_ReferencedComponentSettings& nested_idef_settings
+)
+{
+  if (ON_UuidIsNil(nested_idef_id))
+    return;
+  if (nested_idef_settings.IsEmpty())
+    return;
+
+  const int count = m_nested_idef_settings.Count();
+  for (int i = 0; i < count; i++)
+  {
+    NestedIdefSettings& nested = m_nested_idef_settings[i];
+    if (0 == ON_UuidCompare(nested.m_nested_idef_id, nested_idef_id))
+    {
+      if (nullptr != nested.m_settings)
+        *nested.m_settings = nested_idef_settings;
+      else
+        nested.m_settings = new ON_ReferencedComponentSettings(nested_idef_settings);
+      return;
+    }
+  }
+
+  NestedIdefSettings& nested = m_nested_idef_settings.AppendNew();
+  nested.m_nested_idef_id = nested_idef_id;
+  nested.m_settings = new ON_ReferencedComponentSettings(nested_idef_settings);
+}
+
+const ON_ReferencedComponentSettings* ON_ReferencedComponentSettingsImpl::NestedLinkedIdefSettingsImpl(
+  ON_UUID nested_idef_id
+) const
+{
+  if (ON_UuidIsNil(nested_idef_id))
+    return nullptr;
+  const int count = m_nested_idef_settings.Count();
+  for (int i = 0; i < count; i++)
+  {
+    const NestedIdefSettings& nested = m_nested_idef_settings[i];
+    if (0 == ON_UuidCompare(nested.m_nested_idef_id, nested_idef_id))
+      return nested.m_settings;
+  }
+  return nullptr;
 }
 
 bool ON_ReferencedComponentSettingsImpl::Internal_UpdateBool(
@@ -1953,10 +2133,45 @@ bool ON_ReferencedComponentSettingsImpl::ReadImpl(
     
     // end of 1.0 chunk
 
-    
+    // 1.1 addition - nested linked idef settings.
+    // See the m_nested_idef_settings comment for details.
+    if (minor_version >= 1)
+    {
+      unsigned int nested_count = 0;
+      if (!binary_archive.ReadInt(&nested_count))
+        break;
+      bool bNestedOk = true;
+      for (unsigned int i = 0; i < nested_count && bNestedOk; i++)
+      {
+        ON_UUID nested_idef_id = ON_nil_uuid;
+        if (!binary_archive.ReadUuid(nested_idef_id))
+        {
+          bNestedOk = false;
+          break;
+        }
+        ON_ReferencedComponentSettings* nested_settings = new ON_ReferencedComponentSettings();
+        if (!nested_settings->Read(binary_archive))
+        {
+          delete nested_settings;
+          bNestedOk = false;
+          break;
+        }
+        if (ON_UuidIsNil(nested_idef_id) || nested_settings->IsEmpty())
+        {
+          delete nested_settings;
+          continue;
+        }
+        NestedIdefSettings& nested = m_nested_idef_settings.AppendNew();
+        nested.m_nested_idef_id = nested_idef_id;
+        nested.m_settings = nested_settings;
+      }
+      if (!bNestedOk)
+        break;
+    }
+
     // max_minor_version = minor_version number used in Write();
     // This suppresses partially read chunk warnings when old code reads new files.
-    const int max_minor_version = 0;
+    const int max_minor_version = 1;
     bSuppressPartiallyReadChunkWarning = (minor_version > max_minor_version);
     rc = true;
     break;
@@ -1988,7 +2203,7 @@ bool ON_ReferencedComponentSettingsImpl::WriteImpl(
   ) const
 {
   int major_version = 1;
-  int minor_version = 0;
+  int minor_version = 1; // Added nested linked idef settings (RH-88248)
   if (!binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,major_version,minor_version))
     return false;
 
@@ -2020,6 +2235,38 @@ bool ON_ReferencedComponentSettingsImpl::WriteImpl(
     if ( bHaveParentLayer )
     {
       if ( !binary_archive.WriteObject(m_layer_table_parent_layer) )
+        break;
+    }
+
+    // end of 1.0 chunk
+
+    // 1.1 addition
+    // Settings for nested linked instance definitions, which are not
+    // themselves saved in this archive. See the m_nested_idef_settings
+    // comment for details.
+    {
+      const unsigned int nested_capacity = m_nested_idef_settings.UnsignedCount();
+      unsigned int nested_count = 0;
+      for (unsigned int i = 0; i < nested_capacity; i++)
+      {
+        const NestedIdefSettings& nested = m_nested_idef_settings[i];
+        if (ON_UuidIsNil(nested.m_nested_idef_id) || nullptr == nested.m_settings)
+          continue;
+        nested_count++;
+      }
+      if (!binary_archive.WriteInt(nested_count))
+        break;
+      bool bNestedOk = true;
+      for (unsigned int i = 0; i < nested_capacity && bNestedOk; i++)
+      {
+        const NestedIdefSettings& nested = m_nested_idef_settings[i];
+        if (ON_UuidIsNil(nested.m_nested_idef_id) || nullptr == nested.m_settings)
+          continue;
+        bNestedOk
+          = binary_archive.WriteUuid(nested.m_nested_idef_id)
+          && nested.m_settings->Write(binary_archive);
+      }
+      if (!bNestedOk)
         break;
     }
 

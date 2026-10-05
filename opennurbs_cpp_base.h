@@ -18,6 +18,8 @@
 
 // basic C++ declarations
 
+#include <bitset>
+#include <ostream>
 
 #if !defined(UUID_DEFINED) && !defined(GUID_DEFINED)
 // basic C++ declarations
@@ -101,6 +103,150 @@ private:
   std::chrono::high_resolution_clock::time_point m_start; // most recent Start() time.
   std::chrono::high_resolution_clock::time_point m_stop; // most recent Stop() time.
 #pragma ON_PRAGMA_WARNING_POP
+};
+
+// templated handler for scoped enums that represent bit flags
+template <typename T>
+class ON_BitFlags
+{
+  
+  // BitFlags taken from https://web.archive.org/web/20250118231723/https://voithos.io/articles/type-safe-enum-class-bit-flags/
+  // this code has MIT license. Renamed to ON_BitFlags and extended to return ::All() and ::None()
+  using UnderlyingT = std::underlying_type_t<T>;
+
+public:
+  constexpr ON_BitFlags() : flags_(static_cast<UnderlyingT>(0)) {}
+  constexpr explicit ON_BitFlags(T v) : flags_(ToUnderlying(v)) {}
+  constexpr ON_BitFlags(std::initializer_list<T> vs) : ON_BitFlags()
+  {
+    for (T v : vs)
+    {
+      flags_ |= ToUnderlying(v);
+    }
+  }
+
+  static constexpr ON_BitFlags None()
+  {
+    return ON_BitFlags(static_cast<UnderlyingT>(0));
+  }
+
+  static constexpr ON_BitFlags All()
+  {
+    return ~None();
+  }
+
+  constexpr bool Any() const
+  {
+    return flags_ != None();
+  }
+
+  // Checks if a specific flag is set.
+  constexpr bool IsSet(T v) const
+  {
+    return (flags_ & ToUnderlying(v)) == ToUnderlying(v);
+  }
+  // Sets a single flag value.
+  constexpr void Set(T v) { flags_ |= ToUnderlying(v); }
+  // Unsets a single flag value.
+  constexpr void Unset(T v) { flags_ &= ~ToUnderlying(v); }
+  // Clears all flag values.
+  constexpr void Clear() { flags_ = None(); }
+
+  constexpr operator bool() const
+  {
+    return flags_ != static_cast<UnderlyingT>(0);
+  }
+
+  friend constexpr ON_BitFlags operator|(ON_BitFlags lhs, T rhs)
+  {
+    return ON_BitFlags(lhs.flags_ | ToUnderlying(rhs));
+  }
+  friend constexpr ON_BitFlags operator|(ON_BitFlags lhs, ON_BitFlags rhs)
+  {
+    return ON_BitFlags(lhs.flags_ | rhs.flags_);
+  }
+  friend constexpr ON_BitFlags operator&(ON_BitFlags lhs, T rhs)
+  {
+    return ON_BitFlags(lhs.flags_ & ToUnderlying(rhs));
+  }
+  friend constexpr ON_BitFlags operator&(ON_BitFlags lhs, ON_BitFlags rhs)
+  {
+    return ON_BitFlags(lhs.flags_ & rhs.flags_);
+  }
+  friend constexpr ON_BitFlags operator^(ON_BitFlags lhs, T rhs)
+  {
+    return ON_BitFlags(lhs.flags_ ^ ToUnderlying(rhs));
+  }
+  friend constexpr ON_BitFlags operator^(ON_BitFlags lhs, ON_BitFlags rhs)
+  {
+    return ON_BitFlags(lhs.flags_ ^ rhs.flags_);
+  }
+
+  friend constexpr ON_BitFlags& operator|=(ON_BitFlags& lhs, T rhs)
+  {
+    lhs.flags_ |= ToUnderlying(rhs);
+    return lhs;
+  }
+  friend constexpr ON_BitFlags& operator|=(ON_BitFlags& lhs, ON_BitFlags rhs)
+  {
+    lhs.flags_ |= rhs.flags_;
+    return lhs;
+  }
+  friend constexpr ON_BitFlags& operator&=(ON_BitFlags& lhs, T rhs)
+  {
+    lhs.flags_ &= ToUnderlying(rhs);
+    return lhs;
+  }
+  friend constexpr ON_BitFlags& operator&=(ON_BitFlags& lhs, ON_BitFlags rhs)
+  {
+    lhs.flags_ &= rhs.flags_;
+    return lhs;
+  }
+  friend constexpr ON_BitFlags& operator^=(ON_BitFlags& lhs, T rhs)
+  {
+    lhs.flags_ ^= ToUnderlying(rhs);
+    return lhs;
+  }
+  friend constexpr ON_BitFlags& operator^=(ON_BitFlags& lhs, ON_BitFlags rhs)
+  {
+    lhs.flags_ ^= rhs.flags_;
+    return lhs;
+  }
+
+  friend constexpr ON_BitFlags operator~(const ON_BitFlags& bf)
+  {
+    return ON_BitFlags(~bf.flags_);
+  }
+
+  friend constexpr bool operator==(const ON_BitFlags& lhs, const ON_BitFlags& rhs)
+  {
+    return lhs.flags_ == rhs.flags_;
+  }
+  friend constexpr bool operator!=(const ON_BitFlags& lhs, const ON_BitFlags& rhs)
+  {
+    return lhs.flags_ != rhs.flags_;
+  }
+
+  // Stream output operator for debugging.
+  friend std::ostream& operator<<(std::ostream& os, const ON_BitFlags& bf)
+  {
+    // Write out a bitset representation.
+    os << std::bitset<sizeof(UnderlyingT) * 8>(bf.flags_);
+    return os;
+  }
+
+  // Construct BitFlags from raw values.
+  static constexpr ON_BitFlags FromRaw(UnderlyingT flags)
+  {
+    return ON_BitFlags(flags);
+  }
+  // Retrieve the raw underlying flags.
+  constexpr UnderlyingT ToRaw() const { return flags_; }
+
+private:
+  constexpr explicit ON_BitFlags(UnderlyingT flags) : flags_(flags) {}
+  static constexpr UnderlyingT ToUnderlying(T v) { return static_cast<UnderlyingT>(v); }
+  UnderlyingT flags_;
 };
 
 

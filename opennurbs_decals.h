@@ -105,6 +105,8 @@ public:
   // Construct this decal as a copy of another decal.
   ON_Decal(const ON_Decal& other);
 
+  ON_Decal(ON_DecalCollection& coll, const ON_Decal& other); // For internal use only.
+
   virtual ~ON_Decal();
 
   virtual const ON_Decal& operator = (const ON_Decal& d);
@@ -129,11 +131,22 @@ public:
     Both     =  2, // Project forward and backward.
   };
 
-  // Returns the decal texture's instance id.
-  ON_UUID TextureInstanceId(void) const;
+  // Call this method to set the decal to be a 'cache-only' decal. This inhibits writing to the XML node in the
+  // setters and only updates the cache. It is intended as an optimization for applications that don't need XML
+  // at all, such as decals used by the display. XML will only be used once by each getter to initialize the cache.
+  void SetCacheOnly(void);
 
-  // Sets the decal texture's instance id.
-  void SetTextureInstanceId(const ON_UUID& id);
+  // This method is deprecated in favor of AssetInstanceId().
+  ON_DEPRECATED ON_UUID TextureInstanceId(void) const;
+
+  // Returns the decal's asset instance id. This is the instance id of a material or texture.
+  ON_UUID AssetInstanceId(void) const;
+
+  // This method is deprecated in favor of SetAssetInstanceId().
+  ON_DEPRECATED void SetTextureInstanceId(const ON_UUID& id);
+
+  // Sets the decal's asset instance id. This is the instance id of a material or texture.
+  void SetAssetInstanceId(const ON_UUID& id);
 
   // Returns the decal's mapping.
   Mappings Mapping(void) const;
@@ -220,18 +233,28 @@ public:
   // the decal mapping is Planar, Spherical or Cylindrical. Otherwise returns false.
   bool GetTextureMapping(ON_TextureMapping& tm) const;
 
-  // Returns the Decal CRC of the decal.
+  // Returns the CRC of the decal, if it's valid. An invalid decal (i.e., a decal whose underlying
+  // XML is invalid) will return ON_NIL_DECAL_CRC.
   ON_DECAL_CRC DecalCRC(void) const;
 
-  // Returns the Data CRC of the decal. This is not necessarily the same as the decal CRC
-  // because it allows a starting current remainder.
+  // Returns the Data CRC of the decal. This is not necessarily the same as the decal CRC because
+  // it allows a starting current remainder. An invalid decal (i.e., a decal whose underlying
+  // XML is invalid) will return the incoming 'current_remainder' value.
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
   // Returns true if the decal is visible in the rendering.
   bool IsVisible(void) const;
 
   // Sets whether or not the decal is visible in the rendering.
-  void SetIsVisible(bool visible);
+  void SetIsVisible(bool b);
+
+  // Returns true if the decal is temporary. This is used to let the client know that the decal's
+  // data is expected to change often. This can let the client know that it is unnecessary to cache
+  // the data for example.
+  bool IsTemporary(void) const;
+
+  // Sets whether or not the decal is temporary.
+  void SetIsTemporary(bool b);
 
   // Returns the unique id of the decal. This is a run-time id that is not persistent and is
   // only used for looking decals up in the model.
@@ -243,20 +266,118 @@ public:
   // Set the custom XML for the specified render engine. This XML should have the following format:
   //
   //  <parameters>
-  //    <param-name type="type"></param-name>
+  //    <param-name type="type">VALUE_HERE</param-name>
   //    ...
   //  </parameters>
   //
   // Therefore 'custom_param_node' must have a tag name of "<parameters>". The easiest way to produce
-  // such XML is by using ON_XMLParameters.
+  // such XML is by using ON_XMLParameters. NOTE: Do NOT use ON_XMLParametersV8 for this XML.
   bool SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& custom_param_node);
+
+  // Checks if the decal has color on a given point with a given face normal. If it has, then uvOut is set
+  // to the (u,v) of the point that was hit, and the function returns true. IMPORTANT: If the mapping type
+  // is UV, 'point' must be the texture coordinates of the desired point on the object carrying the decal.
+  bool HitTest(const ON_3dPoint& point, const ON_3dVector& normal, ON_2dPoint& uvOut) const;
+
+  // Applies a transformation to the decal. This can be used to move it around, scale it, or rotate it.
+  void ApplyTransformation(const ON_Xform& xform);
 
 public: // For internal use only.
   void AppendCustomXML(const ON_XMLNode&);
+  void GetSavedVectorLengths(double&, double&) const;
+  void SetSavedVectorLengths(double, double);
+  ON_3dVector GetOriginOffset(void) const;
+  void GetEntireCustomXML(ON_XMLNode& custom_xml) const;
 
 private:
   class CImpl;
-  CImpl* _impl;
+  CImpl* _private;
+};
+
+/* ON_DecalObjectAttributesWrapper
+
+  Decal properties for an object are stored as XML in user data on the object's attributes.
+  This class is a wrapper around these attributes which provides decal functionality. The attributes passed
+  to the constructor of the wrapper can be either const or non-const. If the attributes are const, the wrapper
+  is set as read-only and any methods that attempt to modify the attributes or one of its decals will fail.
+
+*/
+class ON_CLASS ON_DecalObjectAttributesWrapper final
+{
+public:
+  // Construct for read/write access to the decal information on the attributes.
+  ON_DecalObjectAttributesWrapper(ON_3dmObjectAttributes& a);
+
+  // Construct for read-only access to the decal information on the attributes.
+  ON_DecalObjectAttributesWrapper(const ON_3dmObjectAttributes& a);
+
+  // Results for AddDecal().
+  enum class AddDecalResults
+  {
+    Success,   // The new decal was added successfully.
+    Failure,   // The new decal could not be added.
+    Duplicate, // The new decal was not added because it had the same CRC as an existing decal.
+    ReadOnly,  // The new decal was not added because the attributes being wrapped are read-only.
+  };
+
+  // Adds a copy of a decal to the attributes, if possible. Returns Success if successful or an error code
+  // if the attributes does not contain such a decal, the wrapper was constructed with a const attributes object,
+  // or the added decal has the same CRC as an existing decal.
+  AddDecalResults AddDecal(const ON_Decal& decal);
+
+  // Updates a decal on the attributes. The decal given by 'decal_crc' is found and updated (if possible)
+  // to be the same as 'decal'. Returns true if successful, false if the attributes does not contain such
+  // a decal or the wrapper was constructed with a const attributes object.
+  bool UpdateDecal(ON_DECAL_CRC decal_crc, const ON_Decal& decal);
+
+  // Removes the decal given by 'decal_crc' from the attributes, if possible. Returns true if successful, false
+  // if the attributes does not contain such a decal or the wrapper was constructed with a const attributes object.
+  bool RemoveDecal(ON_DECAL_CRC decal_crc);
+
+  // Removes all decals from the attributes, if possible. Returns true if successful, false if the wrapper was
+  // constructed with a const attributes object. */
+  bool RemoveAllDecals(void);
+
+  // Move the decal given by 'decal_crc' after the decal given by 'decal_crc_after'. If 'decal_crc_after' is nil,
+  // move the decal to the top. By 'move', we mean move the decal's XML node position within the parent XML node.
+  // Returns true if successful, false if the wrapper was constructed with a const attributes object.
+  bool MoveDecalAfter(ON_DECAL_CRC decal_crc, ON_DECAL_CRC decal_crc_after);
+
+  // Removes the value given by 'param_name' from the XML of the decal given by 'decal_crc'. Returns true if
+  // successful, false if the parameter does not exist or the wrapper was constructed with a const attributes
+  // object. */
+  bool RemoveValue(ON_DECAL_CRC decal_crc, const wchar_t* param_name);
+
+  // Gets the decal CRCs of all the decals stored on the attributes.
+  void GetDecalCRCs(ON_SimpleArray<ON_DECAL_CRC>& crcs) const;
+
+  // Creates a new const decal for the decal CRC given by 'decal_crc'.
+  // Returns a pointer to the decal if successful, null if the attributes does not contain such a decal.
+  const ON_Decal* NewDecalForRead(ON_DECAL_CRC decal_crc) const;
+
+  // Creates a new non-const decal for the decal CRC given by 'decal_crc'. Returns a pointer to the decal if
+  // successful, null if the attributes does not contain such a decal or the wrapper was constructed with a
+  // const attributes object.
+  ON_Decal* NewDecalForWrite(ON_DECAL_CRC decal_crc);
+
+  // Returns the number of decals stored on the attributes user data.
+  int CountDecalsOnAttributesUserData(void) const;
+
+  // Removes any decals that have duplicate CRCs. Returns a pointer to the decal if successful, null if the
+  // attributes does not contain such a decal or the wrapper was constructed with a const attributes object.
+  bool CullIdenticalDecals(void);
+
+  static const ON_XMLNode* FastDecalsNode(const ON_3dmObjectAttributes& attr);
+
+private:
+  friend class ON_DecalCollection;
+  ON_XMLNode* DecalsNodeForWrite(void);
+  const ON_XMLNode* DecalsNodeForRead(void) const;
+  static       ON_XMLNode* FindDecalNodeByCRC(      ON_XMLNode& decals_node, ON_DECAL_CRC decal_crc);
+  static const ON_XMLNode* FindDecalNodeByCRC(const ON_XMLNode& decals_node, ON_DECAL_CRC decal_crc);
+
+private:
+  class ON_DecalObjectAttributesWrapperPrivate* _private;
 };
 
 // For internal use only.

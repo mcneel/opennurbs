@@ -16,7 +16,7 @@
 
 // If you are using opennurbs as a statically linked library, then
 // you may make calls to the same zlib that opennurbs uses.  This
-// zlib is compiled with z_ symbol projectection.  All the necessary
+// zlib is compiled with z_ symbol protection.  All the necessary
 // header files are included by opennurbs.h.
 // 
 // If you are using opennurbs as a DLL or writing a Rhino plug-in
@@ -44,5 +44,11 @@ ON_BEGIN_EXTERNC
 voidpf zcalloc(voidpf, unsigned, unsigned);
 void  zcfree(voidpf, voidpf);
 ON_END_EXTERNC
+
+ON_DECL
+int ON_Compress(Bytef* dest, uLongf* destLen, const Bytef *source, uLong sourceLen);
+
+ON_DECL
+uLong ON_CompressBound(uLong sourceLen);
 
 #endif

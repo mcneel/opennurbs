@@ -164,25 +164,28 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
     #define ON_RDK_DECAL_PROJECTION_BOTH      L"both"
     #define ON_RDK_DECAL_PROJECTION_NONE      L"none"
 
-    #define ON_RDK_DECAL_MAP_TO_INSIDE_ON     L"map-to-inside-on"
-    #define ON_RDK_DECAL_TRANSPARENCY         L"transparency"
-    #define ON_RDK_DECAL_TEXTURE_INSTANCE     L"texture-instance"
-    #define ON_RDK_DECAL_HEIGHT               L"height"
-    #define ON_RDK_DECAL_ORIGIN               L"origin"
-    #define ON_RDK_DECAL_RADIUS               L"radius"
-    #define ON_RDK_DECAL_HORZ_SWEEP_STA       L"latitude-start"
-    #define ON_RDK_DECAL_HORZ_SWEEP_END       L"latitude-stop"
-    #define ON_RDK_DECAL_VERT_SWEEP_STA       L"longitude-start"
-    #define ON_RDK_DECAL_VERT_SWEEP_END       L"longitude-stop"
-    #define ON_RDK_DECAL_VECTOR_UP            L"vector-up"
-    #define ON_RDK_DECAL_VECTOR_ACROSS        L"vector-across"
-    #define ON_RDK_DECAL_MIN_U                L"min-u"
-    #define ON_RDK_DECAL_MIN_V                L"min-v"
-    #define ON_RDK_DECAL_MAX_U                L"max-u"
-    #define ON_RDK_DECAL_MAX_V                L"max-v"
-    #define ON_RDK_DECAL_IS_TEMPORARY         L"is-temporary"
-    #define ON_RDK_DECAL_IS_VISIBLE           L"is-visible"
-    #define ON_RDK_DECAL_INSTANCE_ID          L"instance-id"
+    #define ON_RDK_DECAL_MAP_TO_INSIDE_ON           L"map-to-inside-on"
+    #define ON_RDK_DECAL_TRANSPARENCY               L"transparency"
+    #define ON_RDK_DECAL_TEXTURE_INSTANCE           L"texture-instance" // Deprecated
+    #define ON_RDK_DECAL_ASSET_INSTANCE             L"texture-instance" // Can't change because of old documents.
+    #define ON_RDK_DECAL_HEIGHT                     L"height"
+    #define ON_RDK_DECAL_ORIGIN                     L"origin"
+    #define ON_RDK_DECAL_RADIUS                     L"radius"
+    #define ON_RDK_DECAL_HORZ_SWEEP_STA             L"latitude-start"
+    #define ON_RDK_DECAL_HORZ_SWEEP_END             L"latitude-stop"
+    #define ON_RDK_DECAL_VERT_SWEEP_STA             L"longitude-start"
+    #define ON_RDK_DECAL_VERT_SWEEP_END             L"longitude-stop"
+    #define ON_RDK_DECAL_VECTOR_UP                  L"vector-up"
+    #define ON_RDK_DECAL_VECTOR_ACROSS              L"vector-across"
+    #define ON_RDK_DECAL_SAVED_VECTOR_LENGTH_UP     L"saved-length-up"
+    #define ON_RDK_DECAL_SAVED_VECTOR_LENGTH_ACROSS L"saved-length-across"
+    #define ON_RDK_DECAL_MIN_U                      L"min-u"
+    #define ON_RDK_DECAL_MIN_V                      L"min-v"
+    #define ON_RDK_DECAL_MAX_U                      L"max-u"
+    #define ON_RDK_DECAL_MAX_V                      L"max-v"
+    #define ON_RDK_DECAL_IS_TEMPORARY               L"is-temporary" // Deprecated; do not use.
+    #define ON_RDK_DECAL_IS_VISIBLE                 L"is-visible"
+    #define ON_RDK_DECAL_INSTANCE_ID                L"instance-id"
 
 // Render Content.
 
@@ -545,10 +548,13 @@ public: // Hierarchy.
   // Returns true if successful, false on failure.
   virtual bool RecurseChildren(ON_XMLRecurseChildrenCallback callback, void* data) const;
 
-public: // Change data.
-  // Adds a node as a child of this node. Takes ownership of node.
-  // Returns a pointer to node for convenience.
+public:
+  // Attaches a node as a child of this node. Takes ownership of the node.
+  // Returns a pointer to the node for convenience.
   virtual ON_XMLNode* AttachChildNode(ON_XMLNode* node);
+
+  // Same as AttachChildNode(), added for naming consistency.
+  ON_XMLNode* AttachChild(ON_XMLNode* node);
 
   // Attaches a property directly to the node. Takes ownership of the property.
   // Any existing property with the same name is first deleted.
@@ -571,7 +577,7 @@ public: // Change data.
   // Returns true if successful, else false.
   virtual bool RemoveProperty(const wchar_t* prop_name);
 
-  // Removes the child node and passes ownership to the caller.
+  // Detaches the child node and passes ownership to the caller.
   // Returns the detached node or null on failure.
   virtual ON_XMLNode* DetachChild(ON_XMLNode& child);
 
@@ -594,7 +600,7 @@ public: // Serialization.
   static constexpr ON__UINT32 ReadError = 0xFFFFFFFF; // Indicates ReadFromStream() failure.
   virtual ON__UINT32 ReadFromStream(const wchar_t* buf, bool warnings_as_errors=false, bool validate_tags=true);
 
-  virtual void* LastReadBufferPointer(void) const;
+  ON_DEPRECATED_MSG("This was always unsafe - and slow.  Deprecated and will be removed.") virtual void* LastReadBufferPointer(void) const;
 
   // This function is called on the top-most node during the reading process.
   virtual void OnNodeReadFromStream(const ON_XMLNode* node) const;
@@ -843,7 +849,7 @@ private:
   friend class ON_XMLParametersIteratorPrivate;
 };
 
-class ON_CLASS ON_XMLParametersV8 : public ON_XMLParameters
+class ON_CLASS ON_XMLParametersV8 : public ON_XMLParameters // Only used for Render Content.
 {
 public:
   ON_XMLParametersV8(ON_XMLNode& node);
@@ -935,6 +941,7 @@ private:
 private:
   ON_XMLRootNode _root;
   const ValueSets _vs;
+  // For non-Rhino models (from IO plugins) the value is set to INT_MAX
   const int _major_version;
   void* _reserved;
 };

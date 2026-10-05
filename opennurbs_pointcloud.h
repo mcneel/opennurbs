@@ -250,6 +250,20 @@ public:
   int RemoveRange(int count, const int* indices);
 
 
+  /*
+  Description:
+    Splits the pointcloud into two parts, or returns false.
+  Parameters:
+    plane - [in] The splitting plane.
+    above - [out] Above plane points.
+    below - [out] Below plane points.
+  Returns:
+    True if the pointcloud was split, false otherwise.
+    If the pointcloud is not partitioned by plane, the method returns false.
+  */
+  bool Split(const ON_Plane& plane, ON_PointCloud& above, ON_PointCloud& below) const;
+
+
   /////////////////////////////////////////////////////////////////
   // Implementation
   ON_3dPointArray m_P;

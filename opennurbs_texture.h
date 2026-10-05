@@ -371,6 +371,8 @@ public:
     pbr_opacity_texture               = 3U,
     pbr_bump_texture                  = 2U,
 
+    blend_amount_texture = 31U, // value = mix/blend amount for blend_texture
+
     // emap_texture is OBSOLETE - set m_mapping_channel_id = ON_MappingChannel::emap_mapping
     emap_texture = 86U // spherical environment mapping.
   };

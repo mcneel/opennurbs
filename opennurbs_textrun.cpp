@@ -20,6 +20,18 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+class ON_TextRunPrivate
+{
+public:
+  double m_linespace_scale = 1.0;
+  int m_list_depth = 1;
+  bool m_ordered_list = false;
+  int m_list_item_number = 0;
+  // Multiplier applied to m_run_text_height by ON_TextContent::Internal_SetRunTextHeight
+  // so the per-run scale survives the post-parse blanket reset.
+  double m_height_scale_factor = 1.0;
+};
+
 class ON_TextRunPool : public ON_FixedSizePool
 {
 public:
@@ -178,6 +190,28 @@ void ON_TextRunArray::SetTextHeight(double height)
     if (nullptr == run)
       continue;
     run->SetTextHeight(height);
+  }
+}
+
+void ON_TextRunArray::SetApplyKerning(bool applyKerning)
+{
+  for (int ri = 0; ri < Count(); ri++)
+  {
+    ON_TextRun* run = m_a[ri];
+    if (nullptr == run)
+      continue;
+    run->SetApplyKerning(applyKerning);
+  }
+}
+
+void ON_TextRunArray::SetLineSpaceScale(double scale)
+{
+  for (int ri = 0; ri < Count(); ri++)
+  {
+    ON_TextRun* run = m_a[ri];
+    if (nullptr == run)
+      continue;
+    run->SetLineSpaceScale(scale);
   }
 }
 
@@ -471,6 +505,11 @@ void ON_TextRun::Internal_Destroy()
     delete m_stacked_text;
     m_stacked_text = nullptr;
   }
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
 }
 
 void ON_TextRun::Internal_CopyFrom(const ON_TextRun& src)
@@ -506,6 +545,15 @@ void ON_TextRun::Internal_CopyFrom(const ON_TextRun& src)
   m_left_margin  = src.m_left_margin;
   m_right_margin = src.m_right_margin;
   m_line_index   = src.m_line_index;
+  m_apply_kerning = src.m_apply_kerning;
+  
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
+  if (src.m_private)
+    m_private = new ON_TextRunPrivate(*src.m_private);
 }
 
 ON_TextRun& ON_TextRun::operator=(const ON_TextRun& src)
@@ -653,6 +701,14 @@ bool ON_TextRun::IsValid() const
       return RunIsInvalid();
     break;
   }
+  case RunType::kTab:
+  case RunType::kListBegin:
+  case RunType::kListEnd:
+  case RunType::kListItemBegin:
+  case RunType::kListItemEnd:
+  {
+    break;
+  }
   default:
     return RunIsInvalid();
   }
@@ -744,6 +800,26 @@ void ON_TextRun::SetStacked(Stacked stacked)
 void ON_TextRun::SetStackedOff()
 {
   SetStacked(Stacked::kNone);
+}
+
+bool ON_TextRun::IsSuperscript() const
+{
+  return m_text_stacked == ON_TextRun::Stacked::kTop;
+}
+
+bool ON_TextRun::IsSubscript() const
+{
+  return m_text_stacked == ON_TextRun::Stacked::kBottom;
+}
+
+void ON_TextRun::SetSuperscript()
+{
+  SetStacked(Stacked::kTop);
+}
+
+void ON_TextRun::SetSubscript()
+{
+  SetStacked(Stacked::kBottom);
 }
 
 double ON_TextRun::TextHeight() const
@@ -858,6 +934,168 @@ void ON_TextRun::SetAdvance(ON_2dVector advance)
   }
 }
 
+bool ON_TextRun::ApplyKerning() const
+{
+  return m_apply_kerning;
+}
+
+void ON_TextRun::SetApplyKerning(bool applyKerning)
+{
+  if (m_apply_kerning != applyKerning)
+  {
+    Internal_ContentChanged();
+    m_apply_kerning = applyKerning;
+  }
+}
+
+double ON_TextRun::LineSpaceScale() const
+{
+  return m_private ? m_private->m_linespace_scale : 1.0;
+}
+void ON_TextRun::SetLineSpaceScale(double scale)
+{
+  if (fabs(scale - LineSpaceScale()) < ON_EPSILON)
+    return;
+
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_linespace_scale = scale;
+}
+
+double ON_TextRun::HeightScaleFactor() const
+{
+  return m_private ? m_private->m_height_scale_factor : 1.0;
+}
+void ON_TextRun::SetHeightScaleFactor(double factor)
+{
+  if (!(factor > 0.0) || !(factor <= 10.0))
+    return;
+  if (fabs(factor - HeightScaleFactor()) < ON_EPSILON)
+    return;
+
+  Internal_ContentChanged();
+  if (nullptr == m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_height_scale_factor = factor;
+}
+
+bool ON_TextRun::IsListDepthRelevant() const
+{
+  return Type() == RunType::kListItemBegin;
+}
+int ON_TextRun::ListDepth() const
+{
+  if (!IsListDepthRelevant())
+    return -1;
+  return m_private ? m_private->m_list_depth : 1;
+}
+void ON_TextRun::SetListDepth(int depth)
+{
+  if (!IsListDepthRelevant() || depth < 1)
+    return;
+  
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_list_depth = depth;
+}
+
+int ON_TextRun::ListItemNumber() const
+{
+  //if (!IsListDepthRelevant())
+  //  return -1;
+  return m_private ? m_private->m_list_item_number : 0;
+}
+void ON_TextRun::SetListItemNumber(int itemNumber)
+{
+  //if (!IsListDepthRelevant() || depth < 1)
+  //  return;
+  
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_list_item_number = itemNumber;
+}
+
+bool ON_TextRun::IsListOrdered() const
+{
+  return m_private ? m_private->m_ordered_list : false;
+}
+void ON_TextRun::SetIsListOrdered(bool ordered)
+{
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_ordered_list = ordered;
+}
+
+bool ON_TextRun::GetListItemPrefixString(wchar_t* buf, size_t buf_count) const
+{
+  if (nullptr == buf || buf_count < 32)
+    return false;
+  buf[0] = L'\0';
+
+  if (Type() != ON_TextRun::RunType::kListItemBegin)
+    return false;
+
+  const int list_depth = ListDepth();
+  if (IsListOrdered())
+  {
+    // Numbered list: integers at depth 1/4/7..., lowercase letters at depth 2/5/8...,
+    // lowercase roman numerals at depth 3/6/9...
+    const int item_number = ListItemNumber();
+    const int depth_style = ((list_depth - 1) % 3 + 3) % 3;
+    if (depth_style == 0)
+    {
+      swprintf(buf, buf_count, L"%d.", item_number);
+    }
+    else if (depth_style == 1)
+    {
+      // %lc / %ls (not %c / %s) so wchar_t arguments are interpreted
+      // consistently on POSIX, where the wide-format %c/%s match char.
+      const wchar_t letter = (wchar_t)(L'a' + (((item_number - 1) % 26 + 26) % 26));
+      swprintf(buf, buf_count, L"%lc.", letter);
+    }
+    else
+    {
+      static const wchar_t* const romans[] = {
+        L"i", L"ii", L"iii", L"iv", L"v", L"vi", L"vii", L"viii", L"ix", L"x",
+        L"xi", L"xii", L"xiii", L"xiv", L"xv", L"xvi", L"xvii", L"xviii", L"xix", L"xx"
+      };
+      const int roman_index = (((item_number - 1) % 20) + 20) % 20;
+      swprintf(buf, buf_count, L"%ls.", romans[roman_index]);
+    }
+  }
+  else
+  {
+    // Unordered list: bullet character cycles by (list_depth % 3).
+    const int mod = ((list_depth % 3) + 3) % 3;
+    const wchar_t* bullet_string = (mod == 1) ? L"\x2022" : (mod == 2 ? L"\x25E6" : L"\x25AA");
+    swprintf(buf, buf_count, L"%ls", bullet_string);
+  }
+  return true;
+}
+
+double ON_TextRun::MeasureListItemPrefixWidth() const
+{
+  if (Type() != ON_TextRun::RunType::kListItemBegin)
+    return 0.0;
+  const ON_Font* font = Font();
+  if (nullptr == font)
+    return 0.0;
+
+  wchar_t prefix[32] = {0};
+  if (!GetListItemPrefixString(prefix, 32) || prefix[0] == L'\0')
+    return 0.0;
+
+  ON_TextBox text_box;
+  const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(prefix, font, false, 1.0, text_box);
+  if (line_count <= 0 || !text_box.IsSet())
+    return 0.0;
+
+  return (double)text_box.m_advance.i * HeightScale(font);
+}
 
 ON_SHA1_Hash ON_TextRun::TextRunContentHash() const
 {
@@ -904,6 +1142,9 @@ ON_SHA1_Hash ON_TextRun::TextRunContentHash(
     sha1.AccumulateUnsigned8(static_cast<unsigned char>(m_direction));
     if ( m_bbox.IsValid() )
       sha1.AccumulateBoundingBox(m_bbox);
+    sha1.AccumulateBool(m_apply_kerning);
+    sha1.AccumulateDouble(LineSpaceScale());
+    sha1.AccumulateInteger64(ListDepth());
 
     if( bIsStacked )
     {
@@ -1010,6 +1251,11 @@ const ON__UINT32* ON_TextRun::UnicodeString() const
   return m_codepoints;
 }
 
+bool ON_TextRun::TextStringContains(const wchar_t* sub_str) const
+{
+  const wchar_t* ptr_str = TextString();
+  return nullptr != ptr_str && nullptr != sub_str && wcsstr(ptr_str, sub_str);
+}
 
 // count doesn't include terminating 0, but a terminating 0 is added
 void ON_TextRun::SetUnicodeString(size_t count, const ON__UINT32* cp)
@@ -1046,6 +1292,25 @@ void ON_TextRun::SetUnicodeString(ON__UINT32*& dest, size_t count, const ON__UIN
     memcpy(dest, cp, count*sizeof(ON__UINT32));
     dest[count] = 0; // add terminating zero
   }
+}
+
+// Distance from `linewidth` to the next tab stop on a column with regular
+// `tab_interval` spacing. Mirror of the helper in opennurbs_text.cpp that
+// MeasureTextRunArray uses at layout time. Defined locally here so the wrap
+// path can use the same formula without exposing the layout-side helper
+// across translation units.
+static double Internal_WrapAdvanceDistToNextTabStop(double linewidth, double tab_interval)
+{
+  if (linewidth < 0.0 || tab_interval <= 0.0)
+    return 0.0;
+  double prev = 0.0;
+  double next = tab_interval;
+  while (next <= linewidth)
+  {
+    prev = next;
+    next += tab_interval;
+  }
+  return tab_interval - (linewidth - prev);
 }
 
 // 2026-02-10 - kike@mcneel.com : See RH-91129
@@ -1135,6 +1400,69 @@ private:
     {
       ON_ERROR("WrapTextRun: Linewidth < 0.");
       linewidth = 0.0;
+    }
+
+    // Tab runs have no glyph advance: their effective width is the distance
+    // from the current `linewidth` to the next tab stop, computed at layout
+    // time by MeasureTextRunArray (opennurbs_text.cpp ~line 2282). Without
+    // accounting for that here, the wrapper would treat tabs as zero-width
+    // and let a line "fit" that the layout-time tab snap will then push
+    // past `wrapwidth`.
+    // We mirror MeasureTextRunArray's per-run tab_interval formula using
+    // *this* tab run's own font/height. Single-font lines: exact match
+    // with layout. Mixed-font lines: this can underestimate, because
+    // MeasureTextRunArray takes max-of-runs across the array. A few mixed-
+    // font corner cases will still slip through; option (a) in the
+    // investigation doc plumbs the array-wide value as a follow-up.
+    if (text_run.Type() == ON_TextRun::RunType::kTab)
+    {
+      double tab_interval = 0.0;
+      if (nullptr != font)
+      {
+        const ON_FontMetrics& fm = font->FontMetrics();
+        int upm = fm.UPM();
+        int aoc = fm.AscentOfCapital();
+        if (upm > 0 && aoc > 0)
+          tab_interval = 3.0 * (double)upm * text_run.TextHeight() / (double)aoc;
+      }
+      if (tab_interval <= 0.0)
+        tab_interval = 3.0 * text_run.TextHeight(); // matches MeasureTextRunArray's fallback
+
+      const double tab_adv = Internal_WrapAdvanceDistToNextTabStop(linewidth, tab_interval);
+
+      if (linewidth + tab_adv > wrapwidth && linewidth > 0.0)
+      {
+        // Break before this tab. Emit a soft return, then recurse so the
+        // tab gets placed on a fresh line starting at linewidth=0. Layout
+        // will recompute the real advance there (= tab_interval).
+        ON_TextRun* lfrun = ON_TextRun::GetManagedTextRun();
+        if (nullptr != lfrun)
+        {
+          lfrun->SetFont(font);
+          lfrun->SetType(ON_TextRun::RunType::kSoftreturn);
+          lfrun->SetTextHeight(text_run.TextHeight());
+          newruns.AppendRun(lfrun);
+          const double linefeedheight = font->FontMetrics().LineSpace() * height_scale;
+          linewidth = 0.0;
+          y_offset -= linefeedheight;
+          return 1 + WrapTextRun(call_count + 1, start_char_offset, wrapwidth, y_offset, linewidth);
+        }
+        return 0;
+      }
+
+      // Tab fits on the current line. Pass it through and update linewidth.
+      // We deliberately don't SetAdvance here -- MeasureTextRunArray will
+      // recompute and store the authoritative advance during layout. This
+      // keeps mixed-font cases consistent with array-wide tab_interval.
+      ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();
+      if (nullptr != newrun)
+      {
+        *newrun = text_run;
+        newruns.AppendRun(newrun);
+        linewidth += tab_adv;
+        return 1;
+      }
+      return 0;
     }
 
     wchar_t* temp_display_str = (wchar_t*)onmalloc((wcscount + 1) * sizeof(wchar_t));

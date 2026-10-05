@@ -32,7 +32,8 @@ ON__UINT32 ON_Hash32TableItem::Hash32FromId(
   const ON_UUID& id
   )
 {
-  return ON_CRC32(0, sizeof(ON_UUID), &id);
+  const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&id.Data1);
+  return d[0];
 }
 
 ON__UINT32 ON_Hash32TableItem::HashTableSerialNumber() const
@@ -129,37 +130,60 @@ void ON_Hash32Table::Internal_AdjustTableCapacity(
   ON__UINT32 item_count
   )
 {
-  const ON__UINT32 max_capacity = 256 * 1024;
-  const ON__UINT32 target_list_length = 8;
-  if (m_hash_table_capacity < max_capacity && item_count/target_list_length >= m_hash_table_capacity)
-  {
-    ON__UINT32 hash_table_capacity = m_hash_table_capacity;
-    if (hash_table_capacity < 64)
-      hash_table_capacity = 64;
-    while (hash_table_capacity < max_capacity && item_count/target_list_length > hash_table_capacity)
-      hash_table_capacity *= 2;
+  //Use used to be a maximum capacity - not anymore.  That basically sets a limit on model size.
 
-    size_t sizeof_hash_table = hash_table_capacity*sizeof(m_hash_table[0]);
+  //This was 8, but since we now ramp up fast, I'm increasing this.
+  constexpr size_t target_list_length = 16;
+
+  if (item_count > m_max_items)
+  {
+    //Ideally we want this to be called as little as possible, so we need to ramp up the capacity fast.
+    auto hash_table_capacity = m_hash_table_capacity;
+
+    if (hash_table_capacity < 64)
+    {
+      hash_table_capacity = 64;
+    }
+
+    const auto minimum_size = item_count / (double)target_list_length;
+
+    //This works out how big the table should be.
+    while (hash_table_capacity < minimum_size)
+    {
+      //Originally, this was doubling.  Now we go fast.
+      hash_table_capacity *= 8;
+    }
+
+    const size_t sizeof_hash_table = hash_table_capacity*sizeof(m_hash_table[0]);
+
     ON_Hash32TableItem** hash_table = (ON_Hash32TableItem**)onmalloc(sizeof_hash_table);
     memset(hash_table,0,sizeof_hash_table);
+
     if (m_item_count > 0)
     {
-      for (ON__UINT32 i = 0; i < m_hash_table_capacity; i++)
+      for (size_t i = 0; i < m_hash_table_capacity; i++)
       {
         ON_Hash32TableItem* item = m_hash_table[i];
+
         while (nullptr != item)
         {
           ON_Hash32TableItem* next = item->m_internal_next;
-          const ON__UINT32 j = item->m_internal_hash32 % hash_table_capacity;
+
+          const size_t j = item->m_internal_hash32 % hash_table_capacity;
+
           item->m_internal_next = hash_table[j];
           hash_table[j] = item;
+
           item = next;
         }
       }
+
       onfree(m_hash_table);
     }
+
     m_hash_table = hash_table;
     m_hash_table_capacity = hash_table_capacity;
+    m_max_items = m_hash_table_capacity * target_list_length;
   }
 }
 

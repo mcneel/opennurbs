@@ -40,6 +40,7 @@ public:
   ON_Circle& operator=(const ON_Circle&) = default;
 
   static const ON_Circle UnitCircle; // unit circle in the xy plane
+  static const ON_Circle UnsetCircle; // invalid circle with ON_Plane::Unset and ON_UNSET_VALUE radius;
 
   // Creates a circle in the plane with center at
   // plane.origin.

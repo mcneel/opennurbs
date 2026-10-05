@@ -1177,7 +1177,8 @@ private:
     const ON_UUID& id
     )
   {
-    return ON_CRC32(0, sizeof(ON_UUID), &id);
+    const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&id.Data1);
+    return d[0];
   }
 
   ON_ManifestHash32TableItemFixedSizePool& m_fsp;
@@ -1397,7 +1398,8 @@ ON__UINT32 ON_ManifestMapItem::SourceIdHash32(
   const ON_UUID& source_component_id
   )
 {
-  return ON_CRC32(0, sizeof(ON_UUID), &source_component_id);
+  const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&source_component_id.Data1);
+  return d[0];
 }
 
 ON__UINT32 ON_ManifestMapItem::SourceIndexHash32(
@@ -3720,7 +3722,14 @@ const ON_wString ON_ComponentManifestImpl::UnusedName(
         }
         break;
       }
-      name_hash = ON_NameHash::Create(ON_nil_uuid, unused_component_name);
+      // The in-use test below has to hash the candidate the same way the manifest hashed the
+      // names it stores, so it must use this component type's case sensitivity. Omitting
+      // bIgnoreCase here picked the overload that hardcodes bIgnoreCase = true, which is right
+      // for every component type except ON_ModelComponent::Type::Group - the only type for which
+      // UniqueNameIgnoresCase() is false. For groups the candidate was hashed case-insensitively
+      // while the stored group names were hashed case-sensitively, so NameInUse() never matched
+      // and this function handed back names that were already taken. See RH-82891.
+      name_hash = ON_NameHash::Create(ON_nil_uuid, unused_component_name, bIgnoreCase);
       if ( hash_table.NameInUse(component_type, name_hash, bIgnoreParentId) )
         continue;
       if ( m_system_name_hash_table.NameInUse(component_type, name_hash, bIgnoreParentId) )

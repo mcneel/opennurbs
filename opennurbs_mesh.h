@@ -158,14 +158,20 @@ public:
   enum : unsigned int
   {
     /// <summary>
-    /// When the SubD display density is adaptive (default), AdaptiveMeshQuadMaximum
-    /// specifies the approximate number of display mesh quads to permit before
-    /// reducing the SubD display mesh density. 
-    /// Approximate display mesh quad count = subd.FaceCount()*(4^subd_display_density).
-    /// This enum value may change from release to release as rendering technology improves.
-    /// Make sure your code works for values between 1024 and 134217728. 
+    /// When the SubD display density is adaptive, AdaptiveMeshQuadMaximum
+    /// specifies the approximate maximum number of display mesh quads
+    /// that will be used to render a SubD.
+    /// 
+    /// This enum value will change from release to release as rendering technology improves.
+    /// The code must work for values between 1024 and 134217728. 
+    /// 
+    /// 2025 May 21 RH-86272 - increased from 512000 to 2048000
+    /// so large SubDs have smoother looking display meshes.
+    /// For ordinary sized SubS, the approximate display mesh quad count
+    /// is subd.FaceCount()*(4^D), where D = (adaptive_display_density + (bHasSharpEdges ? 1 : 0).
+    /// For large SubDs, D is reduced as much until subd.FaceCount()*(4^D) &lt= AdaptiveMeshQuadMaximum.
     /// </summary>
-    AdaptiveDisplayMeshQuadMaximum = 512000
+    AdaptiveDisplayMeshQuadMaximum = 2048000
   };
 
 public:
@@ -197,22 +203,66 @@ public:
   // SubD display density = adaptive ON_SubDDisplayParameters::DefaultDensity
   static const ON_SubDDisplayParameters Default;
 
-  /*
-  Parameters:
-    adaptive_subd_display_density - [in]
-      A value <= ON_SubDDisplayParameters::MaximumDensity.
-      When in doubt, pass ON_SubDDisplayParameters::DefaultDensity.
-      Invalid input values are treated as ON_SubDDisplayParameters::DefaultDensity.
-    subd_face_count - [in]
-      Number of SubD faces. 
-      When subd_face_count = 0, adaptive_subd_display_density is returned.
-  Returns:
-    The absolute SubD display density for SubD with subd_face_count faces.
-    The absolute SubD display density is <= adaptive_subd_display_density and <= ON_SubDDisplayParameters::MaximumDensity.
-  */
+  
+  /// <summary>
+  /// DEPRECATED - DO NOT USE
+  /// BEST: Call ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubD().
+  /// BETTER: Call ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDProperties().
+  /// </summary>
+  ON_DEPRECATED_MSG("Use ON_SubDDisplayParameters::AbsoluteDisplayDensityFromSubDProperties()")
   static unsigned int AbsoluteDisplayDensityFromSubDFaceCount(
     unsigned adaptive_subd_display_density,
     unsigned subd_face_count
+  );
+
+  /// <summary>
+  /// Convert an "adaptive" display_density to an absolute density. 
+  /// For ordinary sized SubDs with no sharp edges, the returned 
+  /// absolute display density is equal to the adaptive display density.
+  /// For ordinary sized SubDs with sharp edges, the returned 
+  /// absolute display density is equal to the 1 + adaptive display density. 
+  /// For SubDs with sharp edges, this increase means the sharp edges
+  /// are rendered more accurately.
+  /// For large SubDs the absolute density is reduced a bit to keep the overall
+  /// number of fragment quads small enough that common current rendering technology
+  /// can handle them. The generation of the fragments is typically much faster than
+  /// rendering the resulting mesh; rendering and/or wasteful conversions to
+  /// ON_Mesh are the typical bottlenecks.
+  /// </summary>
+  /// <param name="adaptive_subd_display_density">
+  /// 0 &lt;= adaptive_subd_display_density &lt;= ON_SubDDisplayParameters::MaximumDensity.
+  /// Invalid input values are treated as ON_SubDDisplayParameters::DefaultDensity.
+  /// When in doubt, pass ON_SubDDisplayParameters::DefaultDensity.
+  /// Do not adjust the adaptive_subd_display_density parameter based on the presense of sharp edges.
+  /// When bHasSharpEdges is true, the caluculation in AbsoluteDisplayDensityFromSubDProperties()
+  /// will increases the returned absolute display density by one.
+  /// </param>
+  /// <param name="subd_face_count">
+  /// Number of SubD faces.
+  /// When subd_face_count is very large, the returned absolute display density is smaller than
+  /// the input adaptive_subd_display_density to attempt to keep the total number of
+  /// mesh quads that need to be renderered &lt;= ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum.
+  /// 
+  /// Details:
+  /// Set D = adaptive_subd_display_density + (bHasSharpEdges?1:0).
+  /// Set M = ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum/(4^D)).
+  /// The same absoluted display density D is returned for all face counts in the range 0 &lt;= subd_face_count &lt;= M.
+  /// When subd_face_count &gt; M, the returned absolute display density is reduced to a level
+  /// where the resulting number of mesh quads will be &lt;= ON_SubDDisplayParameters::AdaptiveDisplayMeshQuadMaximum.
+  /// </param>
+  /// <param name="bHasSharpEdges">
+  /// Pass true if the SubD has sharp edges.
+  /// For ordinary sized SubDs, when bHasSharpEdges is true, adaptive_subd_display_density + 1 is returned and
+  /// when bHasSharpEdges is false, adaptive_subd_display_density is returned.
+  /// For large SubDs, see the Details section of the subd_face_count documentation.
+  /// </param>
+  /// <returns>
+  /// The absolute display density to use to render the SubD.
+  /// </returns>
+  static unsigned int AbsoluteDisplayDensityFromSubDProperties(
+    unsigned adaptive_subd_display_density,
+    unsigned subd_face_count,
+    bool bHasSharpEdges
   );
 
   /*
@@ -346,6 +396,13 @@ public:
   unsigned int DisplayDensity(
     const class ON_SubD& subd
   ) const;
+
+  static int CompareDisplayDensity(
+    const class ON_SubD& subd,
+    const ON_SubDDisplayParameters& a,
+    const ON_SubDDisplayParameters& b,
+    bool bCompareComputeCurvature
+    );
 
   /*
   Returns:
@@ -899,6 +956,71 @@ public:
     const ON_MeshParameters& b
     );
 
+  /// <summary>
+  /// Determine if the settings in a and b will create the same mesh from
+  /// the geometry object.
+  /// </summary>
+  /// <param name="geometry">
+  /// If this pointer is not nullptr, then only the settings that apply to
+  /// this type of geometry are tested.
+  /// </param>
+  /// <param name="a"></param>
+  /// <param name="b"></param>
+  /// <param name="bIgnoreNonGeometricSettings">
+  /// If true, ON_MeshParameters settings like
+  /// m_bComputeCurvature, m_bDoublePrecision, MinimumTolerance(),
+  /// m_texture_range, m_srf_domain0 and m_srf_domain1 are 
+  /// also compared. These settings do not affect the counts 
+  /// or configurations of the mesh's faces, edges, or vertices.
+  /// </param>
+  /// <returns></returns>
+  static int Compare(
+    const ON_Geometry* geometry,
+    const ON_MeshParameters& a,
+    const ON_MeshParameters& b,
+    bool bCompareNonGeometricSettings
+    );
+
+
+  /// <summary>
+  /// Compare the settings in ON_MeshParameters that apply to the subd.
+  /// </summary>
+  /// <param name="bIgnoreNonGeometricSettings">
+  /// If true, ON_MeshParameters settings like
+  /// m_bComputeCurvature, m_bDoublePrecision, MinimumTolerance(),
+  /// m_texture_range, m_srf_domain0 and m_srf_domain1 are 
+  /// also compared. These settings do not affect the counts 
+  /// or configurations of the mesh's faces, edges, or vertices.
+  /// </param>
+  /// <returns></returns>
+  static int CompareSubDMeshParameters(
+    const ON_SubD& subd,
+    const ON_MeshParameters& a,
+    const ON_MeshParameters& b,
+    bool bCompareNonGeometricSettings
+  );
+
+  /// <summary>
+  /// Compare the settings in ON_MeshParameters that apply to
+  /// NURBS surfaces, extrusions and breps.
+  /// </summary>
+  /// <param name="a"></param>
+  /// <param name="b"></param>
+  /// <param name="bIgnoreNonGeometricSettings">
+  /// If true, ON_MeshParameters settings like
+  /// m_bComputeCurvature, m_bDoublePrecision, MinimumTolerance(),
+  /// m_texture_range, m_srf_domain0 and m_srf_domain1 are 
+  /// also compared. These settings do not affect the counts 
+  /// or configurations of the mesh's faces, edges, or vertices.
+  /// </param>
+  /// <returns></returns>
+  static int CompareSurfaceMeshParameters(
+    const ON_MeshParameters& a,
+    const ON_MeshParameters& b,
+    bool bCompareNonGeometricSettings
+  );
+
+
   /*
   Description:
     Compares all meshing parameters that control mesh geometry.
@@ -1399,12 +1521,21 @@ public:
   void Destroy();
   void EmergencyDestroy();
   
-  bool Set( ON::curvature_style,
-            int,           // Kcount,
-            const ON_SurfaceCurvature*, // K[]
-            const ON_3fVector*, // N[] surface normals needed for normal sectional curvatures
-            double = 0.0   // if > 0, value is used for "infinity"
-            );
+  bool Set(
+    ON::curvature_style kappa_style,
+    int Kcount,
+    const ON_SurfaceCurvature* K, // K[]
+    const ON_3fVector* N,         // N[] surface normals needed for normal sectional curvatures
+    double infinity = 0.0         // if > 0, value is used for "infinity"
+    );
+
+  // Gets curvature statistics from analysis meshes,
+  // and calculate total stats.
+  static bool CreateFromMeshes(
+    ON_SimpleArray<const ON_Mesh*>& meshes,
+    ON::curvature_style kappa_style,
+    ON_MeshCurvatureStats& cs
+  );
 
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
@@ -2594,7 +2725,7 @@ private:
   ON_MeshNgonAllocator& operator=(const ON_MeshNgonAllocator&) = delete;
 };
 
-class ON_MeshFaceSide
+class ON_CLASS ON_MeshFaceSide
 {
 public:
   unsigned int   m_vi[2]; // vertex indices or ids (equal values indicate unset)
@@ -3010,6 +3141,17 @@ private:
   bool Create();
   void Destroy();
   void EmergencyDestroy();
+
+  // RH-88675: move src's computed contents - the four topology arrays, the
+  // m_memchunk scratch pool, and the m_b32IsValid state - onto this topology,
+  // leaving src empty and invalid. The ON_MeshTopologyVertex / ON_MeshTopologyEdge
+  // elements hold raw const int* members (m_topei, m_vi, m_topfi) that point
+  // into m_memchunk, so the arrays and the chunk pool MUST move together or those
+  // pointers dangle. Does not touch m_mesh (the owning-mesh backpointer); the
+  // caller fixes that up. Intended only for ON_Mesh carrying topology across a
+  // vertex-coincidence-preserving object move, on the single-threaded transform
+  // path.
+  void Internal_TransferContentsFrom(ON_MeshTopology& src);
 
   // efficient workspaces for
   struct memchunk
@@ -3981,6 +4123,47 @@ Returns:
   bool HasSurfaceParameters() const;
   bool HasPrincipalCurvatures() const;
 
+  /// <summary>
+  /// Calculate a SHA-1 hash of vertex information. 
+  /// </summary>
+  /// <param name="bDoublePrecision">
+  /// If bDoublePrecision and HasDoublePrecisionVertices() are both true,
+  /// then the double precision vertex locations ( m_dV[]) are hashed. 
+  /// In all other cases the float precision vertex locations ( m_V[] ) are hashed.
+  /// </param>
+  /// <param name="bIncludeVertexNormals">
+  /// If they exist, values in the m_N[] array are hashed.
+  /// </param>
+  /// <param name="bIncludeLegacyTextureCoordinates">
+  /// If they exist, values in the m_T[] array are hashed.
+  /// </param>
+  /// <param name="bIncludeSurfaceParameters">
+  /// If they exist, values in the m_S[] array are hashed.
+  /// </param>
+  /// <param name="bIncludePrincipalCurvatures">
+  /// If they exist, values in the m_K[] array are hashed.
+  /// </param>
+  /// <returns>
+  /// If VertexCount() is &gt; 0, then a SHA-1 hash of the specified vertex
+  /// information is returned. Otherwise, ON_SHA1_Hash::EmptyContentHash is returned.
+  /// </returns>
+  const ON_SHA1_Hash VertexHash(
+    bool bDoublePrecision,
+    bool bIncludeVertexNormals,
+    bool bIncludeLegacyTextureCoordinates,
+    bool bIncludeSurfaceParameters,
+    bool bIncludePrincipalCurvatures
+  ) const;
+
+  /// <summary>
+  /// Calculate a SHA-1 hash of face information. 
+  /// </summary>
+  /// <returns>
+  /// If FacexCount() is &gt; 0, then a SHA-1 hash of the indices in the m_F[]
+  /// array is is returned. Otherwise, ON_SHA1_Hash::EmptyContentHash is returned.
+  /// </returns>
+  const ON_SHA1_Hash FaceHash() const;
+
   /// <returns>
   /// If this mesh has per vertex colors set in the m_C[] array, then true is returned.
   /// Otherwise false is returned.
@@ -4615,6 +4798,9 @@ Returns:
   */
   void Append( int count, const ON_Mesh* const* meshes );
 
+  // Back fill uses ON_2fPoint::NanPoint, zero curvature and ON_Color::UnsetColor; it never applies to m_S, and m_N is computed when missing whatever it is set to.
+  void Append( int count, const ON_Mesh* const* meshes, bool bBackFillMissingVertexAttributes );
+
   /*
   Description:
     Append a vector of meshes. This function is much more efficient
@@ -4747,13 +4933,15 @@ Returns:
       true if test_point is inside or the distance from test_point to
       a mesh face is <= tolerance.
   Returns:
-    True if test_point is inside the solid mesh.
+    True if test_point is inside the mesh.
   Remarks:
-    The caller is responsible for making certing the mesh is
-    solid before calling this function. If the mesh is not
-    solid, the behavior is unpredictable.
+    The mesh must be closed and manifold; this function returns
+    false for any other mesh. Inside means enclosed by the mesh,
+    so a consistent face orientation is not required and
+    reversing the faces does not change the answer.
   See Also:
-    ON_Mesh::IsSolid()
+    ON_Mesh::IsClosed()
+    ON_Mesh::IsManifold()
   */
   bool IsPointInside(
           ON_3dPoint test_point, 
@@ -5308,6 +5496,18 @@ Returns:
   // m_F[] facets (triangles or quads)
   ON_SimpleArray<ON_MeshFace> m_F;
 
+  // adds a triangle to the mesh with the given vertex indices.
+  // Returns
+  // - true: the triangle was added.
+  // - false: the vertex indices are not valid for indexing into the vertex array
+  bool AddTriangle(int a, int b, int c);
+
+  // adds a quad to the mesh with the given vertex indices.
+  // Returns
+  // - true: the quad was added.
+  // - false: the vertex indices are not valid for indexing into the vertex array
+  bool AddQuad(int a, int b, int c, int d);
+
   ////////////////////////////////////////////////////////////////////////
   //
   // N-gon
@@ -5698,6 +5898,31 @@ Returns:
     );
 
   /*
+  Description:
+    Returns the n-gon map, creating and caching it when it is missing.
+    This is how to get an n-gon map from a const mesh. It is thread safe.
+  Parameters:
+    bCreateIfMissing - [in]
+      If true and the n-gon map does not exist, it is created and cached.
+  Returns:
+    null:
+      This mesh has no n-gons, or bCreateIfMissing is false and the n-gon
+      map does not exist, or it could not be created.
+    an array of length m_F.Count():
+      Element fi is the index in m_Ngon[] of the n-gon the face m_F[fi]
+      belongs to, or ON_UNSET_UINT_INDEX when m_F[fi] belongs to no n-gon.
+      A map whose length is not m_F.Count() is a missing map.
+  Remarks:
+    Modifying the mesh invalidates the n-gon map, so a caller holding the
+    returned pointer must not let the mesh be modified while it uses it.
+    After modifying m_Ngon[] or m_F[] it is good practice to call
+    RemoveNgonMap(). The map is created again when it is needed.
+  */
+  const unsigned int* NgonMap(
+    bool bCreateIfMissing
+    ) const;
+
+  /*
   Returns:
     true if the n-gon information is valid for adding an n-gon to this mesh.
   Parameters:
@@ -5975,6 +6200,8 @@ The map is an array of length m_F.Count(), ngon_map[]
   Description:
     Removes any existing n-gon map.
     Does not remove other n-gon information.
+    Good practice after modifying m_Ngon[] or m_F[]. The map is created again
+    when it is needed.
   */
   void RemoveNgonMap();
 
@@ -6110,6 +6337,14 @@ The map is an array of length m_F.Count(), ngon_map[]
   //     u = m_srf_domain[0].ParameterAt(y);
   //     v = m_srf_domain[1].ParameterAt(1.0 - x);
   bool m_packed_tex_rotate;
+
+private:
+  // Serializes creating m_NgonMap[] in the const NgonMap(bool), the way
+  // m_top.m_b32IsValid serializes Topology(). Occupies padding that already
+  // existed between m_packed_tex_rotate (656) and m_K (664).
+  mutable ON_SleepLock m_ngon_map_lock;
+
+public:
 
   /*
   Returns:

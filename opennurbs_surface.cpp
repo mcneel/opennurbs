@@ -827,6 +827,17 @@ bool ON_Surface::IsContinuous(
 }
 
 bool 
+ON_Surface::HasSingularEdge() const
+{
+  bool rc = false;
+  for (int si = 0; !rc && si < 4; ++si)
+  {
+    rc |= IsSingular(si);
+  }
+  return rc;
+}
+
+bool 
 ON_Surface::IsSingular(int side) const
 {
   return false;
@@ -1284,6 +1295,27 @@ ON_Curve* ON_Surface::IsoCurve(
        ) const
 {
   return nullptr;
+}
+
+ON_Curve* ON_Surface::CurveIso(ON_Surface::ISO iso, double p) const
+{
+  switch (iso)
+  {
+  case ON_Surface::ISO::x_iso:  
+    return ON_IsValid(p) && Domain(0).Includes(p) ? IsoCurve(1, p) : nullptr;
+  case ON_Surface::ISO::y_iso:
+    return ON_IsValid(p) && Domain(1).Includes(p) ? IsoCurve(0, p) : nullptr;
+  case ON_Surface::ISO::N_iso:
+    return IsoCurve(0, Domain(1).m_t[1]);
+  case ON_Surface::ISO::E_iso:
+    return IsoCurve(1, Domain(0).m_t[1]);
+  case ON_Surface::ISO::S_iso:
+    return IsoCurve(0, Domain(1).m_t[0]);
+  case ON_Surface::ISO::W_iso:
+    return IsoCurve(1, Domain(0).m_t[0]);
+  default:
+    return nullptr;
+  }
 }
 
 

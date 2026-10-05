@@ -62,6 +62,9 @@ public:
 
   ON_SimpleArray(size_t); // size_t parameter = initial capacity
 
+  // create an array of given size and initialize all items to the given value
+  ON_SimpleArray(size_t, T);
+
   // emergency bailout ///////////////////////////////////////////////////
   void EmergencyDestroy(void); // call only when memory used by this array
                                // may have become invalid for reasons beyond
@@ -132,7 +135,13 @@ public:
 
   void Append( int, const T* );      // Append copy of an array T[count]
 
-  void Prepend( int, const T* );      // Prepend copy of an array T[count]
+  template<class... _Val>
+  void EmplaceBack(_Val&&...);       // create a new item an append it
+
+  template<class... _Val>
+  void Emplace( int, _Val&&...);     // create a new item and insert it
+
+  void Prepend( int, const T* );     // Prepend copy of an array T[count]
 
   void Insert( int, const T& );      // Insert copy of element. Uses
                                      // memmove() to perform any
@@ -183,8 +192,8 @@ public:
   // successful, then Search() returns -1.  Search() is only suitable
   // for performing infrequent searches of small arrays.  Sort the
   // array and use BinarySearch() for performing efficient searches.
-	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
-  int Search( const T*, int (*)(const T*,const T*) ) const;
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDecreasing<T>
+  int Search( const T*, int (*compar)(const T*,const T*) ) const;
 
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
@@ -203,31 +212,31 @@ public:
   // Use QuickSort( compare ) or, in rare cases and after meaningful
   // performance testing using optimzed release builds, 
   // HeapSort( compare ) to sort the array.
-	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
-  int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
-  int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDecreasing<T>
+  int BinarySearch( const T*, int (*compar)(const T*,const T*) ) const;
+  int BinarySearch( const T*, int (*compar)(const T*,const T*), int ) const;
 
-  const T* BinarySearchPtr(const T*, int (*)(const T*, const T*)) const;
-  const T* BinarySearchPtr(const T*, int (*)(const T*, const T*), int) const;
+  const T* BinarySearchPtr(const T*, int (*compar)(const T*, const T*)) const;
+  const T* BinarySearchPtr(const T*, int (*compar)(const T*, const T*), int) const;
 
 
-  int InsertInSortedList(const T&, int (*)(const T*, const T*));
-  int InsertInSortedList(const T&, int (*)(const T*, const T*), int);
+  int InsertInSortedList(const T&, int (*compar)(const T*, const T*));
+  int InsertInSortedList(const T&, int (*compar)(const T*, const T*), int);
 
   //////////
   // Sorts the array using the heap sort algorithm.
   // QuickSort() is generally the better choice.
-  bool HeapSort( int (*)(const T*,const T*) );
+  bool HeapSort( int (*compar)(const T*,const T*) );
 
   //////////
   // Sorts the array using the quick sort algorithm.
-	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
-  bool QuickSort( int (*)(const T*,const T*) );
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDecreasing<T>
+  bool QuickSort( int (*compar)(const T*,const T*) );
 
   //////////
-  // Sorts the array using the quick sort algorithma and then removes duplicates.
-	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
-  bool QuickSortAndRemoveDuplicates( int (*)(const T*,const T*) );
+  // Sorts the array using the quick sort algorithm and then removes duplicates.
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDecreasing<T>
+  bool QuickSortAndRemoveDuplicates( int (*compar)(const T*,const T*) );
 
   /*
   Description:
@@ -251,8 +260,14 @@ public:
   bool Sort( 
     ON::sort_algorithm sort_algorithm, 
     int* /* index[] */ ,
-    int (*)(const T*,const T*) 
-    ) const; 
+    int (*compar)(const T*,const T*) 
+    ) const;
+
+  bool Sort( 
+    ON::sort_algorithm sort_algorithm, 
+    unsigned int* /* index[] */ ,
+    int (*compar)(const T*,const T*) 
+    ) const;
 
   /*
   Description:
@@ -278,9 +293,16 @@ public:
   bool Sort( 
     ON::sort_algorithm sort_algorithm,
     int*, // index[] 
-    int (*)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
+    int (*compar)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
     void* // p
-    ) const; 
+    ) const;
+
+  bool Sort( 
+    ON::sort_algorithm sort_algorithm,
+    unsigned int*, // index[] 
+    int (*compar)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
+    void* // p
+    ) const;
 
   //////////
   // Permutes the array so that output[i] = input[index[i]].
@@ -365,7 +387,7 @@ public:
     Do not use this version of SetArray().  Use the one that takes
     a pointer, count and capacity.
   */
-  void SetArray(T*);
+  void SetArray(T* p);
 
   /*
   Description:
@@ -378,13 +400,21 @@ public:
        is set to capacity.  It is critical that the pointer be one 
        returned by onmalloc(sz), where sz >= capacity*sizeof(T[0]).
   */
-  void SetArray(T*, int, int);
+  void SetArray(T* p, int count, int capacity);
 
   //Deleted these two functions because the compiler was actually using pointer
   //comparison on m_a.  Adding implementations for these in Rhino 8 is cumbersome because
   //of the template initialization stuff, so use ON_SimpleArray_IsEqual for now.
   bool operator==(const ON_SimpleArray<T>& other) const = delete;
   bool operator!=(const ON_SimpleArray<T>& other) const = delete;
+  
+  /* Support STL iterators and algorithms */
+  T* begin();
+  T const* begin()   const;
+  T* end();
+  T const* end()     const;
+  T const* cbegin()  const;
+  T const* cend()    const;
 
 protected:
   // implementation //////////////////////////////////////////////////////
@@ -411,38 +441,6 @@ bool ON_SimpleArray_IsEqual(const ON_SimpleArray<T>& first, const ON_SimpleArray
 
   return true;
 }
-
-
-////////////////////////////////////////////////////////////////
-//
-
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<bool>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<char>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT8>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT8>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT16>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT16>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT32>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT32>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<float>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double>;
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<bool*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<char*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT8*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT8*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT16*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT16*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT32*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT32*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<float*>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double*>;
-
-#endif
-
-
 
 ////////////////////////////////////////////////////////////////
 //
@@ -548,6 +546,12 @@ public:
                                      // Increments count by 1.
 
   void Append( int, const T*);       // Append copy of an array T[count]
+  
+  template<class... _Val>
+  void EmplaceBack(_Val&&...);       // create a new item an append it
+
+  template<class... _Val>
+  void Emplace( int, _Val&&...);     // create a new item and insert it
 
   void Insert( int, const T& );      // Insert copy of element. Uses
                                      // memmove() to perform any
@@ -575,7 +579,7 @@ public:
   // successful, then Search() returns -1.  Search() is only suitable
   // for performing infrequent searches of small arrays.  Sort the
   // array and use BinarySearch() for performing efficient searches.
-  int Search( const T*, int (*)(const T*,const T*) ) const;
+  int Search( const T*, int (*compar)(const T*,const T*) ) const;
 
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
@@ -594,24 +598,24 @@ public:
   // Use QuickSort( compare ) or, in rare cases and after meaningful
   // performance testing using optimzed release builds, 
   // HeapSort( compare ) to sort the array.
-	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
-  int BinarySearch( const T*, int (*)(const T*,const T*) ) const;
-  int BinarySearch( const T*, int (*)(const T*,const T*), int ) const;
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDecreasing<T>
+  int BinarySearch( const T*, int (*compar)(const T*,const T*) ) const;
+  int BinarySearch( const T*, int (*compar)(const T*,const T*), int ) const;
 
-  int InsertInSortedList(const T&, int (*)(const T*, const T*));
-  int InsertInSortedList(const T&, int (*)(const T*, const T*), int);
+  int InsertInSortedList(const T&, int (*compar)(const T*, const T*));
+  int InsertInSortedList(const T&, int (*compar)(const T*, const T*), int);
 
   //////////
   // Sorts the array using the heap sort algorithm.
-	// See Also: ON_CompareIncreasing<T> and ON_CompareDeccreasing<T>
+	// See Also: ON_CompareIncreasing<T> and ON_CompareDecreasing<T>
   // QuickSort() is generally the better choice.
   virtual
-  bool HeapSort( int (*)(const T*,const T*) );
+  bool HeapSort( int (*compar)(const T*,const T*) );
 
   //////////
   // Sorts the array using the heap sort algorithm.
   virtual
-  bool QuickSort( int (*)(const T*,const T*) );
+  bool QuickSort( int (*compar)(const T*,const T*) );
 
   /*
   Description:
@@ -636,7 +640,7 @@ public:
   bool Sort( 
     ON::sort_algorithm sort_algorithm, 
     int* /* index[] */ ,
-    int (*)(const T*,const T*)
+    int (*compar)(const T*,const T*)
     ) const; 
 
   /*
@@ -663,7 +667,7 @@ public:
   bool Sort( 
     ON::sort_algorithm sort_algorithm,
     int*, // index[] 
-    int (*)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
+    int (*compar)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
     void* // p
     ) const; 
 
@@ -740,7 +744,7 @@ public:
     Do not use this version of SetArray().  Use the one that takes
     a pointer, count and capacity: SetArray(pointer,count,capacity)
   */
-  void SetArray(T*);
+  void SetArray(T* p);
 
   /*
   Description:
@@ -755,7 +759,7 @@ public:
        and that the in-place operator new has been used to initialize
        each element of the array.  
   */
-  void SetArray(T*, int, int);
+  void SetArray(T* p, int count, int capacity);
 
   //Deleted these two functions because the compiler was actually using pointer
   //comparison on m_a.  Adding implementations for these in Rhino 8 is cumbersome because
@@ -763,7 +767,13 @@ public:
   bool operator==(const ON_ClassArray<T>& other) const = delete;
   bool operator!=(const ON_ClassArray<T>& other) const = delete;
 
-  
+  /* Support STL iterators and algorithms */
+  T*       begin();
+  T const* begin()   const;
+  T*       end();
+  T const* end()     const;
+  T const* cbegin()  const;
+  T const* cend()    const;
 
 protected:
   // implementation //////////////////////////////////////////////////////
@@ -792,13 +802,6 @@ bool ON_ClassArray_IsEqual(const ON_ClassArray<T>& first, const ON_ClassArray<T>
 
   return true;
 }
-
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_String>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_wString>;
-
-#endif
 
 /*
 Description:
@@ -836,12 +839,12 @@ public:
   // calls MemoryRelocate on each element after
   // the heap sort.
   // QuickSort() is generally the better choice.
-  bool HeapSort( int (*)(const T*,const T*) );
+  bool HeapSort( int (*compar)(const T*,const T*) );
 
   // virtual ON_ClassArray<T> override that 
   // calls MemoryRelocate on each element after
   // the quick sort.
-  bool QuickSort( int (*)(const T*,const T*) );
+  bool QuickSort( int (*compar)(const T*,const T*) );
 };
 
 class ON_CLASS ON_UuidPair
@@ -872,17 +875,6 @@ public:
   ON_UUID m_uuid[2];
 };
 
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UUID>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidIndex>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidPtr>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidPair>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_SimpleArray<int> >;
-
-#endif
-
-
 /*
 Description:
   The ON_UuidList class provides a tool to efficiently 
@@ -898,6 +890,9 @@ public:
   ~ON_UuidList();
   ON_UuidList(const ON_UuidList& src);
   ON_UuidList& operator=(const ON_UuidList& src);
+#if defined(ON_HAS_RVALUEREF)
+  ON_UuidList& operator=(ON_UuidList&& src) ON_NOEXCEPT;
+#endif
 
   bool operator==(const ON_UuidList& other) const;
   bool operator!=(const ON_UuidList& other) const;
@@ -1574,20 +1569,35 @@ private:
 };
 
 
+class ON_2dexMap_Old : private ON_SimpleArray<ON_2dex>
+{
+  bool m_bSorted;
+};
 
 
-class ON_CLASS ON_2dexMap : private ON_SimpleArray<ON_2dex>
+class ON_CLASS ON_2dexMap
 {
 public:
   ON_2dexMap();
-  ON_2dexMap(int capacity);
-  ~ON_2dexMap();
+  ON_DEPRECATED ON_2dexMap(int capacity);
+  virtual ~ON_2dexMap();
 
   int Count() const;
 
-  void Reserve(size_t capacity);
+  ON_DEPRECATED void Reserve(size_t capacity);
 
-  const ON_2dex* Array() const;
+  ON_DEPRECATED const ON_2dex* Array() const;
+
+  /*
+  Description:
+    Flattens the map to an array
+  Parameters:
+    aArrayOut - [out]
+       The array which the mapped values are appended to
+  Returns:
+    The number of items appended to the array
+  */
+  int ToArray(ON_SimpleArray<ON_2dex>& aArrayOut) const;
 
   ON_2dex operator[](int i) const;
 
@@ -1684,7 +1694,11 @@ public:
   const ON_2dex* Find2dex(int i) const;
 
 private:
-  bool m_bSorted;
+#pragma warning (push)
+#pragma warning (disable : 4251)
+  std::unique_ptr<class ON_2dexMap_Private> m_private;
+  unsigned char padding[sizeof(ON_2dexMap_Old) - (sizeof(m_private) + sizeof(void*))];  //The extra void* is for the vptr
+#pragma warning (pop)
 };
 
 /* 
@@ -1747,56 +1761,6 @@ See Also:
 template< class T>
 static
 int ON_CompareDecreasing( const T* a, const T* b);
-
-void ON_SHA1_Accumulate2fPointArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_2fPoint>& a
-);
-
-void ON_SHA1_Accumulate3fPointArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_3fPoint>& a
-);
-
-void ON_SHA1_Accumulate4fPointArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_4fPoint>& a
-);
-
-void ON_SHA1_Accumulate2fVectorArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_2fVector>& a
-);
-
-void ON_SHA1_Accumulate3fVectorArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_3fVector>& a
-);
-
-void ON_SHA1_Accumulate2dPointArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_2dPoint>& a
-);
-
-void ON_SHA1_Accumulate3dPointArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_3dPoint>& a
-);
-
-void ON_SHA1_Accumulate4dPointArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_4dPoint>& a
-);
-
-void ON_SHA1_Accumulate2dVectorArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_2dVector>& a
-);
-
-void ON_SHA1_Accumulate3dVectorArray(
-  class ON_SHA1& sha1,
-  const class ON_SimpleArray<ON_3dVector>& a
-);
 
 // definitions of the template functions are in a different file
 // so that Microsoft's developer studio's autocomplete utility
@@ -1953,11 +1917,64 @@ private:
 ON_DECL bool operator==(ON_Big5UnicodePair lhs, ON_Big5UnicodePair rhs);
 ON_DECL bool operator!=(ON_Big5UnicodePair lhs, ON_Big5UnicodePair rhs);
 
+////////////////////////////////////////////////////////////////
+//
 #if defined(ON_DLL_TEMPLATE)
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<bool>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<char>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT8>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT8>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT16>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT16>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT32>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT32>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<float>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<bool*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<char*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT8*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT8*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT16*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT16*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__INT32*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON__UINT32*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<float*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<double*>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2udex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3udex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4dex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4udex>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2fSize>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4fRect>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2iSize>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4iRect>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4fColor>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_ColorStop>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_DisplayMaterialRef>;
 
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Big5UnicodePair>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Big5CodePoint>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UnicodeShortCodePoint>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UUID>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidIndex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidPtr>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidPair>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_SimpleArray<int> >;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_String>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_wString>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_LinetypeSegment>;
 
 #endif
 

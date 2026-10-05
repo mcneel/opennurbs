@@ -433,6 +433,10 @@ private:
 #if defined (ON_RUNTIME_ANDROID)
   static ON_FreeTypeFace* Internal_CreateFaceWithAndroidNdk(const ON_Font& font);
 #endif
+
+#if defined(ON_INTERNAL_LINUX_FONT_FILES)
+  static ON_FreeTypeFace* Internal_CreateFaceFromLinuxFontFile(const ON_Font& font);
+#endif
 };
 
 FT_MemoryRec_ ON_FreeType::m_memory_rec;
@@ -1470,6 +1474,68 @@ ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceWithAndroidNdk(const ON_Font& f
 
 #endif
 
+#if defined(ON_INTERNAL_LINUX_FONT_FILES)
+
+ON_FreeTypeFace* ON_FreeType::Internal_CreateFaceFromLinuxFontFile(const ON_Font& font)
+{
+  const ON_Font* installed_font = nullptr;
+  ON_wString font_file_path;
+  int face_index = 0;
+  if (false == ON_ManagedFonts::Internal_LinuxFontFile(font, installed_font, font_file_path, face_index))
+    return nullptr;
+  if (font_file_path.IsEmpty())
+    return nullptr;
+  FT_Library freetype_library = ON_FreeType::Library();
+  if (nullptr == freetype_library)
+    return nullptr;
+
+  const ON_String utf8_path(font_file_path);
+  FT_Face ftFace = nullptr;
+  FT_Error err = FT_New_Face(freetype_library, utf8_path, face_index, &ftFace);
+  if (err || nullptr == ftFace)
+    return nullptr;
+
+  if (ftFace->num_faces > 1 && nullptr != installed_font)
+  {
+    // Font collection (.ttc). The recorded index is normally right, but do
+    // what the Apple branch does: verify the names and search the file when
+    // they do not match.
+    const ON_wString family_name = installed_font->FamilyName();
+    const ON_wString face_name = installed_font->FaceName();
+    const bool bMatch
+      = family_name.EqualOrdinal(ON_wString(ftFace->family_name), true)
+      && face_name.EqualOrdinal(ON_wString(ftFace->style_name), true);
+    if (false == bMatch)
+    {
+      const FT_Long face_count = ftFace->num_faces;
+      for (FT_Long i = 0; i < face_count; ++i)
+      {
+        if (i == face_index)
+          continue;
+        FT_Face candidate = nullptr;
+        if (FT_Err_Ok != FT_New_Face(freetype_library, utf8_path, i, &candidate) || nullptr == candidate)
+          continue;
+        if (
+          family_name.EqualOrdinal(ON_wString(candidate->family_name), true)
+          && face_name.EqualOrdinal(ON_wString(candidate->style_name), true)
+          )
+        {
+          FT_Done_Face(ftFace);
+          ftFace = candidate;
+          break;
+        }
+        FT_Done_Face(candidate);
+      }
+    }
+  }
+
+  ON_FreeTypeFace* rc = new ON_FreeTypeFace();
+  rc->m_face = ftFace;
+  return rc;
+}
+
+#endif
+
 ON_FreeTypeFace* ON_FreeType::CreateFace(
   const ON_Font& font
 )
@@ -1494,6 +1560,10 @@ ON_FreeTypeFace* ON_FreeType::CreateFace(
 
 #if defined(ON_RUNTIME_ANDROID)
   f = ON_FreeType::Internal_CreateFaceWithAndroidNdk(font);
+#endif
+
+#if defined(ON_INTERNAL_LINUX_FONT_FILES)
+  f = ON_FreeType::Internal_CreateFaceFromLinuxFontFile(font);
 #endif
 
   // Create empty holder so this function doesn't repeatedly

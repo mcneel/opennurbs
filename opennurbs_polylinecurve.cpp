@@ -484,9 +484,7 @@ ON_PolylineCurve::IsLinear( // true if curve locus is a line segment
     nurbs_curve.m_cv = const_cast<double*>(&m_pline[0].x);
     nurbs_curve.m_cv_stride = (int)(&m_pline[1].x - nurbs_curve.m_cv); // the int converts 64 bit size_t
     nurbs_curve.m_knot = const_cast<double*>(m_t.Array());
-    // using ptr to make sure we go through vtable
-    const ON_Curve* ptr = &nurbs_curve;
-    rc = ptr->IsLinear(tolerance);
+    rc = nurbs_curve.IsLinear(tolerance);
     nurbs_curve.m_cv = 0;
     nurbs_curve.m_knot = 0;
   }
@@ -551,9 +549,7 @@ ON_PolylineCurve::IsPlanar(
       nurbs_curve.m_cv = const_cast<double*>(&m_pline[0].x);
       nurbs_curve.m_cv_stride = (int)(&m_pline[1].x - nurbs_curve.m_cv); // the (int) converts 64 bit size_t
       nurbs_curve.m_knot = const_cast<double*>(m_t.Array());
-      // using ptr to make sure we go through vtable
-      const ON_Curve* ptr = &nurbs_curve;
-      rc = ptr->IsPlanar(plane,tolerance);
+      rc = nurbs_curve.IsPlanar(plane,tolerance);
       nurbs_curve.m_cv = 0;
       nurbs_curve.m_knot = 0;
     }

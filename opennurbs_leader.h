@@ -103,6 +103,15 @@ public:
     const ON_DimStyle* dimstyle,
     double textscale) const;
 
+  // Same as above, but the DrawForward text-flip is evaluated against vp's
+  // camera instead of world axes.
+  bool GetTextGripPoints(
+    const ON_Viewport* vp,
+    ON_2dPoint& base,
+    ON_2dPoint& width,
+    const ON_DimStyle* dimstyle,
+    double textscale) const;
+
   //bool Explode(
   //  const ON_DimStyle* dimstyle,
   //  ON_SimpleArray<const ON_Geometry*> object_parts) const;

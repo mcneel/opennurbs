@@ -386,7 +386,6 @@ public:
     CyclicTransformation() = rotation.
     InversionTransformation() = identity.
   */
-  ////ON_WIP_SDK
   static const ON_Symmetry CreateRotateSymmetry(
     ON_Line rotation_axis,
     unsigned int rotation_count,
@@ -414,7 +413,6 @@ public:
     InversionTransformation() = reflection.
     CyclicTransformation() = rotation by (360/rotation_count) degrees.
   */
-  ////ON_WIP_SDK
   static const ON_Symmetry CreateReflectAndRotateSymmetry(
     ON_PlaneEquation reflection_plane, 
     ON_Line rotation_axis, 
@@ -965,6 +963,7 @@ public:
     bUseCleanupTolerance ? this->CleanupTolerance() : ON_Symmetry::ZeroTolerance;
   */
   double Tolerance(bool bUseCleanupTolerance) const;
+
 
 private:
   ON_Symmetry::Type m_type = ON_Symmetry::Type::Unset;

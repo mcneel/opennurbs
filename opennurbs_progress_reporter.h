@@ -32,9 +32,12 @@ public:
     callback_function - [in]
       * This function is called when the calculation reports progress.
       * The calculation thread calls in this callback function.
+      * A calculation that uses several threads can call this function from
+        more than one thread at the same time. The callback function must be
+        thread safe and must tolerate two reports arriving out of order.
       * The callback function should do something that is fast and simple,
         like post a message to a user interface control and return
-        immediately.      
+        immediately.
       Parameters passed to the callback function:
         context - [in] 
           the value of callback_context.

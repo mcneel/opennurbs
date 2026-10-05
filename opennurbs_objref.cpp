@@ -139,7 +139,7 @@ bool ON_COMPONENT_INDEX::IsSubDComponentIndex() const
   case ON_COMPONENT_INDEX::subd_vertex:
   case ON_COMPONENT_INDEX::subd_edge:
   case ON_COMPONENT_INDEX::subd_face:
-    if ( -1 != m_index && 0 != m_index )
+    if ( -1 != m_index && 0 != m_index )  // 2025-09-19, PEC, Why not m_index > 0 ??
     {
       rc = true;
     }
@@ -722,16 +722,17 @@ bool ON_ObjRefEvaluationParameter::Read( ON_BinaryArchive& archive )
 }
 
 ON_ObjRef::ON_ObjRef() 
-          : m_uuid(ON_nil_uuid),
-            m_geometry(0),
-            m_parent_geometry(0),
-            m_geometry_type(ON::unknown_object_type),
-            m_runtime_sn(0),
-            m_point(ON_3dPoint::UnsetPoint),
-            m_osnap_mode(ON::os_none),
-            m__proxy1(0),
-            m__proxy2(0),
-            m__proxy_ref_count(0)
+  : m_uuid(ON_nil_uuid),
+  m_geometry(nullptr),
+  m_parent_geometry(nullptr),
+  m_geometry_type(ON::unknown_object_type),
+  m_runtime_sn(0),
+  m_point(ON_3dPoint::UnsetPoint),
+  m_osnap_mode(ON::os_none),
+  m_rhino_doc_sn(0),
+  m__proxy1(nullptr),
+  m__proxy2(nullptr),
+  m__proxy_ref_count(nullptr)
 {
 }
 
@@ -739,32 +740,34 @@ void ON_ObjRef::Destroy()
 {
   DecrementProxyReferenceCount();
   m_uuid = ON_nil_uuid;
-  m_geometry = 0;
-  m_parent_geometry = 0;
+  m_geometry = nullptr;
+  m_parent_geometry = nullptr;
   m_geometry_type = ON::unknown_object_type;
   m_runtime_sn = 0;
   m_point = ON_3dPoint::UnsetPoint;
   m_osnap_mode = ON::os_none;
-  m__proxy1 = 0;
-  m__proxy2 = 0;
-  m__proxy_ref_count = 0;
+  m_rhino_doc_sn = 0;
+  m__proxy1 = nullptr;
+  m__proxy2 = nullptr;
+  m__proxy_ref_count = nullptr;
 }
 
 
 ON_ObjRef::ON_ObjRef( const ON_ObjRef& src ) 
-          : m_uuid(src.m_uuid),
-            m_geometry(src.m_geometry),
-            m_parent_geometry(src.m_parent_geometry),
-            m_component_index(src.m_component_index),
-            m_geometry_type(src.m_geometry_type),
-            m_runtime_sn(src.m_runtime_sn),
-            m_point(src.m_point),
-            m_osnap_mode(src.m_osnap_mode),
-            m_evp(src.m_evp),
-            m__iref(src.m__iref),
-            m__proxy1(src.m__proxy1),
-            m__proxy2(src.m__proxy2),
-            m__proxy_ref_count(src.m__proxy_ref_count)
+  : m_uuid(src.m_uuid),
+  m_geometry(src.m_geometry),
+  m_parent_geometry(src.m_parent_geometry),
+  m_component_index(src.m_component_index),
+  m_geometry_type(src.m_geometry_type),
+  m_runtime_sn(src.m_runtime_sn),
+  m_point(src.m_point),
+  m_osnap_mode(src.m_osnap_mode),
+  m_rhino_doc_sn(src.m_rhino_doc_sn),
+  m_evp(src.m_evp),
+  m__iref(src.m__iref),
+  m__proxy1(src.m__proxy1),
+  m__proxy2(src.m__proxy2),
+  m__proxy_ref_count(src.m__proxy_ref_count)
 {
   if ( m__proxy_ref_count && *m__proxy_ref_count > 0 )
   {
@@ -789,6 +792,7 @@ ON_ObjRef& ON_ObjRef::operator=( const ON_ObjRef& src )
     m_runtime_sn = src.m_runtime_sn;
     m_point = src.m_point;
     m_osnap_mode = src.m_osnap_mode;
+    m_rhino_doc_sn = src.m_rhino_doc_sn;
     m_evp = src.m_evp;
     m__iref = src.m__iref;
     m__proxy1 = src.m__proxy1;
@@ -905,9 +909,11 @@ bool ON_ObjRef::Write( ON_BinaryArchive& archive ) const
     rc = archive.WriteInt(m_geometry_type);
     if (!rc) break;
 
-    // Do not save the value of m_runtime_sn in the
-    // archive.  When the file is read in, the object
-    // will have a different value of m_runtime_sn.
+    // NOTE WELL:
+    // It is intentional that the RUNTIME serial numbers
+    // m_runtime_sn and m_rhino_doc_sn are NOT saved in the archive.
+    // These values are specific to the application instance;
+    // think of them as pointer values that change from instance to instance.
 
     rc = archive.WritePoint(m_point);
     if (!rc) break;
@@ -942,6 +948,12 @@ bool ON_ObjRef::Write( ON_BinaryArchive& archive ) const
     // 1.3 IO fields
     rc = archive.WriteInt((int)m_osnap_mode);
     if (!rc) break;
+
+    // NOTE WELL:
+    // It is intentional that the RUNTIME serial numbers
+    // m_runtime_sn and m_rhino_doc_sn are NOT saved in the archive.
+    // These values are specific to the application instance;
+    // think of them as pointer values that change from instance to instance.
 
     break;
   }
@@ -1321,6 +1333,23 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
           return false;
         }
       }
+    }
+
+    if (!rc && m_component_index.IsHatchLoopComponentIndex() && nullptr != ON_Curve::Cast(m_geometry))
+    {
+      if (nullptr == m_parent_geometry)
+        m_parent_geometry = m_geometry;
+      ON_Geometry* proxy_geo = m_geometry->Duplicate();
+      if (nullptr == proxy_geo)
+        return false;
+      if (!proxy_geo->Transform(iref.m_xform))
+      {
+        delete proxy_geo;
+        return false;
+      }
+      SetProxy(nullptr, proxy_geo, true);
+      m_geometry = proxy_geo;
+      rc = true;
     }
   }
 

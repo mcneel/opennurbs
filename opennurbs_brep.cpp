@@ -303,6 +303,47 @@ int ON_BrepEdge::TrimCount() const
   return m_ti.Count();
 }
 
+int ON_BrepEdge::AdjacentFaceIndices(ON_SimpleArray<int>& faceIndices) const
+{
+  if (!m_brep) return 0;
+  int n0 = faceIndices.Count();
+  ON_SimpleArray<const ON_BrepFace*> faces;
+  int n1 = AdjacentFaces(faces);
+  faceIndices.Reserve(n0 + n1);
+  for (const ON_BrepFace* face : faces)
+  {
+    faceIndices.Append(face->m_face_index);
+  }
+  return n1;
+}
+
+int ON_BrepEdge::AdjacentFaces(ON_SimpleArray<ON_BrepFace*>& faces)
+{
+  ON_SimpleArray<const ON_BrepFace*> constFaces;
+  int n = AdjacentFaces(constFaces);
+  for (int i = 0; i < n; ++i)
+  {
+    faces.Append(const_cast<ON_BrepFace*>(constFaces[i]));
+  }
+  return n;
+}
+
+int ON_BrepEdge::AdjacentFaces(ON_SimpleArray<const ON_BrepFace*>& faces) const
+{
+  if (!m_brep) return 0;
+  int n0 = faces.Count();
+  int n1 = TrimCount();
+  faces.Reserve(n0 + n1);
+  for (int i = 0; i < n1; ++i)
+  {
+    const ON_BrepTrim* pTrim = Trim(i);
+    const ON_BrepFace* pFace = pTrim->Face();
+    faces.Append(pFace);
+  }
+
+  return n1;
+}
+
 void ON_BrepEdge::Dump( ON_TextLog& dump ) const
 {
   dump.Print("ON_BrepEdge[%d]: ",m_edge_index);
@@ -888,6 +929,102 @@ ON_BrepLoop* ON_BrepFace::OuterLoop() const
     }
   }
   return 0;
+}
+
+int ON_BrepFace::AdjacentTrimIndices(ON_SimpleArray<int>& trims) const
+{
+  if (!m_brep) return 0;
+
+  int n0 = trims.Count();
+  int loopCount = LoopCount();
+  for (int i = 0; i < loopCount; i++)
+  {
+    const ON_BrepLoop* pLoop = Loop(i);
+    if (!pLoop)
+      continue;
+
+    int trimCount = pLoop->TrimCount();
+    for (int j = 0; j < trimCount; j++)
+    {
+      const ON_BrepTrim* pTrim = pLoop->Trim(j);
+      if (!pTrim)
+        continue;
+      trims.AppendNew() = pTrim->m_trim_index;
+    }
+  }
+  return trims.Count() - n0;
+}
+
+
+int ON_BrepFace::AdjacentTrims(ON_SimpleArray<ON_BrepTrim*>& trims)
+{
+  ON_SimpleArray<const ON_BrepTrim*> constTrims;
+  int n = AdjacentTrims(constTrims);
+  for (int i = 0; i < n; ++i)
+  {
+    trims.Append(const_cast<ON_BrepTrim*>(constTrims[i]));
+  }
+  return n;
+}
+
+int ON_BrepFace::AdjacentTrims(ON_SimpleArray<const ON_BrepTrim*>& trims) const
+{
+  if (!m_brep) return 0;
+
+  int n0 = trims.Count();
+  ON_SimpleArray<int> trimIndices;
+  int n1 = AdjacentTrimIndices(trimIndices);
+  trims.Reserve(n0 + n1);
+  for (int ti : trimIndices)
+  {
+    trims.AppendNew() = m_brep->m_T + ti;
+  }
+  return n1;
+}
+
+int ON_BrepFace::AdjacentEdgeIndices(ON_SimpleArray<int>& edgeIndices) const
+{
+  if (!m_brep) return 0;
+
+  int n0 = edgeIndices.Count();
+  ON_SimpleArray<int> trimIndices;
+  int n1 = AdjacentTrimIndices(trimIndices);
+  edgeIndices.Reserve(n0 + n1);
+
+  for (int ti : trimIndices)
+  {
+    int ei = m_brep->m_T[ti].m_ei;
+    if (ei >= 0 && ei < m_brep->m_E.Count())
+      edgeIndices.AppendNew() = ei;
+  }
+  return edgeIndices.Count() - n0;
+}
+
+
+int ON_BrepFace::AdjacentEdges(ON_SimpleArray<ON_BrepEdge*>& edges) 
+{
+  ON_SimpleArray<const ON_BrepEdge*> constEdges;
+  int n = AdjacentEdges(constEdges);
+  for (int i = 0; i < n; ++i)
+  {
+    edges.Append(const_cast<ON_BrepEdge*>(constEdges[i]));
+  }
+  return n;
+}
+
+int ON_BrepFace::AdjacentEdges(ON_SimpleArray<const ON_BrepEdge*>& edges) const
+{
+  if (!m_brep) return 0;
+
+  int n0 = edges.Count();
+  ON_SimpleArray<int> edgeIndices;
+  int n1 = AdjacentEdgeIndices(edgeIndices);
+  edges.Reserve(n0 + n1);
+  for (int ei : edgeIndices)
+  {
+    edges.AppendNew() = &( m_brep->m_E[ei] );
+  }
+  return n1;
 }
 
 unsigned int ON_BrepFace::PackId() const
@@ -6948,6 +7085,25 @@ ON_Brep::SwapLoopParameters(
 bool
 ON_Brep::IsSolid() const
 {
+  // m_is_solid is already maintained lazily: IsManifold() below stores 3 when
+  // the answer turns out to be "not solid", SolidOrientation() stores 1 or 2,
+  // every mutator resets it to 0, and the file reader keeps only 0, 1 or 2 (a
+  // stored 3 is discarded). Reading it here is what makes that laziness worth
+  // anything - without it the full walk of faces, edges and trims was repeated
+  // on every call, and the display asks this question once per object per
+  // frame.
+  //   0 = unset, 1 = solid normals out, 2 = solid normals in, 3 = not solid
+  switch ( m_is_solid )
+  {
+  case 1:
+  case 2:
+    return true;
+  case 3:
+    return false;
+  default:
+    break;
+  }
+
   bool bIsOriented = false;
   bool bHasBoundary = true;
   bool bIsManifold = IsManifold( &bIsOriented, &bHasBoundary );
@@ -6993,21 +7149,21 @@ int ON_Brep::SolidOrientation() const
     break;
   
   default:
+    // m_is_solid is not set ...
     if ( IsSolid() )
     {
       // this virtual function is overridden in Rhino SDK
       // and sets m_is_solid to appropriate values.  This
       // stand-alone version cannot tell the difference
       // between solids with inward pointing normals and
-      // solids with outwards pointing normals.
-      //ON_Brep* p = const_cast<ON_Brep*>(this);
-      //p->m_is_solid = 1;
+      // solids with outwards pointing normals
+      // and returns a 2 to indicate it doesn't know the answer.
       rc = 2;
     }
     else
     {
-      ON_Brep* p = const_cast<ON_Brep*>(this);
-      p->m_is_solid = 3;
+      // not a solid
+      const_cast<ON_Brep*>(this)->m_is_solid = 3;
       rc = 0;
     }
   }
@@ -10772,67 +10928,95 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
   if ( edge0->m_ti.Count() != edge1->m_ti.Count() )
     return 0;
 
-  // figure out which edge ends to merge
-	// GBA 1/6/03 Fixed TRR#8951.
-	// Check that the vertex to be eliminated has exactly 2 incident edges.
-  int end0 = 1, end1 = 0;
-	bool MatchFound = false;			
-	for(end0=1; !MatchFound && end0>=0; /* empty */){
-		int vi = edge0->m_vi[end0];
-		const ON_BrepVertex* v =  Vertex(vi);
-		if(v && v->m_ei.Count()==2 ){
-			for(end1=0; !MatchFound && end1<2; /*empty*/){
-				MatchFound = (vi == edge1->m_vi[end1]);
-				if(!MatchFound)
-					end1++; 
-			}	
-		}
-		if(!MatchFound)
-			end0--;
-	}
-	if(!MatchFound)
-		return 0;
+  // MDvR 14-FEB-2026: RH-91871 replace the code to find at which vertex that is shared
+  // between the two edges the merging should take place. Previous code only considered
+  // the first vertex that was shared between two edges, but in case two edges need to
+  // be joined that after joining make a closed loop, both vertices must be considered
+  // as (in case of RH-91871) only one of the two is allowed to be merged (and that one
+  // was missed in the earlier code, leaving a set of tangent edges unmerged).
 
-  // vi_mid = index of vertex to be eliminated
-  const int vi_mid = edge0->m_vi[end0];
+  ON_SimpleArray<int> edgeVertices(4);
+  edgeVertices.Append(edge0->m_vi[0]);
+  edgeVertices.Append(edge0->m_vi[1]);
+  edgeVertices.Append(edge1->m_vi[0]);
+  edgeVertices.Append(edge1->m_vi[1]);
+  // remove duplicates
+  edgeVertices.QuickSortAndRemoveDuplicates(ON_CompareIncreasing<int>);
+
+  ON_SimpleArray<int> sharedVertices(2);
+  for (int vi : edgeVertices)
   {
-    const ON_BrepVertex* v = Vertex(vi_mid);
-    if ( !v )
-      return 0;
-    if ( v->m_ei.Count() != 2 )
-      return 0;
-    if ( v->m_ei[0] != ei0 && v->m_ei[1] != ei0 )
-      return 0;
-    if ( v->m_ei[0] != ei1 && v->m_ei[1] != ei1 )
-      return 0;
+    if ((edge0->m_vi[0] == vi || edge0->m_vi[1] == vi) &&
+        (edge1->m_vi[0] == vi || edge1->m_vi[1] == vi))
+      sharedVertices.Append(vi);
   }
 
-  // evi0 = vertex index and other end of edge0
-  const int evi0 = edge0->m_vi[1-end0];
+  int end0(-1), end1(-1), vi_mid(-1), evi0(-1), evi1(-1);
+  for (int vi : sharedVertices)
+  {
+    int _end0(-1), _end1(-1);
+    if (edge0->m_vi[0] == vi) _end0 = 0;
+    if (edge0->m_vi[1] == vi) _end0 = 1;
+    if (edge1->m_vi[0] == vi) _end1 = 0;
+    if (edge1->m_vi[1] == vi) _end1 = 1;
 
-  // evi = vertex index and other end of edge1
-  const int evi1 = edge1->m_vi[1-end1];
-  if ( evi0 == vi_mid )
-    return 0;
-  if ( evi1 == vi_mid )
+    ON_3dVector tan0 = edge0->TangentAt(edge0->Domain()[_end0]);
+    if (_end0 == 0)
+      tan0 = -tan0;
+    ON_3dVector tan1 = edge1->TangentAt( edge1->Domain()[_end1] );
+    if (_end1 == 1)
+      tan1 = -tan1;
+    double d = tan0*tan1;
+    if (d < cos(angle_tolerance_radians))
+    {
+      continue;
+    }
+
+    ON_BrepVertex* V = Vertex(vi);
+    if (V->EdgeCount() != 2)
+    {
+      continue;
+    }
+
+    // this check is not really necessary, but it does not hurt to check
+    if (_end0 < 0 || _end1 < 0)
+    {
+      continue;
+    }
+
+    vi_mid = vi;
+    end0 = _end0;
+    end1 = _end1;
+    evi0 = edge0->m_vi[1 - end0];
+    evi1 = edge1->m_vi[1 - end1];
+  }
+
+  if (end0 < 0 || end1 < 0 || vi_mid < 0)
     return 0;
 
   // new edge will start at vi0 and end at vi1
   const int vi0 = (end0==1) ? evi0 : evi1;
   const int vi1 = (end0==1) ? evi1 : evi0;
 
-  // make sure the 3d kink angle at the merge point is <= angle_tolerance
-  {
-    ON_3dVector tan0 = edge0->TangentAt( edge0->Domain()[end0] );
-    if (end0 == 0)
-      tan0 = -tan0;
-    ON_3dVector tan1 = edge1->TangentAt( edge1->Domain()[end1] );
-    if (end1 == 1)
-      tan1 = -tan1;
-    double d = tan0*tan1;
-    if ( d < cos(angle_tolerance_radians) )
-      return 0;
-  }
+  // do not combine closed edges
+  if ( evi0 == vi_mid )
+    return 0;
+  if ( evi1 == vi_mid )
+    return 0;
+
+  // check the vertex to ensure that it has 2 incident edges
+  // that are edge0 and edge1
+  const ON_BrepVertex* v = Vertex(vi_mid);
+  if ( !v )
+    return 0;
+  if ( v->m_ei.Count() != 2 )
+    return 0;
+  if ( v->m_ei[0] != ei0 && v->m_ei[1] != ei0 )
+    return 0;
+  if ( v->m_ei[0] != ei1 && v->m_ei[1] != ei1 )
+    return 0;
+
+  // we now have a tangent edge0 <--> edge1 situation at vi_mid that can be merged.
 
   // get corresponding pairs of trims to merge
   int trim_count = edge0->m_ti.Count();
@@ -10894,69 +11078,80 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     loop_lti1.Append(lti1);
   }
 
-  // create new 3d edge curve geometry
-  // new edge goes same direction as edge0
+  int c3i0 = edge0->m_c3i;
+  int c3i1 = edge1->m_c3i;
+  
+  // 29-MAY-2025 MDvR: only add a new C3 curve if the two edges being merged
+  // do not yet share the same C3 curve. This replaces the separate implementation
+  // of TL_MergeBrokenEdges that was doing this, but gave incorrect results in RH-87677
+  bool needsNewC3 = c3i0 != c3i1;
+
   ON_PolyCurve* ec = 0;
+  if (needsNewC3)
   {
-    ON_Curve* ec0 = edge0->DuplicateCurve();
-    if ( !ec0 )
-      return 0;
-    ON_Curve* ec1 = edge1->DuplicateCurve();
-    if ( !ec1 )
+    // create new 3d edge curve geometry
+    // new edge goes same direction as edge0
     {
-      delete ec0;
-      return 0;
-    }
-    if ( end0 == end1 )
-    {
-      if ( !ec1->Reverse() )
+      ON_Curve* ec0 = edge0->DuplicateCurve();
+      if (!ec0)
+        return 0;
+      ON_Curve* ec1 = edge1->DuplicateCurve();
+      if (!ec1)
       {
         delete ec0;
-        delete ec1;
         return 0;
       }
-    }
-    ec = new ON_PolyCurve();
-    if ( end0 == 1 )
-    {
-      ec->Append(ec0);
-      ec->AppendAndMatch(ec1);
-    }
-    else
-    {
-      ec->Append(ec1);
-      ec->AppendAndMatch(ec0);
-    }
-    ec->RemoveNesting();
+      if (end0 == end1)
+      {
+        if (!ec1->Reverse())
+        {
+          delete ec0;
+          delete ec1;
+          return 0;
+        }
+      }
+      ec = new ON_PolyCurve();
+      if (end0 == 1)
+      {
+        ec->Append(ec0);
+        ec->AppendAndMatch(ec1);
+      }
+      else
+      {
+        ec->Append(ec1);
+        ec->AppendAndMatch(ec0);
+      }
+      ec->RemoveNesting();
 
-    //23 March 2022 - Chuck - Added here to match ON_PolyCurve::Read().  Otherwise 
-    //after saving and reopening, the edge will be invalid if the start or end parameter
-    //is changed in the SanitzeDomain() call in Read().  See RH-67919.
-    ec->SanitizeDomain();
+      //23 March 2022 - Chuck - Added here to match ON_PolyCurve::Read().  Otherwise 
+      //after saving and reopening, the edge will be invalid if the start or end parameter
+      //is changed in the SanitzeDomain() call in Read().  See RH-67919.
+      ec->SanitizeDomain();
+    }
   }
 
   // create new 2d trim curve geometry
   ON_SimpleArray<ON_Curve*> tc(trim_count);
-  for ( eti = 0; eti < trim_count; eti++ )
+  for (eti = 0; eti < trim_count; eti++)
   {
     const ON_BrepTrim* trim0 = Trim(trim0_index[eti]);
-    if ( !trim0 )
+    if (!trim0)
       break;
     const ON_BrepTrim* trim1 = Trim(trim1_index[eti]);
-    if ( !trim1 )
+    if (!trim1)
       break;
     ON_NurbsCurve* c0 = trim0->NurbsCurve();
-    if ( !c0 )
+    if (!c0)
       break;
     ON_NurbsCurve* c1 = trim1->NurbsCurve();
-    if ( !c1 )
+    if (!c1)
     {
       delete c0;
       break;
     }
-    if ( trim0->m_vi[1] == vi_mid && trim1->m_vi[0] == vi_mid )
+    if (trim0->m_vi[1] == vi_mid && trim1->m_vi[0] == vi_mid)
     {
-      if ( !c0->Append(*c1) )
+      if (!c0->Append(*c1))
       {
         delete c0;
         delete c1;
@@ -10966,9 +11161,9 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
       c1 = 0;
       tc.Append(c0);
     }
-    else if ( trim0->m_vi[0] == vi_mid && trim1->m_vi[1] == vi_mid )
+    else if (trim0->m_vi[0] == vi_mid && trim1->m_vi[1] == vi_mid)
     {
-      if ( !c1->Append(*c0) )
+      if (!c1->Append(*c0))
       {
         delete c0;
         delete c1;
@@ -10981,22 +11176,35 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     }
   }
 
-  if ( eti < trim_count )
+  if (eti < trim_count)
   {
     delete ec;
-    for ( eti = 0; eti < tc.Count(); eti++ )
+    for (eti = 0; eti < tc.Count(); eti++)
       delete tc[eti];
     return 0;
   }
+  
 
   // Add new edge from vi0 to vi1 that has the same orientation
   // as edge0.  Adding the new edge may change pointer values,
   // so the edge0 and edge1 pointers are reset.
-  edge0 = 0;
-  edge1 = 0;
+  edge0 = Edge(ei0);
+  edge1 = Edge(ei1);
 
-  const int c3i = AddEdgeCurve(ec);
-  ON_BrepEdge& edge = NewEdge( m_V[vi0], m_V[vi1], c3i );
+  // Set the correct sub-domain when referencing an existing C3 curve. Fixes RH-88995
+  ON_Interval domain(ON_Interval::EmptyInterval);
+  ON_Interval* pDomain(nullptr);
+  if (!needsNewC3)
+  {
+    domain.Union(edge0->ProxyCurveDomain());
+    domain.Union(edge1->ProxyCurveDomain());
+    pDomain = &domain;
+  }
+
+  const int c3i = needsNewC3 ? AddEdgeCurve(ec) : c3i0;
+  ON_BrepEdge& edge = NewEdge(m_V[vi0], m_V[vi1], c3i, pDomain);
+
+  // get the edges again, as the array may have been re-allocated.
   edge0 = Edge(ei0);
   edge1 = Edge(ei1);
 
@@ -12381,24 +12589,22 @@ void ON_Brep::Standardize()
   StandardizeTrimCurves();
 }
 
-
-
-bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
+bool ON_Brep::CanShrinkSurface(const ON_BrepFace& face, ON_Interval outer_dom[2], ON_Interval srf_dom[2], int DisableMask) const
 {
   ON_Surface* srf = const_cast<ON_Surface*>(face.SurfaceOf());
   if ( !srf )
     return false;
 
-  ON_Interval srf_udom = srf->Domain(0);
-  ON_Interval srf_vdom = srf->Domain(1);
+  srf_dom[0] = srf->Domain(0);
+  srf_dom[1] = srf->Domain(1);
 
-  int fli, li, si=-1;
+  int fli, li;
   int lti, ti;
   const int loop_count = m_L.Count();
   const int trim_count = m_T.Count();
   ON_BoundingBox outer_pbox = ON_BoundingBox::NanBoundingBox;
 
-  bool bAllTrimsAreIsoTrims = true; 
+  bool bAllTrimsAreIsoTrims = true;
   bool bSomeTrimsAreIsoTrims = false;
 
   // 4 April 2003 Dale Lear:
@@ -12471,10 +12677,9 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
 
   if ( !outer_pbox.IsValid() )
     return false;
-  
-  bool rc = false;
-  ON_Interval outer_udom( outer_pbox.m_min.x, outer_pbox.m_max.x );
-  ON_Interval outer_vdom( outer_pbox.m_min.y, outer_pbox.m_max.y );
+
+  outer_dom[0].Set( outer_pbox.m_min.x, outer_pbox.m_max.x );
+  outer_dom[1].Set( outer_pbox.m_min.y, outer_pbox.m_max.y );
 
   if ( !bAllTrimsAreIsoTrims )
   {
@@ -12486,21 +12691,21 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
     //    transverse along complicated trims.
     double d;
 
-    d = outer_udom.Length()*0.01;
-    if ( (!bSomeTrimsAreIsoTrims || outer_udom[0] < trim_iso_endbox.m_min.x) && !bIsSrfEdge[0] )
-      outer_udom[0] -= d;
-    if ( (!bSomeTrimsAreIsoTrims || outer_udom[1] > trim_iso_endbox.m_max.x) && !bIsSrfEdge[2])
-      outer_udom[1] += d;
+    d = outer_dom[0].Length() * 0.01;
+    if ( (!bSomeTrimsAreIsoTrims || outer_dom[0][0] < trim_iso_endbox.m_min.x) && !bIsSrfEdge[0] )
+      outer_dom[0][0] -= d;
+    if ( (!bSomeTrimsAreIsoTrims || outer_dom[0][1] > trim_iso_endbox.m_max.x) && !bIsSrfEdge[2] )
+      outer_dom[0][1] += d;
 
-    d = outer_vdom.Length()*0.01;
-    if ( (!bSomeTrimsAreIsoTrims || outer_vdom[0] < trim_iso_endbox.m_min.y) && !bIsSrfEdge[1] )
-      outer_vdom[0] -= d;
-    if ( (!bSomeTrimsAreIsoTrims || outer_vdom[1] > trim_iso_endbox.m_max.y) && !bIsSrfEdge[3] )
-      outer_vdom[1] += d;
+    d = outer_dom[1].Length() * 0.01;
+    if ( (!bSomeTrimsAreIsoTrims || outer_dom[1][0] < trim_iso_endbox.m_min.y) && !bIsSrfEdge[1] )
+      outer_dom[1][0] -= d;
+    if ( (!bSomeTrimsAreIsoTrims || outer_dom[1][1] > trim_iso_endbox.m_max.y) && !bIsSrfEdge[3] )
+      outer_dom[1][1] += d;
   }
 
-  outer_udom.Intersection( srf_udom );
-  outer_vdom.Intersection( srf_vdom );
+  outer_dom[0].Intersection(srf_dom[0]);
+  outer_dom[1].Intersection(srf_dom[1]);
 
   bool bShrinkIt = false;
 
@@ -12523,33 +12728,48 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
   */
 
   // GBA 8 May 2006.  Added DiasbleMask 
-  if( DisableMask & 0x0001)     // West
-    outer_udom[0] = srf_udom[0];
-  if( DisableMask & 0x0002)     // South
-    outer_vdom[0] = srf_vdom[0];
-  if( DisableMask & 0x0004)     // East
-    outer_udom[1] = srf_udom[1];
-  if( DisableMask & 0x0008)     // North
-    outer_vdom[1] = srf_vdom[1];
+  if ( DisableMask & 0x0001)     // West
+    outer_dom[0][0] = srf_dom[0][0];
+  if ( DisableMask & 0x0002)     // South
+    outer_dom[1][0] = srf_dom[1][0];
+  if ( DisableMask & 0x0004)     // East
+    outer_dom[0][1] = srf_dom[0][1];
+  if ( DisableMask & 0x0008)     // North
+    outer_dom[1][1] = srf_dom[1][1];
 
 
   // added 4 April 2003 Dale Lear
-  if ( outer_udom.IsIncreasing() && outer_vdom.IsIncreasing() )
+  if ( outer_dom[0].IsIncreasing() && outer_dom[1].IsIncreasing() )
   {
     //TRR #33381 28-April-08 GBA
     //  Make sure we don't keep allowing the surface to be shrunk.
-    if ( outer_udom.Length()*ON_ZERO_TOLERANCE < (srf_udom.Length() - outer_udom.Length()) || 
-         outer_vdom.Length()*ON_ZERO_TOLERANCE < (srf_vdom.Length() - outer_vdom.Length())  )  
+    double ou = outer_dom[0].Length(), ov = outer_dom[1].Length();
+    double su = srf_dom[0].Length(), sv = srf_dom[1].Length();
+    if ( ou * ON_ZERO_TOLERANCE < (su - ou) || ov * ON_ZERO_TOLERANCE < (sv - ov) )
       bShrinkIt = true;
   }
 
+  return bShrinkIt;
+}
+
+bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
+{
+  ON_Surface* srf = const_cast<ON_Surface*>(face.SurfaceOf());
+  if (!srf)
+    return false;
+
+  ON_Interval srf_dom[2], outer_dom[2];
+  bool bShrinkIt = CanShrinkSurface(face, outer_dom, srf_dom, DisableMask);
+
+  int si = -1;
+  bool rc = false;
   if ( bShrinkIt )
   {
     int srf_use = SurfaceUseCount( face.m_si, 2);
     ON_Surface* small_srf = srf->Duplicate();
-    if ( small_srf->Trim( 0, outer_udom ) )
+    if ( small_srf->Trim( 0, outer_dom[0]))
     {
-      if ( small_srf->Trim( 1, outer_vdom) )
+      if ( small_srf->Trim( 1, outer_dom[1]))
         si = AddSurface(small_srf);
       if ( si >= 0 )
       {

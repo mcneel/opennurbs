@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2025 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -22,6 +22,22 @@
 
 #include "opennurbs_textiterator.h"
 
+class ON_TextContentPrivate
+{
+public:
+  // Authored dimension template runs (user runs + literal "<>" placeholder).
+  // See ON_TextContent::SetDimensionTemplate.
+  ON_TextRunArray m_dimension_template;
+  bool m_has_dimension_template = false;
+
+  // The dim style font and text height the template runs are currently
+  // configured for. See ON_TextContent::SyncDimensionTemplateToDimStyle.
+  // Managed fonts live for the life of the application, so this raw pointer
+  // stays valid (same lifetime rule as ON_TextRun's managed font).
+  const ON_Font* m_dimension_template_font = nullptr;
+  double m_dimension_template_text_height = 0.0;
+};
+
 ON_OBJECT_IMPLEMENT(ON_TextContent, ON_Geometry, "4F0F51FB-35D0-9998-4865-9721D6D2C6A9");
 
 //-----------------------------------------------------------------
@@ -40,6 +56,12 @@ void ON_TextContent::Internal_Destroy()
   m_dimstyle_text_position_properties_hash = ON_TextContent::Empty.m_dimstyle_text_position_properties_hash;
   Internal_ClearTextContentHash();
   m_default_font = &ON_Font::Default;
+
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
 }
 
 ON_TextContent::~ON_TextContent()
@@ -60,7 +82,7 @@ void ON_TextContent::Internal_CopyFrom(
   const ON_TextContent& src
 )
 {
-  m_text = src.m_text;
+  Internal_SetText(src.m_text);
   m_rect_width = src.m_rect_width;
   m_rotation_radians = src.m_rotation_radians;
   m_h_align = src.m_h_align;
@@ -82,6 +104,14 @@ void ON_TextContent::Internal_CopyFrom(
   m_default_font = src.m_default_font;
 
   m_runtime_halign = src.m_runtime_halign;
+
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
+  if (src.m_private)
+    m_private = new ON_TextContentPrivate(*src.m_private);
 }
 
 ON_TextContent::ON_TextContent(const ON_TextContent& src)
@@ -139,101 +169,8 @@ bool ON_TextContent::IsValid(ON_TextLog* text_log) const
 }
 
 
-// At least for now, before text is parsed as RTF, 
-// strings like [[xxx|xxx]] are replaced with custom RTF tags
-// to represent stacked fractions.  
-// After "[[", the characters up to "|" are the top of the fraction 
-// and after "|" up to "]]" are the bottom of the fraction
-// "[[123/456]]" becomes "{\\stack47 123/456}"
-static bool SubstituteStackTags(const wchar_t* text_string, ON_wString& text, int length, int start, int& end, int depth)
-{
-  int i = start;
-  bool stacking = false; // flag to defeat recursive stacking until CreateStackedText() and MeasureTextRun() can handle it (if ever).
-  wchar_t stack_delimiter = L'/';
-
-  bool in_field = false;
-  while (i < length && text_string[i])
-  {
-    if (!stacking && !in_field && text_string[i] == L'%' && text_string[i + 1] == L'<')  // start of a field
-    {
-      text.Append(text_string + start, i - start);  // string up to here
-      text += L"{\\field %<";  // start field
-      i += 2;  // skip "%<"
-      in_field = true;
-      start = i;
-      continue;
-    }
-    else if (in_field && text_string[i] == L'>' && text_string[i + 1] == L'%') // field end
-    {
-      text.Append(text_string + start, i - start);
-      text += L">%}";
-      i += 2;
-      start = i;
-      in_field = false;
-      continue;
-    }
-    else if (!in_field)
-    {
-      if (!stacking && text_string[i] == L'[' && text_string[i + 1] == L'[')  // stack start
-      {
-        if (i < length - 2 && text_string[i + 2] == L'[')
-          i++;
-        else
-        {
-          text.Append(text_string + start, i - start);  // string up to here
-          text += L"{\\stack";  // start stack
-          i += 2;  // skip "[["
-          if (L'/' == text_string[i] || L'|' == text_string[i])
-          {
-            stack_delimiter = text_string[i];
-            i++;
-          }
-          wchar_t code[8] = { 0 };
-
-#if defined (ON_RUNTIME_WIN)
-          wsprintf(code, L"%d", (int)stack_delimiter);
-#endif
-#if defined (ON_RUNTIME_APPLE)
-          swprintf(code, sizeof(code), L"%d", (int)stack_delimiter);
-#endif
-          text += code;
-          text += L" ";
-
-          stacking = true;
-          // Recursive stacking 
-          // SubstituteStackTags(text_string, text, length, i, end, depth + 1);  // read stack section
-          //i = end;
-          start = i;
-          continue;
-        }
-      }
-      else if (stack_delimiter == text_string[i])  // stack separator
-      {
-        text.Append(text_string + start, i - start); // text for current top
-        text += stack_delimiter;
-        i++;
-        start = i;
-        continue;
-      }
-      else if (stacking && text_string[i] == L']' && text_string[i + 1] == L']') // stack end
-      {
-        text.Append(text_string + start, i - start);  // text from bottom 
-        text += L"}";
-        i += 2;
-        start = i;
-        stacking = false;
-        continue;
-      }
-      else
-        i++;
-    }
-    else
-      i++;
-  }
-  text.Append(text_string + start, i - start);  // remaining text
-  end = length;
-  return true;
-}
+// SubstituteStackTags moved to opennurbs_textiterator.cpp alongside
+// its sole caller ON_RtfParser::ParseToRuns.
 
 // sets the m_dimstyle_text_position_properties_hash
 bool ON_TextContent::Internal_SetText(
@@ -243,6 +180,39 @@ bool ON_TextContent::Internal_SetText(
   const bool bComposeAndUpdateRtf = true;
   bool rc = Internal_ParseRtf(rtf_string, dimstyle, bComposeAndUpdateRtf);
   return rc;
+}
+
+ON_wString& ON_TextContent::Internal_GetText() const
+{
+  if (m_text.IsEmpty())
+  {
+    ON_wString str;
+    bool rc = RtfComposer::Compose(this, str, true);
+    if (rc)
+    {
+      const_cast<ON_TextContent*>(this)->Internal_SetText(str);
+    }
+  }
+  return m_text;
+}
+
+void ON_TextContent::Internal_GetTextFromRuns(ON_wString& text) const
+{
+  text = L"";
+  int run_count = m__runs.Count();
+  for (int i = 0; i < run_count; i++)
+  {
+    const ON_TextRun* run = m__runs[i];
+    if (nullptr != run && run->IsText())
+    {
+      text += run->TextString();
+    }
+  }
+}
+
+void ON_TextContent::Internal_SetText(const ON_wString& text)
+{
+  m_text = text;
 }
 
 bool ON_TextContent::Internal_ParseRtfDefault(
@@ -260,63 +230,77 @@ bool ON_TextContent::Internal_ParseRtf(
   bool bComposeAndUpdateRtf
 )
 {
-  const ON_wString rtf_w_string(rtf_string);
-  if (rtf_w_string.IsEmpty())
+  // Parse the RTF string into a fresh run array + side values. The
+  // pure helper does not touch any ON_TextContent state.
+  ON_TextRunArray new_runs;
+  ON_SHA1_Hash new_text_position_hash;
+  const ON_Font* new_default_font = nullptr;
+  if (!ON_RtfParser::ParseToRuns(
+        rtf_string, dimstyle,
+        new_runs, new_text_position_hash, new_default_font))
     return false;
 
-  dimstyle = &ON_DimStyle::DimStyleOrDefault(dimstyle);
-
-  m_dimstyle_text_position_properties_hash
-    = (nullptr != dimstyle)
-    ? dimstyle->TextPositionPropertiesHash()
-    : ON_TextContent::Empty.DimStyleTextPositionPropertiesHash();
-
-  // Turn off recomposing a rtf string for the text
-  // so that the source string stored on the text is 
-  // what the edit control produced
-  // bComposeAndUpdateRtf = false;
-
-  // Call SubstituteStackTags() to change strings like  ABC [[1/2]] DEF
-  // to ABC {\stack47 1/2} DEF
-  // to encode stacked fractions into a custom rtf tag
-  // 47 is the ascii code of the delimiter '/'
-  // Do this in a string other than m_text to avoid changing 
-  // the text definition while parsing it
-
-  ON_wString text_string;
-  int end = 0;
-  int length = (int)rtf_w_string.Length();
-  if (!SubstituteStackTags(rtf_w_string.Array(), text_string, length, 0, end, 0))
-    text_string = rtf_w_string;
-  m_text = rtf_w_string;
-
-  m__runs = ON_TextRunArray::EmptyArray;
+  // Commit the parse results to this. Ordering matches the legacy
+  // Internal_ParseRtf body: stash the raw input as the text cache
+  // before MeasureTextContent runs, replace the run array, drop any
+  // wrapped-run cache, measure, then set the default font.
+  m_dimstyle_text_position_properties_hash = new_text_position_hash;
+  Internal_SetText(ON_wString(rtf_string));
+  m__runs = new_runs;
   Internal_DeleteWrappedRuns();
 
-  ON_TextIterator iter(text_string);
-  ON_TextRunBuilder builder(*this, m__runs, dimstyle, dimstyle->TextHeight(), ON_UNSET_COLOR);
-  ON_RtfParser parser(iter, builder);
-  ON_wString str;
-  bool rc = parser.Parse();
-  if (rc)
-    rc = ON_TextContent::MeasureTextContent(this, true, false);
-  if (rc)
-    m_default_font = &dimstyle->ParentDimStyleFont();
-  if (rc && bComposeAndUpdateRtf)
+  if (!ON_TextContent::MeasureTextContent(this, true, false))
+    return false;
+
+  m_default_font = new_default_font;
+
+  // Optionally overwrite the text cache with a compressed recompose
+  // of the runs. This is what the legacy code did when called with
+  // bComposeAndUpdateRtf=true; reads from binary archives pass false
+  // so the on-disk string is left intact.
+  if (bComposeAndUpdateRtf)
   {
-    rc = RtfComposer::Compose(this, str, false);
-    if (rc)
-    {
-      m_text = str;
-    }
+    ON_wString composed;
+    if (RtfComposer::Compose(this, composed, true))
+      Internal_SetText(composed);
   }
 
-  return rc;
+  return true;
+}
+
+bool ON_TextContent::IsContentEmpty() const
+{
+  //@todo: pretty simplistic. Needs more checks - Alain
+  if (m__runs.Count() == 0)
+    return true;
+  return false;
+}
+
+bool ON_TextContent::ContainsTextFields() const
+{
+  bool contains_text_fields = false;
+  int run_count = m__runs.Count();
+  if (!IsContentEmpty() && run_count > 0)
+  {
+    for (int i = 0; i < run_count; i++)
+    {
+      const wchar_t* s = L"%<";
+      ON_TextRun* run = m__runs[i];
+      if (/*run->Type() == ON_TextRun::RunType::kText &&*/ run->TextStringContains(s))
+      {
+        {
+          contains_text_fields = true;
+          break;
+        } 
+      }
+    }
+  }
+  return contains_text_fields;
 }
 
 const ON_wString ON_TextContent::RichText() const
 {
-  return m_text;
+  return Internal_GetText();
 }
 
 const ON_wString ON_TextContent::RichTextFromRuns(ON::RichTextStyle rich_text_style) const
@@ -326,8 +310,9 @@ const ON_wString ON_TextContent::RichTextFromRuns(ON::RichTextStyle rich_text_st
   switch (rich_text_style)
   {
   case ON::RichTextStyle::Windows10SDK:
-    if (!RtfComposer::Compose(this, rich_text, true))
-      rich_text.Empty();
+    //if (!RtfComposer::Compose(this, rich_text, true))
+    //  rich_text.Empty();
+    rich_text = Internal_GetText();
     break;
 
   case ON::RichTextStyle::AppleOSXSDK:
@@ -430,7 +415,13 @@ ON_SHA1_Hash ON_TextContent::Internal_TextContentSubHash() const
   if (ON_SHA1_Hash::ZeroDigest == m_text_content_sub_hash)
   {
     ON_SHA1 sha1;
-    sha1.AccumulateString(m_text);
+
+    //@todo: not tested
+    //sha1.AccumulateString(Internal_GetText()); // this triggers recomposing the rtf string
+    ON_wString text;
+    Internal_GetTextFromRuns(text);
+    sha1.AccumulateString(text);
+
     sha1.AccumulateSubHash(m_dimstyle_text_position_properties_hash);
     if (m_bWrapText && m_rect_width > 0 && m_rect_width < 1.0e300)
     {
@@ -658,6 +649,159 @@ bool ON_TextContent::Create(
   return rc;
 }
 
+bool ON_TextContent::CreateFromRuns(const ON_TextRunArray& runs)
+{
+  if (&runs == &m__runs)
+    return false;
+
+  const bool wrapped = (nullptr != m__wrapped_runs);
+  Internal_DeleteWrappedRuns();
+  DestroyRuntimeCache();
+  Internal_ClearTextContentHash();
+  double w = FormattingRectangleWidth();
+
+  m__runs = runs;
+
+  Internal_SetText(L"");
+
+  // Runs handed in are authored: they must not be remade from rtf because
+  // ON_TextContent::Read marked the runs they replace. RH-98673
+  if (m_dimstyle_text_position_properties_hash.IsEmptyContentHash())
+    m_dimstyle_text_position_properties_hash = ON_TextContent::Empty.m_dimstyle_text_position_properties_hash;
+
+  ON_TextContent::MeasureTextContent(this, true, false);
+
+  if (wrapped)
+    WrapText(w);
+
+  return true;
+}
+
+bool ON_TextContent::HasDimensionTemplate() const
+{
+  return (nullptr != m_private && m_private->m_has_dimension_template);
+}
+
+const ON_TextRunArray* ON_TextContent::DimensionTemplate() const
+{
+  return HasDimensionTemplate() ? &m_private->m_dimension_template : nullptr;
+}
+
+void ON_TextContent::SetDimensionTemplate(const ON_TextRunArray& template_runs)
+{
+  if (nullptr == m_private)
+    m_private = new ON_TextContentPrivate;
+  if (&template_runs != &m_private->m_dimension_template)
+    m_private->m_dimension_template = template_runs; // deep-copies runs as managed runs
+  m_private->m_has_dimension_template = true;
+}
+
+void ON_TextContent::ClearDimensionTemplate()
+{
+  if (nullptr != m_private)
+  {
+    m_private->m_dimension_template = ON_TextRunArray::EmptyArray;
+    m_private->m_has_dimension_template = false;
+  }
+}
+
+const ON_Font* ON_TextContent::DimensionTemplateFont() const
+{
+  return HasDimensionTemplate() ? m_private->m_dimension_template_font : nullptr;
+}
+
+double ON_TextContent::DimensionTemplateTextHeight() const
+{
+  return HasDimensionTemplate() ? m_private->m_dimension_template_text_height : 0.0;
+}
+
+void ON_TextContent::SetDimensionTemplateBaseline(const ON_Font* font, double text_height)
+{
+  if (nullptr == m_private)
+    m_private = new ON_TextContentPrivate;
+  m_private->m_dimension_template_font = (nullptr != font) ? font->ManagedFont() : nullptr;
+  m_private->m_dimension_template_text_height = text_height;
+}
+
+void ON_TextContent::SyncDimensionTemplateToDimStyle(
+  const ON_DimStyle* dimstyle,
+  bool bResetBaseline
+)
+{
+  if (!HasDimensionTemplate())
+    return;
+
+  const ON_DimStyle& style = ON_DimStyle::DimStyleOrDefault(dimstyle);
+  const ON_Font* new_font = style.Font().ManagedFont();
+  const double new_height = style.TextHeight();
+
+  const ON_Font* baseline_font = m_private->m_dimension_template_font;
+  const double baseline_height = m_private->m_dimension_template_text_height;
+
+  // The template was just built or adopted for this dim style, so its runs
+  // already carry this font and height. Record them and change nothing.
+  // Same when we have no baseline yet (a template restored from a file or by
+  // ON_DimLinear::GetTextXform's reparse): there is nothing to compare
+  // against, and guessing which runs carry a user font override would be
+  // wrong.
+  if (bResetBaseline || nullptr == baseline_font || !(baseline_height > 0.0))
+  {
+    m_private->m_dimension_template_font = new_font;
+    m_private->m_dimension_template_text_height = new_height;
+    return;
+  }
+
+  const bool bFontChanged = (nullptr != new_font && new_font != baseline_font);
+  const bool bHeightChanged = (new_height > 0.0 && !(new_height == baseline_height));
+  if (!bFontChanged && !bHeightChanged)
+    return;
+
+  // Apply the change to the authored runs in place. Rebuilding the template
+  // from UserText() would pick up the new font and height too, but it would
+  // flatten the authored runs to a string and drop run-only attributes such
+  // as super/subscript (RH-96212).
+  ON_TextRunArray& runs = m_private->m_dimension_template;
+  for (int i = 0; i < runs.Count(); i++)
+  {
+    ON_TextRun* run = runs[i];
+    if (nullptr == run)
+      continue;
+
+    const ON_TextRun::RunType type = run->Type();
+    // Matches Internal_SetRunsFont: these runs carry no drawn text of their
+    // own. kListItemBegin IS updated because its font draws the bullet.
+    if (type == ON_TextRun::RunType::kListBegin ||
+        type == ON_TextRun::RunType::kListEnd ||
+        type == ON_TextRun::RunType::kListItemEnd)
+      continue;
+
+    // A run whose font is not the one the template was configured for carries
+    // a deliberate per-run font override. Leave it alone.
+    if (bFontChanged && run->Font() == baseline_font)
+    {
+      run->SetFont(new_font);
+      if (run->IsStacked() == ON_TextRun::Stacked::kStacked &&
+          nullptr != run->m_stacked_text)
+      {
+        if (nullptr != run->m_stacked_text->m_top_run)
+          run->m_stacked_text->m_top_run->SetFont(new_font);
+        if (nullptr != run->m_stacked_text->m_bottom_run)
+          run->m_stacked_text->m_bottom_run->SetFont(new_font);
+      }
+    }
+
+    // Apply each run's HeightScaleFactor so per-run scaling (stacked fractions,
+    // tolerance text) survives, exactly as Internal_SetRunTextHeight does.
+    if (bHeightChanged)
+      run->SetTextHeight(new_height * run->HeightScaleFactor());
+  }
+
+  if (bFontChanged)
+    m_private->m_dimension_template_font = new_font;
+  if (bHeightChanged)
+    m_private->m_dimension_template_text_height = new_height;
+}
+
 bool ON_TextContent::ReplaceTextString(
   const wchar_t* RtfString,
   ON::AnnotationType annotation_type,
@@ -755,6 +899,7 @@ bool ON_TextContent::RunReplaceString(
   }
 
   m__runs = *new_text_runs;
+  Internal_SetText(L"");
 
   return true;
 }
@@ -769,12 +914,96 @@ void ON_TextContent::Internal_SetRunTextHeight(double height)
   DestroyRuntimeCache();
   Internal_ClearTextContentHash();
   double w = FormattingRectangleWidth();
-  m__runs.SetTextHeight(height);
+  // Apply each run's HeightScaleFactor so per-run scaling (e.g. symmetric
+  // tolerance text emitted by FormatTolerance with the \htscale wrapper)
+  // survives this blanket reset.
+  for (int i = 0; i < m__runs.Count(); i++)
+  {
+    ON_TextRun* run = m__runs[i];
+    if (nullptr == run)
+      continue;
+    run->SetTextHeight(height * run->HeightScaleFactor());
+  }
   ON_TextContent::MeasureTextContent(this, true, false);
   if (wrapped)
     WrapText(w);
 }
 
+void ON_TextContent::Internal_SetRunsFont(const ON_Font* font, bool keep_overrides, const ON_Font* old_font)
+{
+  if (nullptr == font)
+    return;
+
+  const ON_Font* new_managed = font->ManagedFont();
+  if (nullptr == new_managed)
+    return;
+
+  const ON_Font* old_managed = nullptr;
+  if (keep_overrides)
+  {
+    if (nullptr != old_font)
+    {
+      old_managed = old_font->ManagedFont();
+    }
+    else
+    {
+      for (int i = 0; i < m__runs.Count(); i++)
+      {
+        const ON_TextRun* run = m__runs[i];
+        if (nullptr == run)
+          continue;
+        ON_TextRun::RunType type = run->Type();
+        if (type == ON_TextRun::RunType::kText ||
+            type == ON_TextRun::RunType::kField ||
+            type == ON_TextRun::RunType::kFieldValue)
+        {
+          old_managed = run->Font();
+          break;
+        }
+      }
+    }
+    if (nullptr == old_managed || old_managed == new_managed)
+      return;
+  }
+
+  const bool wrapped = (nullptr != m__wrapped_runs);
+  Internal_DeleteWrappedRuns();
+  DestroyRuntimeCache();
+  Internal_ClearTextContentHash();
+  double w = FormattingRectangleWidth();
+
+  for (int i = 0; i < m__runs.Count(); i++)
+  {
+    ON_TextRun* run = m__runs[i];
+    if (nullptr == run)
+      continue;
+    ON_TextRun::RunType type = run->Type();
+    // kListItemBegin IS updated because DrawTextRun uses its font for bullets/numbers.
+    if (type == ON_TextRun::RunType::kListBegin ||
+        type == ON_TextRun::RunType::kListEnd ||
+        type == ON_TextRun::RunType::kListItemEnd)
+      continue;
+
+    if (keep_overrides && run->Font() != old_managed)
+      continue;
+
+    run->SetFont(new_managed);
+    if (run->IsStacked() == ON_TextRun::Stacked::kStacked &&
+        nullptr != run->m_stacked_text)
+    {
+      if (nullptr != run->m_stacked_text->m_top_run)
+        run->m_stacked_text->m_top_run->SetFont(new_managed);
+      if (nullptr != run->m_stacked_text->m_bottom_run)
+        run->m_stacked_text->m_bottom_run->SetFont(new_managed);
+    }
+  }
+
+  m_default_font = new_managed;
+  Internal_SetText(L""); // Clear cached RTF — recomposed from runs on next access
+  ON_TextContent::MeasureTextContent(this, true, false);
+  if (wrapped)
+    WrapText(w);
+}
 
 ON::TextHorizontalAlignment ON_TextContent::RuntimeHorizontalAlignment() const
 {
@@ -1034,7 +1263,7 @@ bool ON_TextContent::Write(
       }
 #endif
       // write correct m_text
-      if (!archive.WriteString(m_text))
+      if (!archive.WriteString(Internal_GetText()))
         break;
 
       bRichTextStringSaved = true;
@@ -1067,6 +1296,13 @@ bool ON_TextContent::Write(
     const bool bWrapText = TextIsWrapped();
     if (!archive.WriteBool(bWrapText))
       break;
+
+    //@todo: left this block commented for now
+    //// V9 - Text annotations create text runs directly, i.e., no rtf needs to be parsed
+    //const bool bWasCreatedFromTextRuns = WasCreatedFromTextRuns();
+    //if (!archive.WriteBool(bWasCreatedFromTextRuns))
+    //  break;
+
     rc = true;
     break;
   }
@@ -1092,7 +1328,21 @@ bool ON_TextContent::Read(
   rc = false;
   for (;;)
   {
-    if (!archive.ReadString(m_text))
+    ON_wString archived_text;
+    if (archive.ReadString(archived_text))
+    {
+      // this saves the rtf and creates the text runs but avoids
+      // unnecessarily recomposing the rtf string because bComposeAndUpdateRtf is false
+      // The annotation's dimstyle is not known here, so the runs are made with
+      // ON_DimStyle::Default and any run that names no font of its own gets the
+      // default font - all of a V8 plain-text annotation, which stores no rtf.
+      // EmptyContentHash, which no dimstyle hash equals, marks the runs to be
+      // remade from the archived text with the real dimstyle before use
+      // (CRhinoDoc::AddObject, ON_Text::GetTextXform). RH-98673
+      if (Internal_ParseRtf(archived_text, nullptr, false))
+        m_dimstyle_text_position_properties_hash = ON_SHA1_Hash::EmptyContentHash;
+    }
+    else
       break;
     ON_Plane obsolete_plane;
     if (!archive.ReadPlane(obsolete_plane))
@@ -1119,6 +1369,12 @@ bool ON_TextContent::Read(
     if (!archive.ReadBool(&bWrappedText))
       break;
     SetTextIsWrapped(bWrappedText);
+
+    //@todo: left this block commented for now
+    //// V9 - Text annotations create text runs directly, i.e., no rtf needs to be parsed
+    //bool bWasCreatedFromTextRuns = false;
+    //if (archive.ReadBool(&bWasCreatedFromTextRuns))
+    //  SetWasCreatedFromTextRuns(bWasCreatedFromTextRuns);
 
     rc = true;
     break;
@@ -1781,6 +2037,11 @@ ON_SHA1_Hash ON_TextContent::DimStyleTextPositionPropertiesHash() const
   return m_dimstyle_text_position_properties_hash;
 }
 
+void ON_TextContent::SetDimStyleTextPositionPropertiesHash(ON_SHA1_Hash hash)
+{
+  m_dimstyle_text_position_properties_hash = hash;
+}
+
 ON::AnnotationType ON_TextContent::Internal_AlignmentAnnotationType(
   ON::AnnotationType annotation_type
 )
@@ -1821,7 +2082,8 @@ ON_TextRunArray* ON_TextContent::TextRuns(bool bRaw) const
 
 const wchar_t* ON_TextContent::RtfText() const
 {
-  return m_text;
+  //return m_text;
+  return Internal_GetText();
 }
 
 const ON_Font& ON_TextContent::DefaultFont() const
@@ -1838,7 +2100,7 @@ bool ON_TextContent::ComposeText()
   ON_wString nothing;
   if (RtfComposer::Compose(this, rtf, false))
   {
-    m_text = rtf;
+    Internal_SetText(rtf);
     return true;
   }
   return false;
@@ -1861,7 +2123,7 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
     return false;
 
   ON_TextBox text_box;
-  const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(run->DisplayString(), font, text_box);
+  const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(run->DisplayString(), font, run->ApplyKerning(), run->LineSpaceScale(), text_box);
   bool rc = (line_count > 0 && text_box.IsSet());
   if (line_count == 0 && ON_TextRun::RunType::kText == run->Type())
     run->SetBoundingBox(ON_2dPoint(0,0), ON_2dPoint(0,0));
@@ -1937,7 +2199,8 @@ double ON_TextContent::GetLinefeedHeight(ON_TextRun& run)
     if (!(lfht == legacy_lfht))
       ON_TextLog::Null.Print(L"Break");
   }
-
+  
+  lfht *= run.LineSpaceScale();
 
   return lfht;
 }
@@ -1986,7 +2249,17 @@ bool ON_TextContent::MeasureTextContent(ON_TextContent* text, bool raw, bool wra
   {
     runs = text->TextRuns(true);
     if (nullptr != runs)
-      rc0 = ON_TextContent::MeasureTextRunArray(runs, text->m_v_align, text->m_h_align);
+    {
+      // When wrapping is also being computed, the raw run array is an
+      // intermediate -- only the wrapped run array is displayed. Skip the
+      // Justify prepass here (signalled by wrap_width < 0), otherwise its
+      // run-splitting mutation corrupts the source array that subsequent
+      // re-wrap passes read from.
+      ON_TextRunArray* wruns_check = wrapped ? text->TextRuns(false) : nullptr;
+      const bool raw_is_intermediate = (nullptr != wruns_check && wruns_check != runs);
+      const double raw_wrap_width = raw_is_intermediate ? -1.0 : 0.0;
+      rc0 = ON_TextContent::MeasureTextRunArray(runs, text->m_v_align, text->m_h_align, raw_wrap_width);
+    }
   }
 
   if (wrapped)
@@ -1994,7 +2267,12 @@ bool ON_TextContent::MeasureTextContent(ON_TextContent* text, bool raw, bool wra
     ON_TextRunArray* wruns = text->TextRuns(false);
 
     if (nullptr != wruns && wruns != runs)
-      rc1 = ON_TextContent::MeasureTextRunArray(wruns, text->m_v_align, text->m_h_align);
+    {
+      // Pass the annotation's wrap rectangle width so the layout step can
+      // run the Justify prepass when applicable. For L/C/R/Auto the value
+      // is ignored.
+      rc1 = ON_TextContent::MeasureTextRunArray(wruns, text->m_v_align, text->m_h_align, text->m_rect_width);
+    }
   }
 
   ON_BoundingBox bbox;
@@ -2007,11 +2285,369 @@ bool ON_TextContent::MeasureTextContent(ON_TextContent* text, bool raw, bool wra
   return true;
 }
 
+// should this be a private static member?
+double ON_TextContent__prevOrCurrTabStop(double adv, double tab_size)
+{
+  if (adv < 0.0 || tab_size <= 0.0)
+    return 0.0;
+
+  double prev_or_current_tab_stop = 0.0;
+	double next_tab_stop = tab_size;
+	while (next_tab_stop <= adv)
+	{
+		prev_or_current_tab_stop = next_tab_stop;
+		next_tab_stop += tab_size;
+		continue;
+	}
+	return prev_or_current_tab_stop;
+}
+
+// should this be a private static member?
+double ON_TextContent__advanceDistToNextTabStop(double adv, double tab_size)
+{
+  if (adv < 0.0 || tab_size <= 0.0)
+    return 0.0;
+
+  double overflow = adv - ON_TextContent__prevOrCurrTabStop(adv, tab_size);
+	double advDist = tab_size - overflow;
+  return advDist;
+}
+
 //static
 bool ON_TextContent::MeasureTextRunArray(
   ON_TextRunArray* runs,
   ON::TextVerticalAlignment v_align,
   ON::TextHorizontalAlignment h_align)
+{
+  // Forwarder. Pre-existing callers don't know about Justify and don't
+  // have a wrap-width context to provide; pass 0.0 which disables the
+  // Justify prepass inside the 4-arg overload.
+  return MeasureTextRunArray(runs, v_align, h_align, 0.0);
+}
+
+
+// Returns true if `run` is a kText run whose display string contains nothing
+// but whitespace. After splitting at space boundaries, every all-whitespace
+// sub-run answers true; every word sub-run answers false.
+static bool Internal_IsWhitespaceRun(const ON_TextRun* run)
+{
+  if (nullptr == run) return false;
+  if (run->Type() != ON_TextRun::RunType::kText) return false;
+  const wchar_t* s = run->DisplayString();
+  if (nullptr == s || 0 == *s) return false;
+  for (const wchar_t* p = s; *p; ++p)
+    if (!iswspace(*p)) return false;
+  return true;
+}
+
+
+// Returns true if `run` is a kText run containing at least one non-whitespace
+// character. Used to find the "visible-content" boundary at the start and
+// end of a justified line.
+static bool Internal_IsVisibleContentRun(const ON_TextRun* run)
+{
+  if (nullptr == run) return false;
+  if (run->Type() != ON_TextRun::RunType::kText) return false;
+  const wchar_t* s = run->DisplayString();
+  if (nullptr == s) return false;
+  for (const wchar_t* p = s; *p; ++p)
+    if (!iswspace(*p)) return true;
+  return false;
+}
+
+
+// Returns true if `run` is a candidate to receive slack during Justify --
+// either a whitespace-only kText sub-run or a kTab. Both inflate when they
+// sit between visible-content neighbors on the same line.
+static bool Internal_IsGapCandidate(const ON_TextRun* run)
+{
+  if (nullptr == run) return false;
+  if (run->Type() == ON_TextRun::RunType::kTab) return true;
+  return Internal_IsWhitespaceRun(run);
+}
+
+
+// Splits the kText run at index `ri` in `runs` into per-word and per-space-run
+// sub-runs (one sub-run per contiguous chunk of whitespace or non-whitespace
+// characters in the display string). The original run is returned to the
+// managed-run pool and removed; the sub-runs are inserted in its place,
+// each re-measured via ON_TextContent::MeasureTextRun.
+//
+// Returns the number of sub-runs that replaced the original. The caller
+// should advance its iteration index by this count to skip past the new
+// sub-runs. Returns 0 if no split was made (run is not a splittable kText
+// run, has no internal boundary changes, or sub-run allocation failed --
+// in which case the original run remains in place).
+static int Internal_SplitRunAtSpaces(ON_TextRunArray* runs, int ri)
+{
+  if (nullptr == runs) return 0;
+  ON_TextRun* run = (*runs)[ri];
+  if (nullptr == run) return 0;
+  if (run->Type() != ON_TextRun::RunType::kText) return 0;
+  const wchar_t* s = run->DisplayString();
+  if (nullptr == s || 0 == *s) return 0;
+
+  // Find boundaries between whitespace runs and non-whitespace runs.
+  const int total_len = (int)wcslen(s);
+  ON_SimpleArray<int> boundaries;
+  boundaries.Append(0);
+  bool prev_is_space = (0 != iswspace(s[0]));
+  for (int i = 1; i < total_len; i++)
+  {
+    bool curr_is_space = (0 != iswspace(s[i]));
+    if (curr_is_space != prev_is_space)
+      boundaries.Append(i);
+    prev_is_space = curr_is_space;
+  }
+  boundaries.Append(total_len);
+
+  const int piece_count = boundaries.Count() - 1;
+  if (piece_count <= 1)
+    return 0; // single contiguous class -> nothing to split
+
+  ON_SimpleArray<ON_TextRun*> subs;
+  subs.Reserve(piece_count);
+  for (int p = 0; p < piece_count; p++)
+  {
+    int start = boundaries[p];
+    int end = boundaries[p + 1];
+    int len = end - start;
+    if (len <= 0) continue;
+
+    // Copy via GetManagedTextRun(src) so the sub-run inherits font, height,
+    // color, etc. We then *replace* the canonical Unicode storage with just
+    // the substring -- using SetUnicodeString (not SetDisplayString) so
+    // m_codepoints, m_text_string, AND m_display_string are all consistent.
+    // SetDisplayString alone would leave m_codepoints holding the FULL
+    // original string, and downstream readers (GetTextRuns -> the edit
+    // control) would see each sub-run carrying the whole original text,
+    // producing duplication.
+    ON_TextRun* sub = ON_TextRun::GetManagedTextRun(*run);
+    if (nullptr == sub) continue;
+
+    ON_wString sub_str;
+    sub_str.Append(s + start, len);
+    ON__UINT32* cp = nullptr;
+    int cpcount = ON_TextContext::ConvertStringToCodepoints(sub_str, cp);
+    sub->SetUnicodeString(cpcount, cp);
+    if (nullptr != cp) onfree(cp);
+
+    ON_TextContent::MeasureTextRun(sub);
+    subs.Append(sub);
+  }
+
+  if (subs.Count() < 2)
+  {
+    // Allocation failure or weird input. Don't mutate; return what we did append.
+    for (int p = 0; p < subs.Count(); p++)
+      ON_TextRun::ReturnManagedTextRun(subs[p]);
+    return 0;
+  }
+
+  // Remove the original run and insert the sub-runs in its place.
+  ON_TextRun* original = (*runs)[ri];
+  runs->RemoveRun(ri);
+  if (original->IsManagedTextRun())
+    ON_TextRun::ReturnManagedTextRun(original);
+  else
+    delete original;
+
+  for (int p = 0; p < subs.Count(); p++)
+  {
+    ON_TextRun* sub = subs[p];
+    runs->InsertRun(ri + p, sub);
+  }
+  return subs.Count();
+}
+
+
+// True iff the run at index `i` in `runs[ri0..ri1)` is a "gap" -- a whitespace
+// kText run or a kTab run sandwiched between two visible-content neighbors on
+// the same line. Visible content = a kText run with at least one non-whitespace
+// character. Used by both the gap count and the inflation pass during Justify.
+static bool Internal_IsGapRun(const ON_TextRunArray* runs, int i, int ri0, int ri1)
+{
+  if (nullptr == runs) return false;
+  const ON_TextRun* r = (*runs)[i];
+  if (!Internal_IsGapCandidate(r)) return false;
+
+  bool visible_before = false;
+  for (int j = i - 1; j >= ri0; j--)
+  {
+    if (Internal_IsVisibleContentRun((*runs)[j]))
+    {
+      visible_before = true;
+      break;
+    }
+  }
+  if (!visible_before) return false;
+
+  for (int j = i + 1; j < ri1; j++)
+  {
+    if (Internal_IsVisibleContentRun((*runs)[j]))
+      return true;
+  }
+  return false;
+}
+
+
+// Justify the line covered by runs[ri0..ri1) by:
+//   1. Splitting each kText run at its internal space boundaries.
+//   2. Zeroing the advance of any leading/trailing whitespace sub-runs so the
+//      slack budget covers exactly the visible content's span.
+//   3. Counting "gap" sub-runs (whitespace sandwiched between visible neighbors).
+//   4. Inflating each gap's advance by per_gap_slack = (stretch_target - line_width) / num_gaps.
+// stretch_target is the column the line should reach: wrap_width when the text
+// is wrapped, otherwise max_line_width (the longest natural line of the block).
+// Tabs are NOT inflated (per Q3 (i)): they sit at whatever cumulative x they end up
+// at after preceding gaps inflate. Returns the new end-of-line index (ri1 after
+// any sub-runs were inserted by the split pass).
+static int Internal_JustifyLine(ON_TextRunArray* runs, int ri0, int ri1, double stretch_target)
+{
+  // Step 1: split kText runs at space boundaries. Each split may insert new
+  // sub-runs, shifting ri1 outward.
+  {
+    int cur = ri0;
+    while (cur < ri1)
+    {
+      const ON_TextRun* run = (*runs)[cur];
+      if (nullptr != run && run->Type() == ON_TextRun::RunType::kText)
+      {
+        int n = Internal_SplitRunAtSpaces(runs, cur);
+        if (n > 1)
+        {
+          ri1 += (n - 1);
+          cur += n;
+          continue;
+        }
+      }
+      cur++;
+    }
+  }
+
+  // Step 2: zero leading/trailing gap-like runs. The wrap algorithm keeps a
+  // trailing space on the line that the wrap break was made at; rarely there
+  // can also be a leading whitespace or a trailing tab. Including these in
+  // line_width undercounts the slack and leaves a small visible gap between
+  // the last visible glyph and the rectangle's right edge after inflation.
+  // Zero them out so the slack budget covers exactly the visible span.
+  //
+  // Trailing pass: walk back from end of line; zero gap-candidate runs (tab
+  // or whitespace kText) until we hit a run with visible content.
+  for (int i = ri1 - 1; i >= ri0; i--)
+  {
+    ON_TextRun* r = (*runs)[i];
+    if (nullptr == r) continue;
+    if (Internal_IsVisibleContentRun(r))
+      break;
+    if (Internal_IsGapCandidate(r))
+      r->SetAdvance(ON_2dVector(0.0, 0.0));
+  }
+  // Leading pass: same logic from the front.
+  for (int i = ri0; i < ri1; i++)
+  {
+    ON_TextRun* r = (*runs)[i];
+    if (nullptr == r) continue;
+    if (Internal_IsVisibleContentRun(r))
+      break;
+    if (Internal_IsGapCandidate(r))
+      r->SetAdvance(ON_2dVector(0.0, 0.0));
+  }
+
+  // Step 3: count gaps and accumulate current line width.
+  double line_width = 0.0;
+  int num_gaps = 0;
+  for (int i = ri0; i < ri1; i++)
+  {
+    const ON_TextRun* r = (*runs)[i];
+    if (nullptr == r) continue;
+    line_width += r->Advance().x;
+    if (Internal_IsGapRun(runs, i, ri0, ri1))
+      num_gaps++;
+  }
+
+  if (num_gaps <= 0) return ri1;
+  const double slack = stretch_target - line_width;
+  if (slack <= 0.0) return ri1;
+  const double per_gap = slack / (double)num_gaps;
+
+  // Step 4: inflate each gap's advance.
+  for (int i = ri0; i < ri1; i++)
+  {
+    ON_TextRun* r = (*runs)[i];
+    if (nullptr == r) continue;
+    if (!Internal_IsGapRun(runs, i, ri0, ri1)) continue;
+    ON_2dVector adv = r->Advance();
+    adv.x += per_gap;
+    r->SetAdvance(adv);
+  }
+  return ri1;
+}
+
+
+// Walk the run array line-by-line and call Internal_JustifyLine on each line
+// that should be justified. stretch_target is the wrap rectangle width.
+// Last-line policy follows CSS / Word / LaTeX convention: a hard break
+// (kNewline / kParagraph / kListItemEnd) marks the end of a paragraph, so
+// the line above is left ragged. Soft breaks (kSoftreturn, produced by
+// the word-wrapper mid-paragraph) keep justifying the line above, because
+// the sentence continues on the next line. The final partial line of the
+// block (no terminating break run) is treated the same as a hard-broken
+// last line -- ragged.
+// A line is justifiable iff:
+//   - h_align is Justify
+//   - stretch_target > 0 (a wrap column exists). Callers that pass
+//     stretch_target <= 0 opt out of Justify entirely. That covers both
+//     unwrapped content (no column to stretch to -- matches CSS / Word /
+//     Google Docs: Justify on unwrapped text is a silent no-op) and the
+//     intermediate raw pass during a wrapped layout (sentinel from
+//     MeasureTextContent: the wrapped pass will perform the real Justify).
+static void Internal_ApplyJustify(
+  ON_TextRunArray* runs,
+  ON::TextHorizontalAlignment h_align,
+  double stretch_target)
+{
+  if (nullptr == runs) return;
+  if (h_align != ON::TextHorizontalAlignment::Justify) return;
+  if (!(stretch_target > 0.0)) return;
+
+  int line_start = 0;
+  int ri = 0;
+  while (ri < runs->Count())
+  {
+    const ON_TextRun* run = (*runs)[ri];
+    ON_TextRun::RunType rt = (nullptr != run) ? run->Type() : ON_TextRun::RunType::kNone;
+    const bool is_hard_break =
+      (rt == ON_TextRun::RunType::kNewline ||
+       rt == ON_TextRun::RunType::kParagraph ||
+       rt == ON_TextRun::RunType::kListItemEnd);
+    const bool is_soft_break = (rt == ON_TextRun::RunType::kSoftreturn);
+
+    if (is_soft_break)
+    {
+      int new_end = Internal_JustifyLine(runs, line_start, ri, stretch_target);
+      ri = new_end; // skip past any sub-runs the split inserted
+      line_start = ri + 1;
+    }
+    else if (is_hard_break)
+    {
+      // Hard break: line above is the last line of a paragraph -- leave
+      // it ragged.
+      line_start = ri + 1;
+    }
+    ri++;
+  }
+  // Final partial line (no terminating break) is also treated as a
+  // paragraph end -- ragged.
+}
+
+
+//static
+bool ON_TextContent::MeasureTextRunArray(
+  ON_TextRunArray* runs,
+  ON::TextVerticalAlignment v_align,
+  ON::TextHorizontalAlignment h_align,
+  double wrap_width)
 {
   if (0 == runs)
     return false;
@@ -2025,12 +2661,35 @@ bool ON_TextContent::MeasureTextRunArray(
   double total_height = 0.0, linefeed_height = 0.0;
   bool line_start = true;  // at the start of a line of text
   bool line_end = true;    // last run produced a newline
-
+  int list_depth = 0;
 
   int run_count = runs->Count();
   ON_2dPoint current_point(0.0, 0.0);
   //double os_width = 0.0;
   ON_TextRun* last_text_run = 0;
+
+  // Compute one tab interval for the whole text run array. Fixes RH-94698
+  double cached_tab_interval = 0.0;
+  for (int tri = 0; tri < run_count; tri++)
+  {
+    const ON_TextRun* tr = (*runs)[tri];
+    if (nullptr == tr)
+      continue;
+    if (ON_TextRun::RunType::kText != tr->Type())
+      continue;
+    const ON_Font* tf = tr->Font();
+    if (nullptr == tf)
+      continue;
+    const ON_FontMetrics& tfm = tf->FontMetrics();
+    int tupm = tfm.UPM();
+    int taoc = tfm.AscentOfCapital();
+    if (tupm > 0 && taoc > 0)
+    {
+      double ti = 3.0 * (double)tupm * tr->TextHeight() / (double)taoc;
+      if (ti > cached_tab_interval)
+        cached_tab_interval = ti;
+    }
+  }
 
   // Find the width of the longest run
   // and total height of all lines
@@ -2041,9 +2700,12 @@ bool ON_TextContent::MeasureTextRunArray(
     {
       run->m_line_index = line_index;
       run->SetOffset(ON_2dVector(0.0, 0.0));
-      if (ON_TextRun::RunType::kNewline == run->Type() ||
-        ON_TextRun::RunType::kSoftreturn == run->Type() ||
-        ON_TextRun::RunType::kParagraph == run->Type())
+      const ON_TextRun::RunType runtype = run->Type();
+
+      if (ON_TextRun::RunType::kNewline == runtype ||
+        ON_TextRun::RunType::kSoftreturn == runtype ||
+        ON_TextRun::RunType::kParagraph == runtype ||
+        ON_TextRun::RunType::kListItemEnd == runtype)
       {
         // When a linefeed is found, set the advance.y of the run to the linefeed height
         // and if there is an accumulated width wider than the current linewidth, save it.
@@ -2066,7 +2728,41 @@ bool ON_TextContent::MeasureTextRunArray(
         line_end = true;
         current_point = current_point + run->Advance();
       }
-      else if (ON_TextRun::RunType::kText == run->Type())
+      
+      if (ON_TextRun::RunType::kListBegin == runtype)
+      {
+        list_depth++;
+      }
+      else if (ON_TextRun::RunType::kListEnd == runtype)
+      {
+        list_depth--;
+        if (list_depth < 0)
+          list_depth = 0;
+      }
+      else if (ON_TextRun::RunType::kListItemBegin == runtype)
+      {
+        // The advance on a kListItemBegin run is the horizontal distance from
+        // the bullet/number's origin to the start of the item text on this line.
+        //
+        // Default clearance is 1.6 * list_depth * TextHeight, which works well
+        // for narrow prefixes like Arial "1." but can be too tight for wide
+        // prefixes (monospaced fonts like Courier New, or multi-digit ordered
+        // numbers like "1000."). When the rendered prefix is wider than the
+        // default clearance, grow the advance so the item text doesn't overlap.
+        //
+        // Use absolute assignment (not +=) to prevent accumulation when
+        // MeasureTextContent is called multiple times (e.g. from CreateFromRuns
+        // and then again from GetTextXform).
+        const double text_height = run->TextHeight();
+        const double default_advance = 1.6 * list_depth * text_height;
+        const double prefix_width = run->MeasureListItemPrefixWidth();
+        const double prefix_gap = 0.4 * text_height;
+        const double advance_x = (prefix_width + prefix_gap > default_advance)
+          ? prefix_width + prefix_gap
+          : default_advance;
+        run->SetAdvance(ON_2dVector(advance_x, 0.0));
+      }
+      else if (ON_TextRun::RunType::kText == runtype)
       {
         if (run->IsStacked() != ON_TextRun::Stacked::kNone)
         {
@@ -2079,14 +2775,54 @@ bool ON_TextContent::MeasureTextRunArray(
         }
 
         line_width += run->Advance().x;  // Add width of this run
-        if (run->TextHeight() > line_height)
-          line_height = run->TextHeight();   // Increase height if this is highest run so far in this line
+
+        // 31 Aug 2026 https://mcneel.myjetbrains.com/youtrack/issue/RH-48018
+        // A stacked fraction spans more than the nominal text height. TextHeight() and
+        // GetLinefeedHeight() both know only the nominal height, so the line height and
+        // the feed come out short and adjacent lines collide. CreateStackedText() already
+        // measured the true extent into the run bbox - use it for both.
+        double run_height = run->TextHeight();
+        if (ON_TextRun::Stacked::kNone != run->IsStacked())
+        {
+          const ON_BoundingBox& stacked_bbox = run->BoundingBox();
+          if (stacked_bbox.IsValid())
+          {
+            const double stacked_height = stacked_bbox.m_max.y - stacked_bbox.m_min.y;
+            if (stacked_height > run_height)
+              run_height = stacked_height;
+          }
+        }
+
+        if (run_height > line_height)
+          line_height = run_height;   // Increase height if this is highest run so far in this line
         double lfh = ON_TextContent::GetLinefeedHeight(*run);
+        // The feed returned above is ink (TextHeight) plus the font's leading. A stacked
+        // run's ink is taller, so add the excess and keep the same leading - clamping the
+        // feed to the run height instead would leave the lines touching with no gap.
+        if (run_height > run->TextHeight())
+          lfh += run_height - run->TextHeight();
         if (line_start || lfh > linefeed_height)
           linefeed_height = lfh;         // Increase linefeed height if this is the highest so far in this line
+
         line_start = false;
         line_end = false;
         last_text_run = run;
+      }
+      else if (ON_TextRun::RunType::kTab == runtype)
+      {
+        double tab_interval = cached_tab_interval;
+        if (tab_interval <= 0.0)
+        {
+          // Last-resort fallback: no text run in the array has usable font
+          // metrics. 3 * cap-height is wrong but non-zero.
+          tab_interval = 3.0 * run->TextHeight();
+        }
+        double adv = ON_TextContent__advanceDistToNextTabStop(line_width, tab_interval);
+
+        ON_2dVector advance(adv, 0);
+        run->SetAdvance(advance);
+
+        line_width += adv;
       }
       if (max_line_height == 0.0)
         max_line_height = line_height;
@@ -2102,6 +2838,19 @@ bool ON_TextContent::MeasureTextRunArray(
       max_line_width = line_width;
   }
 
+  // Phase 1.5 -- Justify prepass. Splits kText runs at internal space
+  // boundaries and inflates each gap's advance so each line that ends in a
+  // soft break stretches to wrap_width. Hard-break-terminated lines and the
+  // final partial line are left ragged (CSS / Word / LaTeX convention).
+  // wrap_width <= 0 -> no column -> no justification. That covers both
+  // unwrapped content (wrap_width == 0) and the intermediate raw pass
+  // (wrap_width < 0, sentinel from MeasureTextContent meaning "this run
+  // array is intermediate, the wrapped pass will Justify"). Mutates the
+  // run array; refresh run_count.
+  double justify_stretch_target = (wrap_width > 0.0) ? wrap_width : 0.0;
+  Internal_ApplyJustify(runs, h_align, justify_stretch_target);
+  run_count = runs->Count();
+
   int ri0 = 0, ri1 = 0;
   ON_2dVector offset(0.0, 0.0);
   for (int ri = 0; rc && ri < run_count; ri++)
@@ -2110,9 +2859,12 @@ bool ON_TextContent::MeasureTextRunArray(
     ON_TextRun* run = (*runs)[ri];
     if (nullptr != run)
     {
-      if (ON_TextRun::RunType::kNewline == run->Type() ||
-        ON_TextRun::RunType::kSoftreturn == run->Type() ||
-        ON_TextRun::RunType::kParagraph == run->Type())
+      const ON_TextRun::RunType runtype = run->Type();
+
+      if (ON_TextRun::RunType::kNewline == runtype ||
+        ON_TextRun::RunType::kSoftreturn == runtype ||
+        ON_TextRun::RunType::kParagraph == runtype ||
+        ON_TextRun::RunType::kListItemEnd == runtype)
       {
         SetLineOffsets(runs, ri0, ri1, h_align, max_line_width, offset);
         offset.x = 0.0;
@@ -2179,7 +2931,7 @@ bool ON_TextContent::MeasureTextRunArray(
 
 bool ON_TextContent::FormatTolerance(
   double distance,
-  ON::LengthUnitSystem units_in,
+  const ON_UnitSystem& units_in,
   const ON_DimStyle* dimstyle,
   bool alt,
   ON_wString& formatted_string)
@@ -2231,8 +2983,29 @@ bool ON_TextContent::FormatTolerance(
     wchar_t decimal_char = dimstyle->DecimalSeparator();
     if (ON_TextContent::FormatLength(tol_uv, dim_length_display, 0.0, tolprecision, zs, bracket_stack_frac, decimal_char, sTol))
     {
+      // Wrap "±value" in {\htscale<thousandths> ...} when the dim style's
+      // ToleranceHeightScale is non-unity so the symmetric tolerance text
+      // renders inline at the scaled height on the same baseline as the
+      // dim value. Deviation/Limits get scaled via the stacked-text path
+      // ([[ ]]); the symmetric form is plain inline text and needs its
+      // own marker.
+      const double tol_scale = dimstyle->ToleranceHeightScale();
+      const bool wrap_scale = (tol_scale > 0.0 && fabs(tol_scale - 1.0) > ON_EPSILON);
+      if (wrap_scale)
+      {
+        const int scale_thousandths = (int)floor(tol_scale * 1000.0 + 0.5);
+        wchar_t htscale_buf[32] = { 0 };
+#if defined(ON_RUNTIME_WIN)
+        wsprintf(htscale_buf, L"{\\htscale%d ", scale_thousandths);
+#else
+        swprintf(htscale_buf, sizeof(htscale_buf) / sizeof(htscale_buf[0]), L"{\\htscale%d ", scale_thousandths);
+#endif
+        formatted_string += htscale_buf;
+      }
       formatted_string += ON_wString::PlusMinusSymbol;
       formatted_string += sTol;
+      if (wrap_scale)
+        formatted_string += L"}";
     }
     break;
   }
@@ -2279,12 +3052,22 @@ bool ON_TextContent::FormatTolerance(
   {
     double tol_uv = dimstyle->ToleranceUpperValue();
     double tol_lv = dimstyle->ToleranceLowerValue();
-    
+
     tol_uv *= length_factor;
     tol_lv *= length_factor;
-    
-    tol_uv = distance + tol_uv;
-    tol_lv = distance - tol_lv;
+
+    // RH-79760: the base measurement must be converted to the display
+    // (alternate) units before the limit offsets are added. length_factor
+    // deliberately omits the main LengthFactor for the tolerance offsets
+    // (RH-63775), so scale the base value with the same factor FormatDistance
+    // uses (unit scale * the applicable length factor) rather than adding the
+    // raw, unconverted distance.
+    const double base_length_factor
+      = unit_length_factor * (alt ? dimstyle->AlternateLengthFactor() : dimstyle->LengthFactor());
+    const double base_distance = distance * base_length_factor;
+
+    tol_uv = base_distance + tol_uv;
+    tol_lv = base_distance - tol_lv;
 
     wchar_t decimal_char = dimstyle->DecimalSeparator();
     ON_wString sDist_u, sDist_l;
@@ -2305,9 +3088,19 @@ bool ON_TextContent::FormatTolerance(
   return true;
 }
 
+bool ON_TextContent::FormatTolerance(
+  double distance,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  return FormatTolerance(distance, (ON_UnitSystem)units_in, dimstyle, alt, formatted_string);
+}
+
 bool ON_TextContent::FormatDistance(
   double distance_in,
-  ON::LengthUnitSystem units_in,
+  const ON_UnitSystem& units_in,
   const ON_DimStyle* dimstyle,
   bool alt,
   ON_wString& formatted_string)
@@ -2355,10 +3148,19 @@ bool ON_TextContent::FormatDistance(
   return true;
 }
 
+bool ON_TextContent::FormatDistance(
+  double distance_in,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  return FormatDistance(distance_in, (ON_UnitSystem)units_in, dimstyle, alt, formatted_string);
+}
 
 bool ON_TextContent::FormatDistanceAndTolerance(
   double distance_in,
-  ON::LengthUnitSystem units_in,
+  const ON_UnitSystem& units_in,
   const ON_DimStyle* dimstyle,
   bool alt,
   ON_wString& formatted_string)
@@ -2369,13 +3171,22 @@ bool ON_TextContent::FormatDistanceAndTolerance(
     ON_TextContent::FormatTolerance(distance_in, units_in, dimstyle, alt, formatted_string);
   
   return true;
+}
 
+bool ON_TextContent::FormatDistanceAndTolerance(
+  double distance_in,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool alt,
+  ON_wString& formatted_string)
+{
+  return FormatDistanceAndTolerance(distance_in, (ON_UnitSystem)units_in, dimstyle, alt, formatted_string);
 }
 
 // static
 bool ON_TextContent::FormatDistanceMeasurement(
   double distance_in,
-  ON::LengthUnitSystem units_in,
+  const ON_UnitSystem& units_in,
   const ON_DimStyle* dimstyle,
   const wchar_t* user_text,         // Replace "<>" in user_text with formatted dimension
   ON_wString& formatted_string)     // Output
@@ -2391,17 +3202,19 @@ bool ON_TextContent::FormatDistanceMeasurement(
 
   if (-1 != cpi)
   {
-    if (nullptr != dimstyle->Prefix())
-      formatted_string += dimstyle->Prefix();
-
     int len = user_string.Length();
     for (int i = 0; i < len; i++)
     {
       if (i == cpi)
       {
+        if (nullptr != dimstyle->Prefix())
+          formatted_string += dimstyle->Prefix();
+
         FormatDistanceAndTolerance(distance_in, units_in, dimstyle, false, formatted_string);
+
         if (nullptr != dimstyle->Suffix())
           formatted_string += dimstyle->Suffix();
+
         if (dimstyle->Alternate()) // text alternate units
         {
           if (dimstyle->AlternateBelow())
@@ -2421,7 +3234,21 @@ bool ON_TextContent::FormatDistanceMeasurement(
     //if (nullptr != dimstyle->Prefix())
     //  formatted_string += dimstyle->Prefix();
 
-    int ix = user_string.ReverseFind(L"\\par");
+    // Strip the last "\par" control word so the tolerance is appended to the
+    // same line. Only a complete "\par" tag counts - a following letter or
+    // digit means a longer control word (\pard, \pardirnatural,
+    // \partightenfactor0, ...) whose "\par" must not be removed. RH-68249
+    int ix = -1;
+    const wchar_t* user_chars = static_cast<const wchar_t*>(user_string);
+    for (int i = user_string.Length() - 4; i >= 0 && ix < 0; i--)
+    {
+      if (L'\\' != user_chars[i] || L'p' != user_chars[i + 1] || L'a' != user_chars[i + 2] || L'r' != user_chars[i + 3])
+        continue;
+      const wchar_t next = user_chars[i + 4]; // 0 at the end of the string
+      if ((next >= L'a' && next <= L'z') || (next >= L'A' && next <= L'Z') || (next >= L'0' && next <= L'9'))
+        continue;
+      ix = i;
+    }
     if (ix >= 0)
     {
       formatted_string += user_string.Left(ix);
@@ -2447,6 +3274,16 @@ bool ON_TextContent::FormatDistanceMeasurement(
     }
   }
   return true;
+}
+
+bool ON_TextContent::FormatDistanceMeasurement(
+  double distance_in,
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  const wchar_t* user_text,         // Replace "<>" in user_text with formatted dimension
+  ON_wString& formatted_string)
+{
+  return FormatDistanceMeasurement(distance_in, (ON_UnitSystem)units_in, dimstyle, user_text, formatted_string);
 }
 
 // Converts measurement to string, including scale factor, tolerances, pre- and postfix ...
@@ -2726,6 +3563,7 @@ ON::TextHorizontalAlignment ON::TextHorizontalAlignmentFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Center);
     ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Right);
     ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Auto);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON::TextHorizontalAlignment::Justify);
   }
   ON_ERROR("invalid vertical_alignment_as_unsigned parameter.");
   return (ON::TextHorizontalAlignment::Left);

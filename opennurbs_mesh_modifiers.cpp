@@ -88,7 +88,6 @@ ON_UUID ON_DisplacementUserData::Uuid(void)
 ON_DisplacementUserData::ON_DisplacementUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -98,12 +97,11 @@ ON_DisplacementUserData::ON_DisplacementUserData(const ON_DisplacementUserData& 
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -677,6 +675,8 @@ ON_UUID ON_Displacement::Uuid(void) const
 
 int    ON_Displacement::Defaults::RefineStepCount(void)   { return 1; }
 int    ON_Displacement::Defaults::FairingAmount(void)     { return 4; }
+bool   ON_Displacement::Defaults::Fair(void)              { return false; }
+bool   ON_Displacement::Defaults::LimitFaces(void)        { return false; }
 int    ON_Displacement::Defaults::FaceLimit(void)         { return 10000; }
 int    ON_Displacement::Defaults::ChannelNumber(void)     { return 1; }
 int    ON_Displacement::Defaults::MeshMemoryLimit(void)   { return 512; }
@@ -709,7 +709,6 @@ ON_UUID ON_EdgeSofteningUserData::Uuid(void)
 ON_EdgeSofteningUserData::ON_EdgeSofteningUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -719,12 +718,11 @@ ON_EdgeSofteningUserData::ON_EdgeSofteningUserData(const ON_EdgeSofteningUserDat
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -904,7 +902,6 @@ ON_UUID ON_ThickeningUserData::Uuid(void)
 ON_ThickeningUserData::ON_ThickeningUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -914,12 +911,11 @@ ON_ThickeningUserData::ON_ThickeningUserData(const ON_ThickeningUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -1090,7 +1086,6 @@ ON_UUID ON_CurvePipingUserData::Uuid(void)
 ON_CurvePipingUserData::ON_CurvePipingUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -1100,12 +1095,11 @@ ON_CurvePipingUserData::ON_CurvePipingUserData(const ON_CurvePipingUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -1318,7 +1312,6 @@ ON_UUID ON_ShutLiningUserData::Uuid(void)
 ON_ShutLiningUserData::ON_ShutLiningUserData()
 {
   m_userdata_uuid = Uuid();
-
   m_application_uuid = ON_MeshModifier::PlugInId();
 
   SetToDefaults();
@@ -1328,12 +1321,11 @@ ON_ShutLiningUserData::ON_ShutLiningUserData(const ON_ShutLiningUserData& ud)
   :
   ON_XMLUserData(ud) // CRITICAL - Be sure to call base class.
 {
-  m_userdata_uuid = Uuid();
+  ON_ASSERT(m_userdata_uuid == Uuid());
+  ON_ASSERT(m_application_uuid == ON_MeshModifier::PlugInId());
 
-  m_application_uuid = ON_MeshModifier::PlugInId();
-
-  // DO NOT SET OTHER ON_UserData fields
-  // In particular, do not set m_userdata_copycount
+  // DO NOT SET OTHER ON_UserData fields. In particular, do not set m_userdata_copycount.
+  // The base class is responsible for handling all the base class members.
   *this = ud;
 }
 
@@ -1892,11 +1884,37 @@ ON_Displacement* ON_MeshModifiers::Displacement(bool allow_creation)
   return m_impl->m_displacement;
 }
 
+ON_Displacement& ON_MeshModifiers::Displacement(void)
+{
+  if ((nullptr == m_impl->m_displacement))
+    m_impl->m_displacement = new ON_Displacement;
+
+  return *m_impl->m_displacement;
+}
+
+const ON_Displacement* ON_MeshModifiers::Displacement(void) const
+{
+  return m_impl->m_displacement;
+}
+
 ON_EdgeSoftening* ON_MeshModifiers::EdgeSoftening(bool allow_creation)
 {
   if ((nullptr == m_impl->m_edge_softening) && allow_creation)
     m_impl->m_edge_softening = new ON_EdgeSoftening;
 
+  return m_impl->m_edge_softening;
+}
+
+ON_EdgeSoftening& ON_MeshModifiers::EdgeSoftening(void)
+{
+  if ((nullptr == m_impl->m_edge_softening))
+    m_impl->m_edge_softening = new ON_EdgeSoftening;
+
+  return *m_impl->m_edge_softening;
+}
+
+const ON_EdgeSoftening* ON_MeshModifiers::EdgeSoftening(void) const
+{
   return m_impl->m_edge_softening;
 }
 
@@ -1908,6 +1926,19 @@ ON_Thickening* ON_MeshModifiers::Thickening(bool allow_creation)
   return m_impl->m_thickening;
 }
 
+ON_Thickening& ON_MeshModifiers::Thickening(void)
+{
+  if ((nullptr == m_impl->m_thickening))
+    m_impl->m_thickening = new ON_Thickening;
+
+  return *m_impl->m_thickening;
+}
+
+const ON_Thickening* ON_MeshModifiers::Thickening(void) const
+{
+  return m_impl->m_thickening;
+}
+
 ON_CurvePiping* ON_MeshModifiers::CurvePiping(bool allow_creation)
 {
   if ((nullptr == m_impl->m_curve_piping) && allow_creation)
@@ -1916,11 +1947,37 @@ ON_CurvePiping* ON_MeshModifiers::CurvePiping(bool allow_creation)
   return m_impl->m_curve_piping;
 }
 
+ON_CurvePiping& ON_MeshModifiers::CurvePiping(void)
+{
+  if ((nullptr == m_impl->m_curve_piping))
+    m_impl->m_curve_piping = new ON_CurvePiping;
+
+  return *m_impl->m_curve_piping;
+}
+
+const ON_CurvePiping* ON_MeshModifiers::CurvePiping(void) const
+{
+  return m_impl->m_curve_piping;
+}
+
 ON_ShutLining* ON_MeshModifiers::ShutLining(bool allow_creation)
 {
   if ((nullptr == m_impl->m_shut_lining) && allow_creation)
     m_impl->m_shut_lining = new ON_ShutLining;
 
+  return m_impl->m_shut_lining;
+}
+
+ON_ShutLining& ON_MeshModifiers::ShutLining(void)
+{
+  if ((nullptr == m_impl->m_shut_lining))
+    m_impl->m_shut_lining = new ON_ShutLining;
+
+  return *m_impl->m_shut_lining;
+}
+
+const ON_ShutLining* ON_MeshModifiers::ShutLining(void) const
+{
   return m_impl->m_shut_lining;
 }
 

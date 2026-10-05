@@ -155,6 +155,179 @@ const ON_DimStyle* ON_DimStyleContext::PrevDimStyle(
 
 #pragma endregion DimStyleContext
 
+#pragma region ClippingArrowheads
+bool ON_ClippingArrowhead::operator!=(const ON_ClippingArrowhead& other) const
+{
+  return !operator==(other);
+}
+
+bool ON_ClippingArrowhead::operator==(const ON_ClippingArrowhead& other) const
+{
+  if (m_arrowhead_type == other.m_arrowhead_type)
+  {
+    //@todo: are UserBlock arrow types relevant here?
+    //if (m_arrowhead_type == arrow_type::UserBlock)
+    //  return (m_arrow_block_id == other.m_arrow_block_id);
+    //else
+      return true;
+  }
+  else
+    return false;
+}
+
+ON_ClippingArrowhead::arrow_type ON_ClippingArrowhead::ArrowTypeFromUnsigned(
+  unsigned int type_as_unsigned
+  )
+{
+  switch (type_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::None);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::Triangle);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::OffsetTriangle);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::Arrow);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::OffsetArrow);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::OpenArrow);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::Rectangle);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::Ribbon);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_ClippingArrowhead::arrow_type::Line);
+  }
+  ON_ERROR("Invalid type_as_unsigned parameter.");
+  return (ON_ClippingArrowhead::arrow_type::None);
+}
+
+ON_ClippingArrowhead::arrow_type ON_ClippingArrowhead::ArrowheadType() const
+{
+  return m_arrowhead_type;
+}
+
+void ON_ClippingArrowhead::SetArrowheadType(ON_ClippingArrowhead::arrow_type type)
+{
+  m_arrowhead_type = type;
+}
+
+//ON_UUID ON_ClippingArrowhead::ArrowBlockId() const
+//{
+//  return m_arrow_block_id;
+//}
+//
+//void ON_ClippingArrowhead::SetArrowBlockId(ON_UUID id)
+//{
+//  m_arrow_block_id = id;
+//}
+
+ON_ClippingArrowhead::arrow_type ON_ClippingArrowhead::DefaultArrowType()
+{
+  return ON_ClippingArrowhead::arrow_type::Triangle;
+}
+
+ON__UINT32 ON_ClippingArrowhead::GetPoints(arrow_type type, const double*& points)
+{
+  //@todo: this is taken from the ON_Arrowhead class implementation and needs to be implemented properly.
+  // Polygon points for built-in arrowheads
+  // SolidTriangle
+  static double a2[] = { 0.0, 0.0, -1.0, 0.25, -1.0, -0.25 };
+  // Dot
+  static double a3[] = { 0.5, 0.0, 0.483, 0.129, 0.433, 0.25, 0.353, 0.353, 0.25, 0.433, 0.129, 0.483,
+    0.0, 0.5, -0.129, 0.483, -0.25, 0.433, -0.353, 0.353, -0.433, 0.25, -0.483, 0.129,
+    -0.5, 0.0, -0.483, -0.129, -0.433, -0.25, -0.353, -0.353, -0.25, -0.433, -0.129, -0.483,
+    0.0, -0.5, 0.129, -0.483, 0.25, -0.433, 0.353, -0.353, 0.433, -0.25, 0.483, -0.129 };
+  // Tick
+  static double a4[] = { -0.46, -0.54, 0.54, 0.46, 0.46, 0.54, -0.54, -0.46 };
+  // ShortTriangle
+  static double a5[] = { 0.0, 0.0, -0.5, 0.5, -0.5, -0.5 };
+  // Arrow
+  static double a6[] = { 0.0, 0.0, -0.707, 0.707, -0.777, 0.636, -0.141, 0.0, -0.777, -0.636, -0.707, -0.707 };
+  // Rectangle
+  static double a7[] = { 0.0, 0.0, -1.0, 0.0, -1.0, 0.2, 0.0, 0.2 };
+  // LongTriangle
+  static double a8[] = { 0.0, 0.0, -1.0, 0.125, -1.0, -0.125 };
+  // LongerTriangle
+  static double a9[] = { 0.0, 0.0, -1.0, 0.0833, -1.0, -0.0833 };
+
+  static double* arrow_points[] = { 0, 0, a2, a3, a4, a5, a6, a7, a8, a9 };
+  static unsigned int c[] = {
+    0,  // NoArrow
+    0,  // User
+    sizeof(a2) / sizeof(a2[0]) / 2,
+    sizeof(a3) / sizeof(a3[0]) / 2,
+    sizeof(a4) / sizeof(a4[0]) / 2,
+    sizeof(a5) / sizeof(a5[0]) / 2,
+    sizeof(a6) / sizeof(a6[0]) / 2,
+    sizeof(a7) / sizeof(a7[0]) / 2,
+    sizeof(a8) / sizeof(a8[0]) / 2,
+    sizeof(a9) / sizeof(a9[0]) / 2
+  };
+  ON__UINT32 pointcount = 0;
+  //if (arrow_type::UserBlock < type && arrow_type::LongerTriangle >= type)
+  //{
+    pointcount = c[(int)type];
+    points = arrow_points[(int)type];
+  //}
+  return pointcount;
+}
+
+ON__UINT32 ON_ClippingArrowhead::GetPoints(arrow_type type, ON_2dPointArray& points)
+{
+  const double* pts = nullptr;
+  unsigned int pcount = ON_ClippingArrowhead::GetPoints(type, pts);
+  if (0 < pcount)
+  {
+    points.Empty();
+    points.Reserve(pcount);
+    points.Append(pcount, (ON_2dPoint*)pts);
+  }
+  return pcount;
+}
+
+bool ON_ClippingArrowhead::GetArrowheadBoundingBox(
+  ON_ClippingArrowhead::arrow_type arrowtype,
+  ON_UUID arrow_block_id,
+  ON_Xform xform,
+  ON_BoundingBox& bbox,
+  bool grow)
+{
+  bool rc = false;
+
+  if (!grow)
+    bbox.Destroy();
+  if (/*ON_ClippingArrowhead::arrow_type::UserBlock != arrowtype &&*/ ON_ClippingArrowhead::arrow_type::None != arrowtype)
+  {
+    // Draw polygon from built-in shapes
+    ON_2dPointArray points2d;
+    int count = ON_ClippingArrowhead::GetPoints(arrowtype, points2d);
+    if (2 < count)
+    {
+      ON_3dPointArray points3d(count);
+      for (int i = 0; i < count; i++)
+      {
+        ON_3dPoint& p = points3d.AppendNew();
+        p = points2d[i];
+        p.Transform(xform);
+        bbox.Set(p, grow);
+        grow = true;
+      }
+      rc = true;
+    }
+  }
+  //else if (ON_ClippingArrowhead::arrow_type::UserBlock == arrowtype)
+  //{
+  //  ON_3dPoint points[4] = {
+  //    ON_3dPoint( 0.0, -0.5, 0.0 ),
+  //    ON_3dPoint( 1.0, -0.5, 0.0 ),
+  //    ON_3dPoint( 1.0, 0.5, 0.0 ),
+  //    ON_3dPoint( 0.0, 0.5, 0.0 ) };
+
+  //  for (int i = 0; i < 4; i++)
+  //  {
+  //    points[i].Transform(xform);
+  //    bbox.Set(points[i], grow);
+  //    grow = true;
+  //  }
+  //  rc = true;
+  //}
+  return rc;
+}
+#pragma endregion ClippingArrowheads
 
 #pragma region Arrowheads
 
@@ -192,6 +365,7 @@ ON_Arrowhead::arrow_type ON_Arrowhead::ArrowTypeFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Arrowhead::arrow_type::Rectangle);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Arrowhead::arrow_type::LongTriangle);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_Arrowhead::arrow_type::LongerTriangle);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Arrowhead::arrow_type::SolidDatumTriangle);
   }
   ON_ERROR("Invalid type_as_unsigned parameter.");
   return (ON_Arrowhead::arrow_type::None);
@@ -423,6 +597,13 @@ ON_DimStyle::field ON_DimStyle::FieldFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::TextFit);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ArrowFit);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::DecimalSeparator);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::Kerning);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::LineSpaceScale);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ClippingArrowType1);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ClippingArrowType2);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::ClippingArrowSize);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::SuppressDimLine1);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_DimStyle::field::SuppressDimLine2);
   }
   if (field_as_unsigned > static_cast<unsigned int>(ON_DimStyle::field::AlternateDimensionLengthDisplay))
   {
@@ -749,8 +930,10 @@ ON__UINT32 ON_Arrowhead::GetPoints(arrow_type type, const double*& points)
   static double a8[] = { 0.0, 0.0, -1.0, 0.125, -1.0, -0.125 };
   // LongerTriangle
   static double a9[] = { 0.0, 0.0, -1.0, 0.0833, -1.0, -0.0833 };
+  // SolidDatum
+  static double a10[] = { 0.0, 0.5, -1.0, 0.0, 0.0, -0.5};
 
-  static double* arrow_points[] = { 0, 0, a2, a3, a4, a5, a6, a7, a8, a9 };
+  static double* arrow_points[] = { 0, 0, a2, a3, a4, a5, a6, a7, a8, a9, a10 };
   static unsigned int c[] = {
     0,  // NoArrow
     0,  // User
@@ -761,10 +944,11 @@ ON__UINT32 ON_Arrowhead::GetPoints(arrow_type type, const double*& points)
     sizeof(a6) / sizeof(a6[0]) / 2,
     sizeof(a7) / sizeof(a7[0]) / 2,
     sizeof(a8) / sizeof(a8[0]) / 2,
-    sizeof(a9) / sizeof(a9[0]) / 2
+    sizeof(a9) / sizeof(a9[0]) / 2,
+    sizeof(a10) / sizeof(a10[0]) / 2,
   };
   ON__UINT32 pointcount = 0;
-  if (arrow_type::UserBlock < type && arrow_type::LongerTriangle >= type)
+  if (arrow_type::UserBlock < type && arrow_type::SolidDatumTriangle >= type)
   {
     pointcount = c[(int)type];
     points = arrow_points[(int)type];
@@ -776,7 +960,7 @@ ON__UINT32 ON_Arrowhead::GetPoints(arrow_type type, ON_2dPointArray& points)
 {
   const double* pts = nullptr;
   unsigned int pcount = ON_Arrowhead::GetPoints(type, pts);
-  if (0 < pcount)
+  if (pcount > 0)
   {
     points.Empty();
     points.Reserve(pcount);
@@ -976,6 +1160,13 @@ ON_TextMask::MaskFrame ON_TextMask::MaskFrameFromUnsigned(
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::NoFrame);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::RectFrame);
     ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::CapsuleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::CircleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::SquareFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::DiamondFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::TriangleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::HexagonFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::HexagonCapsuleFrame);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_TextMask::MaskFrame::RoundRectFrame);
   }
   ON_ERROR("mask_type_as_unsigned parameter is not valid");
   return ON_TextMask::MaskFrame::NoFrame;
@@ -1135,6 +1326,7 @@ int ON_DimStyle::V5ArrowType(ON_Arrowhead::arrow_type v6type)
   default:
   case ON_Arrowhead::arrow_type::SolidTriangle:
   case ON_Arrowhead::arrow_type::UserBlock:
+  case ON_Arrowhead::arrow_type::SolidDatumTriangle:
     v5type = ON_V5x_DimStyle::eArrowType::solidtriangle;
     break;
   case ON_Arrowhead::arrow_type::Dot:
@@ -2189,7 +2381,11 @@ bool ON_DimStyle::CompareFields(const ON_DimStyle& style) const
     m_bForceDimLine == style.m_bForceDimLine &&
     m_ArrowFit == style.m_ArrowFit &&
     m_TextFit == style.m_TextFit &&
-    m_decimal_separator == style.m_decimal_separator
+    m_decimal_separator == style.m_decimal_separator &&
+
+    // RH-66603
+    SuppressDimLine1() == style.SuppressDimLine1() &&
+    SuppressDimLine2() == style.SuppressDimLine2()
     )
     return true;
   else
@@ -2229,7 +2425,7 @@ bool ON_DimStyle::Write(
   ON_BinaryArchive& file // serialize definition to binary archive
   ) const
 {
-  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 9))
+  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 13))
     return false;
 
   bool rc = false;
@@ -2571,6 +2767,29 @@ bool ON_DimStyle::Write(
     if (!file.WriteInt(u)) break;
     // END chunk version 1.9 information
 
+    bool useKerning = UseKerning();
+    if (!file.WriteBool(useKerning)) break;
+    // END chunk version 1.10 information
+
+    double scale = LineSpaceScale();
+    if (!file.WriteDouble(scale)) break;
+    // END chunk version 1.11 information
+    
+    u = static_cast<unsigned int>(ClippingArrowType1());
+    if (!file.WriteInt(u)) break;
+
+    u = static_cast<unsigned int>(ClippingArrowType2());
+    if (!file.WriteInt(u)) break;
+
+    double clippingArrowSize = ClippingArrowSize();
+    if (!file.WriteDouble(clippingArrowSize)) break;
+    // END chunk version 1.12 information
+
+    // RH-66603
+    if (!file.WriteBool(SuppressDimLine1())) break;
+    if (!file.WriteBool(SuppressDimLine2())) break;
+    // END chunk version 1.13 information
+
     rc = true;
     break;
   }
@@ -2612,6 +2831,12 @@ bool ON_DimStyle::Read(
     if (!file.ReadDouble(&m_extoffset)) break;
     if (!file.ReadDouble(&m_arrowsize)) break;
     if (!file.ReadDouble(&m_leaderarrowsize)) break;
+
+    // 20-Jan-2026 - when reading older files that do not have clipping arrow size,
+    // set the property to something reasonable.
+    if (minor_version <= 11)
+      SetClippingArrowSize(m_leaderarrowsize);
+
     if (!file.ReadDouble(&m_centermark)) break;
     if (!file.ReadDouble(&m_textgap)) break;
     if (!file.ReadDouble(&m_textheight)) break;
@@ -3126,6 +3351,64 @@ bool ON_DimStyle::Read(
     if (!file.ReadInt(&u)) break;
     m_decimal_separator = (wchar_t)u;
     // END chunk version 1.9 information
+    if (minor_version <= 9)
+    {
+      rc = true;
+      break;
+    }
+    
+    bool useKerning = false;
+    if (!file.ReadBool(&useKerning)) break;
+    SetUseKerning(useKerning);
+    // END chunk version 1.10 information
+    if (minor_version <= 10)
+    {
+      rc = true;
+      break;
+    }
+    
+    double scale = 1.0;
+    if (!file.ReadDouble(&scale)) break;
+    SetLineSpaceScale(scale);
+    // END chunk version 1.11 information
+    if (minor_version <= 11)
+    {
+      rc = true;
+      break;
+    }
+
+    if (!file.ReadInt(&u)) break;
+    SetClippingArrowType1(ON_ClippingArrowhead::ArrowTypeFromUnsigned(u));
+
+    if (!file.ReadInt(&u)) break;
+    SetClippingArrowType2(ON_ClippingArrowhead::ArrowTypeFromUnsigned(u));
+
+    double clippingArrowSize = 1;
+    if (!file.ReadDouble(&clippingArrowSize)) break;
+    SetClippingArrowSize(clippingArrowSize);
+
+    // END chunk version 1.12 information
+    if (minor_version <= 12)
+    {
+      rc = true;
+      break;
+    }
+
+    // RH-66603
+    bool bSuppressDimLine = false;
+    if (!file.ReadBool(&bSuppressDimLine)) break;
+    SetSuppressDimLine1(bSuppressDimLine);
+
+    bSuppressDimLine = false;
+    if (!file.ReadBool(&bSuppressDimLine)) break;
+    SetSuppressDimLine2(bSuppressDimLine);
+
+    // END chunk version 1.13 information
+    if (minor_version <= 13)
+    {
+      rc = true;
+      break;
+    }
 
     rc = true;
     break;
@@ -3655,6 +3938,7 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(this->UnitSystem()));
 
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_text_orientation));
+    sha1.AccumulateBool(m_bUseKerning);
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_leader_text_orientation));
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_dim_text_orientation));
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_dimradial_text_orientation));
@@ -3666,6 +3950,7 @@ const class ON_SHA1_Hash ON_DimStyle::TextPositionPropertiesHash() const
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_TextFit));
 
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_decimal_separator));
+    sha1.AccumulateDouble(LineSpaceScale());
 
     // Save hash in mutable m_text_position_properties_hash
     m_text_position_properties_hash = sha1.Hash();
@@ -3748,6 +4033,13 @@ const class ON_SHA1_Hash& ON_DimStyle::ContentHash() const
 
     sha1.AccumulateUnsigned32(static_cast<unsigned int>(m_decimal_separator));
 
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(ClippingArrowType1()));
+    sha1.AccumulateUnsigned32(static_cast<unsigned int>(ClippingArrowType2()));
+    sha1.AccumulateDouble(ClippingArrowSize());
+
+    // RH-66603
+    sha1.AccumulateBool(SuppressDimLine1());
+    sha1.AccumulateBool(SuppressDimLine2());
     // Save hash in mutable m_content_hash
     m_content_hash = sha1.Hash();
   }
@@ -5200,6 +5492,219 @@ wchar_t ON_DimStyle::DecimalSeparator() const
   return m_decimal_separator;
 }
 
+bool ON_DimStyle::UseKerning() const
+{
+  return m_bUseKerning;
+}
+void ON_DimStyle::SetUseKerning(bool enableKerning)
+{
+  if (m_bUseKerning != enableKerning)
+  {
+    m_bUseKerning = enableKerning;
+    Internal_TextPositionPropertiesChange();
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::Kerning);
+}
+
+double ON_DimStyle::LineSpaceScale() const
+{
+  return m_linespace_scale;
+}
+void ON_DimStyle::SetLineSpaceScale(double scale)
+{
+  if (fabs(m_linespace_scale-scale)>ON_FLOAT_EPSILON)
+  {
+    m_linespace_scale = (float)scale;
+    Internal_TextPositionPropertiesChange();
+  }
+  Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::LineSpaceScale);
+}
+
+class ON_CLASS ON_DimStyleExtensions : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_DimStyleExtensions);
+
+public:
+  ON_DimStyleExtensions();
+  ON_DimStyleExtensions(const ON_DimStyleExtensions& src);
+  ~ON_DimStyleExtensions() = default;
+  ON_DimStyleExtensions& operator=(const ON_DimStyleExtensions& src);
+
+  static ON_DimStyleExtensions* Get(const ON_DimStyle* ds, bool createIfMissing);
+
+  bool GetDescription(ON_wString& description) override;
+  bool Archive() const override;
+
+  ON_ClippingArrowhead::arrow_type m_clippingArrowType1 = ON_ClippingArrowhead::arrow_type::Triangle;
+  ON_ClippingArrowhead::arrow_type m_clippingArrowType2 = ON_ClippingArrowhead::arrow_type::Triangle;
+  double m_clippingArrowSize = 1.0;
+
+  // RH-66603
+  bool m_bSuppressDimLine1 = false;
+  bool m_bSuppressDimLine2 = false;
+};
+
+static ON_DimStyleExtensions DimStyleExtensionsDefaults;
+
+ON_OBJECT_IMPLEMENT(ON_DimStyleExtensions, ON_UserData, "3FDC692A-DA5A-423D-BA41-961f94D05051");
+
+ON_DimStyleExtensions::ON_DimStyleExtensions()
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_DimStyleExtensions);
+  m_userdata_copycount = 1; // enable copying
+}
+
+ON_DimStyleExtensions::ON_DimStyleExtensions(const ON_DimStyleExtensions& src)
+: ON_UserData(src)
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_DimStyleExtensions);
+  m_clippingArrowType1 = src.m_clippingArrowType1;
+  m_clippingArrowType2 = src.m_clippingArrowType2;
+  m_clippingArrowSize = src.m_clippingArrowSize;
+  m_bSuppressDimLine1 = src.m_bSuppressDimLine1;
+  m_bSuppressDimLine2 = src.m_bSuppressDimLine2;
+}
+
+ON_DimStyleExtensions& ON_DimStyleExtensions::operator=(const ON_DimStyleExtensions& src)
+{
+  if (this != &src)
+  {
+    ON_UserData::operator=(src);
+    m_clippingArrowType1 = src.m_clippingArrowType1;
+    m_clippingArrowType2 = src.m_clippingArrowType2;
+    m_clippingArrowSize = src.m_clippingArrowSize;
+    m_bSuppressDimLine1 = src.m_bSuppressDimLine1;
+    m_bSuppressDimLine2 = src.m_bSuppressDimLine2;
+  }
+  return *this;
+}
+
+bool ON_DimStyleExtensions::GetDescription(ON_wString& description)
+{
+  description = L"DimStyle extended data";
+  return true;
+}
+
+bool ON_DimStyleExtensions::Archive() const
+{
+  return false;
+}
+
+ON_DimStyleExtensions* ON_DimStyleExtensions::Get(const ON_DimStyle* ds, bool createIfMissing)
+{
+  if (nullptr == ds)
+    return nullptr;
+  
+  //check if the user data already exists
+  ON_UserData* ud = ds->GetUserData(ON_CLASS_ID(ON_DimStyleExtensions));
+  ON_DimStyleExtensions* dimStyleData = ON_DimStyleExtensions::Cast(ud);
+  if (nullptr == dimStyleData && createIfMissing)
+  {
+    dimStyleData = new ON_DimStyleExtensions();
+    ON_DimStyle* pDS = const_cast<ON_DimStyle*>(ds);
+    pDS->AttachUserData(dimStyleData);
+  }
+  return dimStyleData;
+}
+
+ON_ClippingArrowhead::arrow_type ON_DimStyle::ClippingArrowType1() const
+{
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, false);
+  if (ext)
+    return ext->m_clippingArrowType1;
+  return DimStyleExtensionsDefaults.m_clippingArrowType1;
+}
+void ON_DimStyle::SetClippingArrowType1(ON_ClippingArrowhead::arrow_type arrowType)
+{
+  if (arrowType == ClippingArrowType1())
+    return;
+  
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, true);
+  if (ext)
+  {
+    ext->m_clippingArrowType1 = arrowType;
+    Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::ClippingArrowType1);
+  }
+}
+ON_ClippingArrowhead::arrow_type ON_DimStyle::ClippingArrowType2() const
+{
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, false);
+  if (ext)
+    return ext->m_clippingArrowType2;
+  return DimStyleExtensionsDefaults.m_clippingArrowType2;
+}
+void ON_DimStyle::SetClippingArrowType2(ON_ClippingArrowhead::arrow_type arrowType)
+{
+  if (arrowType == ClippingArrowType2())
+    return;
+  
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, true);
+  if (ext)
+  {
+    ext->m_clippingArrowType2 = arrowType;
+    Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::ClippingArrowType2);
+  }
+}
+double ON_DimStyle::ClippingArrowSize() const
+{
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, false);
+  if (ext)
+    return ext->m_clippingArrowSize;
+  return DimStyleExtensionsDefaults.m_clippingArrowSize;
+}
+void ON_DimStyle::SetClippingArrowSize(double s)
+{
+  if (fabs(s - ClippingArrowSize())<=ON_EPSILON)
+    return;
+  
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, true);
+  if (ext)
+  {
+    ext->m_clippingArrowSize = s;
+    Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::ClippingArrowSize);
+  }
+}
+
+// RH-66603
+bool ON_DimStyle::SuppressDimLine1() const
+{
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, false);
+  if (ext)
+    return ext->m_bSuppressDimLine1;
+  return DimStyleExtensionsDefaults.m_bSuppressDimLine1;
+}
+void ON_DimStyle::SetSuppressDimLine1(bool bSuppress)
+{
+  if (bSuppress == SuppressDimLine1())
+    return;
+
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, true);
+  if (ext)
+  {
+    ext->m_bSuppressDimLine1 = bSuppress;
+    Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::SuppressDimLine1);
+  }
+}
+bool ON_DimStyle::SuppressDimLine2() const
+{
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, false);
+  if (ext)
+    return ext->m_bSuppressDimLine2;
+  return DimStyleExtensionsDefaults.m_bSuppressDimLine2;
+}
+void ON_DimStyle::SetSuppressDimLine2(bool bSuppress)
+{
+  if (bSuppress == SuppressDimLine2())
+    return;
+
+  ON_DimStyleExtensions* ext = ON_DimStyleExtensions::Get(this, true);
+  if (ext)
+  {
+    ext->m_bSuppressDimLine2 = bSuppress;
+    Internal_SetOverrideDimStyleCandidateFieldOverride(ON_DimStyle::field::SuppressDimLine2);
+  }
+}
+
 ON__UINT32* ON_DimStyle::Internal_GetOverrideParentBit(ON_DimStyle::field field_id, ON__UINT32* mask) const
 {
   unsigned int bitdex = 0;
@@ -5794,6 +6299,28 @@ void ON_DimStyle::OverrideFields(const ON_DimStyle& source, const ON_DimStyle& p
     case ON_DimStyle::field::DecimalSeparator:
       ON_INTERNAL_UPDATE_PROPERTY(DecimalSeparator);
       break;
+    case ON_DimStyle::field::Kerning:
+      ON_INTERNAL_UPDATE_PROPERTY(UseKerning);
+      break;
+    case ON_DimStyle::field::LineSpaceScale:
+      ON_INTERNAL_UPDATE_PROPERTY(LineSpaceScale);
+      break;
+    case ON_DimStyle::field::ClippingArrowType1:
+      ON_INTERNAL_UPDATE_PROPERTY(ClippingArrowType1);
+      break;
+    case ON_DimStyle::field::ClippingArrowType2:
+      ON_INTERNAL_UPDATE_PROPERTY(ClippingArrowType2);
+      break;
+    case ON_DimStyle::field::ClippingArrowSize:
+      ON_INTERNAL_UPDATE_PROPERTY(ClippingArrowSize);
+      break;
+    // RH-66603
+    case ON_DimStyle::field::SuppressDimLine1:
+      ON_INTERNAL_UPDATE_PROPERTY(SuppressDimLine1);
+      break;
+    case ON_DimStyle::field::SuppressDimLine2:
+      ON_INTERNAL_UPDATE_PROPERTY(SuppressDimLine2);
+      break;
     default:
       ON_ERROR("The switch statement in this function has gaps!");
       SetFieldOverride(field_id, false);
@@ -5914,6 +6441,14 @@ void ON_Annotation::ScaleOverrideDimstyle(
   double scale
 )
 {
+  ScaleOverrideDimstyle(parent_dimstyle, scale, false);
+}
+
+void ON_Annotation::ScaleOverrideDimstyle(
+  const ON_DimStyle* parent_dimstyle,
+  double scale, bool only_overrides
+)
+{
   // Dale Lear Setp 2020 https://mcneel.myjetbrains.com/youtrack/issue/RH-60536
   // I added this function to scale the appearance of annotation
   // in layout/page views. Using DimScale() does not work in layout/page
@@ -5928,62 +6463,112 @@ void ON_Annotation::ScaleOverrideDimstyle(
     // x1 = scaled value (may end up being the d0 value)
     double x0, x1;
 
-    // m_extextension *= scale;
-    x0 = this->ExtensionLineExtension(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.ExtExtension(), x0, scale);
-    this->SetExtensionLineExtension(parent_dimstyle, x1);
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::ExtensionLineExtension))
+    {
+      // m_extextension *= scale;
+      x0 = this->ExtensionLineExtension(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.ExtExtension(), x0, scale);
+      this->SetExtensionLineExtension(parent_dimstyle, x1);
+    }
 
-    // m_extoffset *= scale
-    x0 = this->ExtensionLineOffset(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.ExtOffset(), x0, scale);
-    this->SetExtensionLineOffset(parent_dimstyle, x1);
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::ExtensionLineOffset))
+    {
+      // m_extoffset *= scale
+      x0 = this->ExtensionLineOffset(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.ExtOffset(), x0, scale);
+      this->SetExtensionLineOffset(parent_dimstyle, x1);
+    }
 
-    // m_arrowsize *= scale;
-    x0 = this->ArrowSize(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.ArrowSize(), x0, scale);
-    this->SetArrowSize(parent_dimstyle, x1);
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::Arrowsize))
+    {
+      // m_arrowsize *= scale;
+      x0 = this->ArrowSize(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.ArrowSize(), x0, scale);
+      this->SetArrowSize(parent_dimstyle, x1);
+    }
 
-    // m_centermark *= scale;
-    x0 = this->CenterMarkSize(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.CenterMark(), x0, scale);
-    this->SetCenterMarkSize(parent_dimstyle, x1);
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::Centermark))
+    {
+      // m_centermark *= scale;
+      x0 = this->CenterMarkSize(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.CenterMark(), x0, scale);
+      this->SetCenterMarkSize(parent_dimstyle, x1);
+    }
 
-    // m_textgap *= scale;
-    x0 = this->TextGap(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.TextGap(), x0, scale);
-    this->SetTextGap(parent_dimstyle, x1);
-    
-    // m_textheight *= scale
-    x0 = this->TextHeight(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.TextHeight(), x0, scale);
-    this->SetTextHeight(parent_dimstyle, x1);
-    
-    // m_dimextension *= scale;
-    x0 = this->DimExtension(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.DimExtension(), x0, scale);
-    this->SetDimExtension(parent_dimstyle, x1);
-    
-    // m_baseline_spacing *= scale;
-    x0 = this->BaselineSpacing(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.BaselineSpacing(), x0, scale);
-    this->SetBaselineSpacing(parent_dimstyle, x1);
-    
-    // m_fixed_extension_len *= scale;
-    x0 = this->FixedExtensionLength(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.FixedExtensionLen(), x0, scale);
-    this->SetFixedExtensionLength(parent_dimstyle, x1);
-    
-    // m_leaderarrowsize *= scale;
-    x0 = this->LeaderArrowSize(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.LeaderArrowSize(), x0, scale);
-    this->SetLeaderArrowSize(parent_dimstyle, x1);
-    
-    // m_leader_landing_length *= scale;
-    x0 = this->LeaderLandingLength(parent_dimstyle);
-    x1 = Internal_ScaleOverrideLength(d0.LeaderLandingLength(), x0, scale);
-    this->SetLeaderLandingLength(parent_dimstyle, x1);
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::TextGap))
+    {
+      // m_textgap *= scale;
+      x0 = this->TextGap(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.TextGap(), x0, scale);
+      this->SetTextGap(parent_dimstyle, x1);
+    }
+
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::TextHeight))
+    {
+      // m_textheight *= scale
+      x0 = this->TextHeight(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.TextHeight(), x0, scale);
+      this->SetTextHeight(parent_dimstyle, x1);
+    }
+
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::DimensionLineExtension))
+    {
+      // m_dimextension *= scale;
+      x0 = this->DimExtension(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.DimExtension(), x0, scale);
+      this->SetDimExtension(parent_dimstyle, x1);
+    }
+
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::BaselineSpacing))
+    {
+      // m_baseline_spacing *= scale;
+      x0 = this->BaselineSpacing(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.BaselineSpacing(), x0, scale);
+      this->SetBaselineSpacing(parent_dimstyle, x1);
+    }
+
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::FixedExtensionLength))
+    {
+      // m_fixed_extension_len *= scale;
+      x0 = this->FixedExtensionLength(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.FixedExtensionLen(), x0, scale);
+      this->SetFixedExtensionLength(parent_dimstyle, x1);
+    }
+
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::LeaderArrowsize))
+    {
+      // m_leaderarrowsize *= scale;
+      x0 = this->LeaderArrowSize(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.LeaderArrowSize(), x0, scale);
+      this->SetLeaderArrowSize(parent_dimstyle, x1);
+    }
+
+    if (!only_overrides || FieldIsOverridden(ON_DimStyle::field::LeaderLandingLength))
+    {
+      // m_leader_landing_length *= scale;
+      x0 = this->LeaderLandingLength(parent_dimstyle);
+      x1 = Internal_ScaleOverrideLength(d0.LeaderLandingLength(), x0, scale);
+      this->SetLeaderLandingLength(parent_dimstyle, x1);
+    }
   }
 
+}
+
+bool ON_Annotation::AnyLengthFieldIsOverridden() const
+{
+  if (FieldIsOverridden(ON_DimStyle::field::ExtensionLineExtension)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::ExtensionLineOffset)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::Arrowsize)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::Centermark)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::TextGap)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::TextHeight)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::DimensionLineExtension)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::BaselineSpacing)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::FixedExtensionLength)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::LeaderArrowsize)) return true;
+  if (FieldIsOverridden(ON_DimStyle::field::LeaderLandingLength)) return true;
+
+  return false;
 }
 
 void ON_DimStyle::SetToleranceFormat(ON_DimStyle::tolerance_format format)
@@ -6205,7 +6790,7 @@ const ON_DimStyle ON_DimStyle::CreateFromProperties(
   const ON_Font* font,
   double model_space_text_scale,
   double text_height,
-  ON::LengthUnitSystem text_height_unit_system
+  const ON_UnitSystem& text_height_unit_system
 )
 {
   ON_DimStyle dim_style(parent_dim_style.CreateOverrideCandidate());
@@ -6236,7 +6821,7 @@ const ON_DimStyle ON_DimStyle::CreateFromProperties(
   const ON_Font* font,
   double model_space_text_scale,
   double text_height,
-  ON::LengthUnitSystem text_height_unit_system,
+  const ON_UnitSystem& text_height_unit_system,
   ON::TextVerticalAlignment valign,
   ON::TextHorizontalAlignment halign
 )
@@ -6269,12 +6854,12 @@ const ON_DimStyle ON_DimStyle::CreateFromProperties(
   const ON_Font* font,
   double model_space_text_scale,
   double text_height,
-  ON::LengthUnitSystem text_height_unit_system,
+  const ON_UnitSystem& text_height_unit_system,
   ON::TextVerticalAlignment valign,
   ON::TextHorizontalAlignment halign,
   ON::TextOrientation orientation,
   ON_DimStyle::TextLocation dim_text_location
-  )
+)
 {
   ON_DimStyle dim_style(parent_dim_style.CreateOverrideCandidate());
 
@@ -6298,13 +6883,82 @@ const ON_DimStyle ON_DimStyle::CreateFromProperties(
   return dim_style;
 }
 
-void ON_DimStyle::Internal_CreateFromProperties(
+const ON_DimStyle ON_DimStyle::CreateFromProperties(
+  const ON_DimStyle& parent_dim_style,
+  ON::AnnotationType annotation_type,
+  const ON_Font* font,
+  double model_space_text_scale,
+  double text_height,
+  ON::LengthUnitSystem text_height_unit_system
+)
+{
+  return CreateFromProperties(
+    parent_dim_style,
+    annotation_type,
+    font,
+    model_space_text_scale,
+    text_height,
+    (ON_UnitSystem) text_height_unit_system
+  );
+}
+
+const ON_DimStyle ON_DimStyle::CreateFromProperties(
   const ON_DimStyle& parent_dim_style,
   ON::AnnotationType annotation_type,
   const ON_Font* font,
   double model_space_text_scale,
   double text_height,
   ON::LengthUnitSystem text_height_unit_system,
+  ON::TextVerticalAlignment valign,
+  ON::TextHorizontalAlignment halign
+)
+{
+  return CreateFromProperties(
+    parent_dim_style,
+    annotation_type,
+    font,
+    model_space_text_scale,
+    text_height,
+    (ON_UnitSystem) text_height_unit_system,
+    valign,
+    halign
+  );
+}
+
+const ON_DimStyle ON_DimStyle::CreateFromProperties(
+  const ON_DimStyle& parent_dim_style,
+  ON::AnnotationType annotation_type,
+  const ON_Font* font,
+  double model_space_text_scale,
+  double text_height,
+  ON::LengthUnitSystem text_height_unit_system,
+  ON::TextVerticalAlignment valign,
+  ON::TextHorizontalAlignment halign,
+  ON::TextOrientation orientation,
+  ON_DimStyle::TextLocation dim_text_location
+  )
+{
+  return CreateFromProperties(
+    parent_dim_style,
+    annotation_type,
+    font,
+    model_space_text_scale,
+    text_height,
+    (ON_UnitSystem) text_height_unit_system,
+    valign,
+    halign,
+    orientation,
+    dim_text_location
+  );
+}
+
+void ON_DimStyle::Internal_CreateFromProperties(
+  const ON_DimStyle& parent_dim_style,
+  ON::AnnotationType annotation_type,
+  const ON_Font* font,
+  double model_space_text_scale,
+  double text_height,
+  const ON_UnitSystem& text_height_unit_system,
   bool bSetAlignment,
   ON::TextVerticalAlignment valign,
   ON::TextHorizontalAlignment halign,

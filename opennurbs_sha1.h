@@ -261,6 +261,12 @@ public:
   */
   bool IsEmptyContentHash() const;
 
+  /*
+  Returns:
+    True if this and ON_SHA1_Hash::EmptyContentHash have different digest values.
+  */
+  bool IsNotEmptyContentHash() const;
+
   bool IsZeroDigestOrEmptyContentHash() const;
 
   ON_DEPRECATED_MSG("Use IsZeroDigestOrEmptyContentHash() instead. (Spelling error in this one's name.")
@@ -530,10 +536,23 @@ public:
     ON_StringMapOrdinalType mapping
     );
 
-
+  /// <summary>
+  /// Unconditionally accumulate the 20 bytes in sub_hash.
+  /// </summary>
+  /// <param name="sub_hash"></param>
   void AccumulateSubHash(
     const class ON_SHA1_Hash& sub_hash
     );
+
+  /// <summary>
+  /// If sub_hash != ON_SHA1_Hash::EmptyContentHash, 
+  /// then accumulate the 20 bytes in sub_hash. Otherwise
+  /// do nothing.
+  /// </summary>
+  /// <param name="sub_hash"></param>
+  void AccumulateNonemptySubHash(
+    const class ON_SHA1_Hash& sub_hash
+  );
 
 private:
   void Internal_SwapBigEndianUpdate(
@@ -636,6 +655,7 @@ void ON_TestHashSpeed(
   double elapsed_time_in_seconds[4]
 );
 
+#ifdef OPENNURBS_PLUS
 /*
 Description:
   Test speeds of various hash algorithms and use text_log to print the results.
@@ -660,13 +680,14 @@ void ON_TestHashSpeed(
   bool bTestCRC32,
   bool bTestMD5,
   bool bTestSHA1,
-  ON_TextLog& text_log
+  class ON_TextLog& text_log
 );
 
 ON_DECL
 void ON_TestHashSpeed(
   size_t byte_count,
-  ON_TextLog& text_log
+  class ON_TextLog& text_log
 );
+#endif
 
 #endif

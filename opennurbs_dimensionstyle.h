@@ -53,6 +53,8 @@ public:
     LongTriangle = 8,   // 4:1
     /// <summary> </summary>
     LongerTriangle = 9,   // 6:1
+    /// <summary></summary>
+    SolidDatumTriangle = 10,
   };
 #pragma endregion
 
@@ -85,6 +87,78 @@ public:
 
 private:
   arrow_type       m_arrowhead_type = ON_Arrowhead::arrow_type::SolidTriangle;
+  ON_UUID          m_arrow_block_id = ON_nil_uuid;
+
+};
+
+class ON_CLASS ON_ClippingArrowhead
+{
+public:
+  ON_ClippingArrowhead() = default;
+  ~ON_ClippingArrowhead() = default;
+  ON_ClippingArrowhead(const ON_ClippingArrowhead&) = default;
+  ON_ClippingArrowhead& operator=(const ON_ClippingArrowhead&) = default;
+
+  bool operator==(const ON_ClippingArrowhead& other) const;
+  bool operator!=(const ON_ClippingArrowhead& other) const;
+
+
+#pragma region RH_C_SHARED_ENUM [ON_ClippingArrowhead::arrow_type] [Rhino.DocObjects.DimensionStyle.ClippingArrowType] [nested:int]
+  /// <summary>
+  /// Defines enumerated values for arrowhead shapes.
+  /// </summary>
+  enum class arrow_type : unsigned int
+  {
+    /// <summary> </summary>
+    None = 0,
+    /// <summary> </summary>
+    Triangle = 1,
+    /// <summary> </summary>
+    OffsetTriangle = 2,   // 2:1
+    /// <summary> </summary>
+    Arrow = 3,
+    /// <summary> </summary>
+    OffsetArrow = 4,
+    /// <summary> </summary>
+    OpenArrow = 5,   // 1:1
+    /// <summary> </summary>
+    Rectangle = 6,
+    /// <summary> </summary>
+    Ribbon = 7,
+    /// <summary> </summary>
+    Line = 8,   // 4:1
+  };
+#pragma endregion
+
+  static ON_ClippingArrowhead::arrow_type ArrowTypeFromUnsigned(
+    unsigned int type_as_unsigned
+  );
+
+  arrow_type ArrowheadType() const;
+  void SetArrowheadType(arrow_type type);
+  //ON_UUID ArrowBlockId() const;
+  //void SetArrowBlockId(ON_UUID id);
+
+  static ON__UINT32 GetPoints(
+    arrow_type type,
+    const double*& points);
+
+  static ON__UINT32 GetPoints(
+    arrow_type type,
+    ON_2dPointArray& points);
+
+  static bool GetArrowheadBoundingBox(
+    ON_ClippingArrowhead::arrow_type arrow_type,
+    ON_UUID arrow_block_id,
+    ON_Xform xform,
+    ON_BoundingBox& bbox,
+    bool grow);
+
+  static
+    ON_ClippingArrowhead::arrow_type DefaultArrowType();
+
+private:
+  arrow_type       m_arrowhead_type = ON_ClippingArrowhead::arrow_type::Triangle;
   ON_UUID          m_arrow_block_id = ON_nil_uuid;
 
 };
@@ -125,7 +199,21 @@ public:
     /// <summary> Text mask frame outline rectangle drawn </summary>
     RectFrame = 1,
     /// <summary> Text mask frame outline capsule drawn </summary>
-    CapsuleFrame = 2
+    CapsuleFrame = 2,
+    /// <summary> Text mask frame outline circle drawn </summary>
+    CircleFrame = 3,
+    /// <summary> Text mask frame outline square drawn </summary>
+    SquareFrame = 4,
+    /// <summary> Text mask frame outline square rotated 45 degrees </summary>
+    DiamondFrame = 5,
+    /// <summary> Text mask frame outline triangle drawn </summary>
+    TriangleFrame = 6,
+    /// <summary> Text mask frame outline as a hexagon </summary>
+    HexagonFrame = 7,
+    /// <summary> Text mask frame outline as an elongated hexagon </summary>
+    HexagonCapsuleFrame = 8,
+    /// <summary> Text mask frame outline as a rounded rectangle </summary>
+    RoundRectFrame = 9,
   };
 #pragma endregion
 
@@ -249,19 +337,20 @@ private:
 
 public:
   // Predefined default dimension styles always available
-  static const ON_DimStyle Unset;                         // index = ON_UNSET_INT_INDEX, id = nil.
-  static const ON_DimStyle Default;                       // index = -1, unique and persistent id.
-  static const ON_DimStyle DefaultInchDecimal;            // index = -2, unique and persistent id.
-  static const ON_DimStyle DefaultInchFractional;         // index = -3, unique and persistent id.
-  static const ON_DimStyle DefaultFootInchArchitecture;   // index = -4, unique and persistent id.
-  static const ON_DimStyle DefaultMillimeterSmall;        // index = -5, unique and persistent id.
-  static const ON_DimStyle DefaultMillimeterLarge;        // index = -6, unique and persistent id.
-  static const ON_DimStyle DefaultMillimeterArchitecture; // index = -7, unique and persistent id.
-  static const ON_DimStyle DefaultFeetDecimal;            // index = -8, unique and persistent id.
-  static const ON_DimStyle DefaultFeetEngrave;            // index = -9, unique and persistent id.
-  static const ON_DimStyle DefaultMillimeterEngrave;      // index = -10, unique and persistent id.
-  static const ON_DimStyle DefaultModelUnitsDecimal;      // index = -11, unique and persistent id.
-  static const ON_DimStyle DefaultModelUnitsEngrave;      // index = -12, unique and persistent id.
+  static const ON_DimStyle Unset;                               // index = ON_UNSET_INT_INDEX, id = nil.
+  static const ON_DimStyle Default;                             // index = -1, unique and persistent id.
+  static const ON_DimStyle DefaultInchDecimal;                  // index = -2, unique and persistent id.
+  static const ON_DimStyle DefaultInchFractional;               // index = -3, unique and persistent id.
+  static const ON_DimStyle DefaultFootInchArchitecture;         // index = -4, unique and persistent id.
+  static const ON_DimStyle DefaultMillimeterSmall;              // index = -5, unique and persistent id.
+  static const ON_DimStyle DefaultMillimeterLarge;              // index = -6, unique and persistent id.
+  static const ON_DimStyle DefaultMillimeterArchitecture;       // index = -7, unique and persistent id.
+  static const ON_DimStyle DefaultFeetDecimal;                  // index = -8, unique and persistent id.
+  static const ON_DimStyle DefaultFeetEngrave;                  // index = -9, unique and persistent id.
+  static const ON_DimStyle DefaultMillimeterEngrave;            // index = -10, unique and persistent id.
+  static const ON_DimStyle DefaultModelUnitsDecimal;            // index = -11, unique and persistent id.
+  static const ON_DimStyle DefaultModelUnitsEngrave;            // index = -12, unique and persistent id.
+  static const ON_DimStyle DefaultModelUnitsGeometricTolerance; // index = -13, unique and persistent id.
 
 public:
   /*
@@ -903,8 +992,28 @@ public:
     /// </summary>
     DecimalSeparator = 114,
 
+    /// <summary>
+    /// Enable kerning for placement of characters
+    /// </summary>
+    Kerning = 115,
+    
+    /// <summary>
+    /// Scale applied for line spacing
+    /// </summary>
+    LineSpaceScale = 116,
+
+    /// <summary></summary>
+    ClippingArrowType1 = 117,
+    /// <summary></summary>
+    ClippingArrowType2 = 118,
+    /// <summary></summary>
+    ClippingArrowSize = 119,
+    /// <summary>Suppress the dimension line and arrowhead between the first extension line and the text.</summary>
+    SuppressDimLine1 = 120,
+    /// <summary>Suppress the dimension line and arrowhead between the second extension line and the text.</summary>
+    SuppressDimLine2 = 121,
     /// <summary>Every enum UINT value that identifies a valid dimension style property is less than the UINT value of Count.</summary>
-    Count = 115
+    Count = 122
   };
   
 #pragma endregion
@@ -1515,6 +1624,16 @@ public:
   bool SuppressExtension2() const;
   void SetSuppressExtension2(bool);
 
+  // Suppress the dimension line and arrowhead between the first
+  // extension line and the text.
+  bool SuppressDimLine1() const;
+  void SetSuppressDimLine1(bool);
+
+  // Suppress the dimension line and arrowhead between the second
+  // extension line and the text.
+  bool SuppressDimLine2() const;
+  void SetSuppressDimLine2(bool);
+
   // Extension of dimension line past extension lines
   double DimExtension() const;
   void SetDimExtension(const double e);
@@ -1687,11 +1806,46 @@ public:
     const ON_Font* font,
     double model_space_text_scale,
     double text_height,
+    const ON_UnitSystem& text_height_unit_system,
+    ON::TextVerticalAlignment valign,
+    ON::TextHorizontalAlignment halign
+  );
+
+  static const ON_DimStyle CreateFromProperties(
+    const ON_DimStyle& parent_dim_style,
+    ON::AnnotationType annotation_type,
+    const ON_Font* font,
+    double model_space_text_scale,
+    double text_height,
+    const ON_UnitSystem& text_height_unit_system,
+    ON::TextVerticalAlignment valign,
+    ON::TextHorizontalAlignment halign,
+    ON::TextOrientation orientation,
+    ON_DimStyle::TextLocation dim_text_location
+  );
+
+  static const ON_DimStyle CreateFromProperties(
+    const ON_DimStyle& parent_dim_style,
+    ON::AnnotationType annotation_type,
+    const ON_Font* font,
+    double model_space_text_scale,
+    double text_height,
+    const ON_UnitSystem& text_height_unit_system
+  );
+
+  //ON_DEPRECATED_MSG("Since v9.0")
+  static const ON_DimStyle CreateFromProperties(
+    const ON_DimStyle& parent_dim_style,
+    ON::AnnotationType annotation_type,
+    const ON_Font* font,
+    double model_space_text_scale,
+    double text_height,
     ON::LengthUnitSystem text_height_unit_system,
     ON::TextVerticalAlignment valign,
     ON::TextHorizontalAlignment halign
   );
 
+  //ON_DEPRECATED_MSG("Since v9.0")
   static const ON_DimStyle CreateFromProperties(
     const ON_DimStyle& parent_dim_style,
     ON::AnnotationType annotation_type,
@@ -1705,6 +1859,7 @@ public:
     ON_DimStyle::TextLocation dim_text_location
   );
 
+  //ON_DEPRECATED_MSG("Since v9.0")
   static const ON_DimStyle CreateFromProperties(
     const ON_DimStyle& parent_dim_style,
     ON::AnnotationType annotation_type,
@@ -1721,7 +1876,7 @@ private:
     const ON_Font* font,
     double model_space_text_scale,
     double text_height,
-    ON::LengthUnitSystem text_height_unit_system,
+    const ON_UnitSystem& text_height_unit_system,
     bool bSetAlignment,
     ON::TextVerticalAlignment valign,
     ON::TextHorizontalAlignment halign,
@@ -2165,11 +2320,20 @@ public:
   void SetDecimalSeparator(wchar_t separator);
   wchar_t DecimalSeparator() const;
 
-  //double ModelSize() const;
-  //void SetModelSize(double size);
-  //double PaperSize() const;
-  //void SetPaperSize(double size);
+  // Should kerning be applied when computing glyph placement
+  bool UseKerning() const;
+  void SetUseKerning(bool enableKerning);
+  
+  double LineSpaceScale() const;
+  void SetLineSpaceScale(double scale);
 
+  ON_ClippingArrowhead::arrow_type ClippingArrowType1() const;
+  void SetClippingArrowType1(ON_ClippingArrowhead::arrow_type);
+  ON_ClippingArrowhead::arrow_type ClippingArrowType2() const;
+  void SetClippingArrowType2(ON_ClippingArrowhead::arrow_type);
+  double ClippingArrowSize() const;
+  void SetClippingArrowSize(double s);
+  
   // For converting to and from V5 Dimstyles
   static int V5ArrowType(ON_Arrowhead::arrow_type v6type);
   static int V5LengthFormat(ON_DimStyle::OBSOLETE_length_format v6format);
@@ -2299,7 +2463,7 @@ private:
 
   bool   m_bSuppressExtension1                     = false;   // flag to not draw extension lines
   bool   m_bSuppressExtension2                     = false;   // flag to not draw extension lines
-  bool   m_bReserved1 = false;
+  bool   m_bUseKerning                             = false;
   bool   m_bReserved2 = false;
 
   // m_field_override_count
@@ -2393,7 +2557,7 @@ private:
     
   unsigned char   m_ReservedChar1                  = 0;
   unsigned short  m_ReservedShort1 = 0;
-  unsigned int    m_ReservedInt1 = 0;
+  float           m_linespace_scale                = 1.0f;
 
   double          m_text_rotation                  = 0.0;              // Dimension text rotation around text point (radians)
   int             m_alternate_tolerance_resolution = 4; // for decimal, digits past the decimal point, fractions: 1/2^n

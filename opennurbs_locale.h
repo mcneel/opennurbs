@@ -74,6 +74,9 @@ public:
     // Portuguese, Portugal, Latn script implied
     pt_PT_LCID = 0x0816, // 2070 decimal
 
+    // Russian, Russia
+    ru_RU_LCID = 0x0419, // 1049 decimal
+
     // According to https://en.wikipedia.org/wiki/Chinese_language, Chinese is a family of language
     // varieties, often mutually unintelligible.  Specifying both Script and REGION
     // (zh-Hans-CN or zh-Hant-TW) doesn't narrow things down nearly enough. 

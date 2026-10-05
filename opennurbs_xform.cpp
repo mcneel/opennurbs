@@ -337,21 +337,26 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
 //
 
 ON_Xform::ON_Xform()
+: m_xform
 {
-  memset( m_xform, 0, sizeof(m_xform) );
-  m_xform[3][3] = 1.0;
+  {0.0, 0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
 }
+{ }
 
 ON_Xform::ON_Xform(
   double x
 )
+: m_xform
 {
-  memset( m_xform, 0, sizeof(m_xform) );
-  m_xform[0][0] = x;
-  m_xform[1][1] = x;
-  m_xform[2][2] = x;
-  m_xform[3][3] = 1.0;
+  {  x, 0.0, 0.0, 0.0},
+  {0.0,   x, 0.0, 0.0},
+  {0.0, 0.0,   x, 0.0},
+  {0.0, 0.0, 0.0, 1.0}
 }
+{ }
 
 const ON_Xform ON_Xform::DiagonalTransformation(
   double d
@@ -373,12 +378,29 @@ const ON_Xform ON_Xform::DiagonalTransformation(
   double d2
 )
 {
-  ON_Xform xform(ON_Xform::IdentityTransformation);
-  xform.m_xform[0][0] = d0;
-  xform.m_xform[1][1] = d1;
-  xform.m_xform[2][2] = d2;
-  return xform;
+  return ON_Xform
+  (
+     d0, 0.0, 0.0, 0.0,
+    0.0,  d1, 0.0, 0.0,
+    0.0, 0.0,  d2, 0.0,
+    0.0, 0.0, 0.0, 1.0
+  );
 }
+
+ON_Xform::ON_Xform(
+  double m00, double m01, double m02, double m03,
+  double m10, double m11, double m12, double m13,
+  double m20, double m21, double m22, double m23,
+  double m30, double m31, double m32, double m33
+)
+: m_xform
+{
+  { m00, m01, m02, m03 },
+  { m10, m11, m12, m13 },
+  { m20, m21, m22, m23 },
+  { m30, m31, m32, m33 }
+}
+{ }
 
 #if defined(ON_COMPILER_MSC)
 ON_Xform::ON_Xform( double m[4][4] )
@@ -521,90 +543,90 @@ const double* ON_Xform::operator[](int i) const
 //
 // All non-commutative operations have "this" as left hand side and
 // argument as right hand side.
-ON_Xform ON_Xform::operator*( const ON_Xform& rhs ) const
+ON_Xform ON_Xform::operator*(const ON_Xform& rhs) const
 {
-  double m[4][4];
   const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0]*p[0] + m_xform[0][1]*p[4] + m_xform[0][2]*p[ 8] + m_xform[0][3]*p[12];
-  m[0][1] = m_xform[0][0]*p[1] + m_xform[0][1]*p[5] + m_xform[0][2]*p[ 9] + m_xform[0][3]*p[13];
-  m[0][2] = m_xform[0][0]*p[2] + m_xform[0][1]*p[6] + m_xform[0][2]*p[10] + m_xform[0][3]*p[14];
-  m[0][3] = m_xform[0][0]*p[3] + m_xform[0][1]*p[7] + m_xform[0][2]*p[11] + m_xform[0][3]*p[15];
+  return ON_Xform
+  (
+    m_xform[0][0] * p[0] + m_xform[0][1] * p[4] + m_xform[0][2] * p[ 8] + m_xform[0][3] * p[12],
+    m_xform[0][0] * p[1] + m_xform[0][1] * p[5] + m_xform[0][2] * p[ 9] + m_xform[0][3] * p[13],
+    m_xform[0][0] * p[2] + m_xform[0][1] * p[6] + m_xform[0][2] * p[10] + m_xform[0][3] * p[14],
+    m_xform[0][0] * p[3] + m_xform[0][1] * p[7] + m_xform[0][2] * p[11] + m_xform[0][3] * p[15],
 
-  m[1][0] = m_xform[1][0]*p[0] + m_xform[1][1]*p[4] + m_xform[1][2]*p[ 8] + m_xform[1][3]*p[12];
-  m[1][1] = m_xform[1][0]*p[1] + m_xform[1][1]*p[5] + m_xform[1][2]*p[ 9] + m_xform[1][3]*p[13];
-  m[1][2] = m_xform[1][0]*p[2] + m_xform[1][1]*p[6] + m_xform[1][2]*p[10] + m_xform[1][3]*p[14];
-  m[1][3] = m_xform[1][0]*p[3] + m_xform[1][1]*p[7] + m_xform[1][2]*p[11] + m_xform[1][3]*p[15];
+    m_xform[1][0] * p[0] + m_xform[1][1] * p[4] + m_xform[1][2] * p[ 8] + m_xform[1][3] * p[12],
+    m_xform[1][0] * p[1] + m_xform[1][1] * p[5] + m_xform[1][2] * p[ 9] + m_xform[1][3] * p[13],
+    m_xform[1][0] * p[2] + m_xform[1][1] * p[6] + m_xform[1][2] * p[10] + m_xform[1][3] * p[14],
+    m_xform[1][0] * p[3] + m_xform[1][1] * p[7] + m_xform[1][2] * p[11] + m_xform[1][3] * p[15],
 
-  m[2][0] = m_xform[2][0]*p[0] + m_xform[2][1]*p[4] + m_xform[2][2]*p[ 8] + m_xform[2][3]*p[12];
-  m[2][1] = m_xform[2][0]*p[1] + m_xform[2][1]*p[5] + m_xform[2][2]*p[ 9] + m_xform[2][3]*p[13];
-  m[2][2] = m_xform[2][0]*p[2] + m_xform[2][1]*p[6] + m_xform[2][2]*p[10] + m_xform[2][3]*p[14];
-  m[2][3] = m_xform[2][0]*p[3] + m_xform[2][1]*p[7] + m_xform[2][2]*p[11] + m_xform[2][3]*p[15];
+    m_xform[2][0] * p[0] + m_xform[2][1] * p[4] + m_xform[2][2] * p[ 8] + m_xform[2][3] * p[12],
+    m_xform[2][0] * p[1] + m_xform[2][1] * p[5] + m_xform[2][2] * p[ 9] + m_xform[2][3] * p[13],
+    m_xform[2][0] * p[2] + m_xform[2][1] * p[6] + m_xform[2][2] * p[10] + m_xform[2][3] * p[14],
+    m_xform[2][0] * p[3] + m_xform[2][1] * p[7] + m_xform[2][2] * p[11] + m_xform[2][3] * p[15],
 
-  m[3][0] = m_xform[3][0]*p[0] + m_xform[3][1]*p[4] + m_xform[3][2]*p[ 8] + m_xform[3][3]*p[12];
-  m[3][1] = m_xform[3][0]*p[1] + m_xform[3][1]*p[5] + m_xform[3][2]*p[ 9] + m_xform[3][3]*p[13];
-  m[3][2] = m_xform[3][0]*p[2] + m_xform[3][1]*p[6] + m_xform[3][2]*p[10] + m_xform[3][3]*p[14];
-  m[3][3] = m_xform[3][0]*p[3] + m_xform[3][1]*p[7] + m_xform[3][2]*p[11] + m_xform[3][3]*p[15];
-
-  return ON_Xform(m);
+    m_xform[3][0] * p[0] + m_xform[3][1] * p[4] + m_xform[3][2] * p[ 8] + m_xform[3][3] * p[12],
+    m_xform[3][0] * p[1] + m_xform[3][1] * p[5] + m_xform[3][2] * p[ 9] + m_xform[3][3] * p[13],
+    m_xform[3][0] * p[2] + m_xform[3][1] * p[6] + m_xform[3][2] * p[10] + m_xform[3][3] * p[14],
+    m_xform[3][0] * p[3] + m_xform[3][1] * p[7] + m_xform[3][2] * p[11] + m_xform[3][3] * p[15]
+  );
 }
 
 ON_Xform ON_Xform::operator+( const ON_Xform& rhs ) const
 {
-  double m[4][4];
   const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0] + p[0];
-  m[0][1] = m_xform[0][1] + p[1];
-  m[0][2] = m_xform[0][2] + p[2];
-  m[0][3] = m_xform[0][3] + p[3];
+  return ON_Xform
+  (
+    m_xform[0][0] + p[ 0],
+    m_xform[0][1] + p[ 1],
+    m_xform[0][2] + p[ 2],
+    m_xform[0][3] + p[ 3],
 
-  m[1][0] = m_xform[1][0] + p[4];
-  m[1][1] = m_xform[1][1] + p[5];
-  m[1][2] = m_xform[1][2] + p[6];
-  m[1][3] = m_xform[1][3] + p[7];
+    m_xform[1][0] + p[ 4],
+    m_xform[1][1] + p[ 5],
+    m_xform[1][2] + p[ 6],
+    m_xform[1][3] + p[ 7],
 
-  m[2][0] = m_xform[2][0] + p[ 8];
-  m[2][1] = m_xform[2][1] + p[ 9];
-  m[2][2] = m_xform[2][2] + p[10];
-  m[2][3] = m_xform[2][3] + p[11];
+    m_xform[2][0] + p[ 8],
+    m_xform[2][1] + p[ 9],
+    m_xform[2][2] + p[10],
+    m_xform[2][3] + p[11],
 
-  m[3][0] = m_xform[3][0] + p[12];
-  m[3][1] = m_xform[3][1] + p[13];
-  m[3][2] = m_xform[3][2] + p[14];
-  m[3][3] = m_xform[3][3] + p[15];
-
-  return ON_Xform(m);
+    m_xform[3][0] + p[12],
+    m_xform[3][1] + p[13],
+    m_xform[3][2] + p[14],
+    m_xform[3][3] + p[15]
+  );
 }
 
 ON_Xform ON_Xform::operator-( const ON_Xform& rhs ) const
 {
-  double m[4][4];
   const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0] - p[0];
-  m[0][1] = m_xform[0][1] - p[1];
-  m[0][2] = m_xform[0][2] - p[2];
-  m[0][3] = m_xform[0][3] - p[3];
+  return ON_Xform
+  (
+    m_xform[0][0] - p[ 0],
+    m_xform[0][1] - p[ 1],
+    m_xform[0][2] - p[ 2],
+    m_xform[0][3] - p[ 3],
 
-  m[1][0] = m_xform[1][0] - p[4];
-  m[1][1] = m_xform[1][1] - p[5];
-  m[1][2] = m_xform[1][2] - p[6];
-  m[1][3] = m_xform[1][3] - p[7];
+    m_xform[1][0] - p[ 4],
+    m_xform[1][1] - p[ 5],
+    m_xform[1][2] - p[ 6],
+    m_xform[1][3] - p[ 7],
 
-  m[2][0] = m_xform[2][0] - p[ 8];
-  m[2][1] = m_xform[2][1] - p[ 9];
-  m[2][2] = m_xform[2][2] - p[10];
-  m[2][3] = m_xform[2][3] - p[11];
+    m_xform[2][0] - p[ 8],
+    m_xform[2][1] - p[ 9],
+    m_xform[2][2] - p[10],
+    m_xform[2][3] - p[11],
 
-  m[3][0] = m_xform[3][0] - p[12];
-  m[3][1] = m_xform[3][1] - p[13];
-  m[3][2] = m_xform[3][2] - p[14];
-  m[3][3] = m_xform[3][3] - p[15];
-
-  return ON_Xform(m);
+    m_xform[3][0] - p[12],
+    m_xform[3][1] - p[13],
+    m_xform[3][2] - p[14],
+    m_xform[3][3] - p[15]
+  );
 }
-  
+
 ///////////////////////////////////////////////////////////////
 //
 // ON_Xform
@@ -778,11 +800,13 @@ const ON_Xform ON_Xform::TranslationTransformation(
   double dz
 )
 {
-  ON_Xform xform(ON_Xform::IdentityTransformation);
-  xform.m_xform[0][3] = dx;
-  xform.m_xform[1][3] = dy;
-  xform.m_xform[2][3] = dz;
-  return xform;
+  return ON_Xform
+  (
+    1.0, 0.0, 0.0, dx,
+    0.0, 1.0, 0.0, dy,
+    0.0, 0.0, 1.0, dz,
+    0.0, 0.0, 0.0, 1.0
+  );
 }
 
 void ON_Xform::PlanarProjection( const ON_Plane& plane )
@@ -837,30 +861,29 @@ void ON_Xform::ActOnRight(double x,double y,double z,double w,double v[4]) const
 
 const ON_Xform operator*(double c, const ON_Xform& xform)
 {
-  ON_Xform cx(xform);
-  double* p = &cx.m_xform[0][0];
-  double* p1 = p + 16;
-  while (p < p1)
-  {
-    const double x = *p;
-    *p++ = c*x;
-  }
-  return cx;
+  const double* p = &xform.m_xform[0][0];
+
+  return ON_Xform
+  (
+    c * p[ 0], c * p[ 1], c * p[ 2], c * p[ 3],
+    c * p[ 4], c * p[ 5], c * p[ 6], c * p[ 7],
+    c * p[ 8], c * p[ 9], c * p[10], c * p[11],
+    c * p[12], c * p[13], c * p[14], c * p[15]
+  );
 }
 
 const ON_Xform operator*(const ON_Xform& xform, double c)
 {
-  ON_Xform xc(xform);
-  double* p = &xc.m_xform[0][0];
-  double* p1 = p + 16;
-  while (p < p1)
-  {
-    const double x = *p;
-    *p++ = x*c;
-  }
-  return xc;
-}
+  const double* p = &xform.m_xform[0][0];
 
+  return ON_Xform
+  (
+    p[ 0] * c, p[ 1] * c, p[ 2] * c, p[ 3] * c,
+    p[ 4] * c, p[ 5] * c, p[ 6] * c, p[ 7] * c,
+    p[ 8] * c, p[ 9] * c, p[10] * c, p[11] * c,
+    p[12] * c, p[13] * c, p[14] * c, p[15] * c
+  );
+}
 
 ON_2dPoint ON_Xform::operator*( const ON_2dPoint& p ) const
 {
@@ -1891,11 +1914,20 @@ int ON_Xform::SignOfDeterminant(bool bFastTest) const
 
 bool ON_Xform::Invert( double* pivot )
 {
+  bool isAffine = IsAffine();
   double mrofx[4][4], d = 0.0, p = 0.0;
   int rank = Inv( &m_xform[0][0], mrofx, &d, &p );
   memcpy( m_xform, mrofx, sizeof(m_xform) );
   if ( pivot )
     *pivot = p;
+
+  // 23-APR-2025 MDvR: keep inverse affine 
+  // the inversion can introduce rounding errors on the fourth row
+  // that make the inverse non-affine. This prevents that from happening:
+  if (isAffine)
+  {
+    Affineize();
+  }
   return (rank == 4) ? true : false;
 }
 
@@ -1903,10 +1935,17 @@ ON_Xform ON_Xform::Inverse( double* pivot ) const
 {
   ON_Xform inv;
   double d = 0.0, p = 0.0;
-  //int rank = 
   Inv( &m_xform[0][0], inv.m_xform, &d, &p );
   if ( pivot )
     *pivot = p;
+
+  // 23-APR-2025 MDvR: keep inverse affine 
+  // the inversion can introduce rounding errors on the fourth row
+  // that make the inverse non-affine. This prevents that from happening:
+  if (IsAffine())
+  {
+    inv.Affineize();
+  }
   return inv;
 }
 
@@ -2038,6 +2077,41 @@ void ON_Xform::Rotation(
         )
 {
   Rotation( sin(angle), cos(angle), axis, center );
+}
+
+const ON_Xform ON_Xform::RotationTransformationFromAngleRadians(
+  double angle_radians,
+  ON_3dVector rotation_axis,
+  ON_3dPoint rotation_center
+)
+{
+  if (ON_DBL::IsValid(angle_radians) && rotation_axis.IsNotZero() && rotation_center.IsValid())
+  {
+    const ON_2dVector v(cos(angle_radians), sin(angle_radians));
+    if (v.IsUnitVector())
+    {
+      ON_Xform rot;
+      rot.Rotation(v.y, v.x, rotation_axis, rotation_center);
+      return rot;
+    }
+  }
+  return ON_Xform::Nan;
+}
+
+const ON_Xform ON_Xform::RotationTransformationFromSineAndCosine(
+  double sin_angle,
+  double cos_angle,
+  ON_3dVector rotation_axis,
+  ON_3dPoint rotation_center
+)
+{
+  if (ON_2dVector(cos_angle, sin_angle).IsUnitVector() && rotation_axis.IsNotZero() && rotation_center.IsValid())
+  {
+    ON_Xform rot;
+    rot.Rotation(sin_angle, cos_angle, rotation_axis, rotation_center);
+    return rot;
+  }
+  return ON_Xform::Nan;
 }
 
 void ON_Xform::Rotation(
@@ -2193,6 +2267,16 @@ void ON_Xform::Rotation(
     plane0.origin, plane0.xaxis, plane0.yaxis, plane0.zaxis,
     plane1.origin, plane1.xaxis, plane1.yaxis, plane1.zaxis
     );
+}
+
+const ON_Xform ON_Xform::RotationTransformation( 
+  const ON_Plane& plane0,
+  const ON_Plane& plane1
+  )
+{
+  ON_Xform rotation{};
+  rotation.Rotation(plane0, plane1);
+  return rotation;
 }
 
 
@@ -2550,29 +2634,29 @@ const ON_Xform ON_Xform::MirrorTransformation(
 {
   const ON_PlaneEquation e = mirror_plane.UnitizedPlaneEquation();
   const ON_3dVector N(e.x, e.y, e.z);
-  ON_3dVector V = (-2.0*e.d)*N;
-  ON_Xform mirror;
-  mirror.m_xform[0][0] = 1 - 2.0*N.x*N.x;
-  mirror.m_xform[0][1] = -2.0*N.x*N.y;
-  mirror.m_xform[0][2] = -2.0*N.x*N.z;
-  mirror.m_xform[0][3] = V.x;
+  const ON_3dVector V = (-2.0*e.d)*N;
+  return ON_Xform
+  (
+    1.0 - 2.0 * N.x * N.x,
+        - 2.0 * N.x * N.y,
+        - 2.0 * N.x * N.z,
+    V.x,
 
-  mirror.m_xform[1][0] = -2.0*N.y*N.x;
-  mirror.m_xform[1][1] = 1.0 - 2.0*N.y*N.y;
-  mirror.m_xform[1][2] = -2.0*N.y*N.z;
-  mirror.m_xform[1][3] = V.y;
+        - 2.0 * N.y * N.x,
+    1.0 - 2.0 * N.y * N.y,
+        - 2.0 * N.y * N.z,
+    V.y,
 
-  mirror.m_xform[2][0] = -2.0*N.z*N.x;
-  mirror.m_xform[2][1] = -2.0*N.z*N.y;
-  mirror.m_xform[2][2] = 1.0 - 2.0*N.z*N.z;
-  mirror.m_xform[2][3] = V.z;
+        - 2.0 * N.z * N.x,
+        - 2.0 * N.z * N.y,
+    1.0 - 2.0 * N.z * N.z,
+    V.z,
 
-  mirror.m_xform[3][0] = 0.0;
-  mirror.m_xform[3][1] = 0.0;
-  mirror.m_xform[3][2] = 0.0;
-  mirror.m_xform[3][3] = 1.0;
-
-  return mirror;
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  );
 }
 
 
@@ -3169,4 +3253,598 @@ bool ON_Xform::IntervalChange(
     }
   }
   return rc;
+}
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d
+//
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d constructors
+//
+
+ON_Xform2d::ON_Xform2d()
+: m_xform
+{
+  {0.0, 0.0, 0.0},
+  {0.0, 0.0, 0.0}
+}
+{ }
+
+ON_Xform2d::ON_Xform2d(
+  double m00, double m01, double m02,
+  double m10, double m11, double m12
+)
+: m_xform
+{
+  { m00, m01, m02 },
+  { m10, m11, m12 }
+}
+{ }
+
+
+double* ON_Xform2d::operator[](int i)
+{
+  return ( i >= 0 && i < 2 ) ? &m_xform[i][0] : nullptr;
+}
+
+const double* ON_Xform2d::operator[](int i) const
+{
+  return ( i >= 0 && i < 2 ) ? &m_xform[i][0] : nullptr;
+}
+
+bool ON_Xform2d::operator==(const ON_Xform2d& rhs) const
+{
+  // Intentionally returns false if any coefficient is a nan.
+  const double* x = &m_xform[0][0];
+  const double* x6 = x + 6;
+  const double* y = &rhs.m_xform[0][0];
+  while (x < x6)
+  {
+    if (*x++ == *y++)
+      continue;
+    return false; // not equal or a nan
+  }
+  return true;
+}
+
+bool ON_Xform2d::operator!=(const ON_Xform2d& rhs) const
+{
+  // Intentionally returns false if any coefficient is a nan.
+  if (IsNan() || rhs.IsNan())
+    return false;
+  return (false == ON_Xform2d::operator==(rhs));
+}
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d standard transformations
+//
+
+const ON_Xform2d ON_Xform2d::TranslationTransformation(
+  double dx,
+  double dy
+)
+{
+  return ON_Xform2d
+  (
+    1.0, 0.0, dx,
+    0.0, 1.0, dy
+  );
+}
+
+const ON_Xform2d ON_Xform2d::TranslationTransformation(
+  const ON_2dVector& delta
+)
+{
+  return ON_Xform2d::TranslationTransformation(delta.x, delta.y);
+}
+
+const ON_Xform2d ON_Xform2d::ScaleTransformation(
+  const ON_2dPoint& fixed_point,
+  double scale_factor
+)
+{
+  return ON_Xform2d::ScaleTransformation(fixed_point, scale_factor, scale_factor);
+}
+
+const ON_Xform2d ON_Xform2d::ScaleTransformation(
+  const ON_2dPoint& fixed_point,
+  double x_scale_factor,
+  double y_scale_factor
+)
+{
+  // x1 = x_scale_factor*(x - fixed_point.x) + fixed_point.x
+  return ON_Xform2d
+  (
+    x_scale_factor, 0.0, fixed_point.x*(1.0 - x_scale_factor),
+    0.0, y_scale_factor, fixed_point.y*(1.0 - y_scale_factor)
+  );
+}
+
+const ON_Xform2d ON_Xform2d::RotationTransformationFromSineAndCosine(
+  double sin_angle,
+  double cos_angle,
+  const ON_2dPoint& rotation_center
+)
+{
+  if (false == ON_2dVector(cos_angle, sin_angle).IsUnitVector())
+    return ON_Xform2d::Nan;
+  if (false == rotation_center.IsValid())
+    return ON_Xform2d::Nan;
+
+  const double cx = rotation_center.x;
+  const double cy = rotation_center.y;
+
+  // x1 = cos_angle*(x-cx) - sin_angle*(y-cy) + cx
+  // y1 = sin_angle*(x-cx) + cos_angle*(y-cy) + cy
+  return ON_Xform2d
+  (
+    cos_angle, -sin_angle, cx - cos_angle*cx + sin_angle*cy,
+    sin_angle,  cos_angle, cy - sin_angle*cx - cos_angle*cy
+  );
+}
+
+const ON_Xform2d ON_Xform2d::RotationTransformationFromAngleRadians(
+  double angle_radians,
+  const ON_2dPoint& rotation_center
+)
+{
+  if (ON_DBL::IsValid(angle_radians) && rotation_center.IsValid())
+  {
+    const ON_2dVector v(cos(angle_radians), sin(angle_radians));
+    if (v.IsUnitVector())
+      return ON_Xform2d::RotationTransformationFromSineAndCosine(v.y, v.x, rotation_center);
+  }
+  return ON_Xform2d::Nan;
+}
+
+const ON_Xform2d ON_Xform2d::RotationTransformation(
+  const ON_2dVector& start_dir,
+  const ON_2dVector& end_dir,
+  const ON_2dPoint& rotation_center
+)
+{
+  ON_2dVector d0 = start_dir;
+  ON_2dVector d1 = end_dir;
+  if ( fabs(d0.Length() - 1.0) > ON_SQRT_EPSILON )
+  {
+    if (false == d0.Unitize())
+      return ON_Xform2d::Nan;
+  }
+  if ( fabs(d1.Length() - 1.0) > ON_SQRT_EPSILON )
+  {
+    if (false == d1.Unitize())
+      return ON_Xform2d::Nan;
+  }
+
+  double cos_angle = d0.x*d1.x + d0.y*d1.y;
+  double sin_angle = d0.x*d1.y - d0.y*d1.x;
+
+  // Remove the rounding errors that Unitize() and the products above
+  // can introduce so that (cos_angle,sin_angle) is a unit vector.
+  const double h = sqrt(cos_angle*cos_angle + sin_angle*sin_angle);
+  if (false == (h > 0.0))
+    return ON_Xform2d::Nan;
+  cos_angle /= h;
+  sin_angle /= h;
+
+  return ON_Xform2d::RotationTransformationFromSineAndCosine(sin_angle, cos_angle, rotation_center);
+}
+
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d operator*
+//
+// All non-commutative operations have "this" as left hand side and
+// argument as right hand side.
+
+ON_2dPoint ON_Xform2d::operator*( const ON_2dPoint& p ) const
+{
+  // Note well: The right hand column is the translation. It has an
+  // important effect when transforming a Euclidean point and has no
+  // effect when transforming a vector.
+  const double x = p.x; // optimizer should put x,y in registers
+  const double y = p.y;
+  const double* m = &m_xform[0][0];
+  return ON_2dPoint
+  (
+    m[0]*x + m[1]*y + m[2],
+    m[3]*x + m[4]*y + m[5]
+  );
+}
+
+ON_2dVector ON_Xform2d::operator*( const ON_2dVector& v ) const
+{
+  // Note well: The right hand column is the translation. It has an
+  // important effect when transforming a Euclidean point and has no
+  // effect when transforming a vector.
+  const double x = v.x; // optimizer should put x,y in registers
+  const double y = v.y;
+  const double* m = &m_xform[0][0];
+  return ON_2dVector
+  (
+    m[0]*x + m[1]*y,
+    m[3]*x + m[4]*y
+  );
+}
+
+ON_Xform2d ON_Xform2d::operator*( const ON_Xform2d& rhs ) const
+{
+  // The bottom row of both matrices is (0,0,1).
+  const double* p = &rhs.m_xform[0][0];
+
+  return ON_Xform2d
+  (
+    m_xform[0][0]*p[0] + m_xform[0][1]*p[3],
+    m_xform[0][0]*p[1] + m_xform[0][1]*p[4],
+    m_xform[0][0]*p[2] + m_xform[0][1]*p[5] + m_xform[0][2],
+
+    m_xform[1][0]*p[0] + m_xform[1][1]*p[3],
+    m_xform[1][0]*p[1] + m_xform[1][1]*p[4],
+    m_xform[1][0]*p[2] + m_xform[1][1]*p[5] + m_xform[1][2]
+  );
+}
+
+const ON_SHA1_Hash ON_Xform2d::Hash() const
+{
+  ON_SHA1 sha1;
+  sha1.AccumulateDoubleArray(6, &this->m_xform[0][0]);
+  return sha1.Hash();
+}
+
+ON__UINT32 ON_Xform2d::CRC32(ON__UINT32 current_remainder) const
+{
+  const ON_SHA1_Hash hash = this->Hash();
+  return ON_CRC32(current_remainder, sizeof(hash), &hash);
+}
+
+int ON_Xform2d::Compare( const ON_Xform2d& rhs ) const
+{
+  const double* a = &m_xform[0][0];
+  const double* b = &rhs.m_xform[0][0];
+  const double* a6 = a + 6;
+  while ( a < a6 )
+  {
+    const double x = *a++;
+    const double y = *b++;
+    if ( x < y )
+      return -1;
+    if ( x > y )
+      return 1;
+    if (x == y)
+      continue;
+
+    if (!(x == x))
+    {
+      // x is a nan
+      if (!(y == y))
+        continue; // x and y are nans
+      return 1; // x is a nan and y is not.
+    }
+
+    // y is a nan and x is not a nan.
+    return -1;
+  }
+  return 0;
+}
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d queries
+//
+
+bool ON_Xform2d::IsValid() const
+{
+  const double* x = &m_xform[0][0];
+  const double* x6 = x + 6;
+  while ( x < x6 )
+  {
+    const double t = *x++;
+    if (ON_IS_VALID(t))
+      continue;
+    return false; // t is not valid
+  }
+  return true;
+}
+
+bool ON_Xform2d::IsNan() const
+{
+  const double* x = &m_xform[0][0];
+  const double* x6 = x + 6;
+  while ( x < x6 )
+  {
+    const double t = *x++;
+    if (!(t == t))
+      return true; // t is a nan
+  }
+  return false;
+}
+
+bool ON_Xform2d::IsIdentity() const
+{
+  const double zero_tolerance = 0.0;
+  // The code below will return false if m_xform[][] contains
+  // a nan value.
+
+  if (!(zero_tolerance >= 0.0 && zero_tolerance < ON_UNSET_POSITIVE_VALUE))
+    return false;
+
+  if ( !(fabs(1.0 - m_xform[0][0]) <= zero_tolerance) )
+    return false;
+  if ( !(fabs(m_xform[0][1]) <= zero_tolerance) )
+    return false;
+  if ( !(fabs(m_xform[0][2]) <= zero_tolerance) )
+    return false;
+
+  if ( !(fabs(m_xform[1][0]) <= zero_tolerance) )
+    return false;
+  if ( !(fabs(1.0 - m_xform[1][1]) <= zero_tolerance) )
+    return false;
+  if ( !(fabs(m_xform[1][2]) <= zero_tolerance) )
+    return false;
+
+  return true;
+}
+
+bool ON_Xform2d::IsZeroTransformation() const
+{
+  const double zero_tolerance = 0.0;
+  // The code below will return false if m_xform[][] contains
+  // a nan value.
+
+  if (!(zero_tolerance >= 0.0 && zero_tolerance < ON_UNSET_POSITIVE_VALUE))
+    return false;
+
+  const double* x = &m_xform[0][0];
+  const double* x6 = x + 6;
+  while ( x < x6 )
+  {
+    if ( !(fabs(*x++) <= zero_tolerance) )
+      return false;
+  }
+  return true;
+}
+
+bool ON_Xform2d::IsTranslation() const
+{
+  const double zero_tolerance = 0.0;
+  if (!(zero_tolerance >= 0.0 && zero_tolerance < ON_UNSET_POSITIVE_VALUE))
+    return false;
+
+  if ( !(fabs(1.0 - m_xform[0][0]) <= zero_tolerance) )
+    return false;
+  if ( !(fabs(m_xform[0][1]) <= zero_tolerance) )
+    return false;
+
+  if ( !(fabs(m_xform[1][0]) <= zero_tolerance) )
+    return false;
+  if ( !(fabs(1.0 - m_xform[1][1]) <= zero_tolerance) )
+    return false;
+
+  return IsValid();
+}
+
+double ON_Xform2d::Determinant() const
+{
+  return m_xform[0][0]*m_xform[1][1] - m_xform[0][1]*m_xform[1][0];
+}
+
+bool ON_Xform2d::Invert( double* determinant )
+{
+  if ( nullptr != determinant )
+    *determinant = ON_DBL_QNAN;
+
+  if (false == IsValid())
+  {
+    *this = ON_Xform2d::Nan;
+    return false;
+  }
+
+  const double m00 = m_xform[0][0];
+  const double m01 = m_xform[0][1];
+  const double m02 = m_xform[0][2];
+  const double m10 = m_xform[1][0];
+  const double m11 = m_xform[1][1];
+  const double m12 = m_xform[1][2];
+
+  const double det = m00*m11 - m01*m10;
+  if ( nullptr != determinant )
+    *determinant = det;
+
+  double i00, i01, i10, i11;
+  bool rc;
+  if ( 0.0 != det && ON_IS_VALID(det) )
+  {
+    const double s = 1.0/det;
+    i00 =  m11*s;
+    i01 = -m01*s;
+    i10 = -m10*s;
+    i11 =  m00*s;
+    rc = true;
+  }
+  else
+  {
+    // The linear part is singular. Use the Moore-Penrose pseudo inverse
+    // of the 2x2 linear part, which for a rank 1 matrix L is
+    // transpose(L)/(sum of the squares of the coefficients of L),
+    // and is the zero matrix when L is the zero matrix.
+    const double f = m00*m00 + m01*m01 + m10*m10 + m11*m11;
+    if ( f > 0.0 && ON_IS_VALID(f) )
+    {
+      const double s = 1.0/f;
+      i00 = m00*s;
+      i01 = m10*s;
+      i10 = m01*s;
+      i11 = m11*s;
+    }
+    else
+    {
+      i00 = 0.0;
+      i01 = 0.0;
+      i10 = 0.0;
+      i11 = 0.0;
+    }
+    rc = false;
+  }
+
+  m_xform[0][0] = i00;
+  m_xform[0][1] = i01;
+  m_xform[0][2] = -(i00*m02 + i01*m12);
+  m_xform[1][0] = i10;
+  m_xform[1][1] = i11;
+  m_xform[1][2] = -(i10*m02 + i11*m12);
+
+  return rc;
+}
+
+ON_Xform2d ON_Xform2d::Inverse( double* determinant ) const
+{
+  ON_Xform2d inv(*this);
+  inv.Invert(determinant);
+  return inv;
+}
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d / ON_Xform conversions
+//
+
+const ON_Xform ON_Xform2d::ToXform() const
+{
+  return ON_Xform
+  (
+    m_xform[0][0], m_xform[0][1], 0.0, m_xform[0][2],
+    m_xform[1][0], m_xform[1][1], 0.0, m_xform[1][2],
+              0.0,           0.0, 1.0,           0.0,
+              0.0,           0.0, 0.0,           1.0
+  );
+}
+
+const ON_Xform2d ON_Xform2d::FromXform(
+  const ON_Xform& xform,
+  double zero_tolerance
+)
+{
+  if (!(zero_tolerance >= 0.0 && zero_tolerance < ON_UNSET_POSITIVE_VALUE))
+    return ON_Xform2d::Nan;
+
+  if (false == xform.IsValid())
+    return ON_Xform2d::Nan;
+
+  // The transformation must be affine and must map the world xy plane
+  // to itself.
+  if ( !(fabs(xform.m_xform[0][2]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[1][2]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[2][0]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[2][1]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(1.0 - xform.m_xform[2][2]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[2][3]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[3][0]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[3][1]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(xform.m_xform[3][2]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+  if ( !(fabs(1.0 - xform.m_xform[3][3]) <= zero_tolerance) )
+    return ON_Xform2d::Nan;
+
+  return ON_Xform2d
+  (
+    xform.m_xform[0][0], xform.m_xform[0][1], xform.m_xform[0][3],
+    xform.m_xform[1][0], xform.m_xform[1][1], xform.m_xform[1][3]
+  );
+}
+
+///////////////////////////////////////////////////////////////
+//
+// ON_Xform2d 2d drawing API conversions
+//
+
+const ON_Xform2d ON_Xform2d::FromAffineElements(
+  double a, double b,
+  double c, double d,
+  double tx, double ty
+)
+{
+  return ON_Xform2d
+  (
+    a, c, tx,
+    b, d, ty
+  );
+}
+
+const ON_Xform2d ON_Xform2d::FromAffineElements(
+  const double abcdtxty[6]
+)
+{
+  if ( nullptr == abcdtxty )
+    return ON_Xform2d::Nan;
+  return ON_Xform2d::FromAffineElements(
+    abcdtxty[0], abcdtxty[1], abcdtxty[2],
+    abcdtxty[3], abcdtxty[4], abcdtxty[5]);
+}
+
+const ON_Xform2d ON_Xform2d::FromAffineElements(
+  const float abcdtxty[6]
+)
+{
+  if ( nullptr == abcdtxty )
+    return ON_Xform2d::Nan;
+  return ON_Xform2d::FromAffineElements(
+    (double)abcdtxty[0], (double)abcdtxty[1], (double)abcdtxty[2],
+    (double)abcdtxty[3], (double)abcdtxty[4], (double)abcdtxty[5]);
+}
+
+void ON_Xform2d::GetAffineElements(
+  double& a, double& b,
+  double& c, double& d,
+  double& tx, double& ty
+) const
+{
+  a  = m_xform[0][0];
+  b  = m_xform[1][0];
+  c  = m_xform[0][1];
+  d  = m_xform[1][1];
+  tx = m_xform[0][2];
+  ty = m_xform[1][2];
+}
+
+void ON_Xform2d::GetAffineElements(
+  double abcdtxty[6]
+) const
+{
+  if ( nullptr != abcdtxty )
+  {
+    abcdtxty[0] = m_xform[0][0];
+    abcdtxty[1] = m_xform[1][0];
+    abcdtxty[2] = m_xform[0][1];
+    abcdtxty[3] = m_xform[1][1];
+    abcdtxty[4] = m_xform[0][2];
+    abcdtxty[5] = m_xform[1][2];
+  }
+}
+
+void ON_Xform2d::GetAffineElements(
+  float abcdtxty[6]
+) const
+{
+  if ( nullptr != abcdtxty )
+  {
+    abcdtxty[0] = (float)m_xform[0][0];
+    abcdtxty[1] = (float)m_xform[1][0];
+    abcdtxty[2] = (float)m_xform[0][1];
+    abcdtxty[3] = (float)m_xform[1][1];
+    abcdtxty[4] = (float)m_xform[0][2];
+    abcdtxty[5] = (float)m_xform[1][2];
+  }
 }

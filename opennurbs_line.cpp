@@ -107,16 +107,13 @@ ON_3dVector ON_Line::Tangent() const
   return V;
 }
 
+const ON_3dPoint ON_Line::Midpoint() const
+{
+  return PointAt(0.5);
+}
+
 ON_3dPoint ON_Line::PointAt( double t ) const
 {
-  // 26 Feb 2003 Dale Lear
-  //     Changed 
-  //          return (1-t)*from + t*to;
-  //     to the following so that axis aligned lines will
-  //     return exact answers for large values of t.  
-  //     See RR 9683.
- 
-
   //08 May 2022 - Greg. Mikko, Chuck.  This is more accurate than the parameterwise 
   //(1-t)*from + t*to with fudging.  Note that if any coordinate of from is the same as that of to,
   //the answer will be exact in that coord.

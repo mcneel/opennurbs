@@ -641,6 +641,562 @@ bool ON_Curve::IsPeriodic() const
   return false;
 }
 
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::Unset = ON_CurveKinkDefinition();
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::DefaultTangentKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio,
+  true,
+  false
+);
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::DefaultCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::SmallCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::SmallCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::MediumCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::MediumCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::LargeCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::LargeCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
+ON_CurveKinkDefinition::ON_CurveKinkDefinition(
+  double kink_angle_degrees,
+  double curvature_kink_radius_ratio,
+  bool bKinkAtTangentChange,
+  bool bKinkAtCurvatureChange
+)
+{
+  this->SetKinkAngleDegrees(kink_angle_degrees);
+  this->SetCurvatureKinkRadiusRatio(curvature_kink_radius_ratio);
+  this->SetKinkAtTangentChange(bKinkAtTangentChange);
+  this->SetKinkAtCurvatureChange(bKinkAtCurvatureChange);
+}
+
+const ON_SHA1_Hash ON_CurveKinkDefinition::Hash() const
+{
+  ON_SHA1 sha1;
+  if (this->m_bKinkAtTangentChange)
+  {
+    sha1.AccumulateDouble(this->KinkAngleDegrees());
+  }
+  if (this->m_bKinkAtCurvatureChange)
+  {
+    sha1.AccumulateDouble(this->KinkAngleDegrees());
+    sha1.AccumulateDouble(this->CurvatureKinkRadiusRatio());
+    sha1.AccumulateDouble(this->CurvatureKinkZeroTolerance());
+  }
+  return sha1.Hash();
+}
+
+const ON_wString ON_CurveKinkDefinition::ToString() const
+{
+  ON_String s;
+
+  const bool bKinkAtTangentChange = this->KinkAtTangentChange();
+  const bool bKinkAtCurvatureChange = this->KinkAtCurvatureChange();
+  if (false == bKinkAtTangentChange && false == bKinkAtCurvatureChange)
+  {
+    s += L"All kinks ignored.";
+  }
+  else
+  {
+    if (bKinkAtTangentChange)
+    {
+      s += ON_wString::FormatToString(
+        L"Tangent kink angle = %g%c. ",
+        this->KinkAngleDegrees(),
+        ON_wString::DegreeSymbol
+      );
+    }
+    else
+      s += L"Tangent kinks ignored. ";
+
+    if (bKinkAtCurvatureChange)
+    {
+      s += ON_wString::FormatToString(
+        L"Curvature kink radius ratio = %g, angle = %g%c, zero tolerance = %g.",
+        this->CurvatureKinkRadiusRatio(),
+        this->KinkAngleDegrees(),
+        ON_wString::DegreeSymbol,
+        this->CurvatureKinkZeroTolerance()
+      );
+    }
+    else
+      s += L"Curvature kinks ignored.";
+  }
+
+  return s;
+}
+
+bool ON_CurveKinkDefinition::Write(class ON_BinaryArchive& archive) const
+{
+  if (false == archive.BeginWrite3dmAnonymousChunk(0))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    // Anonymous Chunk version 0 fields
+    if (false == archive.WriteDouble(m_kink_angle_degrees))
+      break;
+
+    if (false == archive.WriteDouble(m_kink_angle_degrees))
+      break;
+
+    if (false == archive.WriteDouble(m_kink_angle_degrees))
+      break;
+
+    if (false == archive.WriteDouble(m_curvature_kink_radius_ratio))
+      break;
+
+    if (false == archive.WriteDouble(m_curvature_kink_zero_tolerance))
+      break;
+
+    if (false == archive.WriteBool(m_bKinkAtTangentChange))
+      break;
+
+    if (false == archive.WriteBool(m_bKinkAtCurvatureChange))
+      break;
+
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+bool ON_CurveKinkDefinition::Read(class ON_BinaryArchive& archive)
+{
+  *this = ON_CurveKinkDefinition::Unset;
+  int version = -1;
+  if (false == archive.BeginRead3dmAnonymousChunk(&version))
+    return false;
+
+  bool rc = false;
+  for (;;)
+  {
+    if (version < 0)
+      break;
+
+    // Anonymous Chunk version 0 fields
+    if (false == archive.ReadDouble(&m_kink_angle_degrees))
+      break;
+
+    double obsolete_polyline_tangent_kink_angle_degrees = ON_DBL_QNAN;
+    if (false == archive.ReadDouble(&obsolete_polyline_tangent_kink_angle_degrees))
+      break;
+
+    double obsolete_curvature_kink_angle_degrees = ON_DBL_QNAN;
+    if (false == archive.ReadDouble(&obsolete_curvature_kink_angle_degrees))
+      break;
+
+    if (false == archive.ReadDouble(&m_curvature_kink_radius_ratio))
+      break;
+
+    if (false == archive.ReadDouble(&m_curvature_kink_zero_tolerance))
+      break;
+
+    if (false == archive.ReadBool(&m_bKinkAtTangentChange))
+      break;
+
+    if (false == archive.ReadBool(&m_bKinkAtCurvatureChange))
+      break;
+
+    rc = true;
+    break;
+  }
+
+  if (false == archive.EndRead3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+bool ON_CurveKinkDefinition::KinkAtTangentChange() const
+{
+  return this->m_bKinkAtTangentChange;
+}
+
+void ON_CurveKinkDefinition::SetKinkAtTangentChange(bool bKinkAtTangentChange)
+{
+  // the ? true : false is here to prevent hacks from storing byte values in a bool.
+  this->m_bKinkAtTangentChange = bKinkAtTangentChange ? true : false;
+}
+
+void ON_CurveKinkDefinition::ClearKinkAtTangentChange()
+{
+  this->SetKinkAtTangentChange(false);
+}
+
+bool ON_CurveKinkDefinition::KinkAtCurvatureChange() const
+{
+  return this->m_bKinkAtCurvatureChange;
+}
+
+void ON_CurveKinkDefinition::SetKinkAtCurvatureChange(bool bKinkAtCurvatureChange)
+{
+  // the ? true : false is here to prevent hacks from storing byte values in a bool.
+  this->m_bKinkAtCurvatureChange = bKinkAtCurvatureChange ? true : false;
+}
+
+void ON_CurveKinkDefinition::ClearKinkAtCurvatureChange()
+{
+  this->SetKinkAtCurvatureChange(false);
+}
+
+void ON_CurveKinkDefinition::Clear()
+{
+  this->ClearKinkAtTangentChange();
+  this->ClearKinkAtCurvatureChange();
+}
+
+bool ON_CurveKinkDefinition::IsSet() const
+{
+  return (this->m_bKinkAtTangentChange || this->m_bKinkAtCurvatureChange);
+}
+
+bool ON_CurveKinkDefinition::IsUnset() const
+{
+  return this->IsSet() ? false : true;
+}
+
+bool ON_CurveKinkDefinition::IsKink(const ON_Curve& curve, double t) const
+{
+  const ON_Interval domain = curve.Domain();
+  if (false == domain.Includes(t, true))
+    return false;
+
+  const int dercount = this->m_bKinkAtCurvatureChange ? 2 : (this->m_bKinkAtTangentChange ? 1 : 0);
+  if (dercount < 1)
+    return false;
+
+  int hint = 0;
+
+  ON_3dPoint P0;
+  ON_3dVector T0(ON_3dVector::NanVector);
+  ON_3dVector K0(ON_3dVector::NanVector);
+  const bool bExists0
+    = (1 == dercount)
+    ? curve.EvTangent(t, P0, T0, -1, &hint)
+    : curve.EvCurvature(t, P0, T0, K0, -1, &hint);
+
+  ON_3dPoint P1;
+  ON_3dVector T1(ON_3dVector::NanVector);
+  ON_3dVector K1(ON_3dVector::NanVector);
+  const bool bExists1
+    = (1 == dercount)
+    ? curve.EvTangent(t, P1, T1, 1, &hint)
+    : curve.EvCurvature(t, P0, T1, K1, 1, &hint);
+
+  if (bExists0 != bExists1)
+    return true;
+
+  if (this->m_bKinkAtTangentChange && this->IsTangentKink(T0, T1))
+    return true;
+
+  if (this->m_bKinkAtCurvatureChange && this->IsCurvatureKink(K0, K1))
+    return true;
+
+  return false;
+}
+
+bool ON_CurveKinkDefinition::IsTangentKink(const ON_Curve& curve, double t) const
+{
+  ON_CurveKinkDefinition tangent_test(*this);
+  tangent_test.m_bKinkAtCurvatureChange = false;
+  return tangent_test.IsKink(curve, t);
+}
+
+bool ON_CurveKinkDefinition::IsTangentKink(ON_3dVector tangent_from_below, ON_3dVector tangent_from_above) const
+{
+  if (false == this->m_bKinkAtTangentChange)
+    return false;
+
+  if (tangent_from_below.IsZero() || tangent_from_above.IsZero())
+    return true;
+
+  if (false == tangent_from_below.IsValid() || false == tangent_from_above.IsValid())
+    return true;
+
+  const double angle_degrees = this->KinkAngleDegrees();
+  if (angle_degrees >= 180.0)
+    return false;
+
+  if (tangent_from_below == tangent_from_above)
+    return false;
+
+  const double a = ON_3dVector::AngleDegrees(tangent_from_below, tangent_from_above);
+  return (a > angle_degrees);
+}
+
+bool ON_CurveKinkDefinition::IsCurvatureKink(const ON_Curve& curve, double t) const
+{
+  ON_CurveKinkDefinition curvature_test(*this);
+  curvature_test.m_bKinkAtTangentChange = false;
+  return curvature_test.IsKink(curve, t);
+}
+
+bool ON_CurveKinkDefinition::ComputeCurvatureRadiusRatio(const ON_3dVector& K0, const ON_3dVector& K1, double& radius_ratio, double& angle_degrees) const
+{
+  double k0 = K0.Length(), k1 = K1.Length();
+
+  // initialize to unset value
+  angle_degrees = ON_UNSET_VALUE;
+  
+  // first check to see if the curvature vector should be considered zero.
+  if (IsCurvatureZero(k0)) k0 = 0;
+  if (IsCurvatureZero(k1)) k1 = 0;
+
+  const double max_kappa = (k0 >= k1) ? k0 : k1;
+  const double min_kappa = (k0 <= k1) ? k0 : k1;
+
+  if (max_kappa == 0) // both values are zero
+  {
+    radius_ratio = 1.0;
+    return true;
+  }
+
+  if (min_kappa > 0)
+  {
+    // only if both vectors have length, calculate the angle
+    angle_degrees = ON_3dVector::AngleDegrees(K0, K1);
+  }
+    
+  // NOTE WELL:
+  // (min radius of curvature)/(max radius of curvature)
+  // = (1/max_kappa)/(1/min_kappa)
+  // = min_kappa/max_kappa.
+  // In particular, the code below is correct.
+  radius_ratio = min_kappa / max_kappa;
+
+  return true;
+}
+
+bool ON_CurveKinkDefinition::IsCurvatureZero(const ON_3dVector& K) const
+{
+  return IsCurvatureZero(K.Length());
+}
+
+bool ON_CurveKinkDefinition::IsCurvatureZero(double kappa) const
+{
+  // zero_kappa_tolerance is used to decide if a small curvature should be
+  // treated as zero curvature.
+  const double zero_kappa_tolerance = CurvatureKinkZeroTolerance();
+  return kappa <= zero_kappa_tolerance;
+}
+
+bool ON_CurveKinkDefinition::IsCurvatureKink(ON_3dVector curvature_from_below, ON_3dVector curvature_from_above) const
+{
+  if (false == this->m_bKinkAtCurvatureChange)
+    return false;
+
+  const bool bExists[2] = { curvature_from_below.IsValid(), curvature_from_above.IsValid() };
+  if (false == bExists[0] || false == bExists[1])
+    return true;
+
+  if (curvature_from_below == curvature_from_above)
+    return false;
+
+  ON_3dVector K[2] = { curvature_from_below, curvature_from_above };
+  double kappa[2] = { K[0].Length(), K[1].Length() };
+  if (false == (kappa[0] >= 0.0) || false == (kappa[1] >= 0.0))
+    return true; // kappa[0] and/or kappa[1] is a nan.
+
+
+  // heuristic to find meaningful curvature changes with respect to splitting curves at "kinks"
+
+  double kappa_ratio, angle_degrees;
+  if (!ComputeCurvatureRadiusRatio(K[0], K[1], kappa_ratio, angle_degrees))
+    return true;
+
+  if (kappa_ratio >= 0.0 && kappa_ratio < 1.0 && kappa_ratio <= this->CurvatureKinkRadiusRatio()*(1.0 + ON_SQRT_EPSILON))
+    return true;
+
+  if (IsCurvatureZero(kappa[0])) kappa[0] = 0.0;
+  if (IsCurvatureZero(kappa[1])) kappa[1] = 0.0;
+  const double min_kappa = (kappa[0] <= kappa[1]) ? kappa[0] : kappa[1];
+  if (min_kappa > 0.0)
+  {
+    if (angle_degrees > this->KinkAngleDegrees())
+      return true;
+  }
+
+  return false;
+}
+
+double ON_CurveKinkDefinition::KinkAngleDegrees() const
+{
+  const double a = this->m_kink_angle_degrees;
+  return
+    (a >= 0.0 && a <= 180.0)
+    ? a
+    : ON_CurveKinkDefinition::DefaultKinkAngleDegrees;
+}
+
+double ON_CurveKinkDefinition::KinkAngleRadians() const
+{
+  return ON_RadiansFromDegrees(this->KinkAngleDegrees());
+}
+
+double ON_CurveKinkDefinition::CurvatureKinkRadiusRatio() const
+{
+  return
+    (this->m_curvature_kink_radius_ratio >= 0.0 && this->m_curvature_kink_radius_ratio <= 1.0)
+    ? this->m_curvature_kink_radius_ratio
+    : ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio;
+}
+
+double ON_CurveKinkDefinition::CurvatureKinkZeroTolerance() const
+{
+  return
+    (this->m_curvature_kink_zero_tolerance >= 0.0 && this->m_curvature_kink_zero_tolerance < ON_UNSET_POSITIVE_VALUE)
+    ? this->m_curvature_kink_zero_tolerance
+    : ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance;
+}
+
+
+void ON_CurveKinkDefinition::SetKinkAngleDegrees(double kink_angle_degrees)
+{
+  this->m_kink_angle_degrees
+    = (kink_angle_degrees >= 0.0 && kink_angle_degrees < ON_UNSET_POSITIVE_VALUE)
+    ? (kink_angle_degrees < 180.0 ? kink_angle_degrees : 180.0)
+    : ON_DBL_QNAN;
+}
+
+void ON_CurveKinkDefinition::SetKinkAngleRadians(double kink_angle_radians)
+{
+  this->SetKinkAngleDegrees( ON_DegreesFromRadians(kink_angle_radians) );
+}
+
+void ON_CurveKinkDefinition::ClearKinkAngle()
+{
+  this->m_kink_angle_degrees = ON_DBL_QNAN;
+}
+
+void ON_CurveKinkDefinition::SetCurvatureKinkRadiusRatio(
+  double curvature_kink_radius_ratio
+)
+{
+  this->m_curvature_kink_radius_ratio
+    = (curvature_kink_radius_ratio >= 0.0 && curvature_kink_radius_ratio < ON_UNSET_POSITIVE_VALUE)
+    ? (curvature_kink_radius_ratio <= 1.0 ? curvature_kink_radius_ratio : 1.0)
+    : ON_DBL_QNAN;
+}
+
+void ON_CurveKinkDefinition::SetCurvatureKinkZeroTolerance(
+  double curvature_zero_tolerance
+)
+{
+  this->m_curvature_kink_zero_tolerance
+    = (curvature_zero_tolerance >= 0.0 && curvature_zero_tolerance < ON_UNSET_POSITIVE_VALUE)
+    ? curvature_zero_tolerance
+    : ON_DBL_QNAN;
+}
+
+void ON_CurveKinkDefinition::ClearCurvatureKinkRadiusRatio()
+{
+  this->m_curvature_kink_radius_ratio = ON_DBL_QNAN;
+  this->m_curvature_kink_zero_tolerance = ON_DBL_QNAN;
+}
+
+double ON_Curve::NextCurveKink(
+  ON_Interval search_domain,
+  const ON_CurveKinkDefinition& kink_definition
+) const
+{
+  const double not_found = search_domain.Max();
+  if (false == search_domain.Intersection(this->Domain()))
+    return not_found;
+  if (false == search_domain.IsIncreasing())
+    return not_found;
+  const bool bKinkAtTangentChange = kink_definition.KinkAtTangentChange();
+  const double coskinktol
+    = bKinkAtTangentChange
+    ? cos(kink_definition.KinkAngleRadians())
+    : -2.0;
+  const ON::continuity c
+    = kink_definition.KinkAtCurvatureChange()
+    ? ON::continuity::G2_continuous
+    : (bKinkAtTangentChange ? ON::continuity::G1_continuous : ON::continuity::C0_continuous);
+  if (ON::continuity::G1_continuous != c && ON::continuity::G2_continuous != c)
+    return not_found;
+
+  for (int infloopprotect = 0; infloopprotect < 100; ++infloopprotect)
+  {
+    double t = search_domain[1];
+    int hint = 0;
+    int dtype = 0;
+    if (false == this->GetNextDiscontinuity(c, search_domain[0], search_domain[1], &t, &hint, &dtype, coskinktol))
+      break;
+    if (dtype != 1 && dtype != 2)
+      break;
+    if (false == search_domain.Includes(t, true))
+      break;
+
+    ON_3dPoint P[2] = {};
+    ON_3dVector T[2] = { ON_3dVector::XAxis, ON_3dVector::XAxis };
+    ON_3dVector K[2] = {};
+    bool bExists[2] = {};
+    if (ON::continuity::G2_continuous == c)
+    {
+      bExists[0] = this->EvCurvature(t, P[0], T[0], K[0], -1, &hint);
+      bExists[1] = this->EvCurvature(t, P[1], T[1], K[1], 1, &hint);
+    }
+    else if (ON::continuity::G1_continuous == c && bKinkAtTangentChange)
+    {
+      bExists[0] = this->EvTangent(t, P[0], T[0], -1, &hint);
+      bExists[1] = this->EvTangent(t, P[1], T[1], 1, &hint);
+    }
+    else
+      break;
+
+    if (false == bExists[0] || false == bExists[1])
+    {
+      // at least one evaluation failed.
+      return t;
+    }
+
+    if (kink_definition.IsTangentKink(T[0], T[1]))
+      return t; // tangent kink
+
+    if (ON::continuity::G2_continuous != c)
+      break;
+
+    if (2 == dtype && kink_definition.IsCurvatureKink(K[0], K[1]))
+      return t;
+
+    // If we don't find the right sort of kink at t, we continue looking
+    // starting at t.
+    search_domain[0] = t;
+  }
+
+  return not_found;
+}
+
+
+
 bool ON_Curve::GetNextDiscontinuity( 
                 ON::continuity c,
                 double t0,
@@ -1001,11 +1557,24 @@ ON_3dVector ON_Curve::DerivativeAt( double t ) const
 
 ON_3dVector ON_Curve::TangentAt( double t ) const
 {
-  ON_3dPoint point;
-  ON_3dVector tangent;
+  ON_3dPoint point = ON_3dPoint::NanPoint;
+  ON_3dVector tangent = ON_3dVector::NanVector;
   EvTangent( t, point, tangent );
   return tangent;
 }
+
+ON_3dVector ON_Curve::TangentAt(
+  double t,
+  int side
+) const
+{
+  ON_3dPoint point = ON_3dPoint::NanPoint;
+  ON_3dVector tangent = ON_3dVector::NanVector;
+  if (false == EvTangent(t, point, tangent, side) || false == tangent.IsUnitVector())
+    tangent = ON_3dVector::NanVector;
+  return tangent;
+}
+
 
 ON_3dVector ON_Curve::CurvatureAt( double t ) const
 {
@@ -2544,7 +3113,6 @@ bool ON_CurveArray::Read( ON_BinaryArchive& file )
 ////////////////////////// utilities for curve joining ///////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 
-
 static void ReverseSegs(ON_SimpleArray<CurveJoinSeg>& SArray)
 
 {
@@ -2571,49 +3139,35 @@ public:
   double dot_tol;
   bool bUseTan;
 };
-static bool CJEDIsMatch(const CurveJoinEndData* a, const CurveJoinEndData* b)
-
-//Do these represent a pair of possible joins in the same location?
-
-{
-  for (int i=0; i<2; i++){
-    for (int j=0; j<2; j++){
-      if (a->id[i] == b->id[j] && a->end[i] == b->end[j])
-        return true;
-    }
-  }
-  return false;
-}
-
-
 static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
 
 {
-  //The greater tan_dot is, the more tangent the ends are.  
+  //The greater tan_dot is, the more tangent the ends are.
   // Be sure that they have been adjusted for start meets start or end mets end.
   JoinEndCompareContext* context = (JoinEndCompareContext*)ctext;
   const CurveJoinEndData* a = (CurveJoinEndData*)aA;
   const CurveJoinEndData* b = (CurveJoinEndData*)bB;
 
-  //If not comparing two matches at the same end of a curve, sort by id.
-  if (!CJEDIsMatch(a, b)){
-    if (a->id[0] < b->id[0]) return -1;
-    if (a->id[0] > b->id[0]) return 1;
-    if (a->id[1] < b->id[1]) return -1;
-    if (a->id[1] > b->id[1]) return 1;
-    return 0;
-  }
+  //SortCurveEndData consumes this order greedily: it walks the sorted array once and
+  //accepts every candidate whose two endpoints are both still free. So the order has
+  //to be a single global best-first ranking. There used to be a leading test that
+  //sorted by curve id whenever the two records did not share an endpoint, which made
+  //the comparison rule depend on the pair being compared. That is not transitive, so
+  //it was not a strict weak ordering and the sorted result was whatever the sort
+  //algorithm happened to produce.
   if (context->bUseTan){
     //If one is real close and the other isn't,take the close one.
-    if (a->dist < context->dist_tol && b->dist >= context->dist_tol) return -1;
-    if (a->dist >= context->dist_tol && b->dist < context->dist_tol) return 1;
+    const bool aClose = a->dist < context->dist_tol;
+    const bool bClose = b->dist < context->dist_tol;
+    if (aClose != bClose) return aClose ? -1 : 1;
 
     //If one is tangent and the other isn't, take the tangent one.
-    if (a->tan_dot > context->dot_tol && b->tan_dot <= context->dot_tol) return -1;
-    if (a->tan_dot <= context->dot_tol && b->tan_dot > context->dot_tol) return 1;
+    const bool aTan = a->tan_dot > context->dot_tol;
+    const bool bTan = b->tan_dot > context->dot_tol;
+    if (aTan != bTan) return aTan ? -1 : 1;
 
-    //If both are close, take the more tangent one
-    if (a->dist < context->dist_tol && b->dist < context->dist_tol){
+    //If both are close, take the more tangent one. aClose == bClose here.
+    if (aClose){
       if (a->tan_dot > b->tan_dot) return -1;
       if (a->tan_dot < b->tan_dot) return 1;
     }
@@ -2623,23 +3177,22 @@ static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
       return -1;
     if (a->dist > b->dist)
       return 1;
-    if (a->id[0] < b->id[0]) return -1;
-    if (a->id[0] > b->id[0]) return 1;
-    if (a->id[1] < b->id[1]) return -1;
-    if (a->id[1] > b->id[1]) return 1;
-    return 0;
   }
   else {
     if (a->dist < b->dist) return -1;
     if (a->dist > b->dist) return 1;
-    if (a->tan_dot > b->tan_dot) return -1;
-    if (a->tan_dot < b->tan_dot) return 1;
-    if (a->id[0] < b->id[0]) return -1;
-    if (a->id[0] > b->id[0]) return 1;
-    if (a->id[1] < b->id[1]) return -1;
-    if (a->id[1] > b->id[1]) return 1;
-    return 0;
+    // do not compare tangents here
   }
+
+  //Tie break on the full record key to make this a total order. GetCurveEndData emits
+  //at most one record per (id[0], end[0], id[1], end[1]), so no two distinct records
+  //compare equal here. That keeps the sorted order unique, and therefore independent
+  //of ON_qsort, which is not stable and is not the same algorithm on every platform.
+  if (a->id[0] != b->id[0]) return (a->id[0] < b->id[0]) ? -1 : 1;
+  if (a->end[0] != b->end[0]) return (a->end[0] < b->end[0]) ? -1 : 1;
+  if (a->id[1] != b->id[1]) return (a->id[1] < b->id[1]) ? -1 : 1;
+  if (a->end[1] != b->end[1]) return (a->end[1] < b->end[1]) ? -1 : 1;
+  return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -3146,6 +3699,7 @@ void JoinCurveEnd::Create(int cid, const ON_Curve& crv, int end, bool bGetTan)
   }
   else
     m_P = crv.PointAt(crv.Domain()[m_end]);
+
 }
 
 JoinCurveEnd::~JoinCurveEnd()
@@ -3224,7 +3778,7 @@ class JoinCurveEndArray
 public:
   JoinCurveEndArray();
   ~JoinCurveEndArray();
-  bool Create(const ON_SimpleArray<ON_Curve*>& Curves, 
+  bool Create(const ON_SimpleArray<const ON_Curve*>& Curves, 
                                double dtol,
                                bool bPreserveDirection,
                                bool bGetTan, 
@@ -3260,7 +3814,7 @@ void JoinCurveEndArray::Destroy()
   }
 }
 
-bool JoinCurveEndArray::Create(const ON_SimpleArray<ON_Curve*>& Curves, 
+bool JoinCurveEndArray::Create(const ON_SimpleArray<const ON_Curve*>& Curves, 
                                double dtol,
                                bool bPreserveDirection,
                                bool bGetTan, 
@@ -3320,7 +3874,7 @@ bool JoinCurveEndArray::Create(const ON_SimpleArray<ON_Curve*>& Curves,
 
 /////////////////////////////////////////
 
-static bool GetCurveEndData(const ON_SimpleArray<ON_Curve*>& IC,
+static bool GetCurveEndData(const ON_SimpleArray<const ON_Curve*>& IC,
                               double join_tol, double dot_tol,
                               bool bUseTanAngle,
                               bool bPreserveDirection,
@@ -3328,7 +3882,15 @@ static bool GetCurveEndData(const ON_SimpleArray<ON_Curve*>& IC,
 
 {
   JoinCurveEndArray JCA;
-  if (!JCA.Create(IC, join_tol, bPreserveDirection, bUseTanAngle, (dot_tol > 0.0) ? true : false, dot_tol))
+  //Tangents have to be evaluated whenever anything downstream is going to look at
+  //them, and that is not just bUseTanAngle: a positive dot_tol means JoinEndCallback
+  //runs the kink test, which needs m_bTanOK on both ends. Deriving bGetTan from
+  //bUseTanAngle alone made kink_tol > 0 with bUseTanAngle == false reject every pair,
+  //so ON_SortCurveEnds returned true having joined nothing. ON_JoinCurves and
+  //ON_JoinPolylines already use this same expression.
+  const bool bCheckDot = (dot_tol > 0.0);
+  const bool bGetTan = (bUseTanAngle || bCheckDot);
+  if (!JCA.Create(IC, join_tol, bPreserveDirection, bGetTan, bCheckDot, dot_tol))
     return false;
   for (int i=0; i<JCA.m_Pairs.Count(); i++){
     JoinEndPair& Pair = JCA.m_Pairs[i];
@@ -3582,11 +4144,19 @@ static void SortCurveEndData(int count, ON_SimpleArray<CurveJoinEndData>& EData,
       Singles.Append(i);
   }
 
+  for (int i = SegsArray.Count() - 1; i >= 0; --i)
+  {
+    if (SegsArray[i].Count() == 0)
+      SegsArray.Remove(i);
+  }
+
   onfree((void*)endarray);
   onfree((void*)endspace);
 }
 
-static bool SortEnds(int count, 
+// This curve sorter is used in the old version of ON_JoinCurves.
+// And in ON_JoinPolylines and ON_JoinLines.
+static bool ON_SortCurveEnds(int count, 
                      const ON_3dPoint* StartPoints, const ON_3dPoint* EndPoints,//size count
                      const ON_3dVector* StartTans, const ON_3dVector* EndTans,//nullptr or size count 
                      double join_tol, double kink_tol,
@@ -3609,7 +4179,8 @@ static bool SortEnds(int count,
   return true;
 }
 
-ON_DECL bool SortEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
+// public api version on non-const curves
+bool ON_SortCurveEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
                      double join_tol, double kink_tol,
                      bool bUseTanAngle,
                      bool bPreserveDirection,
@@ -3617,6 +4188,23 @@ ON_DECL bool SortEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
                      ON_SimpleArray<int>& Singles
                      )
 
+{
+  ON_SimpleArray<const ON_Curve*> ICC(IC.Count());
+  for (ON_Curve* C : IC) ICC.Append(C);
+  return ON_SortCurveEnds(ICC, join_tol, kink_tol, bUseTanAngle, 
+    bPreserveDirection, SegsArray, Singles);
+
+  return true;
+}
+
+// public api version on const curves
+bool ON_SortCurveEnds(const ON_SimpleArray<const ON_Curve*>& IC,//Open, non-NULL
+                     double join_tol, double kink_tol,
+                     bool bUseTanAngle,
+                     bool bPreserveDirection,
+                     ON_ClassArray<ON_SimpleArray<CurveJoinSeg> >& SegsArray,
+                     ON_SimpleArray<int>& Singles
+                     )
 {
   //get a list of all possible joins
   ON_SimpleArray<CurveJoinEndData> EData;
@@ -3628,8 +4216,6 @@ ON_DECL bool SortEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
 
   return true;
 }
-
-
 
 int 
 ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
@@ -3714,13 +4300,13 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
       }
     }
 
-    SortEnds(IC.Count(), Start.Array(), End.Array(), 
+    ON_SortCurveEnds(IC.Count(), Start.Array(), End.Array(),
       (bGetTans) ? StartTan.Array() : 0, (bGetTans) ? EndTan.Array() : 0, 
       join_tol, kink_tol, bUseTanAngle, bPreserveDirection, SegsArray, Singles);
   }
 
   else
-    SortEnds(IC, 
+    ON_SortCurveEnds(IC,
       join_tol, kink_tol, bUseTanAngle, bPreserveDirection, SegsArray, Singles);
 
   //make polycurves out of sequences
@@ -3951,7 +4537,7 @@ int ON_JoinPolylines(
 
   ON_ClassArray<ON_SimpleArray<CurveJoinSeg> > SegsArray;
   ON_SimpleArray<int> Singles;
-  SortEnds(IC.Count(), Start.Array(), End.Array(), 
+  ON_SortCurveEnds(IC.Count(), Start.Array(), End.Array(),
     (bGetTans) ? StartTan.Array() : 0, (bGetTans) ? EndTan.Array() : 0, 
     join_tol, kink_tol, bUseTanAngle, bPreserveDirection, SegsArray, Singles);
 
@@ -4055,7 +4641,7 @@ int ON_JoinLines(
 
   ON_ClassArray<ON_SimpleArray<CurveJoinSeg>> SegsArray;
   ON_SimpleArray<int> Singles;
-  SortEnds(
+  ON_SortCurveEnds(
     inlines_count, 
     Start.Array(), 
     End.Array(), 
@@ -4386,4 +4972,5 @@ bool ON_SortCurves( const ON_SimpleArray<ON_Curve*>& curves, ON_SimpleArray<int>
   bReverse.SetCount(curve_count);
   return ON_SortCurves( curve_count,curves.Array(),index.Array(),bReverse.Array());
 }
+
 

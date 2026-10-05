@@ -3792,34 +3792,6 @@ int ON_ConvertWideCharToMSMBCP(
 ON_END_EXTERNC
 
 #if defined(ON_CPLUSPLUS)
-ON_DECL
-ON__UINT32 ON_Test_MSSBCP(
-  const ON__UINT32 code_page,
-  const ON__UINT32 char_encoding,
-  bool bWindowsAPITest,
-  ON_TextLog& text_log
-);
-
-ON_DECL
-bool ON_Test_MSSBCP(
-  const ON__UINT32 code_page,
-  bool bWindowsAPITest,
-  ON_TextLog& text_log
-);
-
-ON_DECL
-bool ON_Test_MSSBCP(
-  bool bWindowsAPITest,
-  ON_TextLog& text_log
-);
-
-ON_DECL
-bool ON_Test_PrintPlatformMSSBCPToUnicodeTable(
-  const ON__UINT32 code_page,
-  ON__UINT32 char_encoding0,
-  ON__UINT32 char_encoding1,
-  ON_TextLog& text_log
-);
 
 /*
 Description:

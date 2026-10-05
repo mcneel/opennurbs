@@ -36,10 +36,26 @@ double ON_SpanTolerance(
           int            // span index
           );
 
+/// <summary>
+/// The number of knots in a NURBS knot vector is (cv_count + order - 2).
+/// </summary>
+/// <param name="order">
+/// order &gt;= 2.
+/// Note that order = degree + 1.
+/// </param>
+/// <param name="cv_count">
+/// cv_count &gt;=order.
+/// Number of control points.
+/// </param>
+/// <returns>
+/// If the input is valid, then the number of knots is the
+/// knot vector is returned.
+/// Otherwise, 0 is returned.
+/// </returns>
 ON_DECL
 int ON_KnotCount( // returns (order + cv_count - 2)
-          int, // order (>=2)
-          int  // cv_count (>=order)
+          int order,
+          int cv_count
           );
 
 /// <summary>
@@ -370,11 +386,120 @@ bool ON_MakePeriodicUniformKnotVector(
           double delta = 1.0
           );
 
+/*
+ Description:
+   Fill in knot values for a clamped uniform knot
+   vector.
+ Parameters:
+   order - [in] (>=2) order (degree+1) of the NURBS
+   cv_count - [in] (>=order) total number of control points
+       in the NURBS.
+   knot - [in/out] Input is an array with room for
+       ON_KnotCount(order,cv_count) doubles.  Output is
+       a periodic uniform knot vector with domain
+       (0, (1+cv_count-order)*delta).
+   delta - [in] (>0, default=1.0) spacing between knots.
+ Returns:
+   true if successful
+ See Also:
+   ON_NurbsCurve::MakePeriodicUniformKnotVector
+*/
+ON_DECL
+bool ON_MakeUniformKnotVector(
+  int order,
+  int cv_count,
+  bool bPeriodic,
+  double* knot,
+  double delta = 1.0
+);
+
 ON_DECL
 double ON_GrevilleAbcissa(   // get a single Greville abcissa from knots
           int order,         // order (>=2)
           const double* knot // knot[] array (length = order-1)
           );
+
+/// <summary>
+/// A periodic NURBS with N total control points and degree D = (order-1) has (N-D) Greville abcissa.
+/// Note that for a periodic NURBS, ControlPoint[i] = ControlPoint[N-D+i] and 
+/// (knot[i]-knot[0]) = (knot[N-1+i]-knot[N-1]), when 0 <= lt;= i &lt; D.
+/// For 0 <= lt= i &lt; N-D, the i-th periodic Greville abcissa is
+/// ON_GrevilleAbcissa(i + offset, periodic knots), where
+/// offset = ON_GrevilleAbcissaPeriodicOffset(D+1, periodic knots) is the value returned
+/// by this function. Note that for Greville interpolation, 
+/// the free control points have indices offset &lt;= i &lt (offset+N-D).
+/// </summary>
+/// <param name="order">
+/// order &gt;= 2</param>
+/// <param name="knot">
+/// An array of the initial (2*order-3) knots of the periodic knot vector.
+/// Typically, the knot[] parameter simply points to the entire periodic knot vector.
+/// </param>
+/// <returns>
+/// The offset into the periodic knot vector to use for calculating first Greville abcissa.
+/// 0 &lt;= offset &lt;= (order - 2).
+/// </returns>
+ON_DECL
+int ON_GrevilleAbcissaOffset(
+  int order, 
+  bool bPeriodic,
+  const double* knot
+);
+
+
+/// <summary>
+/// Returns the number of Greville abcissae in a NURBS with the specified properties.
+/// When a NURBS is not periodic, there are cv_count Greville abcissae.
+/// When a NURBS is periodic, there are (cv_count - order + 1) Greville abcissae.
+/// </summary>
+/// <param name="order">
+/// order &gt;= 2. 
+/// Note that order = degree+1.
+/// </param>
+/// <param name="cv_count">
+/// cv_count &gt;= ON_MinimumControlPointCount(order, bPeriodic)
+/// Note that if a NURBS is not periodic, then cv_count %gt;= order.
+/// </param>
+/// <param name="bPeriodic">
+/// True if the NURBS is periodic.
+/// Note that for a periodic NURBS, 
+/// ControlPoint[i] = ControlPoint[cv_count-order+1+i] and 
+/// (knot[i]-knot[0]) = (knot[cv_count-1+i]-knot[cv_count-1]), 
+/// when 0 <= lt;= i &lt; (order-1).
+/// </param>
+/// <returns>
+/// The number of Greville abcissae in a NURBS with the specified properties.
+/// </returns>
+ON_DECL
+int ON_GrevilleAbcissaeCount(
+  int order,
+  int cv_count,
+  bool bPeriodic
+);
+
+/// <summary>
+/// Get the minimum number of control points required for a NURBS with a specified properties.
+/// </summary>
+/// <param name="order">
+/// order & gt;= 2.
+/// Note that order = degree + 1.
+/// </param>
+/// <param name="bPeriodic">
+/// True if the NURBS is periodic.
+/// Note that for a periodic NURBS, 
+/// ControlPoint[i] = ControlPoint[cv_count-order+1+i] and 
+/// (knot[i]-knot[0]) = (knot[cv_count-1+i]-knot[cv_count-1]), 
+/// when 0 <= lt;= i &lt; (order-1).
+/// </param>
+/// <returns>
+/// If order &gt;=2, then the minimum number of control points in a NURBS with the specified properties is returned.
+/// Otherwise 0 is returned.
+/// </returns>
+ON_DECL
+int ON_MinimumControlPointCount(
+  int order,
+  bool bPeriodic
+);
 
 ON_DECL
 bool ON_GetGrevilleAbcissae(  // get Greville abcissae from knots

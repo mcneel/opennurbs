@@ -966,7 +966,6 @@ static const wchar_t* ConvertToWideCharStringFormat(
       {
         // convert %s to %ls
         format_capacity++;
-        s++;
       }
       else if (c >= '1' && c <= '9')
       {
@@ -1011,7 +1010,6 @@ static const wchar_t* ConvertToWideCharStringFormat(
       {
         // convert %s to %ls
         *ls++ = 'l';
-        *ls++ = *s++;
       }
       else if (c >= '1' && c <= '9')
       {
@@ -1039,6 +1037,50 @@ static const wchar_t* ConvertToWideCharStringFormat(
 #endif
 
 
+#if defined(ON_COMPILER_CLANG) || defined (ON_COMPILER_GNU)
+
+#if defined(ON_RUNTIME_APPLE)
+
+// Apple's wide character printf functions convert wchar_t values to multibyte
+// characters using the LC_CTYPE locale. A program that never calls setlocale()
+// runs in the "C" locale, where that conversion fails for every code point
+// above 127. The result is that vswprintf() returns -1 whenever the format
+// string or a %ls parameter contains a non-ASCII character. (glibc does not
+// have this limitation, which is why Linux builds are unaffected.)
+//
+// Formatting with an explicit UTF-8 LC_CTYPE fixes this. The locale is derived
+// from the "C" base locale, so LC_NUMERIC is still "C" and a period is used for
+// the decimal point in formatted printing. This is what the ON_Locale::Ordinal
+// NumericLocalePtr() calls below were originally trying to accomplish.
+static locale_t Internal_AppleWideFormatLocale()
+{
+  // Thread safe initialization. The locale is intentionally never freed
+  // because it is used for the lifetime of the process.
+  static locale_t apple_wide_format_locale = newlocale(LC_CTYPE_MASK, "UTF-8", (locale_t)0);
+  return apple_wide_format_locale;
+}
+
+#endif
+
+// Wrapper around vswprintf() that formats non-ASCII wchar_t values correctly on
+// every platform opennurbs supports.
+static int Internal_VsWPrintf(
+  wchar_t* buffer,
+  size_t buffer_capacity,
+  const wchar_t* format,
+  va_list args
+  )
+{
+#if defined(ON_RUNTIME_APPLE)
+  const locale_t apple_wide_format_locale = Internal_AppleWideFormatLocale();
+  if (nullptr != apple_wide_format_locale)
+    return vswprintf_l(buffer, buffer_capacity, apple_wide_format_locale, format, args);
+#endif
+  return vswprintf(buffer, buffer_capacity, format, args);
+}
+
+#endif
+
 int ON_wString::FormatVargsIntoBuffer(
   wchar_t* buffer,
   size_t buffer_capacity,
@@ -1064,11 +1106,7 @@ int ON_wString::FormatVargsIntoBuffer(
 
   va_list args_copy;
   va_copy (args_copy, args);
-  // Cannot use Apple's vswprintf_l() because it's buggy. 
-  // This means we cannot be certain that a period will be used for a decimal point in formatted printing.
-  // For details, see comments below in ON_wString::FormatVargsOutputCount().
-  //int len = vswprintf_l(buffer, buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
-  int len = vswprintf(buffer, buffer_capacity, format, args_copy);
+  int len = Internal_VsWPrintf(buffer, buffer_capacity, format, args_copy);
   va_end(args_copy);
 #else
   // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
@@ -1191,8 +1229,7 @@ int ON_wString::FormatVargsOutputCount(
     ////       // Apple   Results: Acount1 = 4, Acount2 = 4, Bcount1 = 4, Bcount2 = -1
     ////    }
     ////      
-    //const int formatted_string_count = vswprintf_l(buffer.m_buffer, buffer.m_buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
-    const int formatted_string_count = vswprintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
+    const int formatted_string_count = Internal_VsWPrintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
     va_end(args_copy);
     if (formatted_string_count >= 0)
     {
