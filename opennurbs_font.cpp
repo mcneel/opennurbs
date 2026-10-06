@@ -1146,11 +1146,22 @@ const ON_Font* ON_ManagedFonts::Internal_AddManagedFont(
     if (ON_FontFaceQuartet::Member::Unset == managed_font->m_quartet_member)
       managed_font->m_quartet_member = ON_FontFaceQuartet::MemberFromBoldAndItalic(bBoldInQuartet, bItalicInQuartet);
 
+#if defined(ON_INTERNAL_LINUX_FONT_FILES)
+    // Linux (RhinoCore): the default font is Arial, which stock Linux images do
+    // not have, so the default quartet is normally empty and the branch below
+    // would point every missing font at ON_Font::Default itself - a managed
+    // font with no face to draw with, reported as "substituted". Pick an
+    // installed stand-in (Liberation, DejaVu, ...) instead, and when there is
+    // none say so: no installed font and no substitute.
+    installed_font = ON_ManagedFonts::Internal_LinuxSubstituteFont(managed_font);
+    ON_Font::Internal_SetManagedFontInstalledFont(managed_font, installed_font, nullptr != installed_font);
+#else
     const ON_FontFaceQuartet default_quartet = ON_Font::Default.InstalledFontQuartet(); // only look at installed quartet!
     installed_font = default_quartet.ClosestFace(bBoldInQuartet, bItalicInQuartet);
     if (nullptr == installed_font)
       installed_font = &ON_Font::Default;
     ON_Font::Internal_SetManagedFontInstalledFont(managed_font, installed_font, true);
+#endif
   }
 
   ON_FontGlyphCache* font_cache = managed_font->m_font_glyph_cache.get();
@@ -3265,6 +3276,43 @@ const ON_FontList& ON_Font::InstalledFontList()
   return ON_ManagedFonts::InstalledFonts();
 }
 
+// Rhino 8 for Mac named the faces of a multi-width family that is not in the
+// fake LOGFONT name table "<family> (<stretch>)", for every width except the
+// one closest to Medium - e.g. "Open Sans (Condensed)" - and wrote that name
+// into rich text. Rhino 9 names those faces differently. Find the face from the
+// family and the stretch. The name says nothing about weight: like the Rhino 8
+// quartet, take regular or bold from the rich text. RH-98673
+static const ON_Font* Internal_InstalledFontFromLegacyStretchName(
+  const ON_wString& rtf_font_name,
+  bool bRtfBold,
+  bool bRtfItalic
+)
+{
+  const int length = rtf_font_name.Length();
+  if (length < 5 || L')' != rtf_font_name[length - 1])
+    return nullptr;
+  const int open = rtf_font_name.ReverseFind(L" (");
+  if (open < 1)
+    return nullptr;
+  const ON_wString family_name = rtf_font_name.Left(open);
+  const ON_wString stretch_name = rtf_font_name.Mid(open + 2, length - open - 3);
+  for (unsigned int u = static_cast<unsigned int>(ON_Font::Stretch::Ultracondensed); u <= static_cast<unsigned int>(ON_Font::Stretch::Ultraexpanded); ++u)
+  {
+    const ON_Font::Stretch stretch = ON_Font::FontStretchFromUnsigned(u);
+    if (false == stretch_name.EqualOrdinal(ON_Font::StretchToWideString(stretch), true))
+      continue;
+    const ON_Font* font = ON_Font::InstalledFontList().FamilyMemberWithWeightStretchStyle(
+      family_name,
+      bRtfBold ? ON_Font::Weight::Bold : ON_Font::Weight::Normal,
+      stretch,
+      bRtfItalic ? ON_Font::Style::Italic : ON_Font::Style::Upright
+    );
+    // The name asks for that width: another width of the family is a substitute, not a match.
+    return (nullptr != font && stretch == font->FontStretch()) ? font : nullptr;
+  }
+  return nullptr;
+}
+
 const ON_Font* ON_Font::InstalledFontFromRichTextProperties(
   const wchar_t* rtf_font_name,
   bool bRtfBold,
@@ -3376,7 +3424,12 @@ const ON_Font* ON_Font::InstalledFontFromRichTextProperties(
     if (nullptr != installed_font)
       break;
 
-    // No installed font comes close to matching the input name parameter 
+    // 5th: Try a Rhino 8 for Mac "<family> (<stretch>)" name
+    installed_font = Internal_InstalledFontFromLegacyStretchName(local_rtf_font_name, bRtfBold, bRtfItalic);
+    if (nullptr != installed_font)
+      break;
+
+    // No installed font comes close to matching the input name parameter
     break;
   }
 
@@ -5086,7 +5139,7 @@ const ON_Font* ON_FontList::FontFromQuartetProperties(
   bool bItalic
 ) const
 {
-  const ON_FontFaceQuartet qname(quartet_name, nullptr, nullptr, nullptr, nullptr);
+  ON_FontFaceQuartet qname(quartet_name, nullptr, nullptr, nullptr, nullptr);
   if (qname.QuartetName().IsEmpty())
     return nullptr;
 
@@ -5094,7 +5147,18 @@ const ON_Font* ON_FontList::FontFromQuartetProperties(
   const int quartet_list_count = quartet_list.Count();
   int i = quartet_list.BinarySearch(&qname, ON_FontFaceQuartet::CompareQuartetName);
   if (i < 0 || i >= quartet_list_count)
-    return nullptr;
+  {
+    // Quartet list is keyed on localized names but callers often pass English
+    // (e.g. "Gungsuh" for 궁서 on Korean Windows). Retry with the localized name.
+    // Mirrors the fallback in QuartetFromQuartetName above. RH-64285.
+    const ON_wString locName = ON_FontList__EnNameToLocName(quartet_name);
+    if (locName.IsEmpty())
+      return nullptr;
+    qname = ON_FontFaceQuartet(locName, nullptr, nullptr, nullptr, nullptr);
+    i = quartet_list.BinarySearch(&qname, ON_FontFaceQuartet::CompareQuartetName);
+    if (i < 0 || i >= quartet_list_count)
+      return nullptr;
+  }
 
   while (i > 0 && 0 == ON_FontFaceQuartet::CompareQuartetName(&qname, &quartet_list[i - 1]))
     i--;
@@ -5555,7 +5619,7 @@ const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
           && ssw_dex.j >= 0 && ssw_dex.j < 2
           && ssw_dex.k >= 1 && ssw_dex.k < max_weight_dex
           )
-          ? fonts_by_ssw[ssw_dex.i][ssw_dex.k][ssw_dex.k]
+          ? fonts_by_ssw[ssw_dex.i][ssw_dex.j][ssw_dex.k]
           : nullptr;
         if (nullptr != cleanf)
         {
@@ -6092,67 +6156,53 @@ int ON_Font::AppleWeightOfFontFromWeight(
   return ON_Font::WindowsLogfontWeightFromWeight(font_weight)/100;
 }
 
+// Apple's documented NSFontWeight* constants (also what CoreText's
+// kCTFontWeightTrait normalizes to for a font with a given OpenType
+// USWeightClass). Note the naming shift between Apple and OpenType:
+// Apple's "UltraLight" is the LIGHTEST (matches OpenType USWeightClass 100,
+// which OpenType calls "Thin" and ON_Font calls ON_Font::Weight::Thin).
+// Apple's "Thin" is the second-lightest. We anchor by trait value, not by name.
+struct Internal_AppleWeightAnchor
+{
+  double trait;
+  ON_Font::Weight weight;
+};
+static const Internal_AppleWeightAnchor Internal_AppleWeightAnchors[] =
+{
+  { -0.80, ON_Font::Weight::Thin       }, // NSFontWeightUltraLight, USWeightClass 100
+  { -0.60, ON_Font::Weight::Ultralight }, // NSFontWeightThin,       USWeightClass 200
+  { -0.40, ON_Font::Weight::Light      }, // NSFontWeightLight,      USWeightClass 300
+  {  0.00, ON_Font::Weight::Normal     }, // NSFontWeightRegular,    USWeightClass 400
+  {  0.23, ON_Font::Weight::Medium     }, // NSFontWeightMedium,     USWeightClass 500
+  {  0.30, ON_Font::Weight::Semibold   }, // NSFontWeightSemibold,   USWeightClass 600
+  {  0.40, ON_Font::Weight::Bold       }, // NSFontWeightBold,       USWeightClass 700
+  {  0.56, ON_Font::Weight::Ultrabold  }, // NSFontWeightHeavy,      USWeightClass 800
+  {  0.62, ON_Font::Weight::Heavy      }, // NSFontWeightBlack,      USWeightClass 900
+};
+
 double ON_Font::AppleFontWeightTraitFromWeight(
   ON_Font::Weight font_weight
 )
 {
-  // These values are selected to optimize conversion of font weights between Windows and Apple platforms.
+  // The inverse of WeightFromAppleFontWeightTrait. Returns the Apple trait
+  // value that the documented NSFontWeight* constants assign to each weight,
+  // so that round-tripping enum -> trait -> enum is the identity.
   // https://mcneel.myjetbrains.com/youtrack/issue/RH-37075
-
-
-  const double default_apple_font_weight_trait = 0.0;
-
-  double w = ((double)((int)static_cast<unsigned char>(font_weight)) - 400.0) / 750.0;
-  if (w < -1.0)
-    w = -1.0;
-  else if (w > 1.0)
-    w = 1.0;
-  if (!(-1.0 <= w && w < 1.0))
-    w = default_apple_font_weight_trait;
-  
-  double apple_font_weight_trait;
-  switch (font_weight)
+  //
+  // Prior implementation computed `((int)enum - 400) / 750` -- which mistakes
+  // the enum value (1..9) for a LOGFONT weight (100..900) -- and then in some
+  // branches hard-coded values that didn't agree with the forward function.
+  // For example Ultralight returned ((2-400)/750) = -0.530, never the NSFontWeightThin
+  // value of -0.6. The new implementation pulls the anchor straight from the
+  // forward function's table.
+  const size_t n = sizeof(Internal_AppleWeightAnchors) / sizeof(Internal_AppleWeightAnchors[0]);
+  for (size_t i = 0; i < n; i++)
   {
-  case ON_Font::Weight::Unset:
-    apple_font_weight_trait = default_apple_font_weight_trait;
-    break;
-  case ON_Font::Weight::Thin:
-    apple_font_weight_trait = -0.4;
-    break;
-  case ON_Font::Weight::Ultralight:
-    apple_font_weight_trait = w;
-    break;
-  case ON_Font::Weight::Light:
-    apple_font_weight_trait = w;
-    break;
-  case ON_Font::Weight::Normal:
-    apple_font_weight_trait = 0.0;
-    break;
-  case ON_Font::Weight::Medium:
-    apple_font_weight_trait = w;
-    break;
-  case ON_Font::Weight::Semibold:
-    apple_font_weight_trait = w;
-    break;
-  case ON_Font::Weight::Bold:
-    apple_font_weight_trait = 0.4;
-    break;
-  case ON_Font::Weight::Ultrabold:
-    apple_font_weight_trait = w;
-    break;
-  case ON_Font::Weight::Heavy:
-    apple_font_weight_trait = w;
-    break;
-  default:
-    apple_font_weight_trait = default_apple_font_weight_trait;
-    break;
+    if (Internal_AppleWeightAnchors[i].weight == font_weight)
+      return Internal_AppleWeightAnchors[i].trait;
   }
-
-  // The valid value range is from -1.0 to 1.0. The value of 0.0 corresponds to the regular or medium font weight.
-  return 
-    (-1.0 <= apple_font_weight_trait && apple_font_weight_trait <= 1.0) 
-    ? apple_font_weight_trait 
-    : default_apple_font_weight_trait;
+  // Unset or any future enum value: report Apple's Regular weight.
+  return 0.0;
 }
 
 ON_Font::Weight ON_Font::WeightFromWindowsLogfontWeight(
@@ -6213,13 +6263,34 @@ ON_Font::Weight ON_Font::WeightFromAppleFontWeightTrait(
   if (false == ON_IsValid(apple_font_weight_trait))
     return ON_Font::Weight::Unset;
 
-  const double x = (-1.0 <= apple_font_weight_trait && apple_font_weight_trait <= 1.0) ? apple_font_weight_trait : 0.0;
-  int windows_logfont_weight = (int)(400.0 + 750.0*x);
-  if (windows_logfont_weight < 1)
-    windows_logfont_weight = 1;
-  else if (windows_logfont_weight > 1000)
-    windows_logfont_weight = 1000;
-  return ON_Font::WeightFromWindowsLogfontWeight(windows_logfont_weight);
+  // The prior linear formula `400 + 750*x` over-clamped the negative tail
+  // and collapsed multiple distinct USWeightClass values onto Thin (every
+  // x <= -0.333 mapped to a LOGFONT weight that WeightFromWindowsLogfontWeight
+  // short-circuited to Thin via its `< 150` branch). That broke families like
+  // Roboto where Thin (USWC 100), ExtraLight (200), and Light (300) all came
+  // back as ON_Font::Weight::Thin, defeating the helper's per-weight quartet
+  // partitioning and the matcher's weight-based disambiguation.
+  // The fix is a discrete closest-anchor lookup against Apple's documented
+  // NSFontWeight* constants. Apple's traits are not uniformly spaced
+  // (negatives stretch to -0.8, positives cluster around 0.3..0.6), so a
+  // linear map can't represent the mapping correctly.
+  const double x = (-1.0 <= apple_font_weight_trait && apple_font_weight_trait <= 1.0)
+    ? apple_font_weight_trait
+    : 0.0;
+
+  const size_t n = sizeof(Internal_AppleWeightAnchors) / sizeof(Internal_AppleWeightAnchors[0]);
+  ON_Font::Weight best_weight = Internal_AppleWeightAnchors[0].weight;
+  double best_delta = fabs(Internal_AppleWeightAnchors[0].trait - x);
+  for (size_t i = 1; i < n; i++)
+  {
+    const double d = fabs(Internal_AppleWeightAnchors[i].trait - x);
+    if (d < best_delta)
+    {
+      best_weight = Internal_AppleWeightAnchors[i].weight;
+      best_delta = d;
+    }
+  }
+  return best_weight;
 }
 
 void ON_Font::Internal_CopyFrom(
@@ -7639,7 +7710,7 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
     Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Heavy",         L"Avenir Heavy", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-HeavyOblique",  L"Avenir Heavy", ON_FontFaceQuartet::Member::Italic),
     Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-Black",         L"Avenir Black", ON_FontFaceQuartet::Member::Regular),
-    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-BlackOblique",  L"Avenir-Black", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Avenir", L"Avenir-BlackOblique",  L"Avenir Black", ON_FontFaceQuartet::Member::Italic),
 
     Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-UltraLight", L"Avenir Next Ultralight", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Avenir Next", L"AvenirNext-UltraLightItalic", L"Avenir Next Ultralight", ON_FontFaceQuartet::Member::Italic),
@@ -7850,6 +7921,44 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
 
     Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-95Blk",     L"NeueHaasGroteskDisp Pro Blk", ON_FontFaceQuartet::Member::Regular),
     Internal_FakeWindowsLogfontName(L"Neue Haas Grotesk Display Pro", L"NHaasGroteskDSPro-96BlkIt",   L"NeueHaasGroteskDisp Pro Blk", ON_FontFaceQuartet::Member::Italic),
+
+    // Open Sans ships with two PostScript naming schemes: the static TTFs
+    // (OpenSans-...) and the variable font's named instances
+    // (OpenSansRoman-... / OpenSansItalic-...). Both sets map to the LOGFONT
+    // family names Windows GDI reports for the static TTFs.
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-Light",                    L"Open Sans Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-LightItalic",              L"Open Sans Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-SemiBold",                 L"Open Sans SemiBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-SemiBoldItalic",           L"Open Sans SemiBold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-ExtraBold",                L"Open Sans ExtraBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-ExtraBoldItalic",          L"Open Sans ExtraBold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedRegular",         L"Open Sans Condensed", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedItalic",          L"Open Sans Condensed", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedBold",            L"Open Sans Condensed", ON_FontFaceQuartet::Member::Bold),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedBoldItalic",      L"Open Sans Condensed", ON_FontFaceQuartet::Member::BoldItalic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedLight",           L"Open Sans Condensed Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedLightItalic",     L"Open Sans Condensed Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedSemiBold",        L"Open Sans Condensed SemiBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedSemiBoldItalic",  L"Open Sans Condensed SemiBold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedExtraBold",       L"Open Sans Condensed ExtraBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSans-CondensedExtraBoldItalic", L"Open Sans Condensed ExtraBold", ON_FontFaceQuartet::Member::Italic),
+
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-Light",               L"Open Sans Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-Light",              L"Open Sans Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-SemiBold",            L"Open Sans SemiBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-SemiBold",           L"Open Sans SemiBold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-ExtraBold",           L"Open Sans ExtraBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-ExtraBold",          L"Open Sans ExtraBold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-CondensedRegular",    L"Open Sans Condensed", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-Condensed",          L"Open Sans Condensed", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-CondensedBold",       L"Open Sans Condensed", ON_FontFaceQuartet::Member::Bold),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-CondensedBold",      L"Open Sans Condensed", ON_FontFaceQuartet::Member::BoldItalic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-CondensedLight",      L"Open Sans Condensed Light", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-CondensedLight",     L"Open Sans Condensed Light", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-CondensedSemiBold",   L"Open Sans Condensed SemiBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-CondensedSemiBold",  L"Open Sans Condensed SemiBold", ON_FontFaceQuartet::Member::Italic),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansRoman-CondensedExtraBold",  L"Open Sans Condensed ExtraBold", ON_FontFaceQuartet::Member::Regular),
+    Internal_FakeWindowsLogfontName(L"Open Sans", L"OpenSansItalic-CondensedExtraBold", L"Open Sans Condensed ExtraBold", ON_FontFaceQuartet::Member::Italic),
   };
 
   static bool bFakeNamesAreSorted = false;
@@ -7875,6 +7984,72 @@ const ON_wString ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
   }
 
   return family_name; // use family_name as the fake LOGFONT name
+}
+
+// Computed fallback for Apple/non-Windows fonts that are not in the hard-coded
+// Internal_FakeWindowsLogfontName table above. Synthesizes a Windows-LOGFONT-style
+// partition name from (family, weight, stretch) so families with more than 4 faces
+// (e.g. Roboto with 9 weights x 2 widths) split into one quartet per non-default
+// weight per non-default stretch -- matching how GDI/DirectWrite enumerate the
+// same family on Windows. Regular (Normal) and Bold share one LOGFONT name per
+// stretch, so they don't get a weight suffix; Medium stretch doesn't get a
+// stretch suffix.
+static const ON_wString Internal_ComputeFakeLogfontFromProperties(
+  ON_wString family_name,
+  ON_Font::Weight weight,
+  ON_Font::Stretch stretch
+)
+{
+  family_name.TrimLeftAndRight();
+  if (family_name.IsEmpty())
+    return ON_wString::EmptyString;
+
+  const wchar_t* stretch_suffix = nullptr;
+  switch (stretch)
+  {
+  case ON_Font::Stretch::Ultracondensed: stretch_suffix = L"UltraCondensed"; break;
+  case ON_Font::Stretch::Extracondensed: stretch_suffix = L"ExtraCondensed"; break;
+  case ON_Font::Stretch::Condensed:      stretch_suffix = L"Condensed"; break;
+  case ON_Font::Stretch::Semicondensed:  stretch_suffix = L"SemiCondensed"; break;
+  case ON_Font::Stretch::Semiexpanded:   stretch_suffix = L"SemiExpanded"; break;
+  case ON_Font::Stretch::Expanded:       stretch_suffix = L"Expanded"; break;
+  case ON_Font::Stretch::Extraexpanded:  stretch_suffix = L"ExtraExpanded"; break;
+  case ON_Font::Stretch::Ultraexpanded:  stretch_suffix = L"UltraExpanded"; break;
+  default: break; // Medium and Unset
+  }
+
+  const wchar_t* weight_suffix = nullptr;
+  switch (weight)
+  {
+  case ON_Font::Weight::Thin:       weight_suffix = L"Thin"; break;
+  case ON_Font::Weight::Ultralight: weight_suffix = L"ExtraLight"; break;
+  case ON_Font::Weight::Light:      weight_suffix = L"Light"; break;
+  case ON_Font::Weight::Medium:     weight_suffix = L"Medium"; break;
+  case ON_Font::Weight::Semibold:   weight_suffix = L"SemiBold"; break;
+  case ON_Font::Weight::Ultrabold:  weight_suffix = L"ExtraBold"; break;
+  case ON_Font::Weight::Heavy:      weight_suffix = L"Black"; break;
+  default: break; // Normal, Bold, Unset
+  }
+
+  ON_wString name = family_name;
+
+  // Some CoreText families already encode stretch in the family name itself
+  // (e.g. CTFontDescriptor returns "Roboto Condensed" as a distinct family from
+  // "Roboto"). Don't double-stamp the suffix in that case.
+  if (nullptr != stretch_suffix && false == family_name.ContainsNoCase(stretch_suffix))
+  {
+    name += L" ";
+    name += stretch_suffix;
+  }
+  // Same guard for weight: "Arial Black" is a distinct family from "Arial" on
+  // macOS, with weight Heavy. Without this check the suffix "Black" would be
+  // re-appended -> "Arial Black Black".
+  if (nullptr != weight_suffix && false == family_name.ContainsNoCase(weight_suffix))
+  {
+    name += L" ";
+    name += weight_suffix;
+  }
+  return name;
 }
 
 static bool Internal_TestInstalledFontsFailure()
@@ -8612,6 +8787,33 @@ static bool Internal_IsEngravingFont(
   return false;
 }
 
+static bool Internal_IsToleranceFont(
+  const InternalHashToName* key
+)
+{
+  static InternalHashToName tolerance_name_map[] =
+  {
+    // Y14.5-2018
+    InternalHashToName(L"Y14.5-2018"), // Family
+    InternalHashToName(L"Y14.5-2018"), // PostScript
+  };
+
+  static size_t tolerance_name_map_count = 0;
+
+  const InternalHashToName* e;
+  const size_t sizeof_e = sizeof(*e);
+
+  if (0 == tolerance_name_map_count)
+  {
+    tolerance_name_map_count = InternalHashToName::SortAndCullByHash(tolerance_name_map, (sizeof(tolerance_name_map) / sizeof_e));
+  }
+
+  e = (const InternalHashToName*)bsearch(key, tolerance_name_map, tolerance_name_map_count, sizeof_e, InternalHashToName::CompareHash);
+  if (nullptr != e)
+    return true;
+
+  return false;
+}
 
 const wchar_t* ON_OutlineFigure::OrientationToWideString(
   ON_OutlineFigure::Orientation orientation
@@ -8763,6 +8965,78 @@ bool ON_Font::IsSingleStrokeOrDoubleStrokeFont() const
     ON_OutlineFigure::Type::SingleStroke == figure_type
     || ON_OutlineFigure::Type::DoubleStroke == figure_type
     );
+}
+
+bool ON_Font::IsGeometricToleranceFont() const
+{
+  const ON_wString names[] =
+  {
+    FamilyName(),
+    FamilyName(ON_Font::NameLocale::English),
+    PostScriptName(),
+    PostScriptName(ON_Font::NameLocale::English)
+  };
+
+  InternalHashToName key[sizeof(names) / sizeof(names[0])];
+
+  const int name_count = (int)(sizeof(names) / sizeof(names[0]));
+  int key_count = 0;
+  for (int i = 0; i < name_count; i++)
+  {
+    const ON_wString& name = names[i];
+    if (name.IsEmpty())
+      continue;
+
+    // computing the hash is much more expensive than checking for duplicate names (which is common)
+    bool bSkipName = name.IsEmpty();
+    for (int j = 0; false == bSkipName && j < i; j++)
+      bSkipName = (name == names[j]);
+    if (bSkipName)
+      continue;
+
+    // compute name hash
+    //key[key_count] = InternalHashToName(name, nullptr);
+    key[key_count] = InternalHashToName(name);
+
+    // searching for a duplicate hash is more expensive than checking for duplicate hash 
+    // (which is common because of space and hyphen differences between family and postscript names)
+    for (int j = 0; false == bSkipName && j < key_count; j++)
+      bSkipName = (key[key_count].m_dirty_name_hash == key[i].m_dirty_name_hash);
+    if (bSkipName)
+      continue;
+
+    // search for matching name hash is lists of known tolerance fonts
+    bool bIsToleranceFont = Internal_IsToleranceFont(&key[key_count]);
+    key_count++;
+    if (bIsToleranceFont)
+      return true;
+  }
+  return false;
+}
+
+const ON_Font* ON_Font::DefaultGeometricToleranceFont()
+{
+  static const ON_Font* default_tolerance_font = nullptr;
+
+  if (nullptr == default_tolerance_font)
+  {
+    default_tolerance_font = ON_Font::InstalledFontList().FromNames(
+      L"Y14.5-2018", // postscript_name,
+      L"Y14.5-2018", // windows_logfont_name,
+      L"Y14.5-2018", // family_name,
+      L"2018",       // prefered_face_name,
+      ON_Font::Weight::Normal,  // prefered_weight,
+      ON_Font::Stretch::Medium, // prefered_stretch,
+      ON_Font::Style::Upright,  // prefered_style,
+      false, // bRequireFaceMatch,
+      false, // bRequireStyleMatch,
+      false, // bUnderlined,
+      false, // bStrikethrough,
+      0.0 // point_size
+    );
+  }
+
+  return default_tolerance_font;
 }
 
 const ON_Font* ON_Font::DefaultEngravingFont()
@@ -10754,7 +11028,16 @@ bool ON_Font::Read(
     || (file.PeekAt3dmBigChunkType(&typecode,&big_value) && 1 == typecode)
     )
   {
-    ON_WARNING("Should probably be reading an ON_TextStyle");
+    // Dale Lear 2025 May 8 - RH-87126
+    // Some older version files are triggering this warning when 
+    // override dimstyles are read. It is true V5 files had a text style table,
+    // but we didn't expect to encounter override dimstyles in these old
+    // files. It's not clear to me how these files come into existence,
+    // but this warning seems to be doing more harm than good. In the xase in the bug,
+    // the older version files read correctly. When V8 and V9 files are saved, they appear
+    // to be getting saved correctly.
+    // 
+    // ON_WARNING("Should probably be reading an ON_TextStyle");
     int font_index = -1;
     ON_UUID font_id = ON_nil_uuid;
     return ReadV5(
@@ -13301,6 +13584,10 @@ void ON_Font::GetRunBounds(
   switch (horizontal_alignment)
   {
   case ON::TextHorizontalAlignment::Left:
+  case ON::TextHorizontalAlignment::Justify:
+    // Justify has no per-line stretch effect on a single un-wrapped string
+    // and degrades to Left. The full Justify layout lives in
+    // ON_TextContent::MeasureTextRunArray, not here.
     offset.x = -first_line_basepoint.x;
     break;
 
@@ -13744,6 +14031,28 @@ void ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(
 
   // Assign a fake logfont name.
   const unsigned int font_count = device_list.UnsignedCount();
+
+  // RH-95975 (root cause of RH-68713 regression): only multi-face families need
+  // to be partitioned into multiple fake Windows LOGFONT names. A single-face
+  // family must keep its bare family name (the pre-RH-68713 behavior) so that
+  // name-based lookups still resolve -- e.g. the lone Medium-weight "Y14.5-2018"
+  // GD&T font must stay "Y14.5-2018", not become "Y14.5-2018 Medium". Sort by
+  // family so faces of one family are contiguous, then flag families with more
+  // than one face. (device_list is re-sorted below, so this ordering is local.)
+  device_list.QuickSort(ON_FontList::CompareFamilyName);
+  ON_SimpleArray<bool> bFamilyIsMultiFace(font_count);
+  bFamilyIsMultiFace.SetCount(font_count);
+  for (unsigned int i = 0; i < font_count; )
+  {
+    unsigned int j = i + 1;
+    while (j < font_count && 0 == ON_FontList::CompareFamilyName(&device_list[i], &device_list[j]))
+      ++j;
+    const bool bMultiFace = (j - i) > 1;
+    for (unsigned int k = i; k < j; ++k)
+      bFamilyIsMultiFace[k] = bMultiFace;
+    i = j;
+  }
+
   for (unsigned int i = 0; i < font_count; ++i)
   {
     const ON_Font* f0 = device_list[i];
@@ -13756,10 +14065,29 @@ void ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(
     );
     if (fake_loc_logfont_name.IsEmpty())
       continue;
+    // Table-miss fallback: the hard-coded table returns the family name unchanged
+    // when it has no entry for this font. Synthesize a LOGFONT-style partition
+    // name from weight/stretch so multi-face families like Roboto (9 weights x 2
+    // widths) split into one quartet per non-default weight per non-default
+    // stretch -- matching how GDI enumerates the same family on Windows.
+    if (bFamilyIsMultiFace[i])
+    {
+      ON_wString trimmed_loc_family = f0->FamilyName(ON_Font::NameLocale::LocalizedFirst);
+      trimmed_loc_family.TrimLeftAndRight();
+      if (fake_loc_logfont_name.EqualOrdinal(trimmed_loc_family, true))
+        fake_loc_logfont_name = Internal_ComputeFakeLogfontFromProperties(trimmed_loc_family, f0->FontWeight(), f0->FontStretch());
+    }
     ON_wString fake_en_logfont_name = ON_Font::FakeWindowsLogfontNameFromFamilyAndPostScriptNames(
       f0->FamilyName(ON_Font::NameLocale::English),
       f0->PostScriptName(ON_Font::NameLocale::English)
     );
+    if (bFamilyIsMultiFace[i] && false == fake_en_logfont_name.IsEmpty())
+    {
+      ON_wString trimmed_en_family = f0->FamilyName(ON_Font::NameLocale::English);
+      trimmed_en_family.TrimLeftAndRight();
+      if (fake_en_logfont_name.EqualOrdinal(trimmed_en_family, true))
+        fake_en_logfont_name = Internal_ComputeFakeLogfontFromProperties(trimmed_en_family, f0->FontWeight(), f0->FontStretch());
+    }
     if (fake_en_logfont_name.IsEmpty())
       fake_en_logfont_name = fake_loc_logfont_name;
     else if (false == fake_loc_logfont_name.EqualOrdinal(fake_en_logfont_name, true))
@@ -13861,6 +14189,10 @@ const ON_FontList& ON_ManagedFonts::InstalledFonts()
     ON_ManagedFonts::Internal_GetWindowsInstalledFonts(device_list);
 #elif defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
     ON_ManagedFonts::Internal_GetAppleInstalledCTFonts(device_list);
+    ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(device_list);
+#elif defined(ON_INTERNAL_LINUX_FONT_FILES)
+    ON_ManagedFonts::Internal_GetLinuxInstalledFonts(device_list);
+    // RTF text runs look fonts up by Windows LOGFONT name, exactly as on Apple.
     ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(device_list);
 #endif
     if (device_list.Count() > 0)

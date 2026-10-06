@@ -1316,6 +1316,22 @@ void ON_Object::EmergencyDestroy()
 }
 
 
+// 7th September 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-98360
+// The caches on ON_3dmObjectAttributes that are built from the RDK user data used to be invalidated
+// only when decals were changed through ON_DecalObjectAttributesWrapper. Replacing the user data by
+// any other route therefore left the decal cache holding the old decals. Every method below that
+// changes which user data is attached to an object now calls this so that the caches are rebuilt on
+// the next read. UserDataType::All because all we know here is that the list changed -- not whether
+// decals, or anything else in particular, were part of it.
+static void NotifyUserDataListChanged(const ON_Object* object)
+{
+  auto* attr = ON_3dmObjectAttributes::Cast(const_cast<ON_Object*>(object));
+  if (nullptr != attr)
+  {
+    attr->UserDataChanged(ON_3dmObjectAttributes::UserDataType::All);
+  }
+}
+
 void ON_Object::PurgeUserData()
 {
   ON_UserData* p;
@@ -1333,6 +1349,8 @@ void ON_Object::PurgeUserData()
       if ( bDeleteUserData )
         delete p;
     }
+
+    NotifyUserDataListChanged(this);
   }
 }
 
@@ -1361,6 +1379,7 @@ bool ON_Object::AttachUserData( ON_UserData* p )
       p->m_userdata_owner = this;
       p->m_userdata_next = m_userdata_list;
       m_userdata_list = p;
+      NotifyUserDataListChanged(this);
     }
   }
   return rc;
@@ -1384,6 +1403,7 @@ bool ON_Object::DetachUserData( ON_UserData* p )
         ud->m_userdata_owner = 0;
         ud->m_userdata_next = 0;
         rc = true;
+        NotifyUserDataListChanged(this);
         break;
       }
       prev = ud;
@@ -1432,6 +1452,7 @@ ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
             p->m_userdata_owner = 0;
             delete p;
             p = realp;
+            NotifyUserDataListChanged(this);
           }
         }
       }
@@ -1450,10 +1471,16 @@ ON_UserData* ON_Object::FirstUserData() const
 void ON_Object::TransformUserData( const ON_Xform& x )
 {
   ON_UserData *p, *next;
+  const bool had_user_data = (nullptr != m_userdata_list);
   for ( p = m_userdata_list; p; p = next ) {
     next = p->m_userdata_next;
     if ( !p->Transform(x) )
       delete p;
+  }
+
+  if (had_user_data)
+  {
+    NotifyUserDataListChanged(this);
   }
 }
 
@@ -1500,7 +1527,9 @@ ON_UserData* ON_Object::TransferUserDataItem(
     // make sure we have valid user data - the first beta release of Rhino 2.0 
     // created empty user data.
     const ON_UnknownUserData* uud = ON_UnknownUserData::Cast(source_ud);
-    if (nullptr == uud && false == uud->IsValid())
+    // RH-97211: guard must be OR, not AND. As written with &&, a null uud short-circuits into
+    // uud->IsValid() (null dereference), and the invalid-userdata case never returns.
+    if (nullptr == uud || false == uud->IsValid())
     {
       return nullptr;
     }
@@ -1621,6 +1650,12 @@ unsigned int ON_Object::CopyUserData(
         copied_item_count++;
     }
   }
+
+  if (copied_item_count > 0)
+  {
+    NotifyUserDataListChanged(this);
+  }
+
   return copied_item_count;
 }
 
@@ -1700,6 +1735,12 @@ unsigned int ON_Object::MoveUserData(
     }
   }
 
+  if (moved_item_count > 0)
+  {
+    NotifyUserDataListChanged(this);
+    NotifyUserDataListChanged(&source_object);
+  }
+
   return moved_item_count;
 }
 
@@ -1745,11 +1786,88 @@ bool ON_Object::IsKindOf( const ON_ClassId* pBaseClassId ) const
   return b;
 }
 
-
 ON::object_type ON_Object::ObjectType() const
 {
   // virtual function that is generally overridden
   return ON::unknown_object_type;
+}
+
+ON_wString ON_Object::ObjectTypeStr() const
+{
+  ON::object_type ot = ObjectType();
+  switch (ot)
+  {
+  case ON::object_type::unknown_object_type:
+    return L"Unknown";
+  case ON::object_type::point_object:
+    return L"Point";
+  case ON::object_type::pointset_object:
+    return L"Pointset";
+  case ON::object_type::curve_object:
+    return L"Curve";
+  case ON::object_type::surface_object:
+    return L"Surface";
+  case ON::object_type::brep_object:
+    return L"Brep";
+  case ON::object_type::mesh_object:
+    return L"Mesh";
+  case ON::object_type::layer_object:
+    return L"Layer";
+  case ON::object_type::material_object:
+    return L"Material";
+  case ON::object_type::light_object:
+    return L"Light";
+  case ON::object_type::annotation_object:
+    return L"Annotation";
+  case ON::object_type::userdata_object:
+    return L"UserData";
+  case ON::object_type::instance_definition:
+    return L"Instance Definition";
+  case ON::object_type::instance_reference:
+    return L"Instance Reference";
+  case ON::object_type::text_dot:
+    return L"Text Dot";
+  case ON::object_type::grip_object:
+    return L"Grip";
+  case ON::object_type::detail_object:
+    return L"Detail";
+  case ON::object_type::hatch_object:
+    return L"Hatch";
+  case ON::object_type::morph_control_object:
+    return L"Morph Control";
+  case ON::object_type::subd_object:
+    return L"SubD";
+  case ON::object_type::loop_object:
+    return L"Loop";
+  case ON::object_type::brepvertex_filter:
+    return L"Brep vertex filter";
+  case ON::object_type::polysrf_filter:
+    return L"PolySrf filter";
+  case ON::object_type::edge_filter:
+    return L"Edge filter";
+  case ON::object_type::polyedge_filter:
+    return L"PolyEdge filter";
+  case ON::object_type::meshvertex_filter:
+    return L"Mesh vertex filter";
+  case ON::object_type::meshedge_filter:
+    return L"Mesh edge filter";
+  case ON::object_type::meshface_filter:
+    return L"Mesh face filter";
+  case ON::object_type::meshcomponent_reference:
+    return L"Mesh component reference";
+  case ON::object_type::cage_object:
+    return L"Cage";
+  case ON::object_type::phantom_object:
+    return L"Phantom";
+  case ON::object_type::clipplane_object:
+    return L"Clipping plane";
+  case ON::object_type::extrusion_object:
+    return L"Extrusion";
+  case ON::object_type::any_object:
+    return L"Any";
+  default:
+    return L"Unreconized ObjectType() value";
+  }
 }
 
 ON_UUID ON_Object::ModelObjectId() const
@@ -1863,6 +1981,32 @@ void ON_Object::Dump( ON_TextLog& dump ) const
   {
     dump.Print("ON_Object::ClassId() FAILED\n");
   }
+}
+
+void ON_Object::DumpUserData(const wchar_t* description, ON_TextLog& text_log) const
+{
+  if (text_log.IsTextHash())
+  {
+    // Dale Lear April 7, 2025 - Fix RH-86913
+    // User data is not hashed because the output depends on 
+    // the order the user data is attached, which plug-ins happen
+    // to be loaded, copy counts (which get incremented in a read-write-read test)
+    // and other factors that lead to variable and unpredictable results.
+    return;
+  }
+
+  const ON_UserData* ud = this->FirstUserData();
+  while (0 != ud)
+  {
+    if (nullptr != description)
+      text_log.Print(L"%ls\n", description);
+    text_log.PushIndent();
+    ud->Dump(text_log);
+    text_log.PopIndent();
+    ud = ud->Next();
+  }
+
+  return;
 }
 
 bool ON_Object::Write(

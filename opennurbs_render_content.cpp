@@ -1360,6 +1360,7 @@ enum class ChildSlotUsage : unsigned int
   PBR_displacement                 = 0x0800000,
   PBR_clearcoat_bump               = 0x1000000,
   PBR_alpha                        = 0x2000000,
+  Blend_amount                     = 0x4000000
 };
 
 static ChildSlotUsage PBR_ChildSlotNameToUsage(const wchar_t* csn)
@@ -1427,6 +1428,7 @@ static ON_wString PBR_ChildSlotNameFromUsage(ChildSlotUsage usage)
   case U::PBR_subsurface_scattering_color:  return ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_COLOR;
   case U::PBR_subsurface_scattering_radius: return ON_PBR_MATERIAL_SUBSURFACE_SCATTERING_RADIUS;
   case U::Environment:                      return L""; // PBR materials do not support Environment.
+  case U::Blend_amount:                     return L"mix-amount";
   default: ON_ASSERT(false);                return L"";
   }
 }

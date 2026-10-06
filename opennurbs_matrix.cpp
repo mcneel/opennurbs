@@ -21,6 +21,1496 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+const double ON_2x2Matrix::ZeroTolerance = 1.0e-12;
+const ON_2x2Matrix ON_2x2Matrix::Zero(0.0);
+const ON_2x2Matrix ON_2x2Matrix::Identity(1.0);
+const ON_2x2Matrix ON_2x2Matrix::Nan(ON_DBL_QNAN);
+
+ON_2x2Matrix::ON_2x2Matrix(double M[2][2])
+{
+  m[0][0] = M[0][0];
+  m[0][1] = M[0][1];
+  m[1][0] = M[1][0];
+  m[1][1] = M[1][1];
+}
+
+ON_2x2Matrix::ON_2x2Matrix(const double M[2][2])
+{
+  m[0][0] = M[0][0];
+  m[0][1] = M[0][1];
+  m[1][0] = M[1][0];
+  m[1][1] = M[1][1];
+}
+
+ON_2x2Matrix::ON_2x2Matrix(double d)
+{
+  m[0][0] = d;
+  m[0][1] = 0.0;
+  m[1][0] = 0.0;
+  m[1][1] = d;
+}
+
+ON_2x2Matrix::ON_2x2Matrix(double d0, double d1)
+{
+  m[0][0] = d0;
+  m[0][1] = 0.0;
+  m[1][0] = 0.0;
+  m[1][1] = d1;
+}
+
+ON_2x2Matrix::ON_2x2Matrix(double a, double b, double c, double d)
+{
+  m[0][0] = a;
+  m[0][1] = b;
+  m[1][0] = c;
+  m[1][1] = d;
+}
+
+ON_2x2Matrix::ON_2x2Matrix(const class ON_Matrix& M)
+{
+  if (2 == M.RowCount() && 2 == M.ColCount())
+  {
+    this->m[0][0] = M.m[0][0];
+    this->m[0][1] = M.m[0][1];
+    this->m[1][0] = M.m[1][0];
+    this->m[1][1] = M.m[1][1];
+  }
+  else
+  {
+    this->m[0][0] = ON_DBL_QNAN;
+    this->m[0][1] = ON_DBL_QNAN;
+    this->m[1][0] = ON_DBL_QNAN;
+    this->m[1][1] = ON_DBL_QNAN;
+  }
+}
+
+int ON_2x2Matrix::Rank(double zero_tolerance) const
+{
+  double det;
+  return RankAndDeterminantHelper(zero_tolerance, det);
+}
+
+int ON_2x2Matrix::RankAndDeterminantHelper(double zero_tolerance, double& det) const
+{
+  det = ON_DBL_QNAN;
+
+  if (false == (zero_tolerance > 0.0))
+    zero_tolerance = 0.0;
+
+  int piv = 0;
+
+  double e = fabs(m[0][0]);
+  if (false == (e < ON_UNSET_POSITIVE_VALUE))
+    return -1;
+
+  double f = fabs(m[0][1]);
+  if (false == (f < ON_UNSET_POSITIVE_VALUE))
+    return -1;
+  if (f > e)
+  {
+    e = f;
+    piv = 1;
+  }
+
+  f = fabs(m[1][0]);
+  if (false == (f < ON_UNSET_POSITIVE_VALUE))
+    return -1;
+  if (f > e)
+  {
+    e = f;
+    piv = 2;
+  }
+
+  f = fabs(m[1][1]);
+  if (false == (f < ON_UNSET_POSITIVE_VALUE))
+    return -1;
+  if (f > e)
+  {
+    e = f;
+    piv = 3;
+  }
+
+  if (e <= zero_tolerance)
+  {
+    // matrix is "zero"
+    det = 0.0;
+    return 0;
+  }
+
+  switch (piv)
+  {
+  case 0:
+    if (m[0][0] < 0.0)
+      e = -e;
+    det = e * (m[1][1] - m[1][0] * (m[0][1] / e));
+    break;
+  case 1:
+    if (m[0][1] < 0.0)
+      e = -e;
+    det = e * (m[1][1] * (m[0][0] / e) - m[1][0]);
+    break;
+  case 2:
+    if (m[1][0] < 0.0)
+      e = -e;
+    det = e * (m[0][0] * (m[1][1] / e) - m[0][1]);
+    break;
+  case 3:
+    if (m[1][1] < 0.0)
+      e = -e;
+    det = e * (m[0][0] - m[0][1] * (m[1][0] / e));
+    break;
+  default:
+    det = 0.0;
+  }
+
+  if (fabs(det) <= zero_tolerance)
+  {
+    det = 0.0;
+    return 1;
+  }
+
+  return 2;
+}
+
+int ON_2x2Matrix::Rank() const
+{
+  return Rank(0.0);
+}
+
+const ON_2x2Matrix ON_2x2Matrix::Transpose() const
+{
+  ON_2x2Matrix T;
+  T.m[0][0] = m[0][0];
+  T.m[0][1] = m[1][0];
+  T.m[1][0] = m[0][1];
+  T.m[1][1] = m[1][1];
+  return T;
+}
+
+const ON_2x2Matrix ON_2x2Matrix::SwapRows() const
+{
+  ON_2x2Matrix T;
+  T.m[0][0] = m[1][0];
+  T.m[0][1] = m[1][1];
+  T.m[1][0] = m[0][0];
+  T.m[1][1] = m[0][1];
+  return T;
+}
+
+const ON_2x2Matrix ON_2x2Matrix::SwapColumns() const
+{
+  ON_2x2Matrix T;
+  T.m[0][0] = m[0][1];
+  T.m[0][1] = m[0][0];
+  T.m[1][0] = m[1][1];
+  T.m[1][1] = m[1][0];
+  return T;
+}
+
+
+
+const ON_2x2Matrix ON_2x2Matrix::SwapRowsAndColumns() const
+{
+  ON_2x2Matrix T;
+  T.m[0][0] = m[1][1];
+  T.m[0][1] = m[1][0];
+  T.m[1][0] = m[0][1];
+  T.m[1][1] = m[0][0];
+  return T;
+}
+
+const ON_2x2Matrix ON_2x2Matrix::Rotation(ON_2dVector V)
+{
+  if (false == V.IsUnitVector())
+  {
+    if (false == V.IsValid())
+      return ON_2x2Matrix::Nan;
+    V = V.UnitVector();
+  }
+  return ON_2x2Matrix::Rotation(V.x, V.y);
+}
+
+const ON_2x2Matrix ON_2x2Matrix::Rotation(double cos_angle, double sin_angle)
+{
+  ON_2x2Matrix R;
+  R.m[0][0] = cos_angle;
+  R.m[0][1] = -sin_angle;
+  R.m[1][0] = sin_angle;
+  R.m[1][1] = cos_angle;
+  return R;
+}
+
+const ON_2x2Matrix ON_2x2Matrix::RotationRadians(double angle_radians)
+{
+  return Rotation(cos(angle_radians), sin(angle_radians));
+}
+
+const ON_2x2Matrix ON_2x2Matrix::RotationDegrees(double angle_degrees)
+{
+  return RotationRadians((180.0 / ON_PI) * angle_degrees);
+}
+
+double ON_2x2Matrix::MaximumDigonalAbsoluteValue() const
+{
+  const double a = fabs(m[0][0]);
+  const double d = fabs(m[1][1]);
+  return (a >= d) ? a : (a < d ? d : ON_DBL_QNAN);
+}
+
+double ON_2x2Matrix::MinimumDigonalAbsoluteValue() const
+{
+  const double a = fabs(m[0][0]);
+  const double d = fabs(m[1][1]);
+  return (a <= d) ? a : (a > d ? d : ON_DBL_QNAN);
+}
+
+double ON_2x2Matrix::MaximumOffDigonalAbsoluteValue() const
+{
+  const double b = fabs(m[0][1]);
+  const double c = fabs(m[1][0]);
+  return (b >= c) ? b : (b < c ? c : ON_DBL_QNAN);
+}
+
+double ON_2x2Matrix::MinimumOffDigonalAbsoluteValue() const
+{
+  const double b = fabs(m[0][1]);
+  const double c = fabs(m[1][0]);
+  return (b <= c) ? b : (b > c ? c : ON_DBL_QNAN);
+}
+
+double ON_2x2Matrix::MaximumCoefficientAbsoluteValue() const
+{
+  const double x = MaximumDigonalAbsoluteValue();
+  const double y = MaximumOffDigonalAbsoluteValue();
+  return (x >= y) ? x : (x < y) ? y : ON_DBL_QNAN;
+}
+
+double ON_2x2Matrix::MinimumCoefficientAbsoluteValue() const
+{
+  const double x = MinimumDigonalAbsoluteValue();
+  const double y = MinimumOffDigonalAbsoluteValue();
+  return (x >= y) ? x : (x < y) ? y : ON_DBL_QNAN;
+}
+
+bool ON_2x2Matrix::IsValid() const
+{
+  return
+    ON_UNSET_VALUE < m[0][0] && m[0][0] < ON_UNSET_POSITIVE_VALUE
+    && ON_UNSET_VALUE < m[0][1] && m[0][1] < ON_UNSET_POSITIVE_VALUE
+    && ON_UNSET_VALUE < m[1][0] && m[1][0] < ON_UNSET_POSITIVE_VALUE
+    && ON_UNSET_VALUE < m[1][1] && m[1][1] < ON_UNSET_POSITIVE_VALUE;
+}
+
+bool ON_2x2Matrix::IsIdentity(double tolerance) const
+{
+  if (false == (tolerance > 0.0 && tolerance < ON_UNSET_POSITIVE_VALUE))
+    tolerance = 0.0;
+  return
+    fabs(m[0][0] - 1.0) <= tolerance
+    && fabs(m[0][1]) <= tolerance
+    && fabs(m[1][0]) <= tolerance
+    && fabs(m[1][1] - 1.0) <= tolerance;
+}
+
+bool ON_2x2Matrix::IsZero(double zero_tolerance) const
+{
+  if (false == (zero_tolerance > 0.0 && zero_tolerance < ON_UNSET_POSITIVE_VALUE))
+    zero_tolerance = 0.0;
+  return
+    fabs(m[0][0]) <= zero_tolerance
+    && fabs(m[0][1]) <= zero_tolerance
+    && fabs(m[1][0]) <= zero_tolerance
+    && fabs(m[1][1]) <= zero_tolerance;
+}
+
+bool ON_2x2Matrix::IsZero() const
+{
+  return (0.0 == m[0][0] && 0.0 == m[0][1] && 0.0 == m[1][0] && 0.0 == m[1][1]);
+}
+
+bool ON_2x2Matrix::IsNotZero(double zero_tolerance) const
+{
+  if (false == IsValid())
+    return false;
+  if (false == (zero_tolerance > 0.0))
+    zero_tolerance = 0.0;
+  return (
+    fabs(m[0][0]) > zero_tolerance
+    || fabs(m[0][1]) > zero_tolerance
+    || fabs(m[1][0]) > zero_tolerance
+    || fabs(m[1][1]) > zero_tolerance
+    );
+}
+
+bool ON_2x2Matrix::IsNotZero() const
+{
+  if (false == IsValid())
+    return false;
+  return (
+    fabs(m[0][0]) > 0.0
+    || fabs(m[0][1]) > 0.0
+    || fabs(m[1][0]) > 0.0
+    || fabs(m[1][1]) > 0.0
+    );
+}
+
+
+bool ON_2x2Matrix::IsIdentity() const
+{
+  return (1.0 == m[0][0] && 0.0 == m[0][1] && 0.0 == m[1][0] && 1.0 == m[1][1]);
+}
+
+bool ON_2x2Matrix::IsDiagonal(double relative_tolerance) const
+{
+  const double maxd = MaximumDigonalAbsoluteValue();
+  const double maxoffd = MaximumOffDigonalAbsoluteValue();
+  const double r =
+    (relative_tolerance >= 0.0 && relative_tolerance < 1.0)
+    ? relative_tolerance
+    : ON_DBL_QNAN;
+  return (maxoffd <= maxd * r);
+}
+
+bool ON_2x2Matrix::IsDiagonal() const
+{
+  return (
+    ON_UNSET_VALUE <= m[0][0] && m[0][0] < ON_UNSET_POSITIVE_VALUE
+    && 0.0 == m[0][1] 
+    && 0.0 == m[1][0] 
+    && ON_UNSET_VALUE <= m[1][1] && m[1][1] < ON_UNSET_POSITIVE_VALUE
+    );
+}
+
+bool ON_2x2Matrix::IsOrthoganal(double tolerance) const
+{
+  if (false == (tolerance > 0.0 && tolerance < ON_UNSET_POSITIVE_VALUE))
+    tolerance = 0.0;
+  const ON_2dVector R0(m[0][0], m[0][1]);
+  if (fabs(R0.Length() - 1.0) <= tolerance)
+  {
+    const ON_2dVector R1(m[1][0], m[1][1]);
+    if (fabs(R1.Length() - 1.0) <= tolerance)
+    {
+      if (fabs(m[0][0] * m[1][0] + m[0][1] * m[1][1]) <= tolerance)
+        return true;
+    }
+  }
+  return false;
+}
+
+bool ON_2x2Matrix::IsOrthoganal() const
+{
+  return IsOrthoganal(ON_2x2Matrix::ZeroTolerance);
+}
+
+double ON_2x2Matrix::Determinant() const
+{
+  double det;
+  const int rank = RankAndDeterminantHelper(0.0, det);
+  return (2 == rank) ? det : ((0 == rank || 1 == rank) ? 0.0 : ON_DBL_QNAN);
+}
+
+double ON_2x2Matrix::Trace() const
+{
+  return 
+    (fabs(m[0][0]) < ON_UNSET_POSITIVE_VALUE && fabs(m[1][1]) < ON_UNSET_POSITIVE_VALUE)
+    ? (m[0][0] + m[1][1])
+    : ON_DBL_QNAN;
+}
+
+const ON_2x2Matrix ON_2x2Matrix::Inverse() const
+{
+  const double d = Determinant();
+  if (d != 0.0)
+    return ON_2x2Matrix(m[1][1] / d, -m[0][1] / d, -m[1][0] / d, m[0][0] / d);
+  return ON_2x2Matrix::Nan;
+}
+
+double ON_2x2Matrix::Coefficient(int i, int j) const
+{
+  return (i >= 0 && i <= 1 && 0 >= j && j <= 1) ? m[i][j] : ON_DBL_QNAN;
+}
+
+const double* ON_2x2Matrix::operator[](int i) const
+{
+  return (i >= 0 && i <= 1) ? m[i] : nullptr;
+}
+
+double* ON_2x2Matrix::operator[](int i)
+{
+  return (i >= 0 && i <= 1) ? m[i] : nullptr;
+}
+
+static double ON_SqrtSum(double x, double y)
+{
+  return (x == y) ? sqrt(2.0 * x) : sqrt(x + y);
+}
+
+/// <summary>
+/// Get the singular value decomposition of the 2x2 matrix {{a,b},{c,d}}
+/// as U * Diagnoal(singular_values[0], singular_values[1]) * Transpose(V)
+/// </summary>
+/// <param name="a">
+/// a = coefficient in top row and left column.
+/// </param>
+/// <param name="b">
+/// b = coefficient in top row and right column.
+/// </param>
+/// <param name="c">
+/// c = coefficient in bottom row and left column
+/// </param>
+/// <param name="d">
+/// d = coefficient in bottom row and right column
+/// </param>
+/// <param name="U"></param>
+/// <param name="singular_values">
+/// The returned singular values satisfy 
+/// 0 &lt;= singular_values[0] &lt;= singular_values[1].
+/// </param>
+/// <param name="V"></param>
+/// <returns>
+/// If the singular value decomposition is returned, then true
+/// is returned. Otherwise the singular_values[] elements are 
+/// set to ON_DBL_QNAN and false is returned.
+/// </returns>
+bool ON_Get2x2SVD(
+  double a, double b, double c, double d,
+  double U[2][2],
+  double singular_values[2],
+  double V[2][2])
+{
+  // The input matrix is A[2][2] = { {a,b},{c,d} };
+  // The singlar value decomposition is 
+  // A = U*Diagonal(sigma0,sigma1)*Transpose(V)
+  // with sigma0 >= sigma1 >= 0.
+  if (0.0 == c && 0.0 == b)
+  {
+    // This clause handles the case when A is zero or a diagonal.
+
+    if (fabs(a) <= fabs(d))
+    {
+      singular_values[0] = fabs(a);
+      singular_values[1] = fabs(d);
+
+      U[0][0] = 1.0;
+      U[0][1] = 0.0;
+      U[1][0] = 0.0;
+      U[1][1] = 1.0;
+
+      V[0][0] = (a < 0.0) ? -1.0 : 1.0;
+      V[0][1] = 0.0;
+      V[1][0] = 0.0;
+      V[1][1] = (d < 0.0) ? -1.0 : 1.0;
+    }
+    else if (fabs(a) > fabs(d))
+    {
+      U[0][0] = 0.0;
+      U[0][1] = 1.0;
+      U[1][0] = 1.0;
+      U[1][1] = 0.0;
+
+      singular_values[0] = fabs(d);
+      singular_values[1] = fabs(a);
+
+      V[0][0] = 0.0;
+      V[0][1] = (a < 0.0) ? -1.0 : 1.0;
+      V[1][0] = (d < 0.0) ? -1.0 : 1.0;
+      V[1][1] = 0.0;
+    }
+    else
+    {
+      singular_values[0] = ON_DBL_QNAN;
+      singular_values[1] = ON_DBL_QNAN;
+
+      U[0][0] = 1.0;
+      U[0][1] = 0.0;
+      U[1][0] = 0.0;
+      U[1][1] = 1.0;
+
+      V[0][0] = 1.0;
+      V[0][1] = 0.0;
+      V[1][0] = 0.0;
+      V[1][1] = 1.0;
+      return false;
+    }
+    return true;
+  }
+
+  const double aa = a * a;
+  const double bb = b * b;
+  const double cc = c * c;
+  const double dd = d * d;
+
+  const double rel_zero_tol = 1e-12;
+
+  // We know A is not diagonal (including not zero).
+  // 
+  // Calculate U = rotation(theta) so that
+  // A*Transpose(A) = {{UJ, UL}, {UL, UK}} = U*D*Transpose(U)
+  // where D = Diagonal(s0*s0, s1,s1) = Diagonal(E,F) (0 <= E <= F).
+  const double UJ = aa + bb;
+  const double UK = cc + dd;
+  const double UL = a * c + b * d;
+  const double UJminusUK = UJ - UK;
+  const double Ux = 0.5 * ON_SqrtSum(UJminusUK * UJminusUK, 4.0 * (UL * UL));
+  const bool bTrickyTheta = Ux <= 0.5 * rel_zero_tol * (UJ + UK);
+
+  // Calculate W = rotation(phi)
+  // Transpose(A)*A = {{J, L}, {L, K}} = W*D*Transpose(W)
+  // where D = Diagonal(s0*s0, s1,s1) = Diagonal(E,F) (0 <= E <= F).
+  const double WJ = aa + cc;
+  const double WK = bb + dd;
+  const double WL = a * b + c * d;
+  const double WJminusWK = WJ - WK;
+  const double Wx = 0.5 * ON_SqrtSum(WJminusWK * WJminusWK, 4.0 * (WL * WL));
+  const bool bTrickyPhi = Wx <= 0.5 * rel_zero_tol * (WJ + WK);
+
+  // For the U and W version of J, K, L, the following are satisfied.
+  // J + K = E + F
+  // J - K = cos(2*(theta or phi))*(E-F)
+  // 2L = sin(2*(theta or phi))*(E-F)
+
+  if (bTrickyTheta || bTrickyPhi)
+  {
+    // If x = (F-E) < rel_zero_tol*(E + F).
+    // then we basically have E = F and atan2() will return garbage
+    // for theta, phi, or both.
+    // When E == F, then J = K = E = F >= 0, L = 0, and A*Transpose(A) = Diagnonal(J,J);
+    // For example, if A = scale*rotation, then
+    // J = K = E = F = scale^2,
+    // L = 0, and
+    // E = F = scale^2 and fabs(s0) = fabs(s1) = fabs(scale)
+    double E;
+    if (false == bTrickyPhi)
+    {
+      // bTrikyTheta = true, bTrikyPhi = false.
+      // Use the U versions of J,K to get the singular values.
+      // Note E >= 0 because UJ >= 0 and UK >= 0.
+      E = (UJ == UK) ? UJ : 0.5 * (UJ + UK);
+    }
+    else if (false == bTrickyTheta)
+    {
+      // bTrikyTheta = false, bTrikyPhi = true.
+      // Use the W versions of J,K to get the singular values.
+      // Note E >= 0 because WJ >= 0 and WK >= 0.
+      E = (WJ == WK) ? WJ : 0.5 * (WJ + WK);
+    }
+    else
+    {
+      // bTrikyTheta = bTrikyPhi = true.
+      // In a perfect world, in this siutation we would have
+      // J = K and L = 0.
+      // Choose the U / W versions of J, K, L
+      // that are closet to ideal.
+      // Note E >= 0 because J >= 0 and K >= 0.
+      const double Uerr = fabs(UJ - UK) + fabs(UL);
+      const double Werr = fabs(WJ - WK) + fabs(WL);
+      E = (Uerr <= Werr)
+        ? ((UJ == UK) ? UJ : 0.5 * (UJ + UK))
+        : ((WJ == WK) ? WJ : 0.5 * (WJ + WK))
+        ;
+    }
+
+
+    // E=F is known to be >= 0
+    const double sigma = sqrt(E);
+
+    singular_values[0] = sigma;
+    singular_values[1] = sigma;
+
+    V[0][0] = 1.0;
+    V[0][1] = 0.0;
+    V[1][0] = 0.0;
+    V[1][1] = 1.0;
+
+    ON_2dVector U0(a, b);
+    ON_2dVector U1(c, d);
+    if (false == U0.IsUnitVector())
+      U0 = U0.UnitVector();
+    if (false == U1.IsUnitVector())
+      U1 = U1.UnitVector();
+
+    const double dot = U0 * U1;
+    if (fabs(dot) < 1e-6)
+    {
+      U[0][0] = U0.x;
+      U[0][1] = U0.y;
+      U[1][0] = U1.x;
+      U[1][1] = U1.y;
+      return true;
+    }
+
+    U[0][0] = ON_DBL_QNAN;
+    U[0][1] = ON_DBL_QNAN;
+    U[1][0] = ON_DBL_QNAN;
+    U[1][1] = ON_DBL_QNAN;
+
+    return false;
+  }
+
+  double x, JplusKover2;
+
+  // Since E <= F
+  // 2 * E = (J + K) - sqrt((J-K)^2 + (2*L)^2)
+  // 2 * F = (J + K) + sqrt((J-K)^2 + (2*L)^2)
+  JplusKover2 = 0.5 * (UJ + UK);
+  x = (Ux > JplusKover2) ? JplusKover2 : Ux;
+  const double Us0 = ON_SqrtSum(JplusKover2, -x);
+  const double Us1 = ON_SqrtSum(JplusKover2, x);
+
+  // Solve Transpose(U) * A * Transpose(A) * U = D using the trig double angle formulae to get
+  const double theta = 0.5 * atan2(-2.0 * UL, -UJminusUK);
+  U[0][0] = cos(theta);
+  U[1][1] = U[0][0];
+  U[1][0] = sin(theta);
+  U[0][1] = -U[1][0];
+
+  // matrix solution for abs(singular values) using Transpose(U)*A*Transpose(A)*U = D = diag(s0*s0, s1*s1);
+  const double TransposeUxA[2][2] =
+  { {U[0][0] * a + U[1][0] * c, U[0][0] * b + U[1][0] * d},{U[0][1] * a + U[0][0] * c, U[0][1] * b + U[0][0] * d} };
+  const double UDs0 = ON_SqrtSum(TransposeUxA[0][0] * TransposeUxA[0][0], TransposeUxA[0][1] * TransposeUxA[0][1]);
+  const double UDs1 = ON_SqrtSum(TransposeUxA[1][1] * TransposeUxA[1][1], TransposeUxA[1][0] * TransposeUxA[1][0]);
+
+  //Solve Transpose(W) * Transpose(A) * A * W = D using the trig double angle formulae to get
+  const double phi = 0.5 * atan2(-2.0 * WL, -WJminusWK);
+  double W[2][2];
+  W[0][0] = cos(phi);
+  W[1][1] = W[0][0];
+  W[1][0] = sin(phi);
+  W[0][1] = -W[1][0];
+
+  // algebraic solution for abs(singular values) using W definition and trig
+  JplusKover2 = 0.5 * (WJ + WK);
+  x = (Wx > JplusKover2) ? JplusKover2 : Wx;
+  const double Ws0 = ON_SqrtSum(JplusKover2, -x);
+  const double Ws1 = ON_SqrtSum(JplusKover2, x);
+
+  // matrix solution for abs(singular values) using Transpose(W)*Transpose(A)*A*W = D = diag(s0*s0, s1*s1);
+  const double AxW[2][2] =
+  { {a * W[0][0] + b * W[1][0], a * W[0][1] + b * W[0][0]},{c * W[0][0] + d * W[1][0], c * W[0][1] + d * W[0][0]} };
+  const double WDs0 = ON_SqrtSum(AxW[0][0] * AxW[0][0], AxW[1][0] * AxW[1][0]);
+  const double WDs1 = ON_SqrtSum(AxW[1][1] * AxW[1][1], AxW[0][1] * AxW[0][1]);
+
+  // Find the correction matrix for the right side
+  // S = diagonal(Transpose(U) * A * W);
+  const double S00 = (a * U[0][0] + c * U[1][0]) * W[0][0] + (b * U[0][0] + d * U[1][0]) * W[1][0];
+  const double S11 = (a * U[1][0] - c * U[0][0]) * W[1][0] - (b * U[1][0] - d * U[0][0]) * W[0][0];
+  const double C[2] = { (S00 >= 0.0 ? 1.0 : -1.0), (S11 >= 0.0 ? 1.0 : -1.0) };
+  V[0][0] = C[0] * W[0][0];
+  V[0][1] = C[1] * W[0][1];
+  V[1][0] = C[0] * W[1][0];
+  V[1][1] = C[1] * W[1][1];
+
+
+  // choose the best sigmas
+
+  bool bHaveSigma = ON_IsValid(Us0) && ON_IsValid(Us1);
+  if (bHaveSigma)
+  {
+    singular_values[0] = Us0;
+    singular_values[1] = Us1;
+  }
+
+  const ON_2x2Matrix A(a, b, c, d);
+  double SVD_error
+    = bHaveSigma
+    ? (A - ON_2x2Matrix::CombineSVD(U, Us0, Us1, V)).MaximumCoefficientAbsoluteValue()
+    : ON_DBL_QNAN;
+  if (0.0 == SVD_error)
+    return true;
+
+  if (ON_IsValid(UDs0) && ON_IsValid(UDs1))
+  {
+    const double e = (A - ON_2x2Matrix::CombineSVD(U, UDs0, UDs1, V)).MaximumCoefficientAbsoluteValue();
+    if (e < SVD_error || false == bHaveSigma)
+    {
+      singular_values[0] = UDs0;
+      singular_values[1] = UDs1;
+      if (0.0 == e)
+        return true;
+      bHaveSigma = true;
+      SVD_error = e;
+    }
+  }
+
+  if (ON_IsValid(Ws0) && ON_IsValid(Ws1))
+  {
+    const double e = (A - ON_2x2Matrix::CombineSVD(U, Ws0, Ws1, V)).MaximumCoefficientAbsoluteValue();
+    if (e < SVD_error || false == bHaveSigma)
+    {
+      singular_values[0] = Ws0;
+      singular_values[1] = Ws1;
+      if (0.0 == e)
+        return true;
+      bHaveSigma = true;
+      SVD_error = e;
+    }
+  }
+
+  if (ON_IsValid(Ws0) && ON_IsValid(Ws1))
+  {
+    double e = (A - ON_2x2Matrix::CombineSVD(U, WDs0, WDs1, V)).MaximumCoefficientAbsoluteValue();
+    if (e < SVD_error || false == bHaveSigma)
+    {
+      singular_values[0] = WDs0;
+      singular_values[1] = WDs1;
+      if (0.0 == e)
+        return true;
+      bHaveSigma = true;
+      SVD_error = e;
+    }
+  }
+
+  if (false == bHaveSigma)
+  {
+    singular_values[0] = ON_DBL_QNAN;
+    singular_values[1] = ON_DBL_QNAN;
+  }
+
+  return bHaveSigma;
+}
+
+
+
+/// <summary>
+/// Get the singular value decomposition of the 2x2 matrix {{a,b},{c,d}}
+/// as U * {{singular_values[0], 0}, {0, singular_values[1]}} * Transpose(V)/// 
+/// </summary>
+/// <param name="A"></param>
+/// <param name="U"></param>
+/// <param name="singular_values"></param>
+/// <param name="V"></param>
+/// <returns></returns>
+bool ON_Get2x2SVD(
+  const double A[2][2],
+  double U[2][2],
+  double singular_values[2],
+  double V[2][2])
+{
+  return ON_Get2x2SVD(A[0][0], A[0][1], A[1][0], A[1][1], U, singular_values, V);
+}
+
+bool ON_2x2Matrix::SVD(
+  ON_2x2Matrix& U,
+  double singular_values[2],
+  ON_2x2Matrix& V
+) const
+{
+  return ON_Get2x2SVD(this->m, U.m, singular_values, V.m);
+}
+
+const ON_2x2Matrix ON_2x2Matrix::PseudoInverse() const
+{
+  ON_2x2Matrix U, V;
+  double sigmas[2];
+  const bool bHaveSVD = ON_Get2x2SVD(
+    m[0][0], m[0][1], m[1][0], m[1][1],
+    U.m,
+    sigmas,
+    V.m
+  );
+  return
+    bHaveSVD
+    ? ON_2x2Matrix::CombineSVD(
+      V,
+      0.0 != sigmas[0] ? 1.0 / sigmas[0] : 0.0,
+      0.0 != sigmas[1] ? 1.0 / sigmas[1] : 0.0,
+      U.Transpose())
+    : ON_2x2Matrix::Nan;
+ }
+
+const ON_2x2Matrix ON_2x2Matrix::CombineSVD(
+  const ON_2x2Matrix& U,
+  double s0,
+  double s1,
+  const ON_2x2Matrix& V
+)
+{
+  ON_2x2Matrix A;
+  A.m[0][0] = s0 * U.m[0][0] * V.m[0][0] + s1 * U.m[0][1] * V.m[0][1];
+  A.m[0][1] = s0 * U.m[0][0] * V.m[1][0] + s1 * U.m[0][1] * V.m[1][1];
+  A.m[1][0] = s0 * U.m[1][0] * V.m[0][0] + s1 * U.m[1][1] * V.m[0][1];
+  A.m[1][1] = s0 * U.m[1][0] * V.m[1][0] + s1 * U.m[1][1] * V.m[1][1];
+  return A;
+}
+
+
+const ON_2x2Matrix ON_2x2Matrix::ProcrustesRotation(const ON_2x2Matrix& H)
+{
+  // Kabsch-Umeyama algorithm
+  // 
+  // P = 2 x N matrix (N 2d points as columns) (average of P[] = (0,0))
+  // Q = 2 x N matrix (N 2d points as columns) (average of Q[] = (0,0))
+  // H = P * Transpose(Q) is a 2x2 matrix that is "this" 2x2 matrix.
+
+  ON_2x2Matrix V;
+  ON_2x2Matrix W;
+  double sigmas[2];
+  if (false == H.SVD(V, sigmas, W))
+    return ON_2x2Matrix::Nan;
+
+  const int v = (V.m[0][0] * V.m[1][1] < V.m[0][1] * V.m[1][0]) ? -1 : 1;
+  const int w = (W.m[0][0] * W.m[1][1] < W.m[0][1] * W.m[1][0]) ? -1 : 1;
+  const double d = (v != w) ? -1.0 : 1.0;
+
+  // R = Procrustes rotation (acting on the left of points)
+  const ON_2x2Matrix R = ON_2x2Matrix::CombineSVD(W, 1.0, d, V);
+
+  // Since R is a left rotation, clean up any slop so we return an
+  // exact rotation ((cos, -sin),(sin, cos)).
+  // cs.x = cos(rotation angle), cs.y = sin(rotation angle).
+  ON_2dVector cs(
+    (R.m[0][0] == R.m[1][1]) ? R.m[0][0] : (0.5 * (R.m[0][0] + R.m[1][1])),
+    (-R.m[0][1] == R.m[1][0]) ? -R.m[0][1] : (0.5 * (R.m[1][0] - R.m[0][1])));
+  if (fabs(cs.x) >= 1.0 - ON_EPSILON || fabs(cs.y) <= ON_EPSILON)
+  {
+    cs.x = (cs.x < 0.0) ? -1.0 : 1.0;
+    cs.y = 0.0;
+  }
+  else if (fabs(cs.x) <= ON_EPSILON || fabs(cs.y) >= 1.0 - ON_EPSILON)
+  {
+    cs.x = 0.0;
+    cs.y = (cs.y < 0.0) ? -1.0 : 1.0;
+  }
+  else
+    cs = cs.UnitVector();
+
+  const ON_2x2Matrix CS(cs.x, -cs.y, cs.y, cs.x);
+  const double dd = (CS - R).MaximumCoefficientAbsoluteValue();
+  if (fabs(dd) <= 1e-15)
+    return CS;
+  return CS;
+}
+
+
+const ON_2x2Matrix ON_2x2Matrix::ProcrustesRotation(
+  const ON_2dPoint& P0, const ON_2dPoint& P1, const ON_2dPoint& P2, 
+  const ON_2dPoint& Q0, const ON_2dPoint& Q1, const ON_2dPoint& Q2)
+{
+  // Kabsch-Umeyama algorithm
+  const ON_2x2Matrix H(
+    P0.x * Q0.x + P1.x * Q1.x + P2.x * Q2.x,
+    P0.x * Q0.y + P1.x * Q1.y + P2.x * Q2.y,
+    P0.y * Q0.x + P1.y * Q1.x + P2.y * Q2.x,
+    P0.y * Q0.y + P1.y * Q1.y + P2.y * Q2.y
+  );
+
+  return ProcrustesRotation(H);
+}
+
+const ON_2x2Matrix operator*(const ON_2x2Matrix& A, const ON_2x2Matrix& B)
+{
+  ON_2x2Matrix AB;
+  AB.m[0][0] = A.m[0][0] * B.m[0][0] + A.m[0][1] * B.m[1][0];
+  AB.m[0][1] = A.m[0][0] * B.m[0][1] + A.m[0][1] * B.m[1][1];
+  AB.m[1][0] = A.m[1][0] * B.m[0][0] + A.m[1][1] * B.m[1][0];
+  AB.m[1][1] = A.m[1][0] * B.m[0][1] + A.m[1][1] * B.m[1][1];
+  return AB;
+}
+
+const ON_2x2Matrix operator+(const ON_2x2Matrix& A, const ON_2x2Matrix& B)
+{
+  ON_2x2Matrix AplusB;
+  AplusB.m[0][0] = A.m[0][0] + B.m[0][0];
+  AplusB.m[0][1] = A.m[0][1] + B.m[0][1];
+  AplusB.m[1][0] = A.m[1][0] + B.m[1][0];
+  AplusB.m[1][1] = A.m[1][1] + B.m[1][1];
+  return AplusB;
+}
+
+const ON_2x2Matrix operator-(const ON_2x2Matrix& A, const ON_2x2Matrix& B)
+{
+  ON_2x2Matrix AminusB;
+  AminusB.m[0][0] = A.m[0][0] - B.m[0][0];
+  AminusB.m[0][1] = A.m[0][1] - B.m[0][1];
+  AminusB.m[1][0] = A.m[1][0] - B.m[1][0];
+  AminusB.m[1][1] = A.m[1][1] - B.m[1][1];
+  return AminusB;
+}
+
+const ON_2x2Matrix operator-(const ON_2x2Matrix& A)
+{
+  ON_2x2Matrix minusA;
+  minusA.m[0][0] = -A.m[0][0];
+  minusA.m[0][1] = -A.m[0][1];
+  minusA.m[1][0] = -A.m[1][0];
+  minusA.m[1][1] = -A.m[1][1];
+  return minusA;
+}
+
+const ON_2dVector operator*(const ON_2x2Matrix& A, const ON_2dVector& V)
+{
+  return ON_2dVector(A.m[0][0] * V.x + A.m[0][1] * V.y, A.m[1][0] * V.x + A.m[1][1] * V.y);
+}
+
+const ON_2dVector operator*(const ON_2dVector& V, const ON_2x2Matrix& A)
+{
+  return ON_2dVector(A.m[0][0] * V.x + A.m[1][0] * V.y, A.m[0][1] * V.x + A.m[1][1] * V.y);
+}
+
+const ON_2dPoint operator*(const ON_2x2Matrix& A, const ON_2dPoint& V)
+{
+  return ON_2dPoint(A.m[0][0] * V.x + A.m[0][1] * V.y, A.m[1][0] * V.x + A.m[1][1] * V.y);
+}
+
+const ON_2dPoint operator*(const ON_2dPoint& V, const ON_2x2Matrix& A)
+{
+  return ON_2dPoint(A.m[0][0] * V.x + A.m[1][0] * V.y, A.m[0][1] * V.x + A.m[1][1] * V.y);
+}
+
+static void ON_2x2Matrix_Jiggle(ON_RandomNumberGenerator& RNG, ON_2x2Matrix& A)
+{
+  double tiny = A.MaximumCoefficientAbsoluteValue() * 1e-3;
+  if (0 == tiny)
+    tiny = 1e-4;
+  const ON_Interval tiny_range(-tiny, tiny);
+  const ON_Interval wiggle_range(0.999, 1.001);
+  A[0][0] = (A[0][0] + RNG.RandomDouble(tiny_range)) * RNG.RandomDouble(wiggle_range);
+  A[0][1] = (A[0][1] + RNG.RandomDouble(tiny_range)) * RNG.RandomDouble(wiggle_range);
+  A[1][0] = (A[1][0] + RNG.RandomDouble(tiny_range)) * RNG.RandomDouble(wiggle_range);
+  A[1][1] = (A[1][1] + RNG.RandomDouble(tiny_range)) * RNG.RandomDouble(wiggle_range);
+}
+
+static bool ON_2x2Matrix_TestPermutationsAndJiggles(
+  const ON_2x2Matrix& A,
+  const int Arank,
+  ON_RandomNumberGenerator& RNG,
+  unsigned& callback_count,
+  ON__UINT_PTR context, bool(*Callback)(ON__UINT_PTR, int, const ON_2x2Matrix)
+)
+{
+  if (false == Callback(context, Arank, A))
+    return false;
+  ++callback_count;
+
+  ON_2x2Matrix J1 = A.SwapRows();
+  if (false == Callback(context, Arank, J1))
+    return false;
+  ++callback_count;
+
+  ON_2x2Matrix J2 = A.SwapColumns();
+  if (false == Callback(context, Arank, J2))
+    return false;
+  ++callback_count;
+
+  ON_2x2Matrix J3 = J1.SwapColumns();
+  if (false == Callback(context, Arank, J3))
+    return false;
+  ++callback_count;
+
+  const int unknown_rank = -1;
+  ON_2x2Matrix J0 = A;
+  ON_2x2Matrix_Jiggle(RNG, J0);
+  if (false == Callback(context, unknown_rank, J0))
+    return false;
+  ++callback_count;
+
+  ON_2x2Matrix_Jiggle(RNG, J1);
+  if (false == Callback(context, unknown_rank, J1))
+    return false;
+  ++callback_count;
+
+  ON_2x2Matrix_Jiggle(RNG, J2);
+  if (false == Callback(context, unknown_rank, J2))
+    return false;
+  ++callback_count;
+
+  ON_2x2Matrix_Jiggle(RNG, J3);
+  if (false == Callback(context, unknown_rank, J3))
+    return false;
+  ++callback_count;
+
+  return true;
+}
+
+unsigned ON_2x2Matrix::TestList(ON__UINT_PTR context, bool (*Callback)(ON__UINT_PTR, int, const ON_2x2Matrix))
+{
+  if (nullptr == Callback)
+    return 0;
+
+  unsigned callback_count = 0;
+
+  ON_RandomNumberGenerator RNG;
+
+  if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix::Identity, 2, RNG, callback_count, context, Callback))
+    return callback_count;
+
+  if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix::Zero, 0, RNG, callback_count, context, Callback))
+    return callback_count;
+
+  if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(1.0, 0.0), 1, RNG, callback_count, context, Callback))
+    return callback_count;
+
+
+  const int half_maxi = 6 * 360;
+  const int maxi = 2 * half_maxi;
+
+  for (int i = 1; i < maxi; ++i)
+  {
+    const double scale = ((double)i) / ((double)half_maxi);
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(scale), 2, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(-scale), 2, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(scale, 0.0), 1, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(-scale, 0.0), 1, RNG, callback_count, context, Callback))
+      return callback_count;
+  }
+
+  for (int i = 0; i < maxi; ++i)
+  {
+    const ON_2x2Matrix R = ON_2x2Matrix::RotationRadians((double(i) / (double)maxi));
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(R, 2, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(0.125) * R, 2, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix(8.0) * R, 2, RNG, callback_count, context, Callback))
+      return callback_count;
+  }
+
+  const ON_Interval sval_range(-1000.0, 1000.0);
+  for (int i = 0; i < 1000; ++i)
+  {
+    const double Ua = RNG.RandomDouble(ON_Interval::ZeroToTwoPi);
+    const ON_2x2Matrix U = ON_2x2Matrix::RotationRadians(Ua);
+    const double Va = RNG.RandomDouble(ON_Interval::ZeroToTwoPi);
+    const ON_2x2Matrix V = ON_2x2Matrix::RotationRadians(Va).Transpose();
+    const double sigma0 = RNG.RandomDouble(sval_range);
+    const double sigma1 = RNG.RandomDouble(sval_range);
+
+    const int sigma0_rank = ((0.0 != sigma0) ? 1 : 0);
+    const int sigma1_rank = ((0.0 != sigma1) ? 1 : 0);
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix::CombineSVD(U, sigma0, sigma1, V), sigma0_rank + sigma1_rank, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix::CombineSVD(U, sigma0, 0.0, V), sigma0_rank, RNG, callback_count, context, Callback))
+      return callback_count;
+
+    if (false == ON_2x2Matrix_TestPermutationsAndJiggles(ON_2x2Matrix::CombineSVD(U, sigma1, 0.0, V), sigma1_rank, RNG, callback_count, context, Callback))
+      return callback_count;
+  }
+
+  return callback_count;
+}
+
+// do not export ON_2x2MatrixContext
+class ON_2x2MatrixContext
+{
+public:
+  // Result of SVD test
+  bool m_bSVDPassed = false;
+
+  // Result of comparing Determinant() to product of singular values
+  bool m_bDeterminantPassed = false;
+
+  // Result of comparing Rank() to number of nonzero singular values
+  bool m_bRankPassed = false;
+
+  // Result of comparing Inverse() to PseudoInverse()
+  bool m_bInversePassed = false;
+
+  bool m_bAllPassed = false;
+
+  ON_String m_error_description;
+
+  // m_A.SVD() call failed.
+  ON_2x2Matrix m_A = ON_2x2Matrix::Nan; // failed matrix
+
+  // failed SVD
+  ON_2x2Matrix m_U = ON_2x2Matrix::Nan;
+  double m_sigma[2] = { ON_DBL_QNAN, ON_DBL_QNAN };
+  ON_2x2Matrix m_V = ON_2x2Matrix::Nan;
+
+  void Clear()
+  {
+    m_bSVDPassed = false;
+    m_bDeterminantPassed = false;
+    m_bRankPassed = false;
+    m_bInversePassed = false;
+    m_bAllPassed = false;
+    m_error_description = ON_String::EmptyString;
+    m_A = ON_2x2Matrix::Nan;
+  }
+
+  double SVDUDeterminant() const
+  {
+    const double d = (m_U.m[0][0] * m_U.m[1][1] - m_U.m[0][1] * m_U[1][0]);
+    return (d > 0.0) ? 1.0 : (d < 0.0 ? -1.0 : ON_DBL_QNAN);
+  }
+
+  double SVDVDeterminant() const
+  {
+    const double d = (m_V.m[0][0] * m_V.m[1][1] - m_V.m[0][1] * m_V[1][0]);
+    return (d > 0.0) ? 1.0 : (d < 0.0 ? -1.0 : ON_DBL_QNAN);
+  }
+
+  double SVDDeterminant() const
+  {
+    return
+      (m_sigma[0] >= 0.0 && m_sigma[1] >= 0.0)
+      ? (SVDUDeterminant() * SVDVDeterminant() * (m_sigma[0]*m_sigma[1]))
+      : ON_DBL_QNAN;
+  }
+
+  int SVDRank() const
+  {
+    return
+      (m_sigma[0] > 0.0 && m_sigma[1] > 0.0)
+      ? 2
+      : ((0.0 == m_sigma[0] && m_sigma[1] > 0.0)
+        ? 1
+        : ((0.0 == m_sigma[0] && 0.0 == m_sigma[1])
+          ? 0
+          : -1))
+      ;
+  }
+
+  const ON_2x2Matrix SVDPseudoInverse() const
+  {
+    return (m_sigma[0] >= 0.0 || m_sigma[1] >= 0.0)
+      ? ON_2x2Matrix::CombineSVD(
+        m_V,
+        (m_sigma[0] > 0.0 ? 1.0 / m_sigma[0] : 0.0),
+        (m_sigma[1] > 0.0 ? 1.0 / m_sigma[1] : 0.0),
+        m_U.Transpose())
+      : ON_2x2Matrix::Nan;
+  }
+
+  double m_determinant = ON_DBL_QNAN;
+  ON_2x2Matrix m_inverse = ON_2x2Matrix::Nan;
+};
+
+/// <summary>
+/// Used to test basic ON_2x2Matrix functionality.
+/// </summary>
+/// <param name="context_ptr"></param>
+/// <param name="A"></param>
+/// <returns></returns>
+static bool ON_2x2Matrix_TestCallback(ON__UINT_PTR context_ptr, int Arank, const ON_2x2Matrix A)
+{
+  // Generally test that different ways of computing the same complicated result
+  // agree to 8, 10, 12 or 14 decimal places.
+  // When the "ideal" rank of A is 2, test to 12 decimal places.
+  // When the "ideal" rank of A is 1, test to 8 decimal places.
+  // When the "ideal" rank of A is 0, test to 14 decimal places.
+  // When the "ideal" A is unknown, test to 10 decimal places.
+  const double zero_tolerance 
+    = (2 == Arank) ? 1e-12
+    : ((1 == Arank) ? 1.0e-8 
+      : ((0 == Arank) ? 1e-14 
+        : 1.0e-10)); // unknown rank
+
+  ON_2x2MatrixContext context;
+  context.m_A = A;
+  for (;;)
+  {
+    if (false == A.SVD(context.m_U, context.m_sigma, context.m_V))
+    {
+      context.m_error_description = "A.SVD() returned false.";
+      break;
+    }
+
+
+    const ON_2x2Matrix UsigmaV = ON_2x2Matrix::CombineSVD(context.m_U, context.m_sigma[0], context.m_sigma[1], context.m_V);
+    const ON_2x2Matrix SVD_error = A - UsigmaV;
+    const double absolute_SVD_error = SVD_error.MaximumCoefficientAbsoluteValue();
+
+    const double max_A = A.MaximumCoefficientAbsoluteValue();
+    const double e
+      = (max_A > 1.0 && zero_tolerance > 0.0 && zero_tolerance < ON_UNSET_POSITIVE_VALUE)
+      ? (absolute_SVD_error / max_A)
+      : absolute_SVD_error;
+
+    if (false == (e <= 1.0e-10))
+    {
+      context.m_error_description = ON_String::FormatToString("|A - U*Sigma*Transpose(V)| = %g.", absolute_SVD_error);
+      break;
+    }
+
+    if (false == (context.m_sigma[0] >= 0.0 && context.m_sigma[0] <= context.m_sigma[1]))
+    {
+      // The singular values are negative or in the wrong order.
+      context.m_error_description = "Singular values are not >= 0 and increasing.";
+      break;
+    }
+
+    const double Uerr = (context.m_U * context.m_U.Transpose() - ON_2x2Matrix::Identity).MaximumCoefficientAbsoluteValue();
+    const double Verr = (context.m_V * context.m_V.Transpose() - ON_2x2Matrix::Identity).MaximumCoefficientAbsoluteValue();
+    if (false == (Uerr < 1.0e-12))
+    {
+      // The singular values are negative or in the wrong order.
+      context.m_error_description = "SVD U is not orthoganal.";
+      break;
+    }
+
+    if (false == (Verr <= 1.0e-12))
+    {
+      context.m_error_description = "SVD V is not orthoganal.";
+      break;
+    }
+
+    context.m_bSVDPassed = true;
+
+    const double SVDdet = context.SVDDeterminant();
+    context.m_determinant = A.Determinant();
+
+    const int SVDrank = context.SVDRank();
+    const int rank = A.Rank();
+
+    const double A00xA11 = fabs(A.m[0][0] * A.m[1][1]);
+    const double A01xA10 = fabs(A.m[0][1] * A.m[1][0]);
+    const double zero_det = ON_EPSILON * (SVDrank < 2 && 2 == rank ? 2.0 : 1.0) * (A00xA11 <= A01xA10 ? A00xA11 : ((A00xA11 > A01xA10) ? A01xA10 : ON_DBL_QNAN));
+
+    const bool bUnstableDet 
+      = fabs(context.m_determinant) > 0.0 
+      && zero_det >= 0.0 
+      && zero_det < ON_UNSET_POSITIVE_VALUE 
+      && fabs(context.m_determinant) <= zero_det 
+      && SVDdet <= zero_det;
+
+    const bool bUnstableSVDDet 
+      = context.m_sigma[0] > 0.0 
+      && context.m_sigma[0] <= ON_EPSILON * context.m_sigma[1];
+
+    const bool bUnstableMatrix = bUnstableDet && 2 == rank;
+    const bool bUnstableSVD = bUnstableSVDDet && 2 == SVDrank;
+
+    const bool bUnstable = bUnstableMatrix || bUnstableSVD;
+
+    // test that two ways to compute determinant agree to 10 decimal places or
+    // the determinant is nearly zero and unstable.
+    const double det_tol = zero_tolerance * (0.5 * (fabs(SVDdet) + fabs(context.m_determinant)) + 1.0);
+    const double det_delta = fabs(SVDdet - context.m_determinant);
+    if (false == (det_delta <= det_tol))
+    {
+      if (false == bUnstable)
+      {
+        context.m_error_description = "A.Determinant() != SVDDeterminant().";
+        break;
+      }
+    }
+    context.m_bDeterminantPassed = true;
+
+    if (rank != SVDrank)
+    {
+      if (false == bUnstable)
+      {
+        context.m_error_description = "A.Rank() != SVDRank().";
+        break;
+      }
+    }
+    context.m_bRankPassed = true;
+
+    if (2 == rank)
+    {
+      const ON_2x2Matrix two(2.0, 2.0);
+      context.m_inverse = A.Inverse();
+      const ON_2x2Matrix Id1 = A * context.m_inverse;
+      const double e1 = (Id1 - ON_2x2Matrix::Identity).MaximumCoefficientAbsoluteValue();
+      const ON_2x2Matrix Id2 = context.m_inverse * A;
+      const double e2 = (Id2 - ON_2x2Matrix::Identity).MaximumCoefficientAbsoluteValue();
+
+      const double inverse_error = (e1 >= e2) ? e1 : (e2 > e1 ? e2 : ON_DBL_QNAN);
+      double inverse_tol = zero_tolerance * (1.0 +  context.m_sigma[1]);
+      if (inverse_tol > 1.0e-6)
+        inverse_tol = 1.0e-6;
+
+      if (false == (inverse_error <= inverse_tol))
+      {
+        if (false == bUnstable)
+        {
+          context.m_error_description = "A * A.Inverse() and/or A.Inverse() * A  is not the identity.";
+          break;
+        }
+      }
+    }
+    context.m_bInversePassed = true;
+
+    context.m_bAllPassed = true;
+    break;
+  }
+
+  if (0 != context_ptr)
+    *((ON_2x2MatrixContext*)context_ptr) = context;
+
+  return context.m_bAllPassed;
+}
+
+static bool ON_2x2Matrix_TestProcrustesRotation(ON_TextLog& text_log)
+{
+  double max_Rerror = 0.0;
+  double max_rmsd = 0.0;
+  double max_wigglermsd = 0.0;
+  const int jmax = 720;
+  ON_RandomNumberGenerator RNG;
+  ON_2dVector P0, P1, P2, Q0, Q1, Q2;
+  for (int i = 0; i < 100; ++i)
+  {
+    if (0 == i)
+    {
+      Q0 = ON_2dVector(-0.5, 0.5);
+      Q1 = ON_2dVector(0.5, 0);
+      Q2 = ON_2dVector(0, 0.5);
+    }
+    else
+    {
+      Q0 = ON_2dVector(RNG.RandomDouble(), RNG.RandomDouble());
+      Q1 = ON_2dVector(RNG.RandomDouble(), RNG.RandomDouble());
+      Q2 = ON_2dVector(RNG.RandomDouble(), RNG.RandomDouble());
+      const ON_2dVector C((Q0.x + Q1.x + Q2.x) / 3.0, (Q0.y + Q1.y + Q2.y) / 3.0);
+      Q0 -= C;
+      Q1 -= C;
+      Q2 -= C;
+    }
+    const double area = 0.5 * ON_2x2Matrix(Q1.x - Q0.x, Q1.y - Q0.y, Q2.x - Q0.x, Q2.y - Q0.y).Determinant();
+    //if (area < 0.0)
+    //{
+    //  ON_2dVector tmp = Q2;
+    //  Q2 = Q1;
+    //  Q1 = tmp;
+    //}
+    for (int j = 0; j < jmax; ++j)
+    {
+      const double angle = (((double)j) / ((double)jmax)) * ON_2PI;
+      const ON_2x2Matrix InverseR = ON_2x2Matrix::RotationDegrees(-angle);
+      for (int wiggle = 0; wiggle < 2; ++wiggle)
+      {
+        P0 = InverseR * Q0;
+        P1 = InverseR * Q1;
+        P2 = InverseR * Q2;
+        const double w = (1 == wiggle) ? sqrt(fabs(area)) / 32.0 : ON_DBL_QNAN;
+        const ON_Interval wiggle_room(-w, w);
+        if (1 == wiggle)
+        {
+          P0.x += RNG.RandomDouble(wiggle_room);
+          P0.y += RNG.RandomDouble(wiggle_room);
+          P1.x += RNG.RandomDouble(wiggle_room);
+          P1.y += RNG.RandomDouble(wiggle_room);
+          P2.x += RNG.RandomDouble(wiggle_room);
+          P2.y += RNG.RandomDouble(wiggle_room);
+        }
+        const ON_2x2Matrix L = ON_2x2Matrix::ProcrustesRotation(P0, P1, P2, Q0, Q1, Q2);
+        const ON_2x2Matrix D(1.0, 0.0, 0.0, L.Determinant() < 0.0 ? -1.0 : 1.0);
+        const double Rerror = (L - D * ON_2x2Matrix::RotationDegrees(angle)).MaximumCoefficientAbsoluteValue();
+        const ON_2dVector V0 = L * P0 - Q0;
+        const ON_2dVector V1 = L * P1 - Q1;
+        const ON_2dVector V2 = L * P2 - Q2;
+        const double rmsd = sqrt((V0.LengthSquared() + V1.LengthSquared() + V2.LengthSquared()) / 3.0);
+        if (1 == wiggle)
+        {
+          const double normalized_rmsd = w > 0.0 ? (rmsd / w) : 0.0;
+          if (false == (normalized_rmsd <= 1.5))
+          {
+            text_log.Print(
+              "Wiggled input ProcrustesRotation() failed on angle = %g. R error = %g, rmsd = %g, wiggle_room = [%g, %g]\n",
+              angle, Rerror, rmsd, wiggle_room[0], wiggle_room[1]);
+            text_log.Print("Q = (%g,%g), (%g,%g), (%g,%g) area = %g\n",
+              Q0.x, Q0.y, Q1.x, Q1.y, Q2.x, Q2.y, area);
+            ON_2x2Matrix::ProcrustesRotation(P0, P1, P2, Q0, Q1, Q2);
+            return false;
+          }
+          if (normalized_rmsd > max_wigglermsd)
+            max_wigglermsd = normalized_rmsd;
+        }
+        else
+        {
+          if (false == (Rerror <= 1.0e-8 && rmsd <= 1.0e-4))
+          {
+            text_log.Print("Exact input ProcrustesRotation() failed on angle = %g. R error = %g rmsd = %g\n", angle, Rerror, rmsd);
+            text_log.Print("Q = (%g,%g), (%g,%g), (%g,%g) area = %g\n",
+              Q0.x, Q0.y, Q1.x, Q1.y, Q2.x, Q2.y, area);
+            ON_2x2Matrix::ProcrustesRotation(P0, P1, P2, Q0, Q1, Q2);
+            return false;
+          }
+          if (Rerror > max_Rerror)
+            max_Rerror = Rerror;
+          if (rmsd > max_rmsd)
+            max_rmsd = rmsd;
+        }
+      }
+    }
+  }
+  text_log.Print(
+    "All ProcrustesRotation() tests passed. Max R error = %g, max rmsd = %g, max wiggled input normalized rmsd = %g\n",
+    max_Rerror, max_rmsd, max_wigglermsd
+  );
+  return true;
+}
+
+
+bool ON_2x2Matrix::Test(ON_TextLog& text_log)
+{
+  ON_2x2MatrixContext context;
+  const unsigned pass_count = ON_2x2Matrix::TestList((ON__UINT_PTR)&context, ON_2x2Matrix_TestCallback);
+
+  if (context.m_bAllPassed)
+  {
+    text_log.Print("All %u matrices passed all the ON_2x2Matrix::SVD() tests.\n", pass_count);
+
+    const bool bProcrustesPassed = ON_2x2Matrix_TestProcrustesRotation(text_log);
+    return bProcrustesPassed;
+  }
+
+  if (pass_count > 0)
+    text_log.Print("%u matrices passed the SVD tests.\n", pass_count);
+
+  if (context.m_error_description.IsNotEmpty())
+  {
+    // failure message
+    text_log.PrintString(context.m_error_description);
+    text_log.PrintNewLine();
+  }
+
+  const ON_2x2Matrix A(context.m_A);
+
+  if (false == context.m_bSVDPassed)
+  {
+
+    ON_2x2Matrix U = ON_2x2Matrix::Nan;
+    double s[2] = { ON_DBL_QNAN, ON_DBL_QNAN };
+    ON_2x2Matrix V = ON_2x2Matrix::Nan;
+    context.m_A.SVD(U, s, V); // <- breakpoint here
+    const ON_2x2Matrix UsigmaV = ON_2x2Matrix::CombineSVD(U, s[0], s[1], V);
+    const double A_error = (A - UsigmaV).MaximumCoefficientAbsoluteValue();
+
+    text_log.Print("ON_2x2Matrix.SVD() error = %g.\n", A_error);
+  }
+  else if (false == context.m_bDeterminantPassed)
+  {
+    const double SVDdet = context.SVDDeterminant();
+    const double Adet = context.m_A.Determinant();
+    const double e = fabs(context.m_determinant - SVDdet);
+    text_log.Print("ON_2x2Matrix.Determinant() error = %g. Determinant() = %g, SVD det = %g.\n", e, Adet, SVDdet);
+  }
+  else if (false == context.m_bRankPassed)
+  {
+    const int SVDrank = context.SVDRank();
+    const int Arank = context.m_A.Rank();
+    text_log.Print("ON_2x2Matrix.Rank() error. Rank() = %d, SVD rank = %d.\n", Arank, SVDrank);
+  }
+  else if (false == context.m_bInversePassed)
+  {
+    //const ON_2x2Matrix PseudoInverse = context.SVDPseudoInverse();
+    const ON_2x2Matrix AInverse = context.m_A.Inverse();
+    const ON_2x2Matrix Id1 = A * AInverse;
+    const ON_2x2Matrix Id2 = AInverse * A;
+    const double e1 = (Id1 - ON_2x2Matrix::Identity).MaximumCoefficientAbsoluteValue();
+    const double e2 = (Id2 - ON_2x2Matrix::Identity).MaximumCoefficientAbsoluteValue();
+    const double e = (e1 >= e2) ? e1 : (e2 > e1 ? e2 : ON_DBL_QNAN);
+    text_log.Print("ON_2x2Matrix.Inverse() error = %g.\n", e);
+  }
+
+  return false;
+}
+
+
 // 8 July 2003 Dale Lear
 //    changed ON_Matrix to use multiple allocations
 //    for coefficient memory in large matrices.
@@ -83,6 +1573,18 @@ ON_Matrix::ON_Matrix( int row_size, int col_size )
 , m_cmem(0)
 {
   Create(row_size,col_size);
+}
+
+ON_Matrix::ON_Matrix( int row_size, int col_size, double fill_value ) 
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
+{
+  Create(row_size,col_size,fill_value);
 }
 
 ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 ) 
@@ -341,6 +1843,17 @@ bool ON_Matrix::Create( int row_count, int col_count)
       b = true;
     }
   }
+  return b;
+}
+
+bool ON_Matrix::Create(
+  int row_count,
+  int col_count,
+  double fill_value
+)
+{
+  bool b = Create(row_count, col_count);
+  if (b) Fill(fill_value);
   return b;
 }
 
@@ -1031,6 +2544,23 @@ void ON_Matrix::Zero()
   }
 
   //m_a.Zero();
+}
+
+void ON_Matrix::Fill(double d)
+{
+  struct DBLBLK* cmem = (struct DBLBLK*)m_cmem;
+  while (0 != cmem)
+  {
+    if (0 != cmem->a && cmem->count > 0)
+    {
+      for (int i = 0; i < cmem->count; ++i)
+      {
+        cmem->a[i] = d;
+      }
+    }
+    onmalloc(0);  // allow canceling
+    cmem = cmem->next;
+  }
 }
 
 void ON_Matrix::SetDiagonal( double d)

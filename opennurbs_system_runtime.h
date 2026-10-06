@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -84,26 +84,32 @@
 #include <TargetConditionals.h>
 
 #if (TARGET_OS_IPHONE == 1)
+#if !defined(ON_RUNTIME_APPLE_IOS)  // These are normally defined in the project properties, make sure not to redefine to avoid warning
 #define ON_RUNTIME_APPLE_IOS
+#endif
 #endif
 
 #if (TARGET_OS_SIMULATOR == 1)
+#if !defined(ON_RUNTIME_APPLE_IOS)  // These are normally defined in the project properties, make sure not to redefine to avoid warning
 #define ON_RUNTIME_APPLE_IOS
+#endif
+#if !defined(ON_RUNTIME_APPLE_IOS_SIMULATOR)  // These are normally defined in the project properties, make sure not to redefine to avoid warning
 #define ON_RUNTIME_APPLE_IOS_SIMULATOR
+#endif
 #endif
 
 #if !defined(ON_RUNTIME_APPLE_IOS)
 #define ON_RUNTIME_APPLE_MACOS
+#endif
 
-#if !defined(RHINO_CORE_COMPONENT)
+#if !defined(RHINO_CORE_COMPONENT) && !defined(RHINO_THIRD_PARTY_OSX_PLUGIN_COMPILE)
 // Apple:
-//   Defines RHINO_CORE_COMPONENT here.
-//   If we publish an Apple C++ pubic SDK, this will need to be adjusted.
+//   Defines RHINO_CORE_COMPONENT here, except when the public C++ SDK's
+//   xcconfigs are in use - a third-party plug-in is not a core component.
 // Windows:
 //   uses the property sheet RhinoProjectPropertySheets/Rhino.Cpp.common.props
 //   Some build products in Windows are not "core components"
 #define RHINO_CORE_COMPONENT 1
-#endif
 #endif
 
 #if (defined(__LP64__) || defined(__ppc64__))
@@ -169,6 +175,14 @@
 #define ON_LITTLE_ENDIAN
 #else
 #define ON_BIG_ENDIAN
+#endif
+
+#if !defined(RHINO_CORE_COMPONENT)
+// Linux and WASM:
+//   Defines RHINO_CORE_COMPONENT here.
+//   If we publish a Linux or WASM C++ pubic SDK, this will need to be adjusted.
+// Instead, we should be using CMakeLists.txt to define RHINO_CORE_COMPONENT.
+#define RHINO_CORE_COMPONENT 1
 #endif
 
 #endif

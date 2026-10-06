@@ -2049,6 +2049,47 @@ const ON_4dPoint ON_NurbsCurve::ControlPoint(
   return cv;
 }
 
+int ON_NurbsCurve::ControlPointCount() const
+{
+  return (m_order >= 2 && m_cv_count >= m_order) ? m_cv_count : 0;
+}
+
+int ON_NurbsCurve::DuplicateControlPointCount() const
+{
+  if (m_order >= 2 && m_cv_count >= m_order)
+  {
+    const bool bIsClosed = this->IsClosed();
+    const bool bIsPeriodic = bIsClosed ? this->IsPeriodic() : false;
+    const int duplicate_count = bIsClosed ? (bIsPeriodic ? (m_order - 1) : 1) : 0;    
+    if (m_cv_count - duplicate_count >= (bIsClosed ? 3 : 2))
+      return duplicate_count;
+  }
+  return 0;
+}
+
+int ON_NurbsCurve::IndependentControlPointCount() const
+{
+  if (m_order >= 2 && m_cv_count >= m_order)
+  {
+    const bool bIsClosed = this->IsClosed();
+    const bool bIsPeriodic = bIsClosed ? this->IsPeriodic() : false;
+    const int duplicate_count = bIsClosed ? (bIsPeriodic ? (m_order - 1) : 1) : 0;
+    const int independent_count = m_cv_count - duplicate_count;
+    if (independent_count >= (bIsClosed ? 3 : 2))
+      return independent_count;
+  }
+  return 0;
+}
+
+const ON_2dex ON_NurbsCurve::ControlPointSpans(int control_point_index) const
+{
+  return ON_BsplineControlPointSpans(m_order, m_cv_count, control_point_index);
+}
+
+const ON_Interval ON_NurbsCurve::ControlPointSupport(int control_point_index) const
+{
+  return ON_BsplineControlPointSupport(m_order, m_cv_count, m_knot, control_point_index);
+}
 
 bool 
 ON_NurbsCurve::GetCV( int i, ON_3dPoint& point ) const
@@ -2192,6 +2233,9 @@ double ON_NurbsCurve::GrevilleAbcissa(
   return ON_GrevilleAbcissa( m_order, m_knot+gindex );
 }
 
+// Gets the Greville abscissae. The size of the target array should always be CVCount().
+// NOTE: this does not take into account periodicity and will return parameters
+// outside the domain for periodic curves.
 bool ON_NurbsCurve::GetGrevilleAbcissae( // see ON_GetGrevilleAbcissa() for details
          double* g         // g[m_cv_count]
          ) const
@@ -2481,9 +2525,39 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
 double ON_NurbsCurve::ControlPolygonLength() const
 {
   double length = 0.0;
-  ON_GetPolylineLength( m_dim, m_is_rat, m_cv_count, m_cv_stride, m_cv, &length );
+  if (m_dim > 0 && m_order >= 2 && m_cv_count >= m_order)
+  {
+    // Dale Lear - April 22, 2026 - added the bIsPeriodic check so
+    // the correct answer is returned for periodic NURBS curves.
+    const bool bIsPeriodic = this->IsPeriodic();
+    const int count = m_cv_count - (bIsPeriodic ? (m_order - 2) : 0);
+    ON_GetPolylineLength(m_dim, m_is_rat, count, m_cv_stride, m_cv, &length);
+  }
   return length;
 }
+
+const ON_3dPoint ON_NurbsCurve::ControlPolygonCentroid() const
+{
+  const int point_count = this->IndependentControlPointCount();
+  if (point_count >= 2)
+  {
+    ON_3dPoint c = ON_3dPoint::Origin;
+    for (int i = 0; i < point_count; ++i)
+    {
+      const ON_3dPoint P(this->ControlPoint(i));
+      if (P.IsValid())
+        c += P;
+      else
+        return ON_3dPoint::NanPoint;
+    }
+    c.x /= point_count;
+    c.y /= point_count;
+    c.z /= point_count;
+    return c;
+  }
+  return ON_3dPoint::NanPoint;
+}
+
 
 
 bool ON_NurbsCurve::InsertKnot( double knot_value, int knot_multiplicity )
@@ -4106,6 +4180,12 @@ bool ON_ChangeRationalNurbsCurveEndWeights(
   cv[cvstride*(cv_count-1)+dim] = w1;
 
   return true;
+}
+
+bool ON_NurbsCurve::IsSingular() const
+{
+  const bool rc = ON_PointsAreCoincident(m_dim, m_is_rat, m_cv_count, m_cv_stride, m_cv);
+  return rc;
 }
 
 bool ON_NurbsCurve::SpanIsSingular( 

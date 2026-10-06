@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2023 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -29,34 +29,55 @@ public:
   ON_SectionStyle& operator=(const ON_SectionStyle& other);
 
   static const ON_SectionStyle Unset;   // index = ON_UNSET_INT_INDEX, id = nil
+  static const ON_SectionStyle Default; // index = -1, unique and persistent id.
 
   /*
-    Description:
-      Tests that name is set and there is at least one non-zero length segment
+  Parameters:
+    model_component_reference - [in]
+    none_return_value - [in]
+      value to return if ON_SectionStyle::Cast(model_component_ref.ModelComponent())
+      is nullptr
+  Returns:
+    If ON_SectionStyle::Cast(model_component_ref.ModelComponent()) is not nullptr,
+    that pointer is returned.  Otherwise, none_return_value is returned.
+  */
+  static const ON_SectionStyle* FromModelComponentRef(
+    const class ON_ModelComponentReference& model_component_reference,
+    const ON_SectionStyle* none_return_value
+  );
+
+  bool UpdateReferencedComponents(
+    const class ON_ComponentManifest& source_manifest,
+    const class ON_ComponentManifest& destination_manifest,
+    const class ON_ManifestMap& manifest_map
+  ) override;
+
+  /*
+  Description:
+    Tests that name is set and there is at least one non-zero length segment
   */
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
   void Dump( ON_TextLog& ) const override; // for debugging
 
   /*
-    Description:
-      Write to file (serialize definition to binary archive)
+  Description:
+    Write to file (serialize definition to binary archive)
   */
   bool Write(ON_BinaryArchive&) const override;
 
   /*
-    Description:
-      Read from file (restore definition from binary archive)
+  Description:
+    Read from file (restore definition from binary archive)
   */
   bool Read(ON_BinaryArchive&) override;
 
-
   /*
-    Description:
-      Test only the section style attributes below for equality. Does not
-      perform any testing of the ON_ModelComponent fields
-    Parameters:
-      other: other section style to compare against this
+  Description:
+    Test only the section style attributes below for equality. Does not
+    perform any testing of the ON_ModelComponent fields
+  Parameters:
+    other: other section style to compare against this
   */
   bool SectionAttributesEqual(const ON_SectionStyle& other) const;
 
@@ -89,7 +110,6 @@ public:
   SectionBackgroundFillMode BackgroundFillMode() const;
   void SetBackgroundFillMode(SectionBackgroundFillMode mode);
 
-
   // Custom background fill color. If unset (default), the object's color or
   // material is used for a fill
   ON_Color BackgroundFillColor(bool print) const;
@@ -107,6 +127,19 @@ public:
   // Width scale to apply to an object's linetype for sections. Default is 3
   double BoundaryWidthScale() const;
   void SetBoundaryWidthScale(double scale);
+
+  // Plot width of the boundary curves.
+  //    values less than -1 (-10 is default): plot weight is determined by the
+  //                                          object's attributes
+  //   -1: do not plot
+  //    0: use default weight defined by the print dialog
+  //    positive values are thicknesses in millimeters to print to
+  // 
+  // NOTE: if a linetype is assigned to this section style that has a physical
+  // width (not pixels), then this value is ignored and the linetype value is
+  // used
+  double BoundaryPlotWeightMillimeters() const;
+  void SetBoundaryPlotWeightMillimeters(double weight);
 
   // When to fill/hatch the sections for an object can depend on the type of
   // object being sectioned. See ON_SectionFillRule for the choices of
@@ -127,6 +160,15 @@ public:
   double HatchRotation() const;
   void SetHatchRotation(double rotation);
 
+  // Plot width of the hatch pattern curves for a section.
+  //    values less than -1 (-10 is default): plot weight is determined by the
+  //                                          object's attributes
+  //   -1: do not plot
+  //    0: use default weight defined by the print dialog
+  //    positive values are thicknesses in millimeters to print to
+  double HatchPatternPlotWeightMillimeters() const;
+  void SetHatchPatternPlotWeightMillimeters(double weight);
+
   // Custom hatch pattern color for a section. If unset (default), the object's
   // color is used
   ON_Color HatchColor(bool print) const;
@@ -136,6 +178,15 @@ public:
   // from the parent layer or attributes
   const ON_Linetype* BoundaryLinetype() const;
   void SetBoundaryLinetype(const ON_Linetype& linetype);
+
+  // If the boundary linetype needs to come from the document, then set the
+  // index using an index in the document's linetype table. Default is
+  // ON_UNSET_INT_INDEX which means the linetype is not set to a document linetype
+  // and is instead derived from the locally held custom linetype or the object's
+  // linetype
+  void SetBoundaryLinetypeIndex(int index);
+  int BoundaryLinetypeIndex() const;
+
   void RemoveBoundaryLinetype();
 private:
   class ON_SectionStylePrivate* m_private = nullptr;

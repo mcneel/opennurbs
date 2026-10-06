@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -99,9 +99,19 @@ public:
   */
   void SetType( eLoopType type);
 
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+
 protected:
   friend class ON_Hatch;
   eLoopType m_type;         // loop type flag - inner or outer
+
+public:
+  mutable ON_ComponentStatus m_status = ON_ComponentStatus::NoneSet;
+
+protected:
+  char m_reserved0 = 0;
+  char m_reserved1 = 0;
+
   ON_Curve* m_p2dCurve;     // 2d closed curve bounding the hatch
                             // This is really a 3d curve with z coordinates = 0
 };
@@ -632,6 +642,7 @@ public:
   bool Write( ON_BinaryArchive&) const override;
   bool Read( ON_BinaryArchive&) override;
   ON::object_type ObjectType() const override;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
   // ON_Geometry overrides
   /////////////////////////////////////////////////////////////////
@@ -646,6 +657,51 @@ public:
   // virtual ON_Geometry GetTightBoundingBox override		
   bool GetTightBoundingBox( class ON_BoundingBox& tight_bbox, bool bGrowBox = false, const class ON_Xform* xform = nullptr ) const override;
 
+  /////////////////////////////////////////////////////////////////
+  //
+  // Component status interface
+  //
+  //
+
+  //virtual
+  unsigned int ClearComponentStates(
+    ON_ComponentStatus states_to_clear
+  ) const override;
+
+  //virtual
+  unsigned int GetComponentsWithSetStates(
+    ON_ComponentStatus states_filter,
+    bool bAllEqualStates,
+    ON_SimpleArray< ON_COMPONENT_INDEX >& components
+  ) const override;
+
+  //virtual
+  unsigned int SetComponentStates(
+    ON_COMPONENT_INDEX component_index,
+    ON_ComponentStatus states_to_set
+  ) const override;
+
+  //virtual
+  unsigned int ClearComponentStates(
+    ON_COMPONENT_INDEX component_index,
+    ON_ComponentStatus states_to_clear
+  ) const override;
+
+  //virtual
+  unsigned int SetComponentStatus(
+    ON_COMPONENT_INDEX component_index,
+    ON_ComponentStatus status_to_copy
+  ) const override;
+
+  //virtual
+  ON_AggregateComponentStatus AggregateComponentStatus() const override;
+
+  //virtual
+  bool DeleteComponents(
+    const ON_COMPONENT_INDEX* ci_list,
+    size_t ci_count
+  ) override;
+
   /*
     Description:
       Transform the object by a 4x4 xform matrix
@@ -659,6 +715,7 @@ public:
       The object has been transformed when the function returns.
   */
   bool Transform( const ON_Xform&) override;
+
 
   /*
     Description:
@@ -827,6 +884,16 @@ public:
     true if success
   */
   bool RemoveLoop( int index);
+
+  /*
+  Description:
+    Remove multiple loops in the hatch
+  Parameters:
+    loop_indices - [in] zero based indices of the loops to remove.
+  Returns:
+    true if success
+  */
+  bool RemoveLoops(ON_SimpleArray<int> loop_indices);
 
   /*
   Description:

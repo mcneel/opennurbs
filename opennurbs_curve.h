@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -81,7 +81,7 @@ public:
 /// should are a "kink." It also provides functions for determining
 /// if there is a kink at a specific curve parameter.
 /// </summary>
-class ON_WIP_CLASS ON_CurveKinkDefinition
+class ON_CLASS ON_CurveKinkDefinition
 {
 public:
   ON_CurveKinkDefinition() = default;
@@ -92,32 +92,14 @@ public:
   /// <summary>
   /// Create a ON_CurveKinkDefinition with specified settings.
   /// </summary>
-  /// <param name="polyline_tangent_kink_angle_degrees">
-  /// 0 &lt;= polyline_tangent_kink_angle_degrees &lt;= 180.
+  /// <param name="kink_angle_degrees">
+  /// 0 &lt;= kink_angle_degrees &lt;= 180.
   /// Values &gt; 180 are treated as 180 and 
   /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees.
   /// If a curve is a polyline and the angle (in degrees) between the tangents 
   /// at a tangent discontinuity is &gt; polyline_tangent_kink_angle_degrees, 
   /// then that discontinuity is treated as a kink.
   /// In particular, passing 180.0 disables tangent discontinuity checks for polyline curves.
-  /// </param>
-  /// <param name="curve_tangent_kink_angle_degrees">
-  /// 0 &lt;= curve_tangent_kink_angle_degrees &lt;= 180.
-  /// Values &gt; 180 are treated as 180 and 
-  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees.
-  /// If a curve is not a polyline and the angle (in degrees) between the tangents 
-  /// at a tangent discontinuity is &gt; curve_tangent_kink_angle_degrees, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing 180.0 disables tangent discontinuity checks for curves that are not polylines.
-  /// </param>
-  /// <param name="curvature_kink_angle_degrees">
-  /// 0 &lt;= curvature_kink_angle_degrees &lt;= 180.
-  /// Values &gt; 180 are treated as 180 and 
-  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees.
-  /// If the angle (in degrees) between curvature vector directions
-  /// at a curvature discontinuity is &gt; curvature_kink_angle_degrees, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing 180.0 disables curvature vector direction discontinuity checks.
   /// </param>
   /// <param name="curvature_kink_radius_ratio">
   /// 0 &lt;= curvature_kink_radius_ratio &lt;= 1.
@@ -130,34 +112,30 @@ public:
   /// </param>
   /// <param name="bKinkAtTangentChange">
   /// true if tangent discontinuities should be tested to determine if the tangent discontinuity is a kink.
-  /// false to ingnore tangent discontinuities.
+  /// false to ignore tangent discontinuities.
   /// </param>
   /// <param name="bKinkAtCurvatureChange">
   /// true if curvature discontinuities should be tested to determine if the curvature discontinuity is a kink.
-  /// false to ingnore curvature discontinuities.
+  /// false to ignore curvature discontinuities.
   /// </param>
   ON_CurveKinkDefinition(
-    double polyline_tangent_kink_angle_degrees,
-    double curve_tangent_kink_angle_degrees,
-    double curvature_kink_angle_degrees,
+    double kink_angle_degrees,
     double curvature_kink_radius_ratio,
     bool bKinkAtTangentChange,
     bool bKinkAtCurvatureChange
   );
 
-  static constexpr double DefaultTangentKinkAngleDegrees = 1.0;
+  static constexpr double DefaultKinkAngleDegrees = 1.0;
 
-  static constexpr double DefaultTangentKinkAngleRadians = 1.0 * ON_DEGREES_TO_RADIANS;
-
-  static constexpr double DefaultPolylineTangentKinkAngleDegrees = 5.0;
-
-  static constexpr double DefaultPolylineTangentKinkAngleRadians = 5.0 * ON_DEGREES_TO_RADIANS;
-
-  static constexpr double DefaultCurvatureKinkAngleDegrees = 5.0;
-
-  static constexpr double DefaultCurvatureKinkAngleRadians = 5.0 * ON_DEGREES_TO_RADIANS;
+  static constexpr double DefaultKinkAngleRadians = 1.0 * ON_DEGREES_TO_RADIANS;
 
   static constexpr double DefaultCurvatureKinkRadiusRatio = 0.75;
+
+  static constexpr double SmallCurvatureKinkRadiusRatio = 0.999;
+
+  static constexpr double MediumCurvatureKinkRadiusRatio = 0.75;
+
+  static constexpr double LargeCurvatureKinkRadiusRatio = 0.5;
 
   /// <summary>
   /// DefaultCurvatureKinkZeroTolerance is the default value for
@@ -182,15 +160,36 @@ public:
   static const ON_CurveKinkDefinition DefaultTangentKink;
 
   /// <summary>
-  /// DefaultCurvatureKink is used to detect typical unit tangent discontinuties and 
-  /// typical vector curvature discontinuties.
-  /// The angles used for testing tangent discontinuities are 
-  /// DefaultPolylineTangentKinkAngleDegrees for polylines and 
-  /// DefaultTangentKinkAngleDegrees for all other curves.
-  /// The angle used for testing curvature vector direction discontinuties is DefaultCurvatureKinkAngleDegrees.
-  /// The ratio used for testing curvature radius discontinuities is DefaultCurvatureKinkRadiusRatio.
+  /// DefaultCurvatureKink = MediumCurvatureKink.
   /// </summary>
   static const ON_CurveKinkDefinition DefaultCurvatureKink;
+
+  /// <summary>
+  /// SmallCurvatureKink is used to detect typical unit tangent discontinuties and 
+  /// small vector curvature discontinuties.
+  /// The angle used for testing tangent discontinuities is DefaultKinkAngleDegrees.
+  /// The angle used for testing curvature vector direction discontinuties is DefaultKinkAngleDegrees.
+  /// The ratio used for testing curvature radius discontinuities is SmallCurvatureKinkRadiusRatio.
+  /// </summary>
+  static const ON_CurveKinkDefinition SmallCurvatureKink;
+
+  /// <summary>
+  /// MediumCurvatureKink is used to detect typical unit tangent discontinuties and 
+  /// medium vector curvature discontinuties.
+  /// The angle used for testing tangent discontinuities is DefaultKinkAngleDegrees.
+  /// The angle used for testing curvature vector direction discontinuties is DefaultKinkAngleDegrees.
+  /// The ratio used for testing curvature radius discontinuities is MediumCurvatureKinkRadiusRatio.
+  /// </summary>
+  static const ON_CurveKinkDefinition MediumCurvatureKink;
+
+  /// <summary>
+  /// LargeCurvatureKink is used to detect typical unit tangent discontinuties and 
+  /// large vector curvature discontinuties.
+  /// The angle used for testing tangent discontinuities is DefaultKinkAngleDegrees.
+  /// The angle used for testing curvature vector direction discontinuties is DefaultKinkAngleDegrees.
+  /// The ratio used for testing curvature radius discontinuities is LargeCurvatureKinkRadiusRatio.
+  /// </summary>
+  static const ON_CurveKinkDefinition LargeCurvatureKink;
 
   /// <summary>
   /// Returns a hash of the settings used to determine if a discontinuity is a kink.
@@ -228,38 +227,36 @@ public:
 
   /// <returns>
   /// Returns true if tangent discontinuities should be tested when finding kinks.
-  /// The angle used for testing polylines is TangentKinkAngleDegrees(true).
-  /// The angle used for testing curves that are not polylines is TangentKinkAngleDegrees(false).
+  /// The angle used for testing is KinkAngleDegrees().
   /// </returns>
   bool KinkAtTangentChange() const;
 
   /// <param name="bKinkAtTangentChange">
   /// If true, finding kinks at tangent discontinuities is enabled. 
   /// If the kink angles are not set, then 
-  /// ON_CurveKinkDefinition::DefaultCurveTangentKinkAngleDegrees and 
-  /// ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees are used.
+  /// ON_CurveKinkDefinition::DefaultKinkAngleDegrees is used.
   /// If false, then tangent discontinuities are ignored when finding kinks.
-  /// The current values of TangentKinkAngleDegrees(true) and TangentKinkAngleDegrees(false) are not changed.
+  /// The current value of KinkAngleDegrees() is not changed.
   /// </param>
   void SetKinkAtTangentChange(bool bKinkAtTangentChange);
 
   /// <summary>
   /// ClearKinkAtTangentChange() disables finding kinks at tangent discontinuities.
-  /// The current values of TangentKinkAngleDegrees(true) and TangentKinkAngleDegrees(false) are not changed.
+  /// The current value of KinkAngleDegrees() is not changed.
   /// </summary>
   void ClearKinkAtTangentChange();
 
   /// <returns>
   /// Returns true if curvature discontinuities should be tested when finding kinks.
-  /// The angle used vector curvature direction discontinuities is CurvatureKinkAngleDegrees().
-  /// The ratio used fo radius of curvature discontinuities is CurvatureKinkRadiusRatio().
+  /// The angle used vector curvature direction discontinuities is KinkAngleDegrees().
+  /// The ratio used for radius of curvature discontinuities is CurvatureKinkRadiusRatio().
   /// </returns>
   bool KinkAtCurvatureChange() const;
 
   /// <param name="bKinkAtTangentChange">
   /// If true, finding kinks at curvature discontinuities is enabled. 
   /// If the curvature parameters are not set, then 
-  /// ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees and 
+  /// ON_CurveKinkDefinition::DefaulteKinkAngleDegrees and 
   /// ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio are used.
   /// If false, then curvature discontinuities are ignored when finding kinks.
   /// The current values of CurvatureKinkAngleDegrees() and CurvatureKinkRadiusRatio() are not changed.
@@ -305,7 +302,7 @@ public:
   /// <returns>
   /// True if the angle between tangent_from_below and tangent_from_above is &gt; TangentKinkAngleDegrees(bCurveIsPolyline),
   /// </returns>
-  bool IsTangentKink(ON_3dVector tangent_from_below, ON_3dVector tangent_from_above, bool bCurveIsPolyline) const;
+  bool IsTangentKink(ON_3dVector tangent_from_below, ON_3dVector tangent_from_above) const;
 
   /// <returns>
   /// True if there is a curvature discontinuity at curve(t) that passes the curvature kink test.
@@ -314,8 +311,6 @@ public:
 
   /// <returns>
   /// </returns>
-
-
 
   /// <summary>
   /// True if the angle between curvature_from_below and curvature_from_above is &gt; CurvatureKinkAngleDegrees()
@@ -336,111 +331,50 @@ public:
   bool IsCurvatureKink(ON_3dVector curvature_from_below, ON_3dVector curvature_from_above) const;
 
   /// <summary>
-  /// The angle, in degrees,  used to determine if a tangent discontinuity in a curve is a kink.
-  /// Note that tangent kinks are only reported when KinkAtTangentChange() is true.
-  /// If the tangent kink angles have not be explicitly set, then the values
-  /// ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees and
-  /// ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees are used.
+  /// The angle, in degrees, used to determine if when an abrupt change in tangent or curvature vector
+  /// direction is a kink.
   /// </summary>
-  /// <param name="bDefaultToCurveAngle">
-  /// If ture curve in quetion is a polyline and you want to use different angle definitions for tangent kinks in polylines,
-  /// then pass bCurveIsPolyline = true.
-  /// </param>
   /// <returns>
-  /// The tangent kink angle in degrees. 
+  /// The kink angle in degrees. 
   /// </returns>
-  double TangentKinkAngleDegrees(bool bCurveIsPolyline) const;
+  double KinkAngleDegrees() const;
 
   /// <summary>
-  /// The angle, in radians,  used to determine if a tangent discontinuity in a curve is a kink.
-  /// Note that tangent kinks are only reported when KinkAtTangentChange() is true.
-  /// If the tangent kink angles have not be explicitly set, then the values
-  /// ON_CurveKinkDefinition::DefaultTangentKinkAngleRadians and
-  /// ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleRadians are used.
+  /// The angle, in radians, used to determine if when an abrupt change in tangent or curvature vector
+  /// direction is a kink.
   /// </summary>
-  /// <param name="bDefaultToCurveAngle">
-  /// If ture curve in quetion is a polyline and you want to use different angle definitions for tangent kinks in polylines,
-  /// then pass bCurveIsPolyline = true.
-  /// </param>
   /// <returns>
   /// The tangent kink angle in radians. 
   /// </returns>
-  double TangentKinkAngleRadians(bool bCurveIsPolyline) const;
+  double KinkAngleRadians() const;
 
   /// <summary>
-  /// Set the angles used to determine if a tangent discontinuity should be a kink.
+  /// The angle, in degrees, used to determine if when an abrupt change in tangent or curvature vector
+  /// direction is a kink.
   /// </summary>
-  /// <param name="polyline_kink_angle_degrees">
-  /// 0 &lt;= polyline_kink_angle_degrees &lt;= 180.
+  /// <param name="kink_angle_degrees">
+  /// 0 &lt;= kink_angle_degrees &lt;= 180.
   /// Values &gt; 180 are treated as 180 and 
-  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees.
-  /// If a curve is a polyline and the angle (in degrees) between the tangents 
-  /// at a tangent discontinuity is &gt; polyline_kink_angle_degrees, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing 180.0 disables tangent discontinuity checks for polyline curves.
+  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultKinkAngleDegrees.
   /// </param>
-  /// <param name="curve_kink_angle_degrees">
-  /// 0 &lt;= curve_kink_angle_degrees &lt;= 180.
+  void SetKinkAngleDegrees(double kink_angle_degrees);
+
+  /// <summary>
+  /// The angle, in radians, used to determine if when an abrupt change in tangent or curvature vector
+  /// direction is a kink.
+  /// </summary>
+  /// <param name="kink_angle_radians">
+  /// 0 &lt;= kink_angle_radians &lt;= 180.
   /// Values &gt; 180 are treated as 180 and 
-  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees.
-  /// If a curve is not a polyline and the angle (in degrees) between the tangents 
-  /// at a tangent discontinuity is &gt; curve_kink_angle_degrees, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing 180.0 disables tangent discontinuity checks for curves that are not polylines.
+  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultKinkAngleRadians.
   /// </param>
-  void SetTangentKinkDefinitionDegrees(double polyline_kink_angle_degrees, double curve_kink_angle_degrees);
+  void SetKinkAngleRadians(double kink_angle_radians);
+
 
   /// <summary>
-  /// Set the angles used to determine if a tangent discontinuity should be a kink.
+  /// Clears any customized kink angle.
   /// </summary>
-  /// <param name="polyline_kink_angle_radians">
-  /// 0 &lt;= polyline_kink_angle_radians &lt;= ON_PI.
-  /// Values &gt; ON_PI are treated as ON_PI and 
-  /// other values outside the [0,ON_PI] are treated as ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleRadians.
-  /// If a curve is a polyline and the angle (in radians) between the tangents 
-  /// at a tangent discontinuity is &gt; polyline_kink_angle_radians, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing ON_PI disables tangent discontinuity checks for polyline curves.
-  /// </param>
-  /// <param name="curve_kink_angle_radians">
-  /// 0 &lt;= curve_kink_angle_radians &lt;= ON_PI.
-  /// Values &gt; ON_PI are treated as ON_PI and 
-  /// other values outside the [0,ON_PI] are treated as ON_CurveKinkDefinition::DefaultTangentKinkAngleRadians.
-  /// If a curve is not a polyline and the angle (in degrees) between the tangents 
-  /// at a tangent discontinuity is &gt; curve_kink_angle_radians, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing ON_PI.0 disables tangent discontinuity checks for curves that are not polylines.
-  /// </param>
-  void SetTangentKinkDefinitionRadians(double polyline_kink_angle_radians, double curve_kink_angle_radians);
-
-  /// <summary>
-  /// Clears any customized the curve and polyline tangent kink angles.
-  /// ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees and
-  /// ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees will be used.
-  /// </summary>
-  void ClearTangentKinkAngle();
-
-  /// <summary>
-  /// If the angle (in degrees) between curvature vector directions
-  /// at a curvature discontinuity is &gt; CurvatureKinkAngleDegrees(), 
-  /// then that curvature discontinuity is treated as a kink.
-  /// In particular, if CurvatureKinkAngleDegrees() = 180.0, then curvature vector direction discontinuity checks are disabled.
-  /// </summary>
-  /// <returns>
-  /// The angle used to test for curvature vector direction kinks.
-  /// </returns>
-  double CurvatureKinkAngleDegrees() const;
-
-  /// <summary>
-  /// If the angle (in radians) between curvature vector directions
-  /// at a curvature discontinuity is &gt; CurvatureKinkAngleRadians(), 
-  /// then that curvature discontinuity is treated as a kink.
-  /// In particular, if CurvatureKinkAngleRadians() = ON_PI, then curvature vector direction discontinuity checks are disabled.
-  /// </summary>
-  /// <returns>
-  /// The angle used to test for curvature vector direction kinks.
-  /// </returns>
-  double CurvatureKinkAngleRadians() const;
+  void ClearKinkAngle();
 
   /// <summary>
   /// If the ratio (minimum radius of curvature)/(maximum radius of curvature) 
@@ -449,7 +383,7 @@ public:
   /// In particular, if CurvatureKinkRadiusRatio() = 0, then curvature radius discontinuity checks are disabled.
   /// </summary>
   /// <returns>
-  /// The angle used to test for curvature vector direction kinks.
+  /// The ratio used to test for curvature vector kinks.
   /// </returns>
   double CurvatureKinkRadiusRatio() const;
 
@@ -466,15 +400,6 @@ public:
   /// <returns></returns>
   double CurvatureKinkZeroTolerance() const;
 
-  /// <param name="curvature_kink_angle_degrees">
-  /// 0 &lt;= curvature_kink_angle_degrees &lt;= 180.
-  /// Values &gt; 180 are treated as 180 and 
-  /// other values outside the [0,180] are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees.
-  /// If the angle (in degrees) between curvature vector directions
-  /// at a curvature discontinuity is &gt; curvature_kink_angle_degrees, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing 180.0 disables curvature vector direction discontinuity checks.
-  /// </param>
   /// <param name="curvature_kink_radius_ratio">
   /// 0 &lt;= curvature_kink_radius_ratio &lt;= 1.
   /// Values &gt; 1 are treated as 1 and 
@@ -484,31 +409,7 @@ public:
   /// then that discontinuity is treated as a kink. 
   /// In particular, passing 0.0 disables curvature radius discontinuity checks.
   /// </param>
-  void SetCurvatureKinkDefinitionDegrees(
-    double curvature_kink_angle_degrees,
-    double curvature_kink_radius_ratio
-  );
-
-  /// <param name="curvature_kink_angle_radians">
-  /// 0 &lt;= curvature_kink_angle_radians &lt;= ON_PI.
-  /// Values &gt; ON_PI are treated as ON_PI and 
-  /// other values outside the [0,ON_PI] are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkAngleRadians.
-  /// If the angle (in radians) between curvature vector directions
-  /// at a curvature discontinuity is &gt; curvature_kink_angle_radians, 
-  /// then that discontinuity is treated as a kink.
-  /// In particular, passing ON_PI disables curvature vector direction discontinuity checks.
-  /// </param>
-  /// <param name="curvature_kink_radius_ratio">
-  /// 0 &lt;= curvature_kink_radius_ratio &lt;= 1.
-  /// Values &gt; 1 are treated as 1 and 
-  /// other values outside the [0,1] are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio.
-  /// If the ratio (minimum radius of curvature)/(maximum radius of curvature) 
-  /// at a curvature discontinuity is &lt; curvature_kink_radius_ratio, 
-  /// then that discontinuity is treated as a kink. 
-  /// In particular, passing 0.0 disables curvature radius discontinuity checks.
-  /// </param>
-  void SetCurvatureKinkDefinitionRadians(
-    double curvature_kink_angle_radians,
+  void SetCurvatureKinkRadiusRatio(
     double curvature_kink_radius_ratio
   );
 
@@ -518,14 +419,14 @@ public:
   /// are independent of scale. The default value
   /// ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance &gt; 0. 
   /// If you know of a finite radius R that should be considered flat,
-  /// the calling SetCurvatureKinkZeroTolerance(1.0/R) is a reasonable thing
+  /// then calling SetCurvatureKinkZeroTolerance(1.0/R) is a reasonable thing
   /// to consider. If you want a "mathematically perfect" scale independent
   /// test, then call SetCurvatureKinkZeroTolerance(0) to disable this
   /// test that is useful in many typical modeling situations.
   /// </summary>
   /// <param name="curvature_zero_tolerance">
   /// 0 &lt;= curvature_zero_tolerance
-  /// Negative and nonfinite values are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance.
+  /// Negative and non-finite values are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance.
   /// If the length of a curvature vector is &lt;= curvature_zero_tolerance,
   /// then that curvature is treated as zero.
   /// In particular, passing 0.0 disables curvature zero tolerance checks.
@@ -535,27 +436,40 @@ public:
   );
 
   /// <summary>
-  /// Clears any customized the curature kink settings.
-  /// ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees,
-  /// ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio and
-  /// ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance
-  /// will be used.
+  /// Calculates the curvature radius ratio and the angle between the two curvature vectors.
   /// </summary>
-  void ClearCurvatureKinkDefinition();
+  /// <param name="k0"></param>
+  /// <param name="k1"></param>
+  /// <param name="curvatureRadiusRatio"></param>
+  /// <param name="angleDegrees">If one or both of the vectors have zero length, this returns ON_UNSET_VALUE</param>
+  /// <returns>True if calculation is successful</returns>
+  bool ComputeCurvatureRadiusRatio(const ON_3dVector& k0, const ON_3dVector& k1, double& curvatureRadiusRatio, double& angleDegrees) const;
+
+  /// <summary>
+  /// Returns true if the curvature vector is considered to be zero given the 
+  /// ON_CurveKinkDefinition::CurvatureKinkZeroTolerance
+  /// </summary>
+  /// <param name="K"></param>
+  /// <returns></returns>
+  bool IsCurvatureZero(const ON_3dVector& K) const;
+
+  /// <summary>
+  /// Returns true if the curvature value is considerd to be zero given the
+  /// ON_CurveKinkDefinition::CurvatureKinkZeroTolerance
+  /// </summary>
+  /// <param name="kappa"></param>
+  /// <returns></returns>
+  bool IsCurvatureZero(double kappa) const;
+
+  /// <summary>
+  /// Clears any customized the curature kink radius ratio.
+  /// </summary>
+  void ClearCurvatureKinkRadiusRatio();
 
 private:
 
   // Optional custom angle to use instead of DefaultTangentKinkAngleDegrees.
-  double m_tangent_kink_angle_degrees = ON_DBL_QNAN;
-
-  // Optional custom angle to use instead of DefaultPolylineTangentKinkAngleDegrees.
-  double m_polyline_tangent_kink_angle_degrees = ON_DBL_QNAN;
-
-  /// <summary>
-  /// If the angle between the curvature vectors is &gt; m_curvature_kink_angle_degrees,
-  /// then the curvature change is a curvature kink.
-  /// </summary>
-  double m_curvature_kink_angle_degrees = ON_DBL_QNAN;
+  double m_kink_angle_degrees = ON_DBL_QNAN;
 
   /// <summary>
   /// Optional custom ratio to use instead of DefaultCurvatureKinkRadiusRatio.
@@ -584,11 +498,12 @@ private:
   bool m_bKinkAtCurvatureChange = false;
 
 private:
-  ON__UINT16 m_reserved2 = 0;
-  ON__UINT32 m_reserved3 = 0;
+  ON__UINT16 m_reserved1 = 0;
+  ON__UINT32 m_reserved2 = 0;
+  ON__UINT64 m_reserved3 = 0;
   ON__UINT64 m_reserved4 = 0;
+  ON__UINT64 m_reserved5 = 0;
 };
-
 
 
 /*
@@ -1529,7 +1444,7 @@ public:
   Returns 
     true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
-    - The length of the the line segment from the span's initial 
+    - The length of the line segment from the span's initial 
       point to the span's control point is >= min_length.
     - The maximum distance from the line segment to the span
     is <= tolerance and the span increases monotonically
@@ -1876,6 +1791,7 @@ bool ON_ForceMatchCurveEnds(
                             int end1
                             );
 
+
 /*
 OBSOLETE. Use int ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
                                 ON_SimpleArray<ON_Curve*>& OutCurves,
@@ -1980,6 +1896,33 @@ bool ON_SortCurveEnds(const ON_SimpleArray<const ON_Curve*>& InCurves,
   ON_SimpleArray<int>& Singles
 );
 
+/*
+Description:
+  Sorts curve ends - this is the first step of joining curves.
+Parameters:
+  InCurves - [in] Array of curves to be sorted. These curves should be open (this is NOT checked) and not null.
+  join_tol - [in] Distance tolerance used to decide if endpoints are close enough
+  kink_tol - [in] Angle in radians.  If > 0.0, then curves within join_tol will only be joined if the angle between them
+                  is less than kink_tol. If <= 0, then the angle will be ignored and only join_tol will be used.
+  bUseTanAngle - [in] If true, choose the best match using angle between tangents.
+                      If false, best match is the closest. This is used whether or not kink_tol is positive.
+  bPreserveDirection - [in] If true, curve endpoints will be compared to curve startpoints.
+                            If false, all start and endpoints will be compared, and copies of input
+                            curves may be reversed in output.
+  SegsArray - [out] The array of curve join segments. This array is sorted in the way that the curves are oriented
+                    head-to-tail. Which end is head and which is tail is determined by the bRev parameter of each segment
+  Singles -   [out] An array of unjoinable curves. These do not overlap with any other curve within the given tolerance.
+Returns:
+  True on success, false when the input is not valid.
+*/
+ON_DECL
+bool ON_SortCurveEnds(const ON_SimpleArray<ON_Curve*>& InCurves,
+  double join_tol, double kink_tol,
+  bool bUseTanAngle,
+  bool bPreserveDirection,
+  ON_ClassArray<ON_SimpleArray<CurveJoinSeg> >& SegsArray,
+  ON_SimpleArray<int>& Singles
+);
 
 /*
 Description:

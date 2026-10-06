@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -335,7 +335,7 @@ public:
 
 private:
   ON_Evaluator(); // prohibit default constructor
-  ON_Evaluator& operator=(const ON_Evaluator&); // prohibit operator= (can't copy const members)
+  ON_Evaluator& operator=(const ON_Evaluator&) = delete; // prohibit operator= (can't copy const members)
 };
 
 /*
@@ -934,7 +934,7 @@ Returns:
   nullptr is returned.
 Remarks:
   The ids are invariant under invertable transformations.  
-  Specifically, if one point point set is a rotation of another, then
+  Specifically, if one point set is a rotation of another, then
   the assigned ids will be the same.
 */
 ON_DECL
@@ -1065,8 +1065,8 @@ int ON_Solve2x2(
 //   Solves a system of 3 linear equations and 2 unknowns.
 //
 //          x*col0[0] + y*col1[0] = d0
-//          x*col0[1] + y*col1[1] = d0
-//          x*col0[2] + y*col1[2] = d0
+//          x*col0[1] + y*col1[1] = d1
+//          x*col0[2] + y*col1[2] = d2
 //
 // Parameters:
 //   col0 - [in] coefficients for "x" unknown
@@ -1089,15 +1089,15 @@ int ON_Solve2x2(
 //         = (d0,d1,d2).
 ON_DECL
 int ON_Solve3x2( 
-        const double[3], // col0
-        const double[3], // col1
-        double,  // d0
-        double,  // d1
-        double,  // d2
-        double*, // x
-        double*, // y
-        double*, // error
-        double*  // pivot_ratio
+        const double col0[3],
+        const double col1[3],
+        double d0,
+        double d1,
+        double d2,
+        double*x,
+        double*y,
+        double*error,
+        double*pivot_ratio
         );
 
 /* 
@@ -1448,22 +1448,116 @@ bool ON_EvCurvature1Der(
   double* torsion);       // torsion 
 
 
+/// <summary>
+/// Evaluate the principal curvatures from surface partial derivatives 
+/// and a surface normal.
+/// </summary>
+/// <param name="Ds"></param>
+/// <param name="Dt"></param>
+/// <param name="Dss"></param>
+/// <param name="Dst"></param>
+/// <param name="Dtt"></param>
+/// <param name="N"></param>
+/// <param name="gaussian">
+/// If gaussian is not nullptr, then it is set to the Gaussian curvature = kappa1*kappa2
+/// </param>
+/// <param name="mean">
+/// If mean is not nullptr, then it is set to the mean curvature = (kappa1+kappa2)/2
+/// </param>
+/// <param name="kappa1">
+/// If kappa1 is not nullptr, then it is the largest (in absolute value) 
+/// principal curvature value. Note kappa1 may be negative.
+/// </param>
+/// <param name="kappa2">
+/// If kappa2 is not nullptr, then it is the smallest (in absolute value) 
+/// principal curvature value. Note kappa2 may be negative.
+/// </param>
+/// <param name="K1">
+/// kappa1 unit principal curvature direction. K1 is perpindicular to N and K2.
+/// (K1, K2, N) will form a right handed frame.
+/// </param>
+/// <param name="K2">
+/// kappa2 unit principal curvature direction. K2 is perpindicular to N and K1.
+/// (K1, K2, N) will form a right handed frame.
+/// </param>
+/// <returns>
+/// True if the principal curvatures could be calculated or approximated.
+/// False otherwise.
+/// </returns>
 ON_DECL
 bool ON_EvPrincipalCurvatures( 
-        const ON_3dVector&, // Ds,
-        const ON_3dVector&, // Dt,
-        const ON_3dVector&, // Dss,
-        const ON_3dVector&, // Dst,
-        const ON_3dVector&, // Dtt,
-        const ON_3dVector&, // N,   // unit normal to surface (use ON_EvNormal())
-        double*, // gauss,  // = Gaussian curvature = kappa1*kappa2
-        double*, // mean,   // = mean curvature = (kappa1+kappa2)/2
-        double*, // kappa1, // = largest (in absolute value) principal curvature value (may be negative)
-        double*, // kappa2, // = smallest (in absolute value) principal curvature value (may be negative)
-        ON_3dVector&, // K1,     // kappa1 unit principal curvature direction
-        ON_3dVector&  // K2      // kappa2 unit principal curvature direction
-                        // output K1,K2,N is right handed frame
+        const ON_3dVector& Ds,
+        const ON_3dVector& Dt,
+        const ON_3dVector& Dss,
+        const ON_3dVector& Dst,
+        const ON_3dVector& Dtt,
+        const ON_3dVector& N,
+        double* guassian,
+        double* mean,
+        double* kappa1,
+        double* kappa2,
+        ON_3dVector& K1,
+        ON_3dVector&  K2
         );
+
+/// <summary>
+/// Estimate the principal curvatures from surface partial derivatives and a surface normal. 
+/// This is typically done when ON_EvPrincipalCurvatures() fails and an estimate is better 
+/// than nothing.
+/// </summary>
+/// <param name="sample_count">
+/// The number of samples to use in the approximation. When in doubt,
+/// pass 0 and the default sample count will be used.
+/// </param>
+/// <param name="Ds"></param>
+/// <param name="Dt"></param>
+/// <param name="Dss"></param>
+/// <param name="Dst"></param>
+/// <param name="Dtt"></param>
+/// <param name="N"></param>
+/// <param name="gaussian">
+/// If gaussian is not nullptr, then it is set to the Gaussian curvature = kappa1*kappa2
+/// </param>
+/// <param name="mean">
+/// If mean is not nullptr, then it is set to the mean curvature = (kappa1+kappa2)/2
+/// </param>
+/// <param name="kappa1">
+/// If kappa1 is not nullptr, then it is the largest (in absolute value) 
+/// principal curvature value. Note kappa1 may be negative.
+/// </param>
+/// <param name="kappa2">
+/// If kappa2 is not nullptr, then it is the smallest (in absolute value) 
+/// principal curvature value. Note kappa2 may be negative.
+/// </param>
+/// <param name="K1">
+/// kappa1 unit principal curvature direction. K1 is perpindicular to N and K2.
+/// (K1, K2, N) will form a right handed frame.
+/// </param>
+/// <param name="K2">
+/// kappa2 unit principal curvature direction. K2 is perpindicular to N and K1.
+/// (K1, K2, N) will form a right handed frame.
+/// </param>
+/// <returns>
+/// True if the principal curvatures could be calculated or approximated.
+/// False otherwise.
+/// </returns>
+ON_DECL
+bool ON_EstimatePrincipalCurvatures(
+  int sample_count,
+  const ON_3dVector& Ds,
+  const ON_3dVector& Dt,
+  const ON_3dVector& Dss,
+  const ON_3dVector& Dst,
+  const ON_3dVector& Dtt,
+  const ON_3dVector& N,
+  double* gaussian,
+  double* mean,
+  double* kappa1,
+  double* kappa2,
+  ON_3dVector& K1,
+  ON_3dVector& K2
+);
+
 
 ON_DECL
 bool ON_EvPrincipalCurvatures( 
@@ -1516,13 +1610,13 @@ bool ON_EvSectionalCurvature(
 
 ON_DECL
 ON_3dVector ON_NormalCurvature( 
-        const ON_3dVector&, // surface 1rst partial (Ds)
-        const ON_3dVector&, // surface 1rst partial (Dt)
-        const ON_3dVector&, // surface 1rst partial (Dss)
-        const ON_3dVector&, // surface 1rst partial (Dst)
-        const ON_3dVector&, // surface 1rst partial (Dtt)
-        const ON_3dVector&, // surface unit normal
-        const ON_3dVector&  // unit tangent direction
+        const ON_3dVector& S10,
+        const ON_3dVector& S01,
+        const ON_3dVector& S20,
+        const ON_3dVector& S11,
+        const ON_3dVector& S02,
+        const ON_3dVector& UnitNormal,  
+        const ON_3dVector& UnitTangent
         );
 
 /*

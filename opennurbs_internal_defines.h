@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -58,7 +58,7 @@ bool GetEntireDecalXML(const ON_3dmObjectAttributes& attr, ON_XMLRootNode& xmlOu
 void CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version);
 void CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version);
 bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version);
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, int archive_3dm_version);
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier& mm, int archive_3dm_version);
 bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
 
 template <class T> inline T Lerp(float  t, const T& l, const T& h) { return l + T(t) * (h - l); }
@@ -107,26 +107,31 @@ public:
 class ON_DecalCollection final
 {
 public:
-  ON_DecalCollection(ON_3dmObjectAttributes* attr);
+  ON_DecalCollection(ON_3dmObjectAttributes& attr);
   ON_DecalCollection(const ON_DecalCollection& dc) = delete;
   ~ON_DecalCollection();
 
   const ON_DecalCollection& operator = (const ON_DecalCollection& dc);
 
+  std::shared_ptr<ON_Decal> AddDecal(void);
+  bool RemoveDecal(const ON_Decal&);
+  void RemoveAllDecals(void);
   void ClearDecalArray(void);
-  const ON_SimpleArray<ON_Decal*>& GetDecalArray(void);
-
+  const std::vector<std::shared_ptr<ON_Decal>>& GetDecalArray(void);
   void SetChanged(void);
-
   void InvalidateCache(void);
+
+  static bool FastHasDecals(const ON_3dmObjectAttributes& attr);
 
 private:
   void Populate(void);
   int  FindDecalIndex(const ON_DECAL_CRC decal_crc) const;
 
 private:
-  ON_3dmObjectAttributes* m_attr;
-  mutable ON_SimpleArray<ON_Decal*> m_decals;
+  mutable std::recursive_mutex _mutex;
+  ON_3dmObjectAttributes& m_attr;
+  mutable ON_XMLRootNode m_root_node;
+  mutable std::vector<std::shared_ptr<ON_Decal>> m_decals;
   mutable bool m_cache_valid = false;
   mutable bool m_changed = false;
 };
@@ -137,22 +142,8 @@ template<class T> inline void hash_combine(size_t& seed, const T& v)
 	seed ^= hasher(v) + 0x9E3779B9 + (seed << 6) + (seed >> 2);
 }
 
-class UuidHasher // Hasher for using ON_UUID as key with std::map
-{
-public:
-	inline size_t operator()(const ON_UUID& uuid) const
-	{
-		size_t seed = 0;
-
-		const auto* d = reinterpret_cast<const ON__UINT32*>(&uuid);
-		::hash_combine(seed, d[0]);
-		::hash_combine(seed, d[1]);
-		::hash_combine(seed, d[2]);
-		::hash_combine(seed, d[3]);
-
-		return seed;
-	}
-};
+// Canonical ON_UUID hasher is ON_UuidHasher (opennurbs_uuid.h); aliased here.
+using UuidHasher = ON_UuidHasher;
 
 class ON_EnvironmentsImpl final : public ON_InternalXMLImpl
 {

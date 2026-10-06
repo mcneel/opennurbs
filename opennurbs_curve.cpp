@@ -644,34 +644,49 @@ bool ON_Curve::IsPeriodic() const
 const ON_CurveKinkDefinition ON_CurveKinkDefinition::Unset = ON_CurveKinkDefinition();
 
 const ON_CurveKinkDefinition ON_CurveKinkDefinition::DefaultTangentKink = ON_CurveKinkDefinition(
-  ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees,
-  ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees,
-  ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees,
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
   ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio,
   true,
   false
 );
 
 const ON_CurveKinkDefinition ON_CurveKinkDefinition::DefaultCurvatureKink = ON_CurveKinkDefinition(
-  ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees,
-  ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees,
-  ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees,
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
   ON_CurveKinkDefinition::DefaultCurvatureKinkRadiusRatio,
   true,
   true
 );
 
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::SmallCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::SmallCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::MediumCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::MediumCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
+const ON_CurveKinkDefinition ON_CurveKinkDefinition::LargeCurvatureKink = ON_CurveKinkDefinition(
+  ON_CurveKinkDefinition::DefaultKinkAngleDegrees,
+  ON_CurveKinkDefinition::LargeCurvatureKinkRadiusRatio,
+  true,
+  true
+);
+
 ON_CurveKinkDefinition::ON_CurveKinkDefinition(
-  double polyline_tangent_kink_angle_degrees,
-  double curve_tangent_kink_angle_degrees,
-  double curvature_kink_angle_degrees,
+  double kink_angle_degrees,
   double curvature_kink_radius_ratio,
   bool bKinkAtTangentChange,
   bool bKinkAtCurvatureChange
 )
 {
-  this->SetTangentKinkDefinitionDegrees(polyline_tangent_kink_angle_degrees, curve_tangent_kink_angle_degrees);
-  this->SetCurvatureKinkDefinitionDegrees(curvature_kink_angle_degrees, curvature_kink_radius_ratio);
+  this->SetKinkAngleDegrees(kink_angle_degrees);
+  this->SetCurvatureKinkRadiusRatio(curvature_kink_radius_ratio);
   this->SetKinkAtTangentChange(bKinkAtTangentChange);
   this->SetKinkAtCurvatureChange(bKinkAtCurvatureChange);
 }
@@ -681,12 +696,11 @@ const ON_SHA1_Hash ON_CurveKinkDefinition::Hash() const
   ON_SHA1 sha1;
   if (this->m_bKinkAtTangentChange)
   {
-    sha1.AccumulateDouble(this->TangentKinkAngleDegrees(false));
-    sha1.AccumulateDouble(this->TangentKinkAngleDegrees(true));
+    sha1.AccumulateDouble(this->KinkAngleDegrees());
   }
   if (this->m_bKinkAtCurvatureChange)
   {
-    sha1.AccumulateDouble(this->CurvatureKinkAngleDegrees());
+    sha1.AccumulateDouble(this->KinkAngleDegrees());
     sha1.AccumulateDouble(this->CurvatureKinkRadiusRatio());
     sha1.AccumulateDouble(this->CurvatureKinkZeroTolerance());
   }
@@ -707,30 +721,21 @@ const ON_wString ON_CurveKinkDefinition::ToString() const
   {
     if (bKinkAtTangentChange)
     {
-      const double pline_angle = this->TangentKinkAngleDegrees(true);
-      const double curve_angle = this->TangentKinkAngleDegrees(false);
-      if (pline_angle == curve_angle)
-        s += ON_wString::FormatToString(
-          L"Tangent kink angle = %g%c. ",
-          curve_angle,
-          ON_wString::DegreeSymbol
-        );
-      else
-        s += ON_wString::FormatToString(
-          L"Tangent kink polyline angle = %g%c and curve angle = %g%c. ",
-          pline_angle, ON_wString::DegreeSymbol,
-          curve_angle, ON_wString::DegreeSymbol
-        );
+      s += ON_wString::FormatToString(
+        L"Tangent kink angle = %g%c. ",
+        this->KinkAngleDegrees(),
+        ON_wString::DegreeSymbol
+      );
     }
     else
-      s += L"Tangnt kinks ignored. ";
+      s += L"Tangent kinks ignored. ";
 
     if (bKinkAtCurvatureChange)
     {
       s += ON_wString::FormatToString(
         L"Curvature kink radius ratio = %g, angle = %g%c, zero tolerance = %g.",
         this->CurvatureKinkRadiusRatio(),
-        this->CurvatureKinkAngleDegrees(),
+        this->KinkAngleDegrees(),
         ON_wString::DegreeSymbol,
         this->CurvatureKinkZeroTolerance()
       );
@@ -751,13 +756,13 @@ bool ON_CurveKinkDefinition::Write(class ON_BinaryArchive& archive) const
   for (;;)
   {
     // Anonymous Chunk version 0 fields
-    if (false == archive.WriteDouble(m_tangent_kink_angle_degrees))
+    if (false == archive.WriteDouble(m_kink_angle_degrees))
       break;
 
-    if (false == archive.WriteDouble(m_polyline_tangent_kink_angle_degrees))
+    if (false == archive.WriteDouble(m_kink_angle_degrees))
       break;
 
-    if (false == archive.WriteDouble(m_curvature_kink_angle_degrees))
+    if (false == archive.WriteDouble(m_kink_angle_degrees))
       break;
 
     if (false == archive.WriteDouble(m_curvature_kink_radius_ratio))
@@ -796,13 +801,15 @@ bool ON_CurveKinkDefinition::Read(class ON_BinaryArchive& archive)
       break;
 
     // Anonymous Chunk version 0 fields
-    if (false == archive.ReadDouble(&m_tangent_kink_angle_degrees))
+    if (false == archive.ReadDouble(&m_kink_angle_degrees))
       break;
 
-    if (false == archive.ReadDouble(&m_polyline_tangent_kink_angle_degrees))
+    double obsolete_polyline_tangent_kink_angle_degrees = ON_DBL_QNAN;
+    if (false == archive.ReadDouble(&obsolete_polyline_tangent_kink_angle_degrees))
       break;
 
-    if (false == archive.ReadDouble(&m_curvature_kink_angle_degrees))
+    double obsolete_curvature_kink_angle_degrees = ON_DBL_QNAN;
+    if (false == archive.ReadDouble(&obsolete_curvature_kink_angle_degrees))
       break;
 
     if (false == archive.ReadDouble(&m_curvature_kink_radius_ratio))
@@ -906,7 +913,7 @@ bool ON_CurveKinkDefinition::IsKink(const ON_Curve& curve, double t) const
   if (bExists0 != bExists1)
     return true;
 
-  if (this->m_bKinkAtTangentChange && this->IsTangentKink(T0, T1, curve.IsPolyline()))
+  if (this->m_bKinkAtTangentChange && this->IsTangentKink(T0, T1))
     return true;
 
   if (this->m_bKinkAtCurvatureChange && this->IsCurvatureKink(K0, K1))
@@ -922,7 +929,7 @@ bool ON_CurveKinkDefinition::IsTangentKink(const ON_Curve& curve, double t) cons
   return tangent_test.IsKink(curve, t);
 }
 
-bool ON_CurveKinkDefinition::IsTangentKink(ON_3dVector tangent_from_below, ON_3dVector tangent_from_above, bool bCurveIsPolyline) const
+bool ON_CurveKinkDefinition::IsTangentKink(ON_3dVector tangent_from_below, ON_3dVector tangent_from_above) const
 {
   if (false == this->m_bKinkAtTangentChange)
     return false;
@@ -933,7 +940,7 @@ bool ON_CurveKinkDefinition::IsTangentKink(ON_3dVector tangent_from_below, ON_3d
   if (false == tangent_from_below.IsValid() || false == tangent_from_above.IsValid())
     return true;
 
-  const double angle_degrees = this->TangentKinkAngleDegrees(bCurveIsPolyline);
+  const double angle_degrees = this->KinkAngleDegrees();
   if (angle_degrees >= 180.0)
     return false;
 
@@ -949,6 +956,55 @@ bool ON_CurveKinkDefinition::IsCurvatureKink(const ON_Curve& curve, double t) co
   ON_CurveKinkDefinition curvature_test(*this);
   curvature_test.m_bKinkAtTangentChange = false;
   return curvature_test.IsKink(curve, t);
+}
+
+bool ON_CurveKinkDefinition::ComputeCurvatureRadiusRatio(const ON_3dVector& K0, const ON_3dVector& K1, double& radius_ratio, double& angle_degrees) const
+{
+  double k0 = K0.Length(), k1 = K1.Length();
+
+  // initialize to unset value
+  angle_degrees = ON_UNSET_VALUE;
+  
+  // first check to see if the curvature vector should be considered zero.
+  if (IsCurvatureZero(k0)) k0 = 0;
+  if (IsCurvatureZero(k1)) k1 = 0;
+
+  const double max_kappa = (k0 >= k1) ? k0 : k1;
+  const double min_kappa = (k0 <= k1) ? k0 : k1;
+
+  if (max_kappa == 0) // both values are zero
+  {
+    radius_ratio = 1.0;
+    return true;
+  }
+
+  if (min_kappa > 0)
+  {
+    // only if both vectors have length, calculate the angle
+    angle_degrees = ON_3dVector::AngleDegrees(K0, K1);
+  }
+    
+  // NOTE WELL:
+  // (min radius of curvature)/(max radius of curvature)
+  // = (1/max_kappa)/(1/min_kappa)
+  // = min_kappa/max_kappa.
+  // In particular, the code below is correct.
+  radius_ratio = min_kappa / max_kappa;
+
+  return true;
+}
+
+bool ON_CurveKinkDefinition::IsCurvatureZero(const ON_3dVector& K) const
+{
+  return IsCurvatureZero(K.Length());
+}
+
+bool ON_CurveKinkDefinition::IsCurvatureZero(double kappa) const
+{
+  // zero_kappa_tolerance is used to decide if a small curvature should be
+  // treated as zero curvature.
+  const double zero_kappa_tolerance = CurvatureKinkZeroTolerance();
+  return kappa <= zero_kappa_tolerance;
 }
 
 bool ON_CurveKinkDefinition::IsCurvatureKink(ON_3dVector curvature_from_below, ON_3dVector curvature_from_above) const
@@ -969,74 +1025,39 @@ bool ON_CurveKinkDefinition::IsCurvatureKink(ON_3dVector curvature_from_below, O
     return true; // kappa[0] and/or kappa[1] is a nan.
 
 
-  // hueristic to find meaningful curvature changes with respect to  splitting curves at "kinks"
+  // heuristic to find meaningful curvature changes with respect to splitting curves at "kinks"
 
-
-  // zero_kappa_tolerance is used to decide if a small curvature should be 
-  // treated as zero curvature. Basically, it's silly to
-  // consider K0 = (-1e-200, 0, 0) and K1 = (1e-300, 0, 0) as
-  // a curvature kink even though the radius ration is 1e-100 and the
-  // angle is 180 degrees. The intent of zero_kappa_tolerance is to
-  // insure IsCurvatureKink() returns false in silly cases.
-  const double zero_kappa_tolerance = CurvatureKinkZeroTolerance();
-  if (kappa[0] <= zero_kappa_tolerance)
-    kappa[0] = 0.0;
-  if (kappa[1] <= zero_kappa_tolerance)
-    kappa[1] = 0.0;
-
-
-  // NOTE WELL:
-  // (min radius of curvature)/(max radius of curvature)
-  // = (1/max_kappa)/(1/min_kappa)
-  // = min_kappa/max_kappa.
-  // In particular, the code below is correct.
-  const double max_kappa = (kappa[0] >= kappa[1]) ? kappa[0] : kappa[1];
-  if (0.0 == max_kappa)
-    return false;
-  const double min_kappa = (kappa[0] <= kappa[1]) ? kappa[0] : kappa[1];
-  const double kappa_ratio = min_kappa / max_kappa;
-  if (kappa_ratio < this->CurvatureKinkRadiusRatio())
+  double kappa_ratio, angle_degrees;
+  if (!ComputeCurvatureRadiusRatio(K[0], K[1], kappa_ratio, angle_degrees))
     return true;
 
+  if (kappa_ratio >= 0.0 && kappa_ratio < 1.0 && kappa_ratio <= this->CurvatureKinkRadiusRatio()*(1.0 + ON_SQRT_EPSILON))
+    return true;
+
+  if (IsCurvatureZero(kappa[0])) kappa[0] = 0.0;
+  if (IsCurvatureZero(kappa[1])) kappa[1] = 0.0;
+  const double min_kappa = (kappa[0] <= kappa[1]) ? kappa[0] : kappa[1];
   if (min_kappa > 0.0)
   {
-    const double Kangle = ON_3dVector::AngleDegrees(K[0], K[1]);
-    if (Kangle > this->CurvatureKinkAngleDegrees())
+    if (angle_degrees > this->KinkAngleDegrees())
       return true;
   }
 
   return false;
 }
 
-double ON_CurveKinkDefinition::TangentKinkAngleDegrees(bool bCurveIsPolyline) const
+double ON_CurveKinkDefinition::KinkAngleDegrees() const
 {
-  const double a
-    = (bCurveIsPolyline && this->m_polyline_tangent_kink_angle_degrees >= 0.0 && this->m_polyline_tangent_kink_angle_degrees <= 180.0)
-    ? this->m_polyline_tangent_kink_angle_degrees
-    : this->m_tangent_kink_angle_degrees;
+  const double a = this->m_kink_angle_degrees;
   return
     (a >= 0.0 && a <= 180.0)
     ? a
-    : (bCurveIsPolyline ? ON_CurveKinkDefinition::DefaultPolylineTangentKinkAngleDegrees : ON_CurveKinkDefinition::DefaultTangentKinkAngleDegrees);
+    : ON_CurveKinkDefinition::DefaultKinkAngleDegrees;
 }
 
-double ON_CurveKinkDefinition::TangentKinkAngleRadians(bool bCurveIsPolyline) const
+double ON_CurveKinkDefinition::KinkAngleRadians() const
 {
-  return ON_RadiansFromDegrees(this->TangentKinkAngleDegrees(bCurveIsPolyline));
-}
-
-double ON_CurveKinkDefinition::CurvatureKinkAngleDegrees() const
-{
-  return
-    (this->m_curvature_kink_angle_degrees >= 0.0 && this->m_curvature_kink_angle_degrees <= 180.0)
-    ? this->m_curvature_kink_angle_degrees
-    : ON_CurveKinkDefinition::DefaultCurvatureKinkAngleDegrees;
-
-}
-
-double ON_CurveKinkDefinition::CurvatureKinkAngleRadians() const
-{
-  return ON_RadiansFromDegrees(this->CurvatureKinkAngleDegrees());
+  return ON_RadiansFromDegrees(this->KinkAngleDegrees());
 }
 
 double ON_CurveKinkDefinition::CurvatureKinkRadiusRatio() const
@@ -1056,41 +1077,28 @@ double ON_CurveKinkDefinition::CurvatureKinkZeroTolerance() const
 }
 
 
-void ON_CurveKinkDefinition::SetTangentKinkDefinitionDegrees(double polyline_kink_angle_degrees, double curve_kink_angle_degrees)
+void ON_CurveKinkDefinition::SetKinkAngleDegrees(double kink_angle_degrees)
 {
-  this->m_tangent_kink_angle_degrees
-    = (curve_kink_angle_degrees >= 0.0 && curve_kink_angle_degrees < ON_UNSET_POSITIVE_VALUE)
-    ? (curve_kink_angle_degrees < 180.0 ? curve_kink_angle_degrees : 180.0)
-    : ON_DBL_QNAN;
-  this->m_polyline_tangent_kink_angle_degrees
-    = (polyline_kink_angle_degrees >= 0.0 && polyline_kink_angle_degrees < ON_UNSET_POSITIVE_VALUE)
-    ? (polyline_kink_angle_degrees < 180.0 ? polyline_kink_angle_degrees : 180.0)
+  this->m_kink_angle_degrees
+    = (kink_angle_degrees >= 0.0 && kink_angle_degrees < ON_UNSET_POSITIVE_VALUE)
+    ? (kink_angle_degrees < 180.0 ? kink_angle_degrees : 180.0)
     : ON_DBL_QNAN;
 }
 
-void ON_CurveKinkDefinition::SetTangentKinkDefinitionRadians(double polyline_kink_angle_radians, double curve_kink_angle_radians)
+void ON_CurveKinkDefinition::SetKinkAngleRadians(double kink_angle_radians)
 {
-  this->SetTangentKinkDefinitionDegrees(
-    ON_DegreesFromRadians(polyline_kink_angle_radians),
-    ON_DegreesFromRadians(curve_kink_angle_radians)
-  );
+  this->SetKinkAngleDegrees( ON_DegreesFromRadians(kink_angle_radians) );
 }
 
-void ON_CurveKinkDefinition::ClearTangentKinkAngle()
+void ON_CurveKinkDefinition::ClearKinkAngle()
 {
-  this->m_tangent_kink_angle_degrees = ON_DBL_QNAN;
-  this->m_polyline_tangent_kink_angle_degrees = ON_DBL_QNAN;
+  this->m_kink_angle_degrees = ON_DBL_QNAN;
 }
 
-void ON_CurveKinkDefinition::SetCurvatureKinkDefinitionDegrees(
-  double curvature_kink_angle_degrees,
+void ON_CurveKinkDefinition::SetCurvatureKinkRadiusRatio(
   double curvature_kink_radius_ratio
 )
 {
-  this->m_curvature_kink_angle_degrees
-    = (curvature_kink_angle_degrees >= 0.0 && curvature_kink_angle_degrees < ON_UNSET_POSITIVE_VALUE)
-    ? (curvature_kink_angle_degrees <= 180.0 ? curvature_kink_angle_degrees : 180.0)
-    : ON_DBL_QNAN;
   this->m_curvature_kink_radius_ratio
     = (curvature_kink_radius_ratio >= 0.0 && curvature_kink_radius_ratio < ON_UNSET_POSITIVE_VALUE)
     ? (curvature_kink_radius_ratio <= 1.0 ? curvature_kink_radius_ratio : 1.0)
@@ -1107,20 +1115,8 @@ void ON_CurveKinkDefinition::SetCurvatureKinkZeroTolerance(
     : ON_DBL_QNAN;
 }
 
-void ON_CurveKinkDefinition::SetCurvatureKinkDefinitionRadians(
-  double curvature_kink_angle_radians,
-  double curvature_kink_radius_ratio
-)
+void ON_CurveKinkDefinition::ClearCurvatureKinkRadiusRatio()
 {
-  this->SetCurvatureKinkDefinitionDegrees(
-    ON_DegreesFromRadians(curvature_kink_angle_radians),
-    curvature_kink_radius_ratio
-  );
-}
-
-void ON_CurveKinkDefinition::ClearCurvatureKinkDefinition()
-{
-  this->m_curvature_kink_angle_degrees = ON_DBL_QNAN;
   this->m_curvature_kink_radius_ratio = ON_DBL_QNAN;
   this->m_curvature_kink_zero_tolerance = ON_DBL_QNAN;
 }
@@ -1135,11 +1131,10 @@ double ON_Curve::NextCurveKink(
     return not_found;
   if (false == search_domain.IsIncreasing())
     return not_found;
-  const bool bIsPolyline = this->IsPolyline();
   const bool bKinkAtTangentChange = kink_definition.KinkAtTangentChange();
   const double coskinktol
     = bKinkAtTangentChange
-    ? cos(kink_definition.TangentKinkAngleRadians(bIsPolyline))
+    ? cos(kink_definition.KinkAngleRadians())
     : -2.0;
   const ON::continuity c
     = kink_definition.KinkAtCurvatureChange()
@@ -1183,7 +1178,7 @@ double ON_Curve::NextCurveKink(
       return t;
     }
 
-    if (kink_definition.IsTangentKink(T[0], T[1], bIsPolyline))
+    if (kink_definition.IsTangentKink(T[0], T[1]))
       return t; // tangent kink
 
     if (ON::continuity::G2_continuous != c)
@@ -3144,49 +3139,35 @@ public:
   double dot_tol;
   bool bUseTan;
 };
-static bool CJEDIsMatch(const CurveJoinEndData* a, const CurveJoinEndData* b)
-
-//Do these represent a pair of possible joins in the same location?
-
-{
-  for (int i=0; i<2; i++){
-    for (int j=0; j<2; j++){
-      if (a->id[i] == b->id[j] && a->end[i] == b->end[j])
-        return true;
-    }
-  }
-  return false;
-}
-
-
 static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
 
 {
-  //The greater tan_dot is, the more tangent the ends are.  
+  //The greater tan_dot is, the more tangent the ends are.
   // Be sure that they have been adjusted for start meets start or end mets end.
   JoinEndCompareContext* context = (JoinEndCompareContext*)ctext;
   const CurveJoinEndData* a = (CurveJoinEndData*)aA;
   const CurveJoinEndData* b = (CurveJoinEndData*)bB;
 
-  //If not comparing two matches at the same end of a curve, sort by id.
-  if (!CJEDIsMatch(a, b)){
-    if (a->id[0] < b->id[0]) return -1;
-    if (a->id[0] > b->id[0]) return 1;
-    if (a->id[1] < b->id[1]) return -1;
-    if (a->id[1] > b->id[1]) return 1;
-    return 0;
-  }
+  //SortCurveEndData consumes this order greedily: it walks the sorted array once and
+  //accepts every candidate whose two endpoints are both still free. So the order has
+  //to be a single global best-first ranking. There used to be a leading test that
+  //sorted by curve id whenever the two records did not share an endpoint, which made
+  //the comparison rule depend on the pair being compared. That is not transitive, so
+  //it was not a strict weak ordering and the sorted result was whatever the sort
+  //algorithm happened to produce.
   if (context->bUseTan){
     //If one is real close and the other isn't,take the close one.
-    if (a->dist < context->dist_tol && b->dist >= context->dist_tol) return -1;
-    if (a->dist >= context->dist_tol && b->dist < context->dist_tol) return 1;
+    const bool aClose = a->dist < context->dist_tol;
+    const bool bClose = b->dist < context->dist_tol;
+    if (aClose != bClose) return aClose ? -1 : 1;
 
     //If one is tangent and the other isn't, take the tangent one.
-    if (a->tan_dot > context->dot_tol && b->tan_dot <= context->dot_tol) return -1;
-    if (a->tan_dot <= context->dot_tol && b->tan_dot > context->dot_tol) return 1;
+    const bool aTan = a->tan_dot > context->dot_tol;
+    const bool bTan = b->tan_dot > context->dot_tol;
+    if (aTan != bTan) return aTan ? -1 : 1;
 
-    //If both are close, take the more tangent one
-    if (a->dist < context->dist_tol && b->dist < context->dist_tol){
+    //If both are close, take the more tangent one. aClose == bClose here.
+    if (aClose){
       if (a->tan_dot > b->tan_dot) return -1;
       if (a->tan_dot < b->tan_dot) return 1;
     }
@@ -3196,23 +3177,22 @@ static int CompareJoinEnds(void* ctext, const void* aA, const void* bB)
       return -1;
     if (a->dist > b->dist)
       return 1;
-    if (a->id[0] < b->id[0]) return -1;
-    if (a->id[0] > b->id[0]) return 1;
-    if (a->id[1] < b->id[1]) return -1;
-    if (a->id[1] > b->id[1]) return 1;
-    return 0;
   }
   else {
     if (a->dist < b->dist) return -1;
     if (a->dist > b->dist) return 1;
-    if (a->tan_dot > b->tan_dot) return -1;
-    if (a->tan_dot < b->tan_dot) return 1;
-    if (a->id[0] < b->id[0]) return -1;
-    if (a->id[0] > b->id[0]) return 1;
-    if (a->id[1] < b->id[1]) return -1;
-    if (a->id[1] > b->id[1]) return 1;
-    return 0;
+    // do not compare tangents here
   }
+
+  //Tie break on the full record key to make this a total order. GetCurveEndData emits
+  //at most one record per (id[0], end[0], id[1], end[1]), so no two distinct records
+  //compare equal here. That keeps the sorted order unique, and therefore independent
+  //of ON_qsort, which is not stable and is not the same algorithm on every platform.
+  if (a->id[0] != b->id[0]) return (a->id[0] < b->id[0]) ? -1 : 1;
+  if (a->end[0] != b->end[0]) return (a->end[0] < b->end[0]) ? -1 : 1;
+  if (a->id[1] != b->id[1]) return (a->id[1] < b->id[1]) ? -1 : 1;
+  if (a->end[1] != b->end[1]) return (a->end[1] < b->end[1]) ? -1 : 1;
+  return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -3902,7 +3882,15 @@ static bool GetCurveEndData(const ON_SimpleArray<const ON_Curve*>& IC,
 
 {
   JoinCurveEndArray JCA;
-  if (!JCA.Create(IC, join_tol, bPreserveDirection, bUseTanAngle, (dot_tol > 0.0) ? true : false, dot_tol))
+  //Tangents have to be evaluated whenever anything downstream is going to look at
+  //them, and that is not just bUseTanAngle: a positive dot_tol means JoinEndCallback
+  //runs the kink test, which needs m_bTanOK on both ends. Deriving bGetTan from
+  //bUseTanAngle alone made kink_tol > 0 with bUseTanAngle == false reject every pair,
+  //so ON_SortCurveEnds returned true having joined nothing. ON_JoinCurves and
+  //ON_JoinPolylines already use this same expression.
+  const bool bCheckDot = (dot_tol > 0.0);
+  const bool bGetTan = (bUseTanAngle || bCheckDot);
+  if (!JCA.Create(IC, join_tol, bPreserveDirection, bGetTan, bCheckDot, dot_tol))
     return false;
   for (int i=0; i<JCA.m_Pairs.Count(); i++){
     JoinEndPair& Pair = JCA.m_Pairs[i];
@@ -4191,14 +4179,14 @@ static bool ON_SortCurveEnds(int count,
   return true;
 }
 
-// this is non-const version of the function below, used in the new version of ON_JoinCurves
-static bool ON_SortCurveEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
-  double join_tol, double kink_tol,
-  bool bUseTanAngle,
-  bool bPreserveDirection,
-  ON_ClassArray<ON_SimpleArray<CurveJoinSeg> >& SegsArray,
-  ON_SimpleArray<int>& Singles
-)
+// public api version on non-const curves
+bool ON_SortCurveEnds(const ON_SimpleArray<ON_Curve*>& IC,//Open, non-NULL
+                     double join_tol, double kink_tol,
+                     bool bUseTanAngle,
+                     bool bPreserveDirection,
+                     ON_ClassArray<ON_SimpleArray<CurveJoinSeg> >& SegsArray,
+                     ON_SimpleArray<int>& Singles
+                     )
 
 {
   ON_SimpleArray<const ON_Curve*> ICC(IC.Count());
@@ -4984,4 +4972,5 @@ bool ON_SortCurves( const ON_SimpleArray<ON_Curve*>& curves, ON_SimpleArray<int>
   bReverse.SetCount(curve_count);
   return ON_SortCurves( curve_count,curves.Array(),index.Array(),bReverse.Array());
 }
+
 

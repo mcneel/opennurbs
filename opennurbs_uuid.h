@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -604,6 +604,26 @@ const ON_wString ON_RemoveIdSuffixFromString(
   const wchar_t* separator,
   const ON_UUID id
 );
+
+/*
+Description:
+  Hash functor for using ON_UUID as a key in std::unordered_map / std::unordered_set.
+  Object ids are effectively random, so hashing the first 8 bytes gives a
+  well-distributed 64-bit hash without the cost of mixing all 16 bytes.
+Example:
+  std::unordered_map<ON_UUID, int, ON_UuidHasher> map;
+*/
+class ON_UuidHasher
+{
+public:
+  size_t operator()(const ON_UUID& uuid) const
+  {
+    // Read two 32-bit words (Data1, and Data2/Data3) with 4-byte-aligned reads -
+    // NOT a size_t* cast, since ON_UUID is only guaranteed 4-byte aligned.
+    const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&uuid.Data1);
+    return (static_cast<size_t>(d[0]) << 32) | static_cast<size_t>(d[1]);
+  }
+};
 
 
 #endif

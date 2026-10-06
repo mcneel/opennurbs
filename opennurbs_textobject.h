@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -89,8 +89,15 @@ public:
 
 
 
-  // virtual ON_Geometry GetBBox override		
+  // virtual ON_Geometry GetBBox override
   bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
+
+  // virtual ON_Geometry GetTightBoundingBox override
+  bool GetTightBoundingBox(
+    class ON_BoundingBox& tight_bbox,
+    bool bGrowBox = false,
+    const class ON_Xform* xform = nullptr
+  ) const override;
 
   bool GetAnnotationBoundingBox(
     const ON_Viewport* vp,

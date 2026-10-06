@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -183,7 +183,7 @@ public:
 
 private:
   const ON__UINT32 m_hash_table_sn;
-  ON__UINT32 m_reserved = 0;
+  mutable ON__UINT32 m_max_items = 0; //Always set to m_hash_table_capacity * target_list_length
   mutable ON__UINT32 m_hash_table_capacity = 0;
   ON__UINT32 m_item_count = 0;
   mutable class ON_Hash32TableItem** m_hash_table = nullptr;

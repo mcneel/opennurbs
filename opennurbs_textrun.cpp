@@ -24,6 +24,12 @@ class ON_TextRunPrivate
 {
 public:
   double m_linespace_scale = 1.0;
+  int m_list_depth = 1;
+  bool m_ordered_list = false;
+  int m_list_item_number = 0;
+  // Multiplier applied to m_run_text_height by ON_TextContent::Internal_SetRunTextHeight
+  // so the per-run scale survives the post-parse blanket reset.
+  double m_height_scale_factor = 1.0;
 };
 
 class ON_TextRunPool : public ON_FixedSizePool
@@ -49,7 +55,7 @@ ON_TextRun::ON_TextRun(bool bManagedTextRun)
 
 ON_TextRun* ON_TextRun::GetManagedTextRun()
 {
-  // .NET wrappers manage objects with test runs and .NET GC runs in its own thread,
+  // .NET wrappers manage objects with text runs and .NET GC runs in its own thread,
   // so text run allocation/return using the global ON_TextRunPool::thePool resource
   // must be thread safe.
   void* p = ON_TextRunPool::thePool.ThreadSafeAllocateDirtyElement();
@@ -86,7 +92,7 @@ bool ON_TextRun::ReturnManagedTextRun(
     {
       run->Internal_Destroy();
       run->m_active_status = 1;
-      // .NET wrappers manage objects with test runs and .NET GC runs in its own thread,
+      // .NET wrappers manage objects with text runs and .NET GC runs in its own thread,
       // so text run allocation/return using the global ON_TextRunPool::thePool resource
       // must be thread safe.
       ON_TextRunPool::thePool.ThreadSafeReturnElement(run);
@@ -184,6 +190,28 @@ void ON_TextRunArray::SetTextHeight(double height)
     if (nullptr == run)
       continue;
     run->SetTextHeight(height);
+  }
+}
+
+void ON_TextRunArray::SetApplyKerning(bool applyKerning)
+{
+  for (int ri = 0; ri < Count(); ri++)
+  {
+    ON_TextRun* run = m_a[ri];
+    if (nullptr == run)
+      continue;
+    run->SetApplyKerning(applyKerning);
+  }
+}
+
+void ON_TextRunArray::SetLineSpaceScale(double scale)
+{
+  for (int ri = 0; ri < Count(); ri++)
+  {
+    ON_TextRun* run = m_a[ri];
+    if (nullptr == run)
+      continue;
+    run->SetLineSpaceScale(scale);
   }
 }
 
@@ -674,6 +702,10 @@ bool ON_TextRun::IsValid() const
     break;
   }
   case RunType::kTab:
+  case RunType::kListBegin:
+  case RunType::kListEnd:
+  case RunType::kListItemBegin:
+  case RunType::kListItemEnd:
   {
     break;
   }
@@ -768,6 +800,26 @@ void ON_TextRun::SetStacked(Stacked stacked)
 void ON_TextRun::SetStackedOff()
 {
   SetStacked(Stacked::kNone);
+}
+
+bool ON_TextRun::IsSuperscript() const
+{
+  return m_text_stacked == ON_TextRun::Stacked::kTop;
+}
+
+bool ON_TextRun::IsSubscript() const
+{
+  return m_text_stacked == ON_TextRun::Stacked::kBottom;
+}
+
+void ON_TextRun::SetSuperscript()
+{
+  SetStacked(Stacked::kTop);
+}
+
+void ON_TextRun::SetSubscript()
+{
+  SetStacked(Stacked::kBottom);
 }
 
 double ON_TextRun::TextHeight() const
@@ -904,14 +956,146 @@ void ON_TextRun::SetLineSpaceScale(double scale)
 {
   if (fabs(scale - LineSpaceScale()) < ON_EPSILON)
     return;
-  
+
   Internal_ContentChanged();
   if (nullptr==m_private)
     m_private = new ON_TextRunPrivate();
   m_private->m_linespace_scale = scale;
 }
 
+double ON_TextRun::HeightScaleFactor() const
+{
+  return m_private ? m_private->m_height_scale_factor : 1.0;
+}
+void ON_TextRun::SetHeightScaleFactor(double factor)
+{
+  if (!(factor > 0.0) || !(factor <= 10.0))
+    return;
+  if (fabs(factor - HeightScaleFactor()) < ON_EPSILON)
+    return;
 
+  Internal_ContentChanged();
+  if (nullptr == m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_height_scale_factor = factor;
+}
+
+bool ON_TextRun::IsListDepthRelevant() const
+{
+  return Type() == RunType::kListItemBegin;
+}
+int ON_TextRun::ListDepth() const
+{
+  if (!IsListDepthRelevant())
+    return -1;
+  return m_private ? m_private->m_list_depth : 1;
+}
+void ON_TextRun::SetListDepth(int depth)
+{
+  if (!IsListDepthRelevant() || depth < 1)
+    return;
+  
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_list_depth = depth;
+}
+
+int ON_TextRun::ListItemNumber() const
+{
+  //if (!IsListDepthRelevant())
+  //  return -1;
+  return m_private ? m_private->m_list_item_number : 0;
+}
+void ON_TextRun::SetListItemNumber(int itemNumber)
+{
+  //if (!IsListDepthRelevant() || depth < 1)
+  //  return;
+  
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_list_item_number = itemNumber;
+}
+
+bool ON_TextRun::IsListOrdered() const
+{
+  return m_private ? m_private->m_ordered_list : false;
+}
+void ON_TextRun::SetIsListOrdered(bool ordered)
+{
+  Internal_ContentChanged();
+  if (nullptr==m_private)
+    m_private = new ON_TextRunPrivate();
+  m_private->m_ordered_list = ordered;
+}
+
+bool ON_TextRun::GetListItemPrefixString(wchar_t* buf, size_t buf_count) const
+{
+  if (nullptr == buf || buf_count < 32)
+    return false;
+  buf[0] = L'\0';
+
+  if (Type() != ON_TextRun::RunType::kListItemBegin)
+    return false;
+
+  const int list_depth = ListDepth();
+  if (IsListOrdered())
+  {
+    // Numbered list: integers at depth 1/4/7..., lowercase letters at depth 2/5/8...,
+    // lowercase roman numerals at depth 3/6/9...
+    const int item_number = ListItemNumber();
+    const int depth_style = ((list_depth - 1) % 3 + 3) % 3;
+    if (depth_style == 0)
+    {
+      swprintf(buf, buf_count, L"%d.", item_number);
+    }
+    else if (depth_style == 1)
+    {
+      // %lc / %ls (not %c / %s) so wchar_t arguments are interpreted
+      // consistently on POSIX, where the wide-format %c/%s match char.
+      const wchar_t letter = (wchar_t)(L'a' + (((item_number - 1) % 26 + 26) % 26));
+      swprintf(buf, buf_count, L"%lc.", letter);
+    }
+    else
+    {
+      static const wchar_t* const romans[] = {
+        L"i", L"ii", L"iii", L"iv", L"v", L"vi", L"vii", L"viii", L"ix", L"x",
+        L"xi", L"xii", L"xiii", L"xiv", L"xv", L"xvi", L"xvii", L"xviii", L"xix", L"xx"
+      };
+      const int roman_index = (((item_number - 1) % 20) + 20) % 20;
+      swprintf(buf, buf_count, L"%ls.", romans[roman_index]);
+    }
+  }
+  else
+  {
+    // Unordered list: bullet character cycles by (list_depth % 3).
+    const int mod = ((list_depth % 3) + 3) % 3;
+    const wchar_t* bullet_string = (mod == 1) ? L"\x2022" : (mod == 2 ? L"\x25E6" : L"\x25AA");
+    swprintf(buf, buf_count, L"%ls", bullet_string);
+  }
+  return true;
+}
+
+double ON_TextRun::MeasureListItemPrefixWidth() const
+{
+  if (Type() != ON_TextRun::RunType::kListItemBegin)
+    return 0.0;
+  const ON_Font* font = Font();
+  if (nullptr == font)
+    return 0.0;
+
+  wchar_t prefix[32] = {0};
+  if (!GetListItemPrefixString(prefix, 32) || prefix[0] == L'\0')
+    return 0.0;
+
+  ON_TextBox text_box;
+  const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(prefix, font, false, 1.0, text_box);
+  if (line_count <= 0 || !text_box.IsSet())
+    return 0.0;
+
+  return (double)text_box.m_advance.i * HeightScale(font);
+}
 
 ON_SHA1_Hash ON_TextRun::TextRunContentHash() const
 {
@@ -960,6 +1144,7 @@ ON_SHA1_Hash ON_TextRun::TextRunContentHash(
       sha1.AccumulateBoundingBox(m_bbox);
     sha1.AccumulateBool(m_apply_kerning);
     sha1.AccumulateDouble(LineSpaceScale());
+    sha1.AccumulateInteger64(ListDepth());
 
     if( bIsStacked )
     {
@@ -1066,6 +1251,11 @@ const ON__UINT32* ON_TextRun::UnicodeString() const
   return m_codepoints;
 }
 
+bool ON_TextRun::TextStringContains(const wchar_t* sub_str) const
+{
+  const wchar_t* ptr_str = TextString();
+  return nullptr != ptr_str && nullptr != sub_str && wcsstr(ptr_str, sub_str);
+}
 
 // count doesn't include terminating 0, but a terminating 0 is added
 void ON_TextRun::SetUnicodeString(size_t count, const ON__UINT32* cp)
@@ -1104,6 +1294,332 @@ void ON_TextRun::SetUnicodeString(ON__UINT32*& dest, size_t count, const ON__UIN
   }
 }
 
+// Distance from `linewidth` to the next tab stop on a column with regular
+// `tab_interval` spacing. Mirror of the helper in opennurbs_text.cpp that
+// MeasureTextRunArray uses at layout time. Defined locally here so the wrap
+// path can use the same formula without exposing the layout-side helper
+// across translation units.
+static double Internal_WrapAdvanceDistToNextTabStop(double linewidth, double tab_interval)
+{
+  if (linewidth < 0.0 || tab_interval <= 0.0)
+    return 0.0;
+  double prev = 0.0;
+  double next = tab_interval;
+  while (next <= linewidth)
+  {
+    prev = next;
+    next += tab_interval;
+  }
+  return tab_interval - (linewidth - prev);
+}
+
+// 2026-02-10 - kike@mcneel.com : See RH-91129
+// ON_TextRun::WrapTextRun should be iterative instead of recursive.
+// But by now and to  fix the issue the recursion level is now 128
+// And the recursive function ON_TextWrapper::WrapTextRun is lighter on stack than before.
+// Also the glyph extraction is done just once, so should be faster than before.
+class ON_TextWrapper
+{
+  const int max_recursion_level = 128;
+
+  const ON_TextRun& text_run;
+  ON_TextRunArray& newruns;
+  const wchar_t* display_string;
+  const size_t wcscount;
+  
+  const ON_Font* font;
+  double height_scale;
+  ON_SimpleArray<const ON_FontGlyph*> glyph_list;
+  ON_TextBox text_box;
+
+public:
+  ON_TextWrapper(const ON_TextRun& run, ON_TextRunArray& runs) :
+    text_run(run),
+    newruns(runs),
+    display_string(run.DisplayString()),
+    wcscount(nullptr != display_string ? wcslen(display_string) : 0)
+  { }
+
+  int WrapText(
+    int call_count,         // recursion depth
+    int start_char_offset,  // char offset in cp array
+    double wrapwidth,       // max linewidth
+    double& y_offset,       // y offset from input run from previously added soft returns
+    double& linewidth       // linewidth so far
+  )
+  {
+    font = text_run.Font();
+    if (nullptr == font)
+      return 0;
+
+    height_scale = text_run.HeightScale(font); // Font units to world units
+    ON_FontGlyph::GetGlyphList(display_string, font, ON_NextLine, glyph_list, text_box);
+    {
+      const ON_FontGlyph* Aglyph = font->CodePointGlyph((ON__UINT32)L'A');
+      if (nullptr == Aglyph)
+        return 0;
+
+      const ON_TextBox& Aglyph_box = Aglyph->GlyphBox();
+      double Awidth = Aglyph_box.m_advance.i * height_scale;
+      // height scale is ~1e-3 so floor() will pretty much always make this value 0
+      // when text height is much less than 1, so this is a test for a NAN result
+      if (floor(Awidth) < 0.0)
+      {
+        ON_ERROR("Font height scale * width of 'A' is less than 0\n");
+        return 0;
+      }
+      if (!(Awidth > 0.0 && wrapwidth >= Awidth))
+        return 0;
+    }
+
+    return WrapTextRun(call_count, start_char_offset, wrapwidth, y_offset, linewidth);
+  }
+
+private:
+  int WrapTextRun(
+    int call_count,         // recursion depth
+    int start_char_offset,  // char offset in cp array
+    double wrapwidth,       // max linewidth
+    double& y_offset,       // y offset from input run from previously added soft returns
+    double& linewidth       // linewidth so far
+  )
+  {
+    int new_count = 0;
+
+    if (max_recursion_level < call_count)
+    {
+      ON_ERROR("WrapTextRun: Recursion too deep.");
+      return 0;
+    }
+    if (0 > start_char_offset)
+    {
+      ON_ERROR("WrapTextRun: String start offset < 0.");
+      start_char_offset = 0;
+    }
+    if (0.0 > linewidth)
+    {
+      ON_ERROR("WrapTextRun: Linewidth < 0.");
+      linewidth = 0.0;
+    }
+
+    // Tab runs have no glyph advance: their effective width is the distance
+    // from the current `linewidth` to the next tab stop, computed at layout
+    // time by MeasureTextRunArray (opennurbs_text.cpp ~line 2282). Without
+    // accounting for that here, the wrapper would treat tabs as zero-width
+    // and let a line "fit" that the layout-time tab snap will then push
+    // past `wrapwidth`.
+    // We mirror MeasureTextRunArray's per-run tab_interval formula using
+    // *this* tab run's own font/height. Single-font lines: exact match
+    // with layout. Mixed-font lines: this can underestimate, because
+    // MeasureTextRunArray takes max-of-runs across the array. A few mixed-
+    // font corner cases will still slip through; option (a) in the
+    // investigation doc plumbs the array-wide value as a follow-up.
+    if (text_run.Type() == ON_TextRun::RunType::kTab)
+    {
+      double tab_interval = 0.0;
+      if (nullptr != font)
+      {
+        const ON_FontMetrics& fm = font->FontMetrics();
+        int upm = fm.UPM();
+        int aoc = fm.AscentOfCapital();
+        if (upm > 0 && aoc > 0)
+          tab_interval = 3.0 * (double)upm * text_run.TextHeight() / (double)aoc;
+      }
+      if (tab_interval <= 0.0)
+        tab_interval = 3.0 * text_run.TextHeight(); // matches MeasureTextRunArray's fallback
+
+      const double tab_adv = Internal_WrapAdvanceDistToNextTabStop(linewidth, tab_interval);
+
+      if (linewidth + tab_adv > wrapwidth && linewidth > 0.0)
+      {
+        // Break before this tab. Emit a soft return, then recurse so the
+        // tab gets placed on a fresh line starting at linewidth=0. Layout
+        // will recompute the real advance there (= tab_interval).
+        ON_TextRun* lfrun = ON_TextRun::GetManagedTextRun();
+        if (nullptr != lfrun)
+        {
+          lfrun->SetFont(font);
+          lfrun->SetType(ON_TextRun::RunType::kSoftreturn);
+          lfrun->SetTextHeight(text_run.TextHeight());
+          newruns.AppendRun(lfrun);
+          const double linefeedheight = font->FontMetrics().LineSpace() * height_scale;
+          linewidth = 0.0;
+          y_offset -= linefeedheight;
+          return 1 + WrapTextRun(call_count + 1, start_char_offset, wrapwidth, y_offset, linewidth);
+        }
+        return 0;
+      }
+
+      // Tab fits on the current line. Pass it through and update linewidth.
+      // We deliberately don't SetAdvance here -- MeasureTextRunArray will
+      // recompute and store the authoritative advance during layout. This
+      // keeps mixed-font cases consistent with array-wide tab_interval.
+      ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();
+      if (nullptr != newrun)
+      {
+        *newrun = text_run;
+        newruns.AppendRun(newrun);
+        linewidth += tab_adv;
+        return 1;
+      }
+      return 0;
+    }
+
+    wchar_t* temp_display_str = (wchar_t*)onmalloc((wcscount + 1) * sizeof(wchar_t));
+    double runwidth = 0.0;  // run width without trailing spaces
+    {
+#pragma region Run Width
+      //double runwidth0 = 0.0; // run width including trailing spaces
+      if (0 == start_char_offset)  // using the whole run
+      {
+        //runwidth = Advance().x;
+        runwidth = text_box.m_advance.i * height_scale;
+      }
+      else // Part of the run has already been picked off and added to the previous line
+      {
+        // Find width of remaining characters
+        for (int ci = start_char_offset; ci < wcscount && ci < glyph_list.Count(); ci++)
+        {
+          const ON_FontGlyph* gi = glyph_list[ci];
+
+          if (nullptr != gi)
+          {
+            const ON_TextBox& glyph_box = gi->GlyphBox();
+            double charwidth = glyph_box.m_advance.i * height_scale;
+            runwidth += charwidth;
+          }
+        }
+      }
+
+      if (0.0 > runwidth)
+        runwidth = 0.0;
+#pragma endregion Run Width
+
+#pragma region Whole Run
+      if (runwidth + linewidth <= wrapwidth || 2 > wcscount)
+      {
+        // Adding this entire run won't go past wrap width
+        // or the run has only 0 or 1 character and can't be wrapped
+        ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();
+        if (nullptr != newrun)
+        {
+          *newrun = text_run;
+          if (text_run.Type() == ON_TextRun::RunType::kNewline ||
+            text_run.Type() == ON_TextRun::RunType::kParagraph ||
+            text_run.Type() == ON_TextRun::RunType::kSoftreturn)
+            linewidth = 0.0;
+          else
+          {
+            if (0 != start_char_offset)
+            {
+              wcsncpy(temp_display_str, display_string + start_char_offset, wcscount - start_char_offset);
+              temp_display_str[wcscount - start_char_offset] = 0;
+              newrun->SetDisplayString(temp_display_str);
+            }
+            linewidth += runwidth;
+          }
+          newruns.AppendRun(newrun);
+          onfree(temp_display_str);
+          return 1; // 1 new run was added
+        }
+      }
+#pragma endregion Whole Run
+    }
+
+    // Find what part of the run will fit
+    bool found_space = false;
+    int last_space = -1;
+    int run_length = 0;
+    double curwidth = 0.0;
+    double linefeedheight = font->FontMetrics().LineSpace() * height_scale;
+
+    int sp_count = 0;
+    for (int ci = start_char_offset; ci < (int)wcscount; ci++)
+    {
+      if ((ci + 1) < wcscount &&
+        display_string[ci] >= 0xD800 && display_string[ci] < 0xDC00 &&
+        display_string[ci + 1] >= 0xDC00 && display_string[ci + 1] < 0xE000)
+      {
+        sp_count++;
+        continue;
+      }
+
+      int gi = ci - sp_count;
+      if (gi >= glyph_list.Count())
+        break;
+
+      const ON_FontGlyph* glyph = glyph_list[gi];
+      if (nullptr != glyph)
+      {
+        const ON_TextBox& glyph_box = glyph->GlyphBox();
+        curwidth += glyph_box.m_advance.i * height_scale;
+        run_length++;
+
+        if (linewidth + curwidth > wrapwidth) // reached wrapping width
+        {
+          if (found_space) // store run up to last space
+            run_length = last_space - start_char_offset + 1;
+          else if (0.0 < linewidth) // A line is already started
+            run_length = 0;
+          else  // no space yet - store run up to this char position
+            run_length = ci - start_char_offset;
+
+          if (0 < run_length)
+          {
+            ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();  // make a new run
+            if (nullptr != newrun)
+            {
+              *newrun = text_run;
+              wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
+              temp_display_str[run_length] = 0;
+              newrun->SetDisplayString(temp_display_str);
+              newrun->SetOffset(ON_2dVector(0.0, y_offset + text_run.Offset().y));
+              newruns.AppendRun(newrun);
+            }
+          }
+          // add a soft return
+          ON_TextRun* lfrun = ON_TextRun::GetManagedTextRun();
+          if (nullptr != lfrun)
+          {
+            lfrun->SetFont(font);
+            lfrun->SetType(ON_TextRun::RunType::kSoftreturn);
+            lfrun->SetTextHeight(text_run.TextHeight());
+            newruns.AppendRun(lfrun);
+
+            // Starting a new line now
+            linewidth = 0.0;
+            curwidth = 0.0;
+            y_offset -= linefeedheight;
+          }
+
+          int wrapcount = WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth);
+
+          onfree(temp_display_str);
+          return new_count + wrapcount;
+        }
+        if (iswspace(display_string[ci]))
+        {
+          found_space = true;
+          last_space = ci;
+        }
+      }
+    }
+
+    ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();  // make a new run
+    if (nullptr != newrun)
+    {
+      *newrun = text_run;
+      wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
+      temp_display_str[run_length] = 0;
+      newrun->SetOffset(ON_2dVector(0.0, y_offset + text_run.Offset().y));
+      newruns.AppendRun(newrun);
+      new_count += 1;
+    }
+    onfree(temp_display_str);
+    return new_count;
+  }
+};
+
 int ON_TextRun::WrapTextRun(
   int call_count,         // recursion depth
   int start_char_offset,  // char offset in cp array
@@ -1113,206 +1629,8 @@ int ON_TextRun::WrapTextRun(
   ON_TextRunArray& newruns// new runs made by wrapping
 ) const
 {
-  int new_count = 0;
-
-  if (500 < call_count)
-  {
-    ON_ERROR("WrapTextRun: Recursion too deep.");
-    return 0;
-  }
-  if (0 > start_char_offset)
-  {
-    ON_ERROR("WrapTextRun: String start offset < 0.");
-    start_char_offset = 0;
-  }
-
-  if (0.0 > linewidth)
-  {
-    ON_ERROR("WrapTextRun: Linewidtht < 0.");
-    linewidth = 0.0;
-  }
-
-  const wchar_t* display_string = DisplayString();
-
-  size_t wcscount = 0;
-  if (nullptr != display_string)
-    wcscount = wcslen(display_string);
-
-  const ON_Font* font = Font();
-  if (nullptr == font)
-    return 0;
-  double height_scale = HeightScale(font); // Font units to world units
-
-  ON_SimpleArray< const ON_FontGlyph*> glyph_list;
-  ON_TextBox text_box;
-
-  ON_FontGlyph::GetGlyphList(display_string, font, ON_NextLine, glyph_list, text_box);
-  int glyph_count = glyph_list.Count();
-
-  const ON_FontGlyph* Aglyph = font->CodePointGlyph((ON__UINT32)L'A');
-  if (nullptr == Aglyph)
-    return 0;
-  const ON_TextBox Aglyph_box = Aglyph->GlyphBox();
-  double Awidth = Aglyph_box.m_advance.i * height_scale;
-  // height scale is ~1e-3 so floor() will pretty much always make this value 0
-  // when text height is much less than 1, so this is a test for a NAN result
-  if (floor(Awidth) < 0.0)
-  {
-    ON_ERROR("Font height scale * width of 'A' is less than 0\n");
-    return 0;
-  }
-  if (!(Awidth > 0.0 && wrapwidth >= Awidth))
-    return 0;
-
-#pragma region Run Width
-  double runwidth = 0.0;  // run width without trailing spaces
-  //double runwidth0 = 0.0; // run width including trailing spaces
-  if (0 == start_char_offset)  // using the whole run
-  {
-    //runwidth = Advance().x;
-    runwidth = text_box.m_advance.i * height_scale;
-  }
-  else // Part of the run has already been picked off and added to the previous line
-  {
-    // Find width of remaining characters
-    for (int ci = start_char_offset; ci < wcscount && ci < glyph_count; ci++)
-    {
-      const ON_FontGlyph* gi = glyph_list[ci];
-
-      if (nullptr != gi)
-      {
-        const ON_TextBox glyph_box = gi->GlyphBox();
-        double charwidth = glyph_box.m_advance.i * height_scale;
-        runwidth += charwidth;
-      }
-    }
-  }
-
-  if (0.0 > runwidth)
-    runwidth = 0.0;
-#pragma endregion Run Width
-
-#pragma region Whole Run
-  wchar_t* temp_display_str = (wchar_t*)onmalloc((wcscount + 1) * sizeof(wchar_t));
-  if (runwidth + linewidth <= wrapwidth || 2 > wcscount)
-  {
-    // Adding this entire run won't go past wrap width
-    // or the run has only 0 or 1 character and can't be wrapped
-    ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();
-    if (nullptr != newrun)
-    {
-      *newrun = *this;
-      if (Type() == ON_TextRun::RunType::kNewline ||
-        Type() == ON_TextRun::RunType::kParagraph ||
-        Type() == ON_TextRun::RunType::kSoftreturn)
-        linewidth = 0.0;
-      else
-      {
-        if (0 != start_char_offset)
-        {
-          wcsncpy(temp_display_str, display_string + start_char_offset, wcscount - start_char_offset);
-          temp_display_str[wcscount - start_char_offset] = 0;
-          newrun->SetDisplayString(temp_display_str);
-        }
-        linewidth += runwidth;
-      }
-      newruns.AppendRun(newrun);
-      onfree(temp_display_str);
-      return 1; // 1 new run was added
-    }
-  }
-#pragma endregion Whole Run
-
-  // Find what part of the run will fit
-  bool found_space = false;
-  int last_space = -1;
-  int run_length = 0;
-  double curwidth = 0.0;
-  double linefeedheight = font->FontMetrics().LineSpace() * height_scale;
-
-  int sp_count = 0;
-  for (int ci = start_char_offset; ci < (int)wcscount; ci++)
-  {
-    if ((ci + 1) < wcscount &&
-      display_string[ci] >= 0xD800 && display_string[ci] < 0xDC00 &&
-      display_string[ci + 1] >= 0xDC00 && display_string[ci + 1] < 0xE000)
-    {
-      sp_count++;
-      continue;
-    }
-
-    int gi = ci - sp_count;
-    if (gi >= glyph_count)
-      break;
-
-    const ON_FontGlyph* glyph = glyph_list[gi];
-    if (nullptr != glyph)
-    {
-      const ON_TextBox glyph_box = glyph->GlyphBox();
-      curwidth += glyph_box.m_advance.i * height_scale;
-      run_length++;
-
-      if (linewidth + curwidth > wrapwidth) // reached wrapping width
-      {
-        if (found_space) // store run up to last space
-          run_length = last_space - start_char_offset + 1;
-        else if (0.0 < linewidth) // A line is already started
-          run_length = 0;
-        else  // no space yet - store run up to this char position
-          run_length = ci - start_char_offset;
-
-        if (0 < run_length)
-        {
-          ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();  // make a new run
-          if (nullptr != newrun)
-          {
-            *newrun = *this;
-            wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
-            temp_display_str[run_length] = 0;
-            newrun->SetDisplayString(temp_display_str);
-            newrun->SetOffset(ON_2dVector(0.0, y_offset + Offset().y));
-            newruns.AppendRun(newrun);
-          }
-        }
-        // add a soft return
-        ON_TextRun* lfrun = ON_TextRun::GetManagedTextRun();
-        if (nullptr != lfrun)
-        {
-          lfrun->SetFont(Font());
-          lfrun->SetType(ON_TextRun::RunType::kSoftreturn);
-          lfrun->SetTextHeight(this->TextHeight());
-          newruns.AppendRun(lfrun);
-
-          // Starting a new line now
-          linewidth = 0.0;
-          curwidth = 0.0;
-          y_offset -= linefeedheight;
-        }
-
-        int wrapcount = WrapTextRun(call_count + 1, run_length + start_char_offset, wrapwidth, y_offset, linewidth, newruns);
-        onfree(temp_display_str);
-        return new_count + wrapcount;
-      }
-      if (iswspace(display_string[ci]))
-      {
-        found_space = true;
-        last_space = ci;
-      }
-    }
-  }
-
-  ON_TextRun* newrun = ON_TextRun::GetManagedTextRun();  // make a new run
-  if (nullptr != newrun)
-  {
-    *newrun = *this;
-    wcsncpy(temp_display_str, display_string + start_char_offset, run_length);
-    temp_display_str[run_length] = 0;
-    newrun->SetOffset(ON_2dVector(0.0, y_offset + Offset().y));
-    newruns.AppendRun(newrun);
-    new_count += 1;
-  }
-  onfree(temp_display_str);
-  return new_count;
+  ON_TextWrapper wrapper(*this, newruns);
+  return wrapper.WrapText(call_count, start_char_offset, wrapwidth, y_offset, linewidth);
 }
 
 ON_StackedText::StackStyle ON_StackedText::StackStyleFromUnsigned(

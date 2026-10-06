@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -18,10 +18,10 @@ class ON_NurbsCurve;
 
 /*
 Description:
-	ON_Circle is a circle in 3d.  The circle is represented by a radius and an 
-	orthonormal frame	of the plane containing the circle, with origin at the center.
+	ON_Circle is a circle in 3d.  The circle is represented by a radius and an
+	orthonormal frame of the plane containing the circle, with origin at the center.
 
-	An Is_Valid() circle has positive radius and an Is_ Valid() plane defining the frame.
+	An IsValid() circle has positive radius and an IsValid() plane defining the frame.
 	
 	The circle is parameterized by radians from 0 to 2 Pi given by 
      t -> center + cos(t)*radius*xaxis + sin(t)*radius*yaxis	
@@ -40,6 +40,7 @@ public:
   ON_Circle& operator=(const ON_Circle&) = default;
 
   static const ON_Circle UnitCircle; // unit circle in the xy plane
+  static const ON_Circle UnsetCircle; // invalid circle with ON_Plane::Unset and ON_UNSET_VALUE radius;
 
   // Creates a circle in the plane with center at
   // plane.origin.
@@ -94,7 +95,7 @@ public:
     );
 
   // Creates a circle parallel to the plane
-  // with given centr and radius.
+  // with given center and radius.
   bool Create(
     const ON_Plane& plane,
     const ON_3dPoint& center,
@@ -158,11 +159,11 @@ public:
 		tight_bbox - [in/out] tight bounding box
 		bGrowBox -[in]	(default=false)			
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
-      arc's tight bounding box.
+      tight_bbox is the union of the input tight_bbox and the
+      circle's tight bounding box.
 		xform -[in] (default=nullptr)
       If not nullptr, the tight bounding box of the transformed
-      arc is calculated.  The arc is not modified.
+      circle is calculated.  The circle is not modified.
 	Returns:
     True if a valid tight_bbox is returned.
   */
@@ -266,7 +267,7 @@ public:
           circle.GetRadianFromNurbFormParameter( nurbs_t, &circle_t );
 
           ON_NurbsCurve nurbs_curve;
-          circle.GetNurbsForm( nurbs_curve );
+          circle.GetNurbForm( nurbs_curve );
           circle_pt = circle.PointAt(circle_t);
           nurbs_pt = nurbs_curve.PointAt(nurbs_t);
           // circle_pt and nurbs_pt will be the same
@@ -299,7 +300,7 @@ public:
           circle.GetNurbFormParameterFromRadian( circle_t, &nurbs_t );
 
           ON_NurbsCurve nurbs_curve;
-          circle.GetNurbsForm( nurbs_curve );
+          circle.GetNurbForm( nurbs_curve );
           circle_pt = circle.PointAt(circle_t);
           nurbs_pt = nurbs_curve.PointAt(nurbs_t);
           // circle_pt and nurbs_pt will be the same
@@ -311,7 +312,7 @@ public:
     parameter and radian parameter are the same.  At all other
     values the nurbs and radian parameter values are different.
   See Also:
-    ON_Circle::GetNurbFormParameterFromRadian
+    ON_Circle::GetRadianFromNurbFormParameter
   */
   bool GetNurbFormParameterFromRadian(
         double circle_radians_parameter,
@@ -322,4 +323,3 @@ public:
 
 
 #endif
-

@@ -22,11 +22,14 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+// TODO: This really needs to be a member of ON_3dmObjectAttributes but that would break the SDK.
+std::recursive_mutex g_mutex;
+
 class ON_3dmObjectAttributesPrivate
 {
 public:
-  ON_3dmObjectAttributesPrivate() = delete;
-  ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes* attr);
+  ON_3dmObjectAttributesPrivate();
+  ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes& attr);
   ~ON_3dmObjectAttributesPrivate() = default;
   ON_3dmObjectAttributesPrivate& operator=(const ON_3dmObjectAttributesPrivate&) = default;
 
@@ -34,11 +37,15 @@ public:
   bool operator!=(const ON_3dmObjectAttributesPrivate&) const;
 
   ON::SectionAttributesSource m_section_attributes_source = ON::SectionAttributesSource::FromLayer;
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
   int m_section_style_index = -1;
-#endif
   double m_linetype_scale = 1.0;
+  double m_hatch_boundary_plot_weight_mm = -10;
   ON_Color m_hatch_background_fill;
+  ON_Color m_hatch_background_fill_print;
+  ON_Color m_hatch_boundary_color;
+  ON_Color m_hatch_boundary_print_color;
+  ON::item_color_source m_hatch_boundary_color_source = ON::item_color_source::color_from_layer;
+  ON::item_color_source m_hatch_boundary_print_color_source = ON::item_color_source::color_from_layer;
   bool m_hatch_boundary_visible = false;
   bool m_detail_background_visible = false;
   ON::SectionLabelStyle m_section_label_style = ON::SectionLabelStyle::None;
@@ -48,13 +55,34 @@ public:
 
   ON_DecalCollection m_decals;
   ON_MeshModifiers m_mesh_modifiers;
+
+  ON_UuidList m_viewport_activity_list;
+  bool m_viewport_activity_is_active_only_in = false;
+
+#if defined(OPENNURBS_TAG_WIP)
+  ON_SimpleArray<int> m_tags; // array of zero based tag indices
+#endif // OPENNURBS_TAG_WIP
+
+  ON_UUID m_markup_id = ON_nil_uuid;
 };
 
-ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes* attr)
+ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate()
   :
-  m_decals(const_cast<ON_3dmObjectAttributes*>(attr))
+  m_decals(const_cast<ON_3dmObjectAttributes&>(ON_3dmObjectAttributes::DefaultAttributes))
 {
   m_hatch_background_fill = ON_Color::UnsetColor;
+  m_hatch_boundary_color = ON_Color::UnsetColor;
+  m_hatch_boundary_print_color = ON_Color::UnsetColor;
+}
+
+ON_3dmObjectAttributesPrivate::ON_3dmObjectAttributesPrivate(const ON_3dmObjectAttributes& attr)
+  :
+  m_decals(const_cast<ON_3dmObjectAttributes&>(attr))
+{
+  m_hatch_background_fill = ON_Color::UnsetColor;
+  m_hatch_background_fill_print = ON_Color::UnsetColor;
+  m_hatch_boundary_color = ON_Color::UnsetColor;
+  m_hatch_boundary_print_color = ON_Color::UnsetColor;
 }
 
 bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPrivate& other) const
@@ -66,6 +94,24 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
     return false;
 
   if (m_hatch_background_fill != other.m_hatch_background_fill)
+    return false;
+
+  if (m_hatch_background_fill_print != other.m_hatch_background_fill_print)
+    return false;
+
+  if (m_hatch_boundary_color != other.m_hatch_boundary_color)
+    return false;
+
+  if (m_hatch_boundary_print_color != other.m_hatch_boundary_print_color)
+    return false;
+
+  if (m_hatch_boundary_color_source != other.m_hatch_boundary_color_source)
+    return false;
+
+  if (m_hatch_boundary_print_color_source != other.m_hatch_boundary_print_color_source)
+    return false;
+
+  if (m_hatch_boundary_plot_weight_mm != other.m_hatch_boundary_plot_weight_mm)
     return false;
 
   if (m_hatch_boundary_visible != other.m_hatch_boundary_visible)
@@ -90,14 +136,33 @@ bool ON_3dmObjectAttributesPrivate::operator==(const ON_3dmObjectAttributesPriva
         return false;
     }
   }
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
   if (m_section_style_index != other.m_section_style_index)
     return false;
-#endif
 
   const ON_Linetype* customThis = m_custom_linetype.get();
   const ON_Linetype* customOther = other.m_custom_linetype.get();
   if (customThis != customOther)
+    return false;
+
+  if (m_viewport_activity_list != other.m_viewport_activity_list)
+    return false;
+  if (m_viewport_activity_is_active_only_in != other.m_viewport_activity_is_active_only_in)
+    return false;
+
+#if defined(OPENNURBS_TAG_WIP)
+  int count = m_tags.Count();
+  if (count != other.m_tags.Count())
+    return false;
+  if (count > 0)
+  {
+    const int* a = m_tags.Array();
+    const int* b = other.m_tags.Array();
+    if (memcmp(a, b, count * sizeof(*a)))
+      return false;
+  }
+#endif
+
+  if (m_markup_id != other.m_markup_id)
     return false;
 
   return true;
@@ -108,7 +173,7 @@ bool ON_3dmObjectAttributesPrivate::operator!=(const ON_3dmObjectAttributesPriva
   return !ON_3dmObjectAttributesPrivate::operator==(other);
 }
 
-static const ON_3dmObjectAttributesPrivate DefaultAttributesPrivate(nullptr);
+static const ON_3dmObjectAttributesPrivate DefaultAttributesPrivate;
 
 ON_OBJECT_IMPLEMENT( ON_3dmObjectAttributes, ON_Object, "A828C015-09F5-477c-8665-F0482F5D6996" );
 
@@ -124,6 +189,15 @@ ON_3dmObjectAttributes::~ON_3dmObjectAttributes()
 {
   if (m_private)
     delete m_private;
+}
+
+ON_3dmObjectAttributesPrivate& ON_3dmObjectAttributes::Private()
+{
+  if (!m_private)
+  {
+    m_private = new ON_3dmObjectAttributesPrivate(*this);
+  }
+  return *m_private;
 }
 
 void ON_3dmObjectAttributes::CopyHelper(const ON_3dmObjectAttributes& src)
@@ -154,14 +228,15 @@ void ON_3dmObjectAttributes::CopyHelper(const ON_3dmObjectAttributes& src)
   m_reserved_0 = src.m_reserved_0;
   m_object_frame = src.m_object_frame;
   m_group = src.m_group;
-  if (m_private)
-    delete m_private;
+
+  delete m_private;
   m_private = nullptr;
+
   if (src.m_private)
   {
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-    *m_private = *src.m_private;
+    Private() = *src.m_private;
   }
+
   m_dmref = src.m_dmref;
 }
 
@@ -235,7 +310,7 @@ bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) con
   if ( m_viewport_id != other.m_viewport_id )
     return false;
 
-  if(m_dmref.Count() != other.m_dmref.Count())
+  if (!ON_SimpleArray_IsEqual(m_dmref, other.m_dmref))
     return false;
 
   for (int i = 0; i < m_dmref.Count(); i++)
@@ -449,9 +524,43 @@ enum ON_3dmObjectAttributesTypeCodes : unsigned char
   ObsoleteSelectiveClippingListType = 41,
   // 18 Jan 2025 S. Baer
   DetailBackgroundVisible = 42,
+  // 19 Jun 2025 D. Fugier
+  SectionStyleIndex = 43,
+  // 16 Sep 2025 S. Baer
+  ViewportActivityList = 44,
+  ActiveOnlyInActivityList = 45,
+  // 8-Dec-2025 Dale Fugier
+  //Tags = 46, // commented out; we can add tags I/O in the future if we add this feature
+  // 27 Feb 2026 S. Baer
+  HatchBoundaryColor = 47,
+  HatchBoundaryPrintColor = 48,
+  HatchBoundaryPlotWeightMM = 49,
+  // 3 April 2026 S. Baer
+  // We forgot to add the print variant of hatch background fill color when it was first
+  // introduced in Rhino 8
+  HatchBackgroundFillPrint = 50,
+  HatchPatternColor = 51,
+  HatchPatternPrintColor = 52,
+  MarkupId = 53,
+  // 13 May 2026 S. Baer
+  // add hatch boundary/pattern color source
+  HatchBoundaryColorSource = 54,
+  HatchPatternColorSource = 55,
+  HatchBoundaryPrintColorSource = 56,
+  HatchPatternPrintColorSource = 57,
   // add items here
-  LastAttributeTypeCode = 42
+  LastAttributeTypeCode = 57
 };
+
+// 13 May 2026 S. Baer (RH-94343)
+// Added boundary and pattern color source. When reading older files that
+// have boundary and pattern colors set, adjust the source to custom
+static bool FileIsOlderThanWhenHatchColorSourcesAdded(const ON_BinaryArchive& file)
+{
+  unsigned int onVersionForFile = file.ArchiveOpenNURBSVersion();
+  unsigned int onVersionWhenSourceAdded = ON_VersionNumberConstruct(9, 0, 2026, 05, 13, 0);
+  return -1 == ON_VersionNumberCompare(onVersionForFile, onVersionWhenSourceAdded, 10);
+}
 
 bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
 {
@@ -800,6 +909,10 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       rc = file.ReadColor(color);
       if (!rc) break;
       SetHatchBackgroundFillColor(color);
+      // For older files that have hatch background fill color set,
+      // also set the print color to the same.
+      if (minor_version < 14)
+        SetHatchBackgroundFillColor(color, true);
       rc = file.ReadChar(&itemid);
       if (!rc || 0 == itemid) break;
     }
@@ -921,7 +1034,162 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
       if (!rc || 0 == itemid) break;
     }
 
-    if (minor_version <= 13)
+    // 19 Jun 2025 D. Fugier
+    if (ON_3dmObjectAttributesTypeCodes::SectionStyleIndex == itemid) // 43
+    {
+      int section_style_index = -1;
+      rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::SectionStyle, &section_style_index);
+      if (!rc) break;
+      SetSectionStyleIndex(section_style_index);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    // 16 Sep 2025 S. Baer
+    if (ON_3dmObjectAttributesTypeCodes::ViewportActivityList == itemid) // 44
+    {
+      rc = Private().m_viewport_activity_list.Read(file);
+
+      if (!rc) break;
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::ActiveOnlyInActivityList == itemid) // 45
+    {
+      rc = file.ReadBool(&Private().m_viewport_activity_is_active_only_in);
+      if (!rc) break;
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::HatchBoundaryColor == itemid) // 47
+    {
+      ON_Color color = ON_Color::UnsetColor;
+      rc = file.ReadColor(color);
+      if (!rc) break;
+      SetHatchBoundaryColor(color, false);
+      if (FileIsOlderThanWhenHatchColorSourcesAdded(file))
+      {
+        // 13 May 2026 S. Baer (RH-94343)
+        // Added boundary and pattern color source. When reading older files that
+        // have boundary and pattern colors set, adjust the source to custom
+        SetHatchBoundaryColorSource(ON::item_color_source::color_custom, false);
+      }
+
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchBoundaryPrintColor == itemid) // 48
+    {
+      ON_Color color = ON_Color::UnsetColor;
+      rc = file.ReadColor(color);
+      if (!rc) break;
+      SetHatchBoundaryColor(color, true);
+      if (FileIsOlderThanWhenHatchColorSourcesAdded(file))
+      {
+        // 13 May 2026 S. Baer (RH-94343)
+        // Added boundary and pattern color source. When reading older files that
+        // have boundary and pattern colors set, adjust the source to custom
+        SetHatchBoundaryColorSource(ON::item_color_source::color_custom, true);
+      }
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchBoundaryPlotWeightMM == itemid) // 49
+    {
+      double weight = 0;
+      rc = file.ReadDouble(&weight);
+      if (!rc) break;
+      SetHatchBoundaryPlotWeightMillimeters(weight);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchBackgroundFillPrint == itemid) // 50
+    {
+      ON_Color color = ON_Color::UnsetColor;
+      rc = file.ReadColor(color);
+      if (!rc) break;
+      SetHatchBackgroundFillColor(color, true);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchPatternColor == itemid) // 51
+    {
+      ON_Color color = ON_Color::UnsetColor;
+      rc = file.ReadColor(color);
+      if (!rc) break;
+      // Throw away the color. It was decided that a custom hatch pattern color
+      // was confusing and unnecessary
+      // SetHatchPatternColor(color, false);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchPatternPrintColor == itemid) // 52
+    {
+      ON_Color color = ON_Color::UnsetColor;
+      rc = file.ReadColor(color);
+      if (!rc) break;
+      // Throw away the color. It was decided that a custom hatch pattern color
+      // was confusing and unnecessary
+      // SetHatchPatternColor(color, true);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::MarkupId == itemid) // 53
+    {
+      ON_UUID id = ON_nil_uuid;
+      rc = file.ReadUuid(id);
+      if (!rc) break;
+      SetMarkupId(id);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (ON_3dmObjectAttributesTypeCodes::HatchBoundaryColorSource == itemid) // 54
+    {
+      unsigned char source = 0;
+      rc = file.ReadChar(&source);
+      if (!rc) break;
+      SetHatchBoundaryColorSource(ON::ItemColorSource(source), false);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchPatternColorSource == itemid) // 55
+    {
+      unsigned char source = 0;
+      rc = file.ReadChar(&source);
+      if (!rc) break;
+      // HatchPatternColorSource was only saved in 3dm files for one day in
+      // internal builds. This block of code will most likely never be hit, but
+      // just to be safe read the char and throw it away
+      // SetHatchPatternColorSource(ON::ItemColorSource(source), false);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchBoundaryPrintColorSource == itemid) // 56
+    {
+      unsigned char source = 0;
+      rc = file.ReadChar(&source);
+      if (!rc) break;
+      SetHatchBoundaryColorSource(ON::ItemColorSource(source), true);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+    if (ON_3dmObjectAttributesTypeCodes::HatchPatternPrintColorSource == itemid) // 57
+    {
+      unsigned char source = 0;
+      rc = file.ReadChar(&source);
+      if (!rc) break;
+      // HatchPatternColorSource was only saved in 3dm files for one day in
+      // internal builds. This block of code will most likely never be hit, but
+      // just to be safe read the char and throw it away
+      // SetHatchPatternColorSource(ON::ItemColorSource(source), true);
+      rc = file.ReadChar(&itemid);
+      if (!rc || 0 == itemid) break;
+    }
+
+    if (minor_version <= 14)
       break;
 
     // Add new item reading above and increment the LastAttributeTypeCode value
@@ -930,8 +1198,7 @@ bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
     //
     if ( itemid > ON_3dmObjectAttributesTypeCodes::LastAttributeTypeCode )
     {
-      // we are reading file written with code newer
-      // than this code (minor_version > 2)
+      // we are reading file written with code newer than this code
       itemid = 0;
     }
 
@@ -1131,7 +1398,13 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
   // two values packed into a single unsigned char. The use of type codes for I/O
   // makes it so the minor version isn't really necessary. Just stop at a minor
   // version of 13
-  bool rc = file.Write3dmChunkVersion(2,13);
+  // 4 Apr 2026 S. Baer
+  // We had to roll the minor version number to 14 to help with the logic for
+  // hatch background fill color. Prior to 14, there was only a single color
+  // that worked for both display and print. After adding a separate print color
+  // we can use the minor version number to determine if the print color should
+  // match the display color when being read.
+  bool rc = file.Write3dmChunkVersion(2,14);
   while(rc)
   {
     if (!rc) break;
@@ -1303,7 +1576,7 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       rc = file.WriteChar(c);
       if (!rc) break;
     }
-    if ( !ON_UuidIsNil(m_viewport_id) )
+    if ( ON_UuidIsNotNil(m_viewport_id) )
     {
       c = 20;
       rc = file.WriteChar(c);
@@ -1522,6 +1795,148 @@ bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
       if (!rc) break;
     }
 
+    // 19 Jun 2025 D. Fugier
+    if (SectionStyleIndex() != DefaultAttributes.SectionStyleIndex())
+    {
+      c = ON_3dmObjectAttributesTypeCodes::SectionStyleIndex; // 43
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::SectionStyle, SectionStyleIndex());
+      if (!rc) break;
+    }
+    
+    // 16 Sep 2025 S. Baer
+    if (m_private && m_private->m_viewport_activity_list.Count() > 0)
+    {
+      c = ON_3dmObjectAttributesTypeCodes::ViewportActivityList; // 44
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = m_private->m_viewport_activity_list.Write(file);
+      if (!rc) break;
+    }
+    if (m_private && m_private->m_viewport_activity_is_active_only_in) // false is default value
+    {
+      c = ON_3dmObjectAttributesTypeCodes::ActiveOnlyInActivityList; // 45
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteBool(m_private->m_viewport_activity_is_active_only_in);
+      if (!rc) break;
+    }
+
+#if defined(OPENNURBS_TAG_WIP)
+    // 8-Dec-2025 Dale Fugier
+    if (m_private && m_private->m_tags.Count() > 0)
+    {
+      c = ON_3dmObjectAttributesTypeCodes::Tags; // 46
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      const int tag_count = m_private->m_tags.Count();
+      rc = file.WriteInt(tag_count);
+      for (int i = 0; i < tag_count && rc; i++)
+        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::Tag, m_private->m_tags[i]);
+      if (!rc) break;
+    }
+#endif
+
+    if (HatchBoundaryColor(false).IsSet())
+    {
+      c = ON_3dmObjectAttributesTypeCodes::HatchBoundaryColor; // 47
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      ON_Color color = HatchBoundaryColor(false);
+      rc = file.WriteColor(color);
+      if (!rc) break;
+    }
+    if (HatchBoundaryColor(true).IsSet())
+    {
+      c = ON_3dmObjectAttributesTypeCodes::HatchBoundaryPrintColor; // 48
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      ON_Color color = HatchBoundaryColor(true);
+      rc = file.WriteColor(color);
+      if (!rc) break;
+    }
+    if (HatchBoundaryPlotWeightMillimeters() > -1.1)
+    {
+      c = ON_3dmObjectAttributesTypeCodes::HatchBoundaryPlotWeightMM; // 49
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      double weight = HatchBoundaryPlotWeightMillimeters();
+      rc = file.WriteDouble(weight);
+      if (!rc) break;
+    }
+    if (HatchBackgroundFillColor(true) != ON_Color::UnsetColor)
+    {
+      c = ON_3dmObjectAttributesTypeCodes::HatchBackgroundFillPrint; // 50
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteColor(HatchBackgroundFillColor(true));
+      if (!rc) break;
+    }
+    //if (HatchPatternColor(false).IsSet())
+    //{
+    //  c = ON_3dmObjectAttributesTypeCodes::HatchPatternColor; // 51
+    //  rc = file.WriteChar(c);
+    //  if (!rc) break;
+    //  ON_Color color = HatchPatternColor(false);
+    //  rc = file.WriteColor(color);
+    //  if (!rc) break;
+    //}
+    //if (HatchPatternColor(true).IsSet())
+    //{
+    //  c = ON_3dmObjectAttributesTypeCodes::HatchPatternPrintColor; // 52
+    //  rc = file.WriteChar(c);
+    //  if (!rc) break;
+    //  ON_Color color = HatchPatternColor(true);
+    //  rc = file.WriteColor(color);
+    //  if (!rc) break;
+    //}
+
+    if (ON_UuidIsNotNil(MarkupId()))
+    {
+      c = ON_3dmObjectAttributesTypeCodes::MarkupId; // 53
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      ON_UUID markupId = MarkupId();
+      rc = file.WriteUuid(markupId);
+      if (!rc) break;
+    }
+
+    // 13 May 2026 S. Baer
+    // hatch boundary/pattern color source
+    if (ON::item_color_source::color_from_layer != HatchBoundaryColorSource(false))
+    {
+      c = ON_3dmObjectAttributesTypeCodes::HatchBoundaryColorSource; // 54
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteChar((unsigned char)HatchBoundaryColorSource(false));
+      if (!rc) break;
+    }
+    //if (ON::item_color_source::color_from_layer != HatchPatternColorSource(false))
+    //{
+    //  c = ON_3dmObjectAttributesTypeCodes::HatchPatternColorSource; // 55
+    //  rc = file.WriteChar(c);
+    //  if (!rc) break;
+    //  rc = file.WriteChar((unsigned char)HatchPatternColorSource(false));
+    //  if (!rc) break;
+    //}
+    if (ON::item_color_source::color_from_layer != HatchBoundaryColorSource(true))
+    {
+      c = ON_3dmObjectAttributesTypeCodes::HatchBoundaryPrintColorSource; // 56
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteChar((unsigned char)HatchBoundaryColorSource(true));
+      if (!rc) break;
+    }
+    //if (ON::item_color_source::color_from_layer != HatchPatternColorSource(true))
+    //{
+    //  c = ON_3dmObjectAttributesTypeCodes::HatchPatternPrintColorSource; // 57
+    //  rc = file.WriteChar(c);
+    //  if (!rc) break;
+    //  rc = file.WriteChar((unsigned char)HatchPatternColorSource(true));
+    //  if (!rc) break;
+    //}
+
     // 0 indicates end of attributes - this should be the last item written
     c = 0;
     rc = file.WriteChar(c);
@@ -1617,7 +2032,7 @@ bool ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
     int count_local = m_dmref.Count();
     if ( count_local < 0 )
       count_local = 0;
-    bool bAddPagespaceDMR = ( ON::page_space == m_space && !ON_UuidIsNil(m_viewport_id) );
+    bool bAddPagespaceDMR = ( ON::page_space == m_space && ON_UuidIsNotNil(m_viewport_id) );
     rc = file.WriteInt( bAddPagespaceDMR ? (count_local+1) : count_local );
     if ( rc && bAddPagespaceDMR )
     {
@@ -1808,6 +2223,206 @@ void ON_3dmObjectAttributes::SetMode( ON::object_mode m )
 bool ON_3dmObjectAttributes::IsInstanceDefinitionObject() const
 {
   return (ON::idef_object == Mode());
+}
+
+
+bool ON_3dmObjectAttributes::IsActiveInViewport(const ON_UUID& viewportId) const
+{
+  if (m_viewport_id == viewportId)
+    return true;
+
+  if (nullptr == m_private)
+    return true;
+
+  if (m_private->m_viewport_activity_list.Count() < 1)
+    return true;
+
+  bool inList = m_private->m_viewport_activity_list.FindUuid(viewportId);
+  if (inList && m_private->m_viewport_activity_is_active_only_in)
+    return true;
+
+  if (!inList && !m_private->m_viewport_activity_is_active_only_in)
+    return true;
+
+  return false;
+}
+
+// --------------------------------------------------------------------------------
+
+bool ON_3dmObjectAttributes::IsActiveInModelSpace() const
+{
+  if (m_mode == ON::idef_object)
+    return false;
+
+  if (m_space != ON::active_space::model_space)
+    return false;
+
+  return true;
+}
+
+bool ON_3dmObjectAttributes::IsActiveInAllModelViewports() const
+{
+  if (!IsActiveInModelSpace())
+    return false;
+
+  if (ON_UuidIsNotNil(m_viewport_id))
+    return false;
+
+  if (m_private)
+  {
+    if (m_private->m_viewport_activity_list.Count() > 0)
+      return false;
+  }
+
+  return true;
+}
+
+bool ON_3dmObjectAttributes::SetActiveInAllModelViewports()
+{
+  if (!IsActiveInModelSpace())
+    return false;
+
+  m_viewport_id = ON_nil_uuid;
+
+  if (m_private)
+  {
+    m_private->m_viewport_activity_list.Empty();
+    m_private->m_viewport_activity_is_active_only_in = false;
+  }
+
+  return true;
+}
+
+// --------------------------------------------------------------------------------
+const ON_UuidList& ON_3dmObjectAttributes::GetActiveInViewportOverrides(bool& active_list) const
+{
+  static const ON_UuidList Empty;
+  active_list = false;
+
+  if (!IsActiveInModelSpace())
+    return Empty;
+
+  if (nullptr == m_private)
+    return Empty;
+
+  if (m_private->m_viewport_activity_list.Count() < 1)
+    return Empty;
+
+  active_list = m_private->m_viewport_activity_is_active_only_in;
+  return m_private->m_viewport_activity_list;
+}
+
+bool ON_3dmObjectAttributes::SetActiveInViewportOverrides(const ON_UuidList& viewportIds, bool active)
+{
+  if (0 == viewportIds.Count())
+  {
+    return SetActiveInAllModelViewports();
+  }
+  else if (IsActiveInModelSpace())
+  {
+    auto& pr = Private();
+
+    pr.m_viewport_activity_list = viewportIds;
+    pr.m_viewport_activity_list.RemoveUuid(ON_nil_uuid);
+    pr.m_viewport_activity_is_active_only_in = active;
+    return true;
+  }
+
+  return false;
+}
+
+bool ON_3dmObjectAttributes::SetActiveInViewportOverrides(ON_UuidList&& viewportIds, bool active)
+{
+  if (0 == viewportIds.Count())
+  {
+    return SetActiveInAllModelViewports();
+  }
+  else if (IsActiveInModelSpace())
+  {
+    auto& pr = Private();
+
+    pr.m_viewport_activity_list = std::move(viewportIds);
+    pr.m_viewport_activity_list.RemoveUuid(ON_nil_uuid);
+    pr.m_viewport_activity_is_active_only_in = active;
+    return true;
+  }
+
+  return false;
+}
+
+// --------------------------------------------------------------------------------
+bool ON_3dmObjectAttributes::HasActiveInViewportOverride(const ON_UUID& viewportId, bool& active) const
+{
+  active = true;
+  if (ON_UuidIsNotNil(viewportId))
+  {
+    bool current = false;
+    const ON_UuidList& uuid_list = GetActiveInViewportOverrides(current);
+    if (uuid_list.FindUuid(viewportId))
+    {
+      active = current;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool ON_3dmObjectAttributes::AddActiveInViewportOverride(const ON_UUID& viewportId, bool active)
+{
+  if (ON_UuidIsNotNil(viewportId) && IsActiveInModelSpace())
+  {
+    bool current = false;
+    const ON_UuidList& uuid_list = GetActiveInViewportOverrides(current);
+    if (current == active)
+    {
+      if (uuid_list.FindUuid(viewportId))
+        return true;
+    }
+
+    ON_UuidList viewportIds;
+    if (current == active)
+      viewportIds = uuid_list;
+
+    viewportIds.AddUuid(viewportId, true);
+    return SetActiveInViewportOverrides(viewportIds, active);
+  }
+
+  return false;
+}
+
+bool ON_3dmObjectAttributes::RemoveActiveInViewportOverride(const ON_UUID& viewportId, bool active)
+{
+  if (ON_UuidIsNotNil(viewportId) && IsActiveInModelSpace())
+  {
+    bool current = false;
+    const ON_UuidList& uuid_list = GetActiveInViewportOverrides(current);
+    if (active == current)
+    {
+      if (uuid_list.Count() > 0)
+        m_private->m_viewport_activity_list.RemoveUuid(viewportId);
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+void ON_3dmObjectAttributes::SetMarkupId(const ON_UUID& markupId)
+{
+  if (markupId == MarkupId())
+    return;
+  if (nullptr == m_private)
+    m_private = new ON_3dmObjectAttributesPrivate();
+  m_private->m_markup_id = markupId;
+}
+
+const ON_UUID& ON_3dmObjectAttributes::MarkupId() const
+{
+  if (nullptr == m_private)
+    return ON_nil_uuid;
+  return m_private->m_markup_id;
 }
 
 bool ON_3dmObjectAttributes::IsVisible() const
@@ -2034,12 +2649,15 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
           SetCustomSectionStyle(*sectionStyle);
         else
           RemoveCustomSectionStyle();
+
+        SetSectionStyleIndex(parent_layer.SectionStyleIndex());
       }
       else
       {
-        ON_SectionStyle sectionStyle;
-        parents_attributes.CustomSectionStyle(&sectionStyle);
-        SetCustomSectionStyle(sectionStyle);
+        SetSectionStyleIndex(parents_attributes.SectionStyleIndex());
+        const ON_SectionStyle* parentSectionStyle = parents_attributes.CustomSectionStyle();
+        if (parentSectionStyle)
+          SetCustomSectionStyle(*parentSectionStyle);
       }
     }
   }
@@ -2217,6 +2835,86 @@ void ON_3dmObjectAttributes::RemoveFromAllGroups()
 }
 
 
+#if defined(OPENNURBS_TAG_WIP)
+int ON_3dmObjectAttributes::TagCount() const
+{ 
+  if (m_private)
+    return m_private->m_tags.Count();
+  return 0;
+}
+
+int ON_3dmObjectAttributes::GetTagList(ON_SimpleArray<int>& tag_list) const
+{
+  if (m_private)
+  {
+    tag_list = m_private->m_tags;
+    return tag_list.Count();
+  }
+  return 0;
+}
+
+const int* ON_3dmObjectAttributes::TagList() const
+{
+  if (m_private && m_private->m_tags.Count() > 0)
+    return m_private->m_tags.Array();
+  return nullptr;
+}
+
+bool ON_3dmObjectAttributes::IsInTag(int tag_index) const
+{
+  bool rc = false;
+  if (m_private)
+  {
+    const int count = m_private->m_tags.Count();
+    for (int i = 0; i < count; i++) 
+    {
+      if (m_private->m_tags[i] == tag_index) 
+      {
+        rc = true;
+        break;
+      }
+    }
+  }
+  return rc;
+}
+
+void ON_3dmObjectAttributes::AddToTag(int tag_index) const
+{
+  if (tag_index >= 0)
+  {
+    if (!IsInGroup(tag_index))
+    {
+      if (nullptr == m_private)
+        m_private = new ON_3dmObjectAttributesPrivate(this);
+      m_private->m_tags.Append(tag_index);
+    }
+  }
+}
+
+void ON_3dmObjectAttributes::RemoveFromTag(int tag_index) const
+{
+  if (m_private)
+  {
+    const int count = m_private->m_tags.Count();
+    for (int i = 0; i < count; i++)
+    {
+      if (m_private->m_tags[i] == tag_index)
+      {
+        m_private->m_tags.Remove(i);
+        break;
+      }
+    }
+  }
+}
+
+void ON_3dmObjectAttributes::RemoveFromAllTags()
+{
+  if (m_private)
+    m_private->m_tags.Destroy();
+}
+#endif // OPENNURBS_TAG_WIP
+
+
 bool ON_3dmObjectAttributes::FindDisplayMaterialId( 
       const ON_UUID& viewport_id, 
       ON_UUID* display_material_id
@@ -2363,8 +3061,8 @@ bool ON_3dmObjectAttributes::RemoveDisplayMaterialRef(
   int i = m_dmref.Count();
   if ( i > 0 )
   {
-    const bool bCheckViewportId = !ON_UuidIsNil(viewport_id);
-    const bool bCheckMaterialId = !ON_UuidIsNil(display_material_id);
+    const bool bCheckViewportId = ON_UuidIsNotNil(viewport_id);
+    const bool bCheckMaterialId = ON_UuidIsNotNil(display_material_id);
     if ( bCheckViewportId || bCheckMaterialId )
     {
       while(i--)
@@ -2386,7 +3084,7 @@ bool ON_3dmObjectAttributes::RemoveDisplayMaterialRef(
       // uuid.
       while(i--)
       {
-        if (   !ON_UuidIsNil(m_dmref[i].m_viewport_id)
+        if (   ON_UuidIsNotNil(m_dmref[i].m_viewport_id)
              && ON_UuidIsNil(m_dmref[i].m_display_material_id)
            )
         {
@@ -2416,12 +3114,9 @@ void ON_3dmObjectAttributes::SetSectionAttributesSource(ON::SectionAttributesSou
   if (SectionAttributesSource() == source)
     return;
 
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_attributes_source = source;
+  Private().m_section_attributes_source = source;
 }
 
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
 int ON_3dmObjectAttributes::SectionStyleIndex() const
 {
   return m_private ? m_private->m_section_style_index : DefaultAttributesPrivate.m_section_style_index;
@@ -2431,18 +3126,12 @@ void ON_3dmObjectAttributes::SetSectionStyleIndex(int index)
   if (SectionStyleIndex() == index)
     return;
   
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_style_index = index;
+  Private().m_section_style_index = index;
 }
-#endif
 
 void ON_3dmObjectAttributes::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-
-  m_private->m_custom_section_style.reset(new ON_SectionStyle(sectionStyle));
+  Private().m_custom_section_style.reset(new ON_SectionStyle(sectionStyle));
 }
 const ON_SectionStyle* ON_3dmObjectAttributes::CustomSectionStyle(ON_SectionStyle* sectionStyle) const
 {
@@ -2476,17 +3165,12 @@ void ON_3dmObjectAttributes::SetLinetypePatternScale(double scale)
   if (fabs(LinetypePatternScale() - scale) < ON_EPSILON)
     return;
 
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_linetype_scale = scale;
+  Private().m_linetype_scale = scale;
 }
 
 void ON_3dmObjectAttributes::SetCustomLinetype(const ON_Linetype& linetype)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-
-  m_private->m_custom_linetype.reset(new ON_Linetype(linetype));
+  Private().m_custom_linetype.reset(new ON_Linetype(linetype));
 }
 const ON_Linetype* ON_3dmObjectAttributes::CustomLinetype() const
 {
@@ -2504,20 +3188,34 @@ void ON_3dmObjectAttributes::RemoveCustomLinetype()
 
 ON_Color ON_3dmObjectAttributes::HatchBackgroundFillColor() const
 {
-  return m_private ? m_private->m_hatch_background_fill : ON_Color::UnsetColor;
+  return HatchBackgroundFillColor(false);
 }
 void ON_3dmObjectAttributes::SetHatchBackgroundFillColor(const ON_Color& color)
+{
+  SetHatchBackgroundFillColor(color, false);
+}
+
+ON_Color ON_3dmObjectAttributes::HatchBackgroundFillColor(bool print) const
+{
+  if (nullptr == m_private)
+    return ON_Color::UnsetColor;
+
+  return print ? m_private->m_hatch_background_fill_print : m_private->m_hatch_background_fill;
+}
+void ON_3dmObjectAttributes::SetHatchBackgroundFillColor(const ON_Color& color, bool print)
 {
   ON_Color c = color;
   if (c.Alpha() == 255)
     c = ON_Color::UnsetColor;
-  if (HatchBackgroundFillColor() == c)
+  if (HatchBackgroundFillColor(print) == c)
     return;
 
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_hatch_background_fill = c;
+  if (print)
+    Private().m_hatch_background_fill_print = c;
+  else
+    Private().m_hatch_background_fill = c;
 }
+
 bool ON_3dmObjectAttributes::HatchBoundaryVisible() const
 {
   return m_private ? m_private->m_hatch_boundary_visible : DefaultAttributesPrivate.m_hatch_boundary_visible;
@@ -2527,10 +3225,68 @@ void ON_3dmObjectAttributes::SetHatchBoundaryVisible(bool on)
   if (HatchBoundaryVisible() == on)
     return;
 
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_hatch_boundary_visible = on;
+  Private().m_hatch_boundary_visible = on;
 }
+
+ON_Color ON_3dmObjectAttributes::HatchBoundaryColor(bool print) const
+{
+  if (m_private)
+  {
+    return print ? m_private->m_hatch_boundary_print_color : m_private->m_hatch_boundary_color;
+  }
+  return ON_Color::UnsetColor;
+}
+void ON_3dmObjectAttributes::SetHatchBoundaryColor(const ON_Color& color, bool print)
+{
+  if (color == HatchBoundaryColor(print))
+    return;
+
+  if (print)
+    Private().m_hatch_boundary_print_color = color;
+  else
+    Private().m_hatch_boundary_color = color;
+}
+
+ON::item_color_source ON_3dmObjectAttributes::HatchBoundaryColorSource(bool print) const
+{
+  if (m_private)
+  {
+    return print
+      ? m_private->m_hatch_boundary_print_color_source
+      : m_private->m_hatch_boundary_color_source;
+  }
+  return print
+    ? DefaultAttributesPrivate.m_hatch_boundary_print_color_source
+    : DefaultAttributesPrivate.m_hatch_boundary_color_source;
+}
+void ON_3dmObjectAttributes::SetHatchBoundaryColorSource(ON::item_color_source source, bool print)
+{
+  if (HatchBoundaryColorSource(print) == source)
+    return;
+  if (print)
+    Private().m_hatch_boundary_print_color_source = source;
+  else
+    Private().m_hatch_boundary_color_source = source;
+}
+
+double ON_3dmObjectAttributes::HatchBoundaryPlotWeightMillimeters() const
+{
+  if (m_private)
+    return m_private->m_hatch_boundary_plot_weight_mm;
+  return DefaultAttributesPrivate.m_hatch_boundary_plot_weight_mm;
+
+}
+void ON_3dmObjectAttributes::SetHatchBoundaryPlotWeightMillimeters(double weight)
+{
+  if (weight < -1.1)
+    weight = DefaultAttributesPrivate.m_hatch_boundary_plot_weight_mm;
+  if (weight == HatchBoundaryPlotWeightMillimeters())
+    return;
+
+  Private().m_hatch_boundary_plot_weight_mm = weight;
+}
+
+
 
 bool ON_3dmObjectAttributes::DetailBackgroundVisible() const
 {
@@ -2541,9 +3297,7 @@ void ON_3dmObjectAttributes::SetDetailBackgroundVisible(bool visible)
   if (DetailBackgroundVisible() == visible)
     return;
   
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_detail_background_visible = visible;
+  Private().m_detail_background_visible = visible;
 }
 
 
@@ -2556,9 +3310,7 @@ void ON_3dmObjectAttributes::SetClippingPlaneLabelStyle(ON::SectionLabelStyle st
   if (ClippingPlaneLabelStyle() == style)
     return;
 
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-  m_private->m_section_label_style = style;
+  Private().m_section_label_style = style;
 }
 
 
@@ -2580,26 +3332,61 @@ void ON_3dmObjectAttributes::SetObjectFrame(const ON_COMPONENT_INDEX& ci, const 
   m_object_frame = plane;
 }
 
-ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void) const
+const ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void) const
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
 
-  return m_private->m_mesh_modifiers;
+  if (m_private)
+    return m_private->m_mesh_modifiers;
+
+  static ON_MeshModifiers empty;
+  return empty;
 }
 
-const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const
+ON_MeshModifiers& ON_3dmObjectAttributes::MeshModifiers(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
 
-  return m_private->m_decals.GetDecalArray();
+  return Private().m_mesh_modifiers;
 }
 
-ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
+const ON_SimpleArray<ON_Decal*>& ON_3dmObjectAttributes::GetDecalArray(void) const // Deprecated.
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
+  std::vector<std::shared_ptr<ON_Decal>> decals;
+  GetDecalArray(decals);
+
+  static ON_SimpleArray<ON_Decal*> dummy;
+  dummy.Destroy();
+
+  for (const auto& decal_sp : decals)
+  {
+    dummy.Append(decal_sp.get());
+  }
+
+  return dummy;
+}
+
+void ON_3dmObjectAttributes::GetDecalArray(std::vector<std::shared_ptr<ON_Decal>>& array_out) const
+{
+  // 4th May 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-94477
+  // Fast check to see if there are any decals on the object attributes. If not, don't do anything else.
+  if (ON_DecalCollection::FastHasDecals(*this))
+  {
+    std::lock_guard<std::recursive_mutex> lg(g_mutex);
+
+    auto& pr = const_cast<ON_3dmObjectAttributes*>(this)->Private();
+    array_out = pr.m_decals.GetDecalArray();
+  }
+}
+
+ON_Decal* ON_3dmObjectAttributes::AddDecal(void) // Deprecated.
+{
+  return AddDecalEx().get();
+}
+
+const std::shared_ptr<ON_Decal> ON_3dmObjectAttributes::AddDecalEx(void)
+{
+  std::lock_guard<std::recursive_mutex> lg(g_mutex);
 
   ON_Decal decal;
 
@@ -2607,8 +3394,8 @@ ON_Decal* ON_3dmObjectAttributes::AddDecal(void)
   if (w.AddDecal(decal) != ON_DecalObjectAttributesWrapper::AddDecalResults::Success)
     return nullptr;
 
-  auto& a = m_private->m_decals.GetDecalArray();
-  const int upper = a.Count() - 1;
+  auto& a = Private().m_decals.GetDecalArray();
+  const int upper = int(a.size() - 1);
   if (upper < 0)
     return nullptr;
 
@@ -2623,8 +3410,10 @@ bool ON_3dmObjectAttributes::RemoveDecal(ON_Decal& decal) // Deprecated.
 
 bool ON_3dmObjectAttributes::RemoveDecal(ON_DECAL_CRC decal_crc)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
+  // 9th April 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-94608
+  // This function doesn't even use m_private. The folowing stops removal from working at all.
+  //if (nullptr == m_private)
+  //  return false;
 
   ON_DecalObjectAttributesWrapper w(*this);
   if (!w.RemoveDecal(decal_crc))
@@ -2635,9 +3424,6 @@ bool ON_3dmObjectAttributes::RemoveDecal(ON_DECAL_CRC decal_crc)
 
 void ON_3dmObjectAttributes::RemoveAllDecals(void)
 {
-  if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
-
   ON_DecalObjectAttributesWrapper w(*this);
   w.RemoveAllDecals();
 }
@@ -2645,9 +3431,13 @@ void ON_3dmObjectAttributes::RemoveAllDecals(void)
 void ON_3dmObjectAttributes::UserDataChanged(UserDataType type)
 {
   if (nullptr == m_private)
-    m_private = new ON_3dmObjectAttributesPrivate(this);
+    return;
 
-  if (UserDataType::Decals == type)
+  // 7th September 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-98360
+  // UserDataType::All means the user data was replaced by a caller that has no idea what was in
+  // it, so every cache built from the user data has to be invalidated. Any cache added here in
+  // future needs to be invalidated for All as well as for its own type.
+  if ((UserDataType::Decals == type) || (UserDataType::All == type))
   {
     m_private->m_decals.InvalidateCache();
   }

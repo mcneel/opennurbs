@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -30,18 +30,23 @@
 #include "opennurbs_3dm.h"          /* 3DM typecode (TCODE) definitions */
 
 #include "opennurbs_defines.h"      /* openNURBS defines and enums */
+#include "opennurbs_uuid.h"         /* universally unique identifiers (UUID, a.k.a, GUID) */
+#include "opennurbs_unicode.h"      /* unicode string conversion */
+#if defined(ON_CPLUSPLUS)
+#include "opennurbs_locale.h"
+#include "opennurbs_md5.h"
+#include "opennurbs_sha1.h"
+#include "opennurbs_string.h"         // dynamic string classes (single and double byte)
+#endif
 #include "opennurbs_error.h"        /* error handling */
 #include "opennurbs_memory.h"       /* memory management (onmalloc(), onrealloc(), onfree(), ...) */
 #include "opennurbs_rand.h"         /* random number generator */
 #include "opennurbs_crc.h"          /* cyclic redundancy check tool */
-#include "opennurbs_uuid.h"         /* universally unique identifiers (UUID, a.k.a, GUID) */
-#include "opennurbs_unicode.h"      /* unicode string conversion */
 
 #if defined(ON_CPLUSPLUS)
 #include "opennurbs_sleeplock.h"
 #include "opennurbs_topology.h"
 #include "opennurbs_cpp_base.h"     // for safe use of STL classes as private data members
-#include "opennurbs_locale.h"
 #include "opennurbs_date.h"
 #include "opennurbs_version_number.h"
 #include "opennurbs_compstat.h"
@@ -51,19 +56,16 @@
 #include "opennurbs_fsp.h"            // fixed size memory pool
 #include "opennurbs_function_list.h"      /* list of functions to run */
 #include "opennurbs_std_string.h"     // std::string utilities
-#include "opennurbs_md5.h"
-#include "opennurbs_sha1.h"
-#include "opennurbs_string.h"         // dynamic string classes (single and double byte)
 #include "opennurbs_hash_table.h"
 #include "opennurbs_file_utilities.h"
-#include "opennurbs_array.h"          // dynamic array templates
 #include "opennurbs_compress.h"
 #include "opennurbs_base64.h"         // base64 encodeing and decoding
-#include "opennurbs_color.h"          // R G B color
 #include "opennurbs_linestyle.h"      // line pattern, scale, and width
-#include "opennurbs_point.h"          // double precision 2d, 3d, 4d points and 2d, 3d vectors
+#include "opennurbs_color.h"          // R G B color
 #include "opennurbs_fpoint.h"         // float precision 2d, 3d, 4d points and 2d, 3d vectors
 #include "opennurbs_ipoint.h"         // 2d integer point, rectangle and size
+#include "opennurbs_array.h"          // dynamic array templates
+#include "opennurbs_point.h"          // double precision 2d, 3d, 4d points and 2d, 3d vectors
 #include "opennurbs_base32.h"         // base32 encodeing and decoding
 #include "opennurbs_pluginlist.h"
 #include "opennurbs_bounding_box.h"   // simple 3d axis aligned bounding box
@@ -110,16 +112,24 @@
 #include "opennurbs_texture_mapping.h" // texture coordinate evaluation
 #include "opennurbs_texture.h"        // texture definition
 #include "opennurbs_material.h"       // simple rendering material
+#include "opennurbs_markup.h"         // markup entities
 #include "opennurbs_sectionstyle.h"   // attributes for drawing sections
 #include "opennurbs_layer.h"          // layer definition
 #include "opennurbs_linetype.h"       // linetype definition
 #include "opennurbs_group.h"          // group name and index
+
+#if defined(OPENNURBS_TAG_WIP)
+#include "opennurbs_tag.h"            // tag name and index
+#endif // OPENNURBS_TAG_WIP
+
+#include "opennurbs_pageview_group.h" // page view group name and index
 #include "opennurbs_light.h"          // light
 #include "opennurbs_pointgeometry.h"  // single point
 #include "opennurbs_pointcloud.h"     // point set
 #include "opennurbs_curveproxy.h"     // proxy curve provides a way to use an existing curve
 #include "opennurbs_surfaceproxy.h"   // proxy surface provides a way to use another surface
 #include "opennurbs_mesh.h"           // mesh object
+#include "opennurbs_quickhull3d.h"    // 3d convex hull (Quickhull algorithm)
 
 
 #include "opennurbs_pointgrid.h"      // point grid object
@@ -180,6 +190,7 @@
 #include "opennurbs_post_effects.h"        // Post Effect support.
 #include "opennurbs_mesh_modifiers.h"      // Mesh Modifiers support.
 #include "opennurbs_extensions.h"
+#include "opennurbs_worksession.h"         // Rhino worksession (.rws) files.
 #include "opennurbs_freetype.h"
 
 

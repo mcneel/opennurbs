@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -71,6 +71,17 @@ ON_SimpleArray<T>::ON_SimpleArray( size_t c )
 {
   if ( c > 0 ) 
     SetCapacity( c );
+}
+
+template <class T>
+ON_SimpleArray<T>::ON_SimpleArray(size_t count, T initial_value)
+  : ON_SimpleArray(count)
+{
+  if (count > 0)
+  {
+    m_count = static_cast<int>(count);
+    SetRange(0, m_count, initial_value);
+  }
 }
 
 // Copy constructor
@@ -572,16 +583,56 @@ template<class T>
 template<class... _Val>
 void ON_SimpleArray<T>::EmplaceBack(_Val&&... val)
 {
-  T obj = T(std::forward<_Val>(val)...);
-  Append(obj);
+  if (m_count == m_capacity)
+  {
+    const int newcapacity = NewCapacity();
+    Reserve(newcapacity);
+    if (nullptr == m_a)
+    {
+      ON_ERROR("allocation failure");
+      return;
+    }
+  }
+
+#ifdef ON_HAS_CXX20
+  std::construct_at(m_a + m_count++, std::forward<_Val>(val)...);
+#else
+  ::new (static_cast<void*>(m_a + m_count++)) T(std::forward<_Val>(val)...);
+#endif
+
+  // inefficient, don't do this:
+  // T obj = T(std::forward<_Val>(val)...);
+  // Append(obj);
 }
 
 template<class T>
 template<class... _Val>
 void ON_SimpleArray<T>::Emplace(int i, _Val&&... val)
 {
-  T obj = T(std::forward<_Val>(val)...);
-  Insert(i, obj);
+  if (i >= 0 && i <= m_count)
+  {
+    if (m_count == m_capacity)
+    {
+      const int newcapacity = NewCapacity();
+      Reserve(newcapacity);
+      if (nullptr == m_a)
+      {
+        ON_ERROR("allocation failure");
+        return;
+      }
+    }
+    m_count++;
+    Move(i + 1, i, m_count - 1 - i);
+#ifdef ON_HAS_CXX20
+    std::construct_at(m_a + i, std::forward<_Val>(val)...);
+#else
+    ::new (static_cast<void*>(m_a + i)) T(std::forward<_Val>(val)...);
+#endif
+  }
+
+  // inefficient, don't do this:
+  // T obj = T(std::forward<_Val>(val)...);
+  // Insert(i, obj);
 }
 
 template <class T>
@@ -676,7 +727,7 @@ void ON_SimpleArray<T>::RemoveValue(const T& key)
 }
 
 template <class T>
-void ON_SimpleArray<T>::RemoveIf(bool predicate(const T& key))
+void ON_SimpleArray<T>::RemoveIf(bool (*predicate)(const T& key))
 {
   int t = 0;
   for (int i = 0; i < m_count; i++)
@@ -1032,6 +1083,34 @@ bool ON_SimpleArray<T>::Sort( ON::sort_algorithm sa, int* index, int (*compar)(c
 }
 
 template <class T>
+bool ON_SimpleArray<T>::Sort( ON::sort_algorithm sa, unsigned int* index, int (*compar)(const T*,const T*) ) const
+{
+  bool rc = false;
+  if ( m_a && m_count > 0 && compar && index ) {
+    if ( m_count > 1 )
+      ON_Sort(sa, index, m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
+    else if ( m_count == 1 )
+      index[0] = 0;
+    rc = true;
+  }
+  return rc;
+}
+
+template <class T>
+bool ON_SimpleArray<T>::Sort( ON::sort_algorithm sa, unsigned int* index, int (*compar)(const T*,const T*,void*),void* p ) const
+{
+  bool rc = false;
+  if ( m_a && m_count > 0 && compar && index ) {
+    if ( m_count > 1 )
+      ON_Sort(sa, index, m_a, m_count, sizeof(T), (int(*)(const void*,const void*,void*))compar, p );
+    else if ( m_count == 1 )
+      index[0] = 0;
+    rc = true;
+  }
+  return rc;
+}
+
+template <class T>
 bool ON_SimpleArray<T>::Permute( const int* index )
 {
   bool rc = false;
@@ -1156,7 +1235,7 @@ T* ON_SimpleArray<T>::SetCapacity( size_t new_capacity )
   if (0 == m_capacity)
   {
     // Allow "expert" users of ON_SimpleArray<>.SetArray(*,*,0) to clean up after themselves
-    // and deals with the case when the forget to clean up after themselves.
+    // and deals with the case when they forget to clean up after themselves.
     m_a = nullptr;
     m_count = 0;
   }
@@ -1431,11 +1510,25 @@ ON_ClassArray<T>& ON_ClassArray<T>::operator=( ON_ClassArray<T>&& src ) ON_NOEXC
 {
   if( this != &src ) 
   {
+    // 2026-02-02, Pierre
+    // The move to std::move(src) proposed by Steve below, in reference to
+    // getting rhino3dm to compile on Linux, ends up just calling the rvalue ref
+    // constructor above, and so does NOT call Destroy(). The objects in the array
+    // will not be destroyed, which on first glance seems correct because the current
+    // code leads to use after free!
+    // 
+    // 2019-11-05, Dale Lear, RH-55467
     // TODO - investigate why we should use std::move(src)
-    // instead of the code below
-    //ON_ClassArray<T>::operator=(std::move(src));
+    // instead of only this:
+    // 
+    //ON_ClassArray<T>::operator=(std::move(src));  // 2019-04-19, Steve Bear, abdc015b3e7f970b1650d06280c584354a91c071
+    // 
     // Then investigate why the change was requested only for class array.
     // What about the other dynamic array classes?
+    // 
+    // 2026-02-02, Pierre
+    // TODO: Why are we calling Destroy() here??
+    // This will call element destructors and leads to potential use after free??
     this->Destroy();
     m_a = src.m_a;
     m_count = src.m_count;
@@ -1919,6 +2012,61 @@ void ON_ClassArray<T>::Insert( int i, const T& x )
     }
 	  m_a[i] = x; // uses T::operator=() to copy x to array
   }
+}
+
+template<class T>
+template<class... _Val>
+void ON_ClassArray<T>::EmplaceBack(_Val&&... val)
+{
+  if (m_count == m_capacity)
+  {
+    const int newcapacity = NewCapacity();
+    Reserve(newcapacity);
+    if (nullptr == m_a)
+    {
+      ON_ERROR("allocation failure");
+      return;
+    }
+  }
+#ifdef ON_HAS_CXX20
+  std::construct_at(m_a + m_count++, std::forward<_Val>(val)...);
+#else
+  ::new (static_cast<void*>(m_a + m_count++)) T(std::forward<_Val>(val)...);
+#endif
+
+  // inefficient, don't do this:
+  // T obj = T(std::forward<_Val>(val)...);
+  // Append(obj);
+}
+
+template<class T>
+template<class... _Val>
+void ON_ClassArray<T>::Emplace(int i, _Val&&... val)
+{
+  if (i >= 0 && i <= m_count)
+  {
+    if (m_count == m_capacity)
+    {
+      const int newcapacity = NewCapacity();
+      Reserve(newcapacity);
+      if (nullptr == m_a)
+      {
+        ON_ERROR("allocation failure");
+        return;
+      }
+    }
+    m_count++;
+    Move(i + 1, i, m_count - 1 - i);
+#ifdef ON_HAS_CXX20
+    std::construct_at(m_a + i, std::forward<_Val>(val)...);
+#else
+    ::new (static_cast<void*>(m_a + i)) T(std::forward<_Val>(val)...);
+#endif
+  }
+
+  // inefficient, don't do this:
+  // T obj = T(std::forward<_Val>(val)...);
+  // Insert(i, obj);
 }
 
 template <class T>

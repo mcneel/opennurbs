@@ -14,6 +14,8 @@
 #include "opennurbs.h"
 #include <functional>
 #include <unordered_map>
+#include <algorithm>
+#include "opennurbs_parallel_sort.h"
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -470,6 +472,7 @@ unsigned int ON_Mesh::SizeOf() const
 {
   unsigned int sz = ON_Geometry::SizeOf();
   sz += m_V.SizeOfArray();
+  sz += m_dV.SizeOfArray();
   sz += m_F.SizeOfArray();
   sz += m_N.SizeOfArray();
   sz += m_FN.SizeOfArray();
@@ -2854,16 +2857,22 @@ bool ON_Mesh::GetBBox( // returns true if successful
     rc = m_vertex_bbox.IsNotEmpty();
     if ( false == rc ) 
     {
+      // Made in a local and copied over only when complete, so a reader never sees a part-made box.
+      ON_BoundingBox vertex_bbox = ON_BoundingBox::UnsetBoundingBox;
+
       if ( HasDoublePrecisionVertices() )
       {
         const ON_3dPointArray& dV = DoublePrecisionVertices();
         if ( dV.UnsignedCount() == m_V.UnsignedCount() )
-          rc = m_vertex_bbox.Set(dV, false);
+          rc = vertex_bbox.Set(dV, false);
       }
       if (false == rc)
       {
-        rc = m_vertex_bbox.Set(m_V, false);
+        rc = vertex_bbox.Set(m_V, false);
       }
+
+      if ( rc )
+        m_vertex_bbox = vertex_bbox;
     }
 
     if ( rc ) 
@@ -3069,11 +3078,14 @@ void ON_Mesh::DestroyRuntimeCache( bool bDelete )
     m_top.Destroy();
     DeleteMeshParameters();
     InvalidateCurvatureStats();
+    // The face -> n-gon map is created on demand, including from a const mesh.
+    RemoveNgonMap();
   }
   else
   {
     // do not free any memory
     m_top.EmergencyDestroy();
+    m_NgonMap.EmergencyDestroy();
   }
 
   InvalidateBoundingBoxes();
@@ -3192,34 +3204,6 @@ void ON_Mesh::SetSolidOrientation(int solid_orientation)
   }
 }
 
-
-static 
-int ON_MeshIsManifold_Compare3floats( const void* a, const void* b )
-{
-  // NOPE // memcmp thinks -0.0f and 0.0f are different numbers // return memcmp(a,b,sizeof(ON_3fPoint));
-
-  const float* fa = (const float*)a;
-  const float* fb = (const float*)b;
-  for (const float* fa3 = fa + 3; fa < fa3; ++fa, ++fb)
-  {
-    const float x = *fa;
-    const float y = *fb;
-    if (x < y)
-      return -1;
-    if (x > y)
-      return 1;
-    if (x == y)
-      continue; // neither x nor y is a nan
-
-    // at least one of x and y is a nan
-    // use convention (not a nan) < (nan) because this code must use a well ordered compare for all values.
-    if (x == x)
-      return -1; // x is not a nan, y is a nan
-    if (y == y)
-      return 1; // x is a nan, y is not a nan
-  }
-  return 0;
-}
 
 static 
 int ON_MeshGetVertexEdges_Compare2dex( const void* a, const void* b )
@@ -3502,7 +3486,8 @@ bool ON_Mesh::IsPointInside(
         bool bStrictlyInside
         ) const
 {
-  if ( IsSolid() )
+  // Crossing parity never reads a normal: a closed manifold answers correctly whether or not it is oriented.
+  if ( IsClosed() && IsManifold() )
   {
   }
   return false;
@@ -3533,8 +3518,6 @@ bool ON_Mesh::IsManifold(
     ON_3dex e;
     int i, j, ecount;
     const int* fvi;
-    ON_3fPoint v0;
-    const ON_3fPoint* v;
     const ON_MeshFace* f;
     int* vid = ws.GetIntMemory(vcount);
     ON_3dex* edge = (ON_3dex*)ws.GetMemory(4*fcount*sizeof(*edge));
@@ -3542,25 +3525,8 @@ bool ON_Mesh::IsManifold(
     if ( bTopologicalTest )
     {
       // coincident vertices are assigned the same vertex id
-      ON_Sort(ON::sort_algorithm::quick_sort,vid,m_V.Array(),vcount,sizeof(m_V[0]), ON_MeshIsManifold_Compare3floats);
-      ecount = 0;
-      v = m_V.Array();
-      ecount = 0;
-      j = vcount;
-      for ( i = 0; i < vcount; i = j)
-      {
-        v0 = v[vid[i]];
-        vid[i] = ecount;
-        for ( j = i+1; j < vcount; j++ )
-        {
-          if (ON_MeshIsManifold_Compare3floats(v0,v+vid[j]) )
-          {
-            ecount++;
-            break;
-          }
-          vid[j] = ecount;
-        }
-      }
+      if ( nullptr == GetVertexLocationIds(0,(unsigned int*)vid,nullptr) )
+        return false;
     }
     else
     {
@@ -3611,7 +3577,7 @@ bool ON_Mesh::IsManifold(
       }
     }
 
-    if ( ecount >= 4 )
+    if ( ecount >= 3 )
     {
       bIsManifold = true;
       bool bIsOriented  = (pbIsOriented)  ? true  : false;
@@ -3746,53 +3712,35 @@ static void ON_Mesh_SetClosedHelper(
     // build an edge list where the "vertex" indices identify unique 3d locations
     ON_3udex* E_list = (ON_3udex*)onmalloc(4 * Fcount*sizeof(E_list[0]));
     ON_3udex E;
-    unsigned int Vid0;
     const int* fvi;
     unsigned int E_count = 0;
     const ON_MeshFace* F = mesh.m_F.Array();
     for ( j = 0; j < Fcount; j++ )
     {
       fvi = F[j].vi;
-      E.i = Vid[fvi[0]];
-      Vid0 = E.j = Vid[fvi[1]];
-      if ( E.i == E.j )
-        break;
-      if ( E.i > E.j )
-      {
-        i = E.i; E.i = E.j; E.j = i;
-        E.k = 1;
-      }
-      else
-      {
-        E.k = 0;
-      }
-      E_list[E_count++] = E;
 
-      E.i = Vid0;
-      Vid0 = E.j = Vid[fvi[2]];
-      if ( E.i == E.j )
-        break;
-      if ( E.i > E.j )
+      // The corners as location ids, without the sides of zero length.
+      unsigned int Fid[4];
+      unsigned int Fid_count = 0;
+      for ( i = 0; i < 4; i++ )
       {
-        i = E.i; E.i = E.j; E.j = i;
-        E.k = 1;
+        const unsigned int id = Vid[fvi[i]];
+        if ( 0 == Fid_count || id != Fid[Fid_count-1] )
+          Fid[Fid_count++] = id;
       }
-      else
-      {
-        E.k = 0;
-      }
-      E_list[E_count++] = E;
+      if ( Fid_count > 1 && Fid[Fid_count-1] == Fid[0] )
+        Fid_count--; // the closing side has zero length
 
-      if ( fvi[2] != fvi[3] )
+      if ( Fid_count < 3 )
+        continue; // the face is collapsed to a point or to a segment
+
+      for ( i = 0; i < Fid_count; i++ )
       {
-        // quad
-        E.i = Vid0;
-        Vid0 = E.j = Vid[fvi[3]];
-        if ( E.i == E.j )
-          break;
+        E.i = Fid[i];
+        E.j = Fid[(i+1) % Fid_count];
         if ( E.i > E.j )
         {
-          i = E.i; E.i = E.j; E.j = i;
+          const unsigned int id = E.i; E.i = E.j; E.j = id;
           E.k = 1;
         }
         else
@@ -3801,26 +3749,11 @@ static void ON_Mesh_SetClosedHelper(
         }
         E_list[E_count++] = E;
       }
-
-      E.i = Vid0;
-      E.j = Vid[fvi[0]];
-      if ( E.i == E.j )
-        break;
-      if ( E.i > E.j )
-      {
-        i = E.i; E.i = E.j; E.j = i;
-        E.k = 1;
-      }
-      else
-      {
-        E.k = 0;
-      }
-      E_list[E_count++] = E;
     }
     if ( Vid != &Vidbuffer[0] )
       onfree(Vid);
 
-    if ( E_count < 3 || j != Fcount )
+    if ( E_count < 3 )
     {
       ON_ERROR("Mesh is corrupt or collapsed");
       bClosedOnly = false;
@@ -4309,6 +4242,68 @@ bool ON_Mesh::HasCachedTextureCoordinates() const
     }
   }
   return false;
+}
+
+const ON_SHA1_Hash ON_Mesh::VertexHash(
+  bool bDoublePrecision,
+  bool bIncludeVertexNormals,
+  bool bIncludeLegacyTextureCoordinates,
+  bool bIncludeSurfaceParameters,
+  bool bIncludePrincipalCurvatures
+) const
+{
+  ON_SHA1 sha1;
+
+  for(;;)
+  {
+    const unsigned int vertex_count = VertexUnsignedCount();
+    if (0 == vertex_count)
+      break;
+    if (bDoublePrecision && HasDoublePrecisionVertices())
+      sha1.AccumulateDoubleArray(3 * m_dV.UnsignedCount(), &m_dV.Array()->x);
+    else if (HasSinglePrecisionVertices())
+      sha1.AccumulateFloatArray(3 * m_V.UnsignedCount(), &m_V.Array()->x);
+    else
+      break;
+
+    if (bIncludeVertexNormals && this->HasVertexNormals())
+      sha1.AccumulateFloatArray(3 * m_V.UnsignedCount(), &m_N.Array()->x);
+
+    if (bIncludeLegacyTextureCoordinates && this->HasTextureCoordinates())
+      sha1.AccumulateFloatArray(2 * m_T.UnsignedCount(), &m_T.Array()->x);
+
+    if (bIncludeSurfaceParameters && this->HasSurfaceParameters())
+      sha1.AccumulateDoubleArray(2 * m_S.UnsignedCount(), &m_S.Array()->x);
+
+    if (bIncludePrincipalCurvatures && this->HasPrincipalCurvatures())
+      sha1.AccumulateDoubleArray(2 * m_K.UnsignedCount(), &m_K.Array()->k1);
+
+    break;
+  }
+
+  return sha1.Hash();
+}
+
+/// <summary>
+/// Calculate a SHA-1 hash of face information. 
+/// </summary>
+/// <returns>
+/// If FacexCount() is &gt; 0, then a SHA-1 hash of the indices in the m_F[]
+/// array is is returned. Otherwise, ON_SHA1_Hash::EmptyContentHash is returned.
+/// </returns>
+const ON_SHA1_Hash ON_Mesh::FaceHash() const
+{
+  ON_SHA1 sha1;
+
+  const unsigned int face_count = m_F.UnsignedCount();
+  const ON_MeshFace* f = m_F.Array();
+  for (const ON_MeshFace* f1 = f + face_count; f1 < f; ++f)
+  {
+    sha1.AccumulateInteger32Array(f->vi[2] == f->vi[3] ? 3 : 4, f->vi);
+  }
+
+  return sha1.Hash();
+
 }
 
 // Note: We are exporting this function for use in CRhinoObject::SetCachedTextureCoordinatesFromPlugIn
@@ -5832,431 +5827,116 @@ bool ON_Mesh::CombineIdenticalVertices(
   return rc;
 }
 
-void ON_Mesh::Append( std::vector<std::shared_ptr<const ON_Mesh>> meshes )
+static bool ON_Mesh_SeedAppendFlag(bool bBackFill, bool bEmptyDestination, bool bDestinationHasIt)
 {
-  if ( meshes.size() == 0 )
-    return;
+  if (bBackFill)
+    return (false == bEmptyDestination && bDestinationHasIt);
+  return (bEmptyDestination || bDestinationHasIt);
+}
 
-  int vcount0 = VertexCount();
-  if ( vcount0 <= 0 )
-    m_F.SetCount(0);
-  int fcount0 = FaceCount();
-
-  // The calls to Has*() must happen before the m_V[] and m_F[] arrays get enlarged
-  // Allow the appendage of VertexNormals, TextureCoordinates, PrincipalCurvatures to empty meshes
-  // by checking for 0 == vcount0 && 0 == fcount0
-  bool bHasVertexNormals       = (0 == vcount0 || HasVertexNormals());
-  bool bHasFaceNormals         = (0 == vcount0 || 0 == fcount0 || HasFaceNormals());
-  bool bHasTextureCoordinates  = (0 == vcount0 || HasTextureCoordinates());
-  bool bHasPrincipalCurvatures = (0 == vcount0 || HasPrincipalCurvatures());
-  bool bHasVertexColors        = (0 == vcount0 || HasVertexColors());
-  bool bHasSurfaceParameters   = (0 == vcount0 || HasSurfaceParameters());
-  bool bHasDoubles             = (0 == vcount0 || HasSynchronizedDoubleAndSinglePrecisionVertices());
-  bool bHasNgonMap             = (NgonCount() > 0 && 0 != NgonMap());
-
-  bool bSetMeshParameters = true;
-  const ON_MeshParameters* mp = nullptr;
-  ON_SHA1_Hash mp_hash = ON_SHA1_Hash::EmptyContentHash;
-  if (0 != vcount0)
+static void ON_Mesh_CombineAppendFlag(bool bBackFill, bool& bFlag, bool bMeshHasIt)
+{
+  if (bBackFill)
   {
-    mp = this->MeshParameters();
-    if (nullptr == mp)
-      bSetMeshParameters = false;
-    else
-      mp_hash = mp->GeometrySettingsHash();
-  }
-
-  bool bHasSurfaceDomain
-    = bHasSurfaceParameters
-    && (0 == vcount0 || (m_srf_domain[0].IsIncreasing() && m_srf_domain[1].IsIncreasing()));
-
-  ON_Interval srf_domain[2];
-  srf_domain[0] = (bHasSurfaceDomain && vcount0  > 0) ? m_srf_domain[0] : ON_Interval::EmptyInterval;
-  srf_domain[1] = (bHasSurfaceDomain && vcount0  > 0) ? m_srf_domain[1] : ON_Interval::EmptyInterval;
-  
-  bool bHasTexturePackingDomain
-    = bHasTextureCoordinates
-    && (0 == vcount0 || (m_packed_tex_domain[0].IsIncreasing() && m_packed_tex_domain[1].IsIncreasing()));
-
-  ON_Interval packed_tex_domain[2];
-  packed_tex_domain[0] = (bHasTexturePackingDomain && vcount0  > 0) ? m_packed_tex_domain[0] : ON_Interval::EmptyInterval;
-  packed_tex_domain[1] = (bHasTexturePackingDomain && vcount0  > 0) ? m_packed_tex_domain[1] : ON_Interval::EmptyInterval;
-  bool packed_tex_rotate = (bHasTexturePackingDomain && m_packed_tex_rotate) ? true : false;
-
-  double srf_scale[2] = { m_srf_scale[0], m_srf_scale[1]};
-
-  int fcount = fcount0;
-  int vcount = vcount0;
-  unsigned int merged_count = vcount0 > 0 ? 1 : 0;
-
-  int mesh_index = 0;
-  for ( auto m : meshes )
-  {
-    if (!m )
-      continue;
-    int vcount1 = m->m_V.Count();
-    if ( vcount1 <= 0 )
-      continue;
-
-    merged_count++;
-
-    if (bSetMeshParameters)
-    {
-      const ON_MeshParameters* this_mesh_mp = m->MeshParameters();
-      if (nullptr == this_mesh_mp)
-        bSetMeshParameters = false;
-      else
-      {
-        const ON_SHA1_Hash this_mesh_mp_hash = this_mesh_mp->GeometrySettingsHash();
-        if (nullptr == mp)
-        {
-          // first mesh parameters.
-          mp = this_mesh_mp;
-          mp_hash = this_mesh_mp_hash;
-        }
-        else
-        {
-          if (this_mesh_mp_hash != mp_hash)
-          {
-            // variable mesh parameters - means output gets none.
-            bSetMeshParameters = false;
-          }
-        }
-      }
-    }
-
-    int fcount1 = m->m_F.Count();
-    if ( fcount1 > 0 )
-      fcount += fcount1;
-    vcount += vcount1;
-    if ( bHasVertexNormals && !m->HasVertexNormals() )
-      bHasVertexNormals = false;
-    if ( bHasTextureCoordinates && !m->HasTextureCoordinates())
-      bHasTextureCoordinates = false;
-    if ( bHasPrincipalCurvatures && !m->HasPrincipalCurvatures())
-      bHasPrincipalCurvatures = false;
-    if ( bHasVertexColors && !m->HasVertexColors())
-      bHasVertexColors = false;
-    if ( bHasSurfaceParameters && !m->HasSurfaceParameters())
-      bHasSurfaceParameters = false;
-    if ( bHasDoubles && !m->HasSynchronizedDoubleAndSinglePrecisionVertices())
-      bHasDoubles = false;
-    if ( bHasFaceNormals && fcount1 > 0 && !m->HasFaceNormals() )
-      bHasFaceNormals = false;
-
-    if (bHasSurfaceDomain)
-    {
-      bHasSurfaceDomain
-        = bHasSurfaceParameters
-        && m->m_srf_domain[0].IsIncreasing()
-        && m->m_srf_domain[1].IsIncreasing();
-      if (bHasSurfaceDomain)
-      {
-        srf_domain[0].Union(m->m_srf_domain[0]);
-        srf_domain[1].Union(m->m_srf_domain[1]);
-      }
-    }
-
-    if (1 == merged_count && bHasSurfaceParameters && bHasSurfaceDomain)
-    {
-      srf_scale[0] = m->m_srf_scale[0];
-      srf_scale[1] = m->m_srf_scale[1];
-    }
-    else
-    {
-      srf_scale[0] = 0.0;
-      srf_scale[1] = 0.0;
-    }
-
-    if (bHasTexturePackingDomain)
-    {
-      // 2014-04-01 Dale Lear
-      //   Trying to merger packed_tex_domain[] intervals
-      //   is questionable at best.
-      //   A strong argument can be made for simply deleting
-      //   packed texture domain information when there are
-      //   two non-empty meshes that are merged.
-      bHasTexturePackingDomain
-        = bHasTextureCoordinates
-        && m->m_packed_tex_domain[0].IsIncreasing()
-        && m->m_packed_tex_domain[1].IsIncreasing();
-      if (packed_tex_rotate != (m->m_packed_tex_rotate?true:false))
-      {
-        if (0 == vcount0 && 0 == mesh_index)
-        {
-          packed_tex_rotate = (m->m_packed_tex_rotate ? true : false);
-        }
-        else
-        {
-          bHasTexturePackingDomain = false;
-        }
-      }
-      if (bHasTexturePackingDomain)
-      {
-        if (1 == merged_count)
-        {
-          packed_tex_rotate = (m->m_packed_tex_rotate ? true : false);
-        }
-        else if (packed_tex_rotate != (m->m_packed_tex_rotate ? true : false))
-        {
-          bHasTexturePackingDomain = false;
-        }
-        packed_tex_domain[0].Union(m->m_packed_tex_domain[0]);
-        packed_tex_domain[1].Union(m->m_packed_tex_domain[1]);
-      }     
-    }
-
-    mesh_index++;
-  }
-
-
-  if ( vcount <= vcount0 && fcount <= fcount0 )
-    return;
-
-  if (!bHasSurfaceParameters || !bHasSurfaceDomain)
-  {
-    srf_domain[0] = ON_Interval::EmptyInterval;
-    srf_domain[1] = ON_Interval::EmptyInterval;
-    srf_scale[0] = 0.0;
-    srf_scale[1] = 0.0;
-  }
-
-  if (!bHasTextureCoordinates || !bHasTexturePackingDomain)
-  {
-    packed_tex_domain[0] = ON_Interval::EmptyInterval;
-    packed_tex_domain[1] = ON_Interval::EmptyInterval;
-    packed_tex_rotate = false;
-  }
-
-  m_srf_domain[0] = srf_domain[0];
-  m_srf_domain[1] = srf_domain[1];
-  m_srf_scale[0] = srf_scale[0];
-  m_srf_scale[1] = srf_scale[1];
-
-  m_packed_tex_domain[0] = packed_tex_domain[0];
-  m_packed_tex_domain[1] = packed_tex_domain[1];
-  m_packed_tex_rotate = packed_tex_rotate;
-
-  m_top.Destroy();
-
-  // It is critical to call DoublePrecisionVertices() before 
-  // we modify m_V[] because DoublePrecisionVertices() will
-  // attempt to update the double precision information
-  // when it notices that m_V has new vertices added.
-
-  m_V.Reserve(vcount);
-  m_F.Reserve(fcount);
-  for (auto m : meshes)
-  {
-    const unsigned int vcount0_local = m_V.UnsignedCount();
-    const unsigned int fcount0_local = m_F.UnsignedCount();
-
-    if (!m)
-      continue;
-
-    int vcount1 = m->m_V.Count();
-    if ( vcount1 <= 0 )
-      continue;
-    int fcount1 = m->m_F.Count();
-    if ( fcount1 > 0 )
-    {
-      auto j = m_F.Count();
-      m_F.Append(fcount1,m->m_F.Array());
-      fcount1 += j;
-      while (j < fcount1)
-      {
-        const auto vi = m_F[j].vi;
-        vi[0] += (int)vcount0_local;
-        vi[1] += (int)vcount0_local;
-        vi[2] += (int)vcount0_local;
-        vi[3] += (int)vcount0_local;
-        j++;
-      }
-    }
-    m_V.Append(vcount1,m->m_V.Array());
-    if ( m->HasNgons() )
-    {
-      if ( 0 != m->NgonMap() )
-        bHasNgonMap = true;
-      m_NgonMap.Destroy();
-      unsigned int ngon_count = m->NgonUnsignedCount();
-      for ( unsigned int ni = 0; ni < ngon_count; ni++ )
-      {
-        const ON_MeshNgon* ngon0 = m->Ngon(ni);
-        if ( 0 == ngon0 )
-          continue;
-        if ( 0 == ngon0->m_Vcount && 0 == ngon0->m_Fcount )
-          continue;
-        ON_MeshNgon* ngon1 = this->m_NgonAllocator.CopyNgon(ngon0);
-        if ( 0 == ngon1 )
-          continue;
-        for ( unsigned int nvi = 0; nvi < ngon1->m_Vcount; nvi++ )
-        {
-          ngon1->m_vi[nvi] += vcount0_local;
-        }
-        for ( unsigned int nfi = 0; nfi < ngon1->m_Fcount; nfi++ )
-        {
-          ngon1->m_fi[nfi] += fcount0_local;
-        }
-        this->AddNgon(ngon1);
-      }
-    }
-  }
-
-  if ( bHasDoubles)
-  {
-    // Now update the double precision vertex locations.
-    m_dV.Reserve(vcount);
-    for (auto m : meshes)
-    {
-      if ( !m || m->m_dV.Count() <= 0 )
-        continue;
-
-      m_dV.Append(m->m_dV.Count(),m->m_dV.Array());
-    }
-    if (m_dV.Count() != vcount)
-      bHasDoubles = false;
-  }
-
-  if ( false == bHasDoubles )
-  {
-    bHasDoubles = false;
-    DestroyDoublePrecisionVertices();
-  }
-  
-  if ( bHasVertexNormals ) 
-  {
-    m_N.Reserve(vcount);
-    for (auto m : meshes)
-    {
-      if (!m)
-        continue;
-      m_N.Append(m->m_N.Count(), m->m_N.Array());
-    }
+    if (false == bFlag && bMeshHasIt)
+      bFlag = true;
   }
   else
   {
-    m_N.Destroy();
-  }
-
-
-  if ( bHasFaceNormals ) 
-  {
-    m_FN.Reserve(fcount);
-    for (auto m : meshes)
-    {
-      if ( !m || m->m_V.Count() <= 0 )
-        continue;
-      m_FN.Append(m->m_FN.Count(), m->m_FN.Array());
-    }
-  }
-  else
-  {
-    m_FN.Destroy();
-  }
-
-  if ( bHasTextureCoordinates ) 
-  {
-    m_T.Reserve(vcount);
-    for (auto m : meshes)
-    {
-      if (!m )
-        continue;
-      m_T.Append(m->m_T.Count(), m->m_T.Array());
-    }
-  }
-  else 
-  {
-    m_T.Destroy();
-  }
-
-
-  if ( bHasSurfaceParameters )
-  {
-    m_S.Reserve(vcount);
-    for (auto m : meshes)
-    {
-      if ( !m )
-        continue;
-      m_S.Append(m->m_S.Count(), m->m_S.Array());
-    }
-  }
-  else 
-  {
-    m_S.Destroy();
-  }
-
-  if ( bHasPrincipalCurvatures )
-  {
-    m_K.Reserve(vcount);
-    for (auto m : meshes)
-    {
-      if ( !m )
-        continue;
-      m_K.Append(m->m_K.Count(), m->m_K.Array());
-    }
-  }
-  else
-  {
-    m_K.Destroy();
-  }
-
-  if ( bHasVertexColors ) 
-  {
-    m_C.Reserve(vcount);
-    for (auto m : meshes)
-    {
-      if (!m)
-        continue;
-      m_C.Append(m->m_C.Count(), m->m_C.Array());
-    }
-  }
-  else 
-  {
-    m_C.Destroy();
-  }
-
-  if ( 0 !=  m_mesh_parameters )
-  {
-    for (auto m : meshes)
-    {
-      if (!m)
-        continue;
-      if ( 0 == m->m_mesh_parameters || *m_mesh_parameters != *m->m_mesh_parameters )
-      {
-        delete m_mesh_parameters;
-        m_mesh_parameters = 0;
-        break;
-      }
-    }
-  }
-
-  for ( int j = 0; j < 4; j++ ) 
-  {
-    if ( m_kstat[j] ) 
-    {
-      // will be recomputed if required
-      delete m_kstat[j];
-      m_kstat[j] = 0;
-    }
-  }
-
-  SetClosed(-99);
-  SetSolidOrientation(-99);
-  InvalidateBoundingBoxes();
-
-  if ( NgonCount() > 0 && bHasNgonMap )
-    CreateNgonMap();
-
-  if (bSetMeshParameters && nullptr != mp && mp != this->MeshParameters())
-  {
-    // Appending to an empty this and all appendees have matching mesh parameters.
-    this->SetMeshParameters(*mp);
+    if (bFlag && false == bMeshHasIt)
+      bFlag = false;
   }
 }
 
+static void ON_Mesh_AppendUnsetVertexColors(ON_SimpleArray<ON_Color>& a, int count)
+{
+  for (int i = 0; i < count; i++)
+    a.Append(ON_Color::UnsetColor);
+}
+
+static void ON_Mesh_AppendUnsetTextureCoordinates(ON_SimpleArray<ON_2fPoint>& a, int count)
+{
+  for (int i = 0; i < count; i++)
+    a.Append(ON_2fPoint::NanPoint);
+}
+
+static void ON_Mesh_AppendUnsetSurfaceCurvatures(ON_SimpleArray<ON_SurfaceCurvature>& a, int count)
+{
+  const ON_SurfaceCurvature k = ON_SurfaceCurvature::CreateFromPrincipalCurvatures(0.0, 0.0);
+  for (int i = 0; i < count; i++)
+    a.Append(k);
+}
+
+static void ON_Mesh_AppendUnsetCachedTextureCoordinates(ON_SimpleArray<ON_3fPoint>& a, int count)
+{
+  for (int i = 0; i < count; i++)
+    a.Append(ON_3fPoint::NanPoint);
+}
+
+static void ON_Mesh_AppendZeroVertexNormals(ON_SimpleArray<ON_3fVector>& a, int count)
+{
+  for (int i = 0; i < count; i++)
+    a.Append(ON_3fVector::ZeroVector);
+}
+
+static void ON_Mesh_ComputeAppendedVertexNormals(
+  ON_SimpleArray<ON_3fVector>& N,
+  const ON_SimpleArray<ON_3fPoint>& V,
+  const ON_SimpleArray<ON_MeshFace>& F,
+  int vi0, int vi1, int fi0, int fi1)
+{
+  if (vi1 <= vi0 || N.Count() < vi1 || V.Count() < vi1)
+    return;
+
+  for (int vi = vi0; vi < vi1; vi++)
+    N[vi] = ON_3fVector::ZeroVector;
+
+  const ON_3fPoint* fV = V.Array();
+  for (int fi = fi0; fi < fi1 && fi < F.Count(); fi++)
+  {
+    ON_3dVector FN(0.0, 0.0, 0.0);
+    if (!F[fi].ComputeFaceNormal(fV, FN))
+      continue;
+    const ON_3fVector fn((float)FN.x, (float)FN.y, (float)FN.z);
+    const int corner_count = F[fi].IsQuad() ? 4 : 3;
+    for (int c = 0; c < corner_count; c++)
+    {
+      const int vi = F[fi].vi[c];
+      if (vi < vi0 || vi >= vi1)
+        continue;
+      N[vi] = N[vi] + fn;
+    }
+  }
+
+  for (int vi = vi0; vi < vi1; vi++)
+  {
+    ON_3dVector n(N[vi].x, N[vi].y, N[vi].z);
+    if (n.Unitize())
+      N[vi] = ON_3fVector((float)n.x, (float)n.y, (float)n.z);
+    else
+      N[vi] = ON_3fVector::ZeroVector;
+  }
+}
+
+void ON_Mesh::Append( std::vector<std::shared_ptr<const ON_Mesh>> meshes )
+{
+  const size_t mesh_count = meshes.size();
+  if (0 == mesh_count)
+    return;
+
+  ON_SimpleArray<const ON_Mesh*> mesh_pointers((int)mesh_count);
+  for (size_t i = 0; i < mesh_count; i++)
+    mesh_pointers.Append(meshes[i].get());
+
+  Append(mesh_pointers.Count(), mesh_pointers.Array());
+}
 
 void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
+{
+  Append(mesh_count, meshes, false);
+}
+
+void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes, bool bBackFillMissingVertexAttributes)
 {
   if (mesh_count <= 0 || 0 == meshes)
     return;
@@ -6273,11 +5953,12 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
   // The calls to Has*() must happen before the m_V[] and m_F[] arrays get enlarged
   // Allow the appendage of VertexNormals, TextureCoordinates, PrincipalCurvatures to empty meshes
   // by checking for 0 == vcount0 && 0 == fcount0
-  bool bHasVertexNormals = (0 == vcount0 || HasVertexNormals());
+  const bool bThisHasVertexNormals = (0 != vcount0 && HasVertexNormals());
+  bool bHasVertexNormals = bThisHasVertexNormals;
   bool bHasFaceNormals = (0 == vcount0 || 0 == fcount0 || HasFaceNormals());
-  bool bHasTextureCoordinates = (0 == vcount0 || HasTextureCoordinates());
-  bool bHasPrincipalCurvatures = (0 == vcount0 || HasPrincipalCurvatures());
-  bool bHasVertexColors = (0 == vcount0 || HasVertexColors());
+  bool bHasTextureCoordinates = ON_Mesh_SeedAppendFlag(bBackFillMissingVertexAttributes, 0 == vcount0, HasTextureCoordinates());
+  bool bHasPrincipalCurvatures = ON_Mesh_SeedAppendFlag(bBackFillMissingVertexAttributes, 0 == vcount0, HasPrincipalCurvatures());
+  bool bHasVertexColors = ON_Mesh_SeedAppendFlag(bBackFillMissingVertexAttributes, 0 == vcount0, HasVertexColors());
   bool bHasSurfaceParameters = (0 == vcount0 || HasSurfaceParameters());
   bool bHasDoubles = (0 == vcount0 || HasSynchronizedDoubleAndSinglePrecisionVertices());
   bool bHasNgonMap = (NgonCount() > 0 && 0 != NgonMap());
@@ -6356,14 +6037,11 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
     if (fcount1 > 0)
       fcount += fcount1;
     vcount += vcount1;
-    if (bHasVertexNormals && !m->HasVertexNormals())
-      bHasVertexNormals = false;
-    if (bHasTextureCoordinates && !m->HasTextureCoordinates())
-      bHasTextureCoordinates = false;
-    if (bHasPrincipalCurvatures && !m->HasPrincipalCurvatures())
-      bHasPrincipalCurvatures = false;
-    if (bHasVertexColors && !m->HasVertexColors())
-      bHasVertexColors = false;
+    if (false == bHasVertexNormals && m->HasVertexNormals())
+      bHasVertexNormals = true;
+    ON_Mesh_CombineAppendFlag(bBackFillMissingVertexAttributes, bHasTextureCoordinates, m->HasTextureCoordinates());
+    ON_Mesh_CombineAppendFlag(bBackFillMissingVertexAttributes, bHasPrincipalCurvatures, m->HasPrincipalCurvatures());
+    ON_Mesh_CombineAppendFlag(bBackFillMissingVertexAttributes, bHasVertexColors, m->HasVertexColors());
     if (bHasSurfaceParameters && !m->HasSurfaceParameters())
       bHasSurfaceParameters = false;
     if (bHasDoubles && !m->HasSynchronizedDoubleAndSinglePrecisionVertices())
@@ -6551,12 +6229,32 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
   if (bHasVertexNormals)
   {
     m_N.Reserve(vcount);
+    ON_Mesh_AppendZeroVertexNormals(m_N, vcount0 - m_N.Count());
+    if (vcount0 > 0 && false == bThisHasVertexNormals)
+      ON_Mesh_ComputeAppendedVertexNormals(m_N, m_V, m_F, 0, vcount0, 0, fcount0);
+
+    int normal_vi = vcount0;
+    int normal_fi = fcount0;
     for (mi = 0; mi < mesh_count; mi++)
     {
       m = meshes[mi];
       if (0 == m)
         continue;
-      m_N.Append(m->m_N.Count(), m->m_N.Array());
+      const int vcount1 = m->m_V.Count();
+      if (vcount1 <= 0)
+        continue;
+      const int fcount1 = m->m_F.Count();
+      if (m->HasVertexNormals())
+      {
+        m_N.Append(m->m_N.Count(), m->m_N.Array());
+      }
+      else
+      {
+        ON_Mesh_AppendZeroVertexNormals(m_N, vcount1);
+        ON_Mesh_ComputeAppendedVertexNormals(m_N, m_V, m_F, normal_vi, normal_vi + vcount1, normal_fi, normal_fi + fcount1);
+      }
+      normal_vi += vcount1;
+      normal_fi += fcount1;
     }
   }
   else
@@ -6584,12 +6282,19 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
   if (bHasTextureCoordinates)
   {
     m_T.Reserve(vcount);
+    ON_Mesh_AppendUnsetTextureCoordinates(m_T, vcount0 - m_T.Count());
     for (mi = 0; mi < mesh_count; mi++)
     {
       m = meshes[mi];
       if (0 == m)
         continue;
-      m_T.Append(m->m_T.Count(), m->m_T.Array());
+      const int vcount1 = m->m_V.Count();
+      if (vcount1 <= 0)
+        continue;
+      if (m->HasTextureCoordinates())
+        m_T.Append(m->m_T.Count(), m->m_T.Array());
+      else
+        ON_Mesh_AppendUnsetTextureCoordinates(m_T, vcount1);
     }
   }
   else
@@ -6617,12 +6322,19 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
   if (bHasPrincipalCurvatures)
   {
     m_K.Reserve(vcount);
+    ON_Mesh_AppendUnsetSurfaceCurvatures(m_K, vcount0 - m_K.Count());
     for (mi = 0; mi < mesh_count; mi++)
     {
       m = meshes[mi];
       if (0 == m)
         continue;
-      m_K.Append(m->m_K.Count(), m->m_K.Array());
+      const int vcount1 = m->m_V.Count();
+      if (vcount1 <= 0)
+        continue;
+      if (m->HasPrincipalCurvatures())
+        m_K.Append(m->m_K.Count(), m->m_K.Array());
+      else
+        ON_Mesh_AppendUnsetSurfaceCurvatures(m_K, vcount1);
     }
   }
   else
@@ -6633,12 +6345,19 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
   if (bHasVertexColors)
   {
     m_C.Reserve(vcount);
+    ON_Mesh_AppendUnsetVertexColors(m_C, vcount0 - m_C.Count());
     for (mi = 0; mi < mesh_count; mi++)
     {
       m = meshes[mi];
       if (0 == m)
         continue;
-      m_C.Append(m->m_C.Count(), m->m_C.Array());
+      const int vcount1 = m->m_V.Count();
+      if (vcount1 <= 0)
+        continue;
+      if (m->HasVertexColors())
+        m_C.Append(m->m_C.Count(), m->m_C.Array());
+      else
+        ON_Mesh_AppendUnsetVertexColors(m_C, vcount1);
     }
   }
   else
@@ -6673,19 +6392,40 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
   }
 
   bool bAllowNewCachedTCs = (vcount0 == 0);
+  int cached_tc_vi = vcount0;
   for (mi = 0; mi < mesh_count; mi++)
   {
     m = meshes[mi];
     if (0 == m)
       continue;
 
-    if (bAllowNewCachedTCs)
+    if (bAllowNewCachedTCs && false == bBackFillMissingVertexAttributes)
     {
       m_TC = m->m_TC;
       bAllowNewCachedTCs = false;
     }
     else
     {
+      if (bBackFillMissingVertexAttributes)
+      {
+        for (int tcimi = 0; tcimi < m->m_TC.Count(); tcimi++)
+        {
+          bool bKnown = false;
+          for (int tci = 0; tci < m_TC.Count(); tci++)
+          {
+            if (m_TC[tci].m_tag == m->m_TC[tcimi].m_tag)
+              bKnown = true;
+          }
+          if (false == bKnown)
+          {
+            ON_TextureCoordinates& tc = m_TC.AppendNew();
+            tc.m_tag = m->m_TC[tcimi].m_tag;
+            tc.m_dim = m->m_TC[tcimi].m_dim;
+            ON_Mesh_AppendUnsetCachedTextureCoordinates(tc.m_T, cached_tc_vi);
+          }
+        }
+      }
+
       for (int tci = 0; tci < m_TC.Count(); tci++)
       {
         bool bKeep = false;
@@ -6697,13 +6437,22 @@ void ON_Mesh::Append(int mesh_count, const ON_Mesh* const* meshes)
             bKeep = true;
           }
         }
-        if (!bKeep)
+        if (false == bKeep)
         {
-          m_TC.Remove(tci);
-          tci--;
+          if (bBackFillMissingVertexAttributes)
+          {
+            ON_Mesh_AppendUnsetCachedTextureCoordinates(m_TC[tci].m_T, m->m_V.Count());
+          }
+          else
+          {
+            m_TC.Remove(tci);
+            tci--;
+          }
         }
       }
     }
+
+    cached_tc_vi += m->m_V.Count();
   }
 
   SetClosed(-99);
@@ -7416,24 +7165,24 @@ double ON_MeshParameters::ToleranceFromObjectSize(
     e = (relative_tolerance < 0.5) 
       ? 1.0 + relative_tolerance*(6.0 - 4.0*relative_tolerance) // 1.0 + 4.0*relative_tolerance
       : 2.0 + 2.0*relative_tolerance;
-    x = pow(10.0,-e);
+    x = pow(10.0, -e);
 
-    tol = actual_size*x;
+    tol = actual_size * x;
   }
   return tol;
 }
 
 bool operator==(const ON_MeshParameters& a, const ON_MeshParameters& b)
 {
-  return 0 == ON_MeshParameters::Compare(a,b);
+  return 0 == ON_MeshParameters::Compare(a, b);
 }
 
 bool operator!=(const ON_MeshParameters& a, const ON_MeshParameters& b)
 {
-  return 0 != ON_MeshParameters::Compare(a,b);
+  return 0 != ON_MeshParameters::Compare(a, b);
 }
 
-void ON_MeshParameters::Dump( ON_TextLog& text_log ) const
+void ON_MeshParameters::Dump(ON_TextLog& text_log) const
 {
   const ON_wString description = this->Description();
   text_log.Print(L"Description: %ls\n", static_cast<const wchar_t*>(description));
@@ -7505,10 +7254,81 @@ static double ON_MeshParameters_SHA1Double(double t, double default_value)
 int ON_MeshParameters::Compare(
   const ON_MeshParameters& a,
   const ON_MeshParameters& b
-  )
+)
 {
   return ON_SHA1_Hash::Compare(a.ContentHash(), b.ContentHash());
 }
+
+int ON_MeshParameters::Compare(
+  const class ON_Geometry* geometry,
+  const ON_MeshParameters& a,
+  const ON_MeshParameters& b,
+  bool bCompareNonGeometricSettings
+)
+{
+  if (nullptr != geometry)
+  {
+    const ON_SubD* subd = ON_SubD::Cast(geometry);
+    return
+      (nullptr != subd)
+      ? ON_MeshParameters::CompareSubDMeshParameters(*subd, a, b, bCompareNonGeometricSettings)
+      : ON_MeshParameters::CompareSurfaceMeshParameters(a, b, bCompareNonGeometricSettings);
+  }
+  return
+    bCompareNonGeometricSettings
+    ? ON_MeshParameters::Compare(a, b)
+    : ON_MeshParameters::CompareGeometrySettings(a, b);
+}
+
+
+int ON_MeshParameters::CompareSubDMeshParameters(
+  const ON_SubD& subd,
+  const ON_MeshParameters& a,
+  const ON_MeshParameters& b,
+  bool bCompareNonGeometricSettings
+)
+{
+  return ON_SubDDisplayParameters::CompareDisplayDensity(
+    subd,
+    a.SubDDisplayParameters(),
+    b.SubDDisplayParameters(),
+    bCompareNonGeometricSettings
+  );
+}
+
+/// <summary>
+/// Compare the settings in ON_MeshParameters that effect mesh out from
+/// NURBS surfaces, extrusions and Breps.
+/// </summary>
+int ON_MeshParameters::CompareSurfaceMeshParameters(
+  const ON_MeshParameters& a,
+  const ON_MeshParameters& b,
+  bool bCompareNonGeometricSettings
+)
+{
+  ON_MeshParameters aa(a);
+  ON_MeshParameters bb(b);
+
+  // ALWAYS ignore m_bCustomSettings stuff - it has no effect on mesh output
+  // (and if that ever changes, it is a very unusual change begs the question WHY???).
+  aa.m_geometry_settings_hash = ON_SHA1_Hash::ZeroDigest;
+  bb.m_geometry_settings_hash = ON_SHA1_Hash::ZeroDigest;
+  aa.m_bCustomSettings = false;
+  aa.m_bCustomSettingsEnabled = false;
+  bb.m_bCustomSettings = false;
+  bb.m_bCustomSettingsEnabled = false;
+  
+  // ignore SubD parameters - 
+  // they have no effect on NURBS, extrusion, or brep meshing.
+  aa.m_subd_mesh_parameters_as_char = 0;
+  bb.m_subd_mesh_parameters_as_char = 0;
+
+  return
+    bCompareNonGeometricSettings
+    ? Compare(aa, bb)
+    : CompareGeometrySettings(aa, bb);
+}
+
 
 int ON_MeshParameters::CompareGeometrySettings(
   const ON_MeshParameters& a,
@@ -8140,12 +7960,13 @@ bool ON_MeshCurvatureStats::Read( ON_BinaryArchive& file )
   return rc;
 }
 
-bool ON_MeshCurvatureStats::Set( ON::curvature_style kappa_style,
-                                 int Kcount,
-                                 const ON_SurfaceCurvature* K,
-                                 const ON_3fVector* N, // needed for normal sectional curvatures
-                                 double infinity
-                                 )
+bool ON_MeshCurvatureStats::Set(
+  ON::curvature_style kappa_style,
+  int Kcount,
+  const ON_SurfaceCurvature* K,
+  const ON_3fVector* N, // needed for normal sectional curvatures
+  double infinity
+  )
 {
   bool rc = (Kcount > 0 && K != nullptr);
 
@@ -8285,6 +8106,86 @@ bool ON_MeshCurvatureStats::Set( ON::curvature_style kappa_style,
   }
   
   return rc;  
+}
+
+bool ON_MeshCurvatureStats::CreateFromMeshes(
+  ON_SimpleArray<const ON_Mesh*>& meshes,
+  ON::curvature_style kappa_style,
+  ON_MeshCurvatureStats& cs
+)
+{
+  // get curvature statistics from each analysis mesh
+  cs.Destroy();
+  ON_SimpleArray<ON_MeshCurvatureStats> mesh_stats(meshes.Count());
+  ON_MeshCurvatureStats mesh_cs;
+  double d;
+  int i, count = meshes.Count();
+  for (i = 0; i < count; i++)
+  {
+    const ON_Mesh* mesh = meshes[i];
+    if (0 == mesh || !mesh->HasPrincipalCurvatures())
+      continue;
+    if (mesh->GetCurvatureStats(kappa_style, mesh_cs))
+      mesh_stats.Append(mesh_cs);
+  }
+
+  // calculate total stats
+  int mesh_count = mesh_stats.Count();
+
+  if (mesh_count < 1)
+    return false;
+
+  cs = mesh_stats[0];
+
+  if (mesh_count > 1)
+  {
+    cs.m_average = cs.m_average * cs.m_count;
+    cs.m_mode = cs.m_mode * cs.m_count;
+    for (i = 1; i < mesh_count; i++)
+    {
+      mesh_cs = mesh_stats[i];
+      if (mesh_cs.m_infinity < cs.m_infinity)
+        cs.m_infinity = mesh_cs.m_infinity;
+      cs.m_count_infinite += mesh_cs.m_count_infinite;
+
+      if (cs.m_count > 0 && mesh_cs.m_count > 0)
+      {
+        if (cs.m_range.m_t[0] > mesh_cs.m_range.m_t[0])
+          cs.m_range.m_t[0] = mesh_cs.m_range.m_t[0];
+        if (cs.m_range.m_t[1] < mesh_cs.m_range.m_t[1])
+          cs.m_range.m_t[1] = mesh_cs.m_range.m_t[1];
+      }
+      else if (mesh_cs.m_count > 0)
+      {
+        cs.m_range = mesh_cs.m_range;
+      }
+      // RH-66923 25-Jan-22  update m_range first 
+      cs.m_count += mesh_cs.m_count;
+      cs.m_average += mesh_cs.m_count * mesh_cs.m_average;
+      cs.m_mode += mesh_cs.m_count * mesh_cs.m_mode;
+    }
+
+    if (cs.m_count > 0)
+    {
+      d = 1.0 / cs.m_count;
+      cs.m_average *= d;
+      cs.m_mode *= d;
+      cs.m_adev = 0.0;
+    }
+
+    // (over)estimate total average deviation from actual deviations on each mesh.
+    for (i = 0; i < mesh_count; i++)
+    {
+      mesh_cs = mesh_stats[i];
+      d = mesh_cs.m_adev + fabs(cs.m_average - mesh_cs.m_average);
+      d = d * mesh_cs.m_count;
+      cs.m_adev += d;
+    }
+    if (cs.m_count > 0)
+      cs.m_adev = cs.m_adev / cs.m_count;
+  }
+
+  return true;
 }
 
 struct EDGEINFO
@@ -10086,6 +9987,13 @@ bool operator!=(
   return (lhs.k1 != rhs.k1 || lhs.k2 != rhs.k2) || (lhs.IsNan() && rhs.IsNan());
 }
 
+ON__UINT32 ON_SurfaceCurvature::DataCRC(ON__UINT32 current_remainder) const
+{
+  current_remainder = ON_CRC32(current_remainder, sizeof(k1), &k1);
+  current_remainder = ON_CRC32(current_remainder, sizeof(k2), &k2);
+  return current_remainder;
+}
+
 bool ON_SurfaceCurvature::IsSet() const
 {
   return (ON_UNSET_VALUE < k1 && k1 < ON_UNSET_POSITIVE_VALUE && ON_UNSET_VALUE < k2 && k2 < ON_UNSET_POSITIVE_VALUE);
@@ -10212,6 +10120,33 @@ void ON_MeshTopology::EmergencyDestroy()
   m_topf.EmergencyDestroy();
   m_memchunk = 0;
   m_b32IsValid = 0;
+}
+
+void ON_MeshTopology::Internal_TransferContentsFrom(ON_MeshTopology& src)
+{
+  // RH-88675: steal src's computed topology so a moved mesh does not rebuild it.
+  // See the header for the memchunk-aliasing contract: the arrays' internal
+  // int-pointers point into m_memchunk, so the arrays and the chunk pool have to
+  // move as a unit. m_mesh is intentionally left alone (the caller sets it).
+
+  if (this == &src)
+    return;
+
+  // Release anything this object currently holds, then move src's state in.
+  Destroy();
+
+  m_topv_map = std::move(src.m_topv_map);
+  m_topv = std::move(src.m_topv);
+  m_tope = std::move(src.m_tope);
+  m_topf = std::move(src.m_topf);
+
+  // Move the scratch pool the array elements' int-pointers alias into.
+  m_memchunk = src.m_memchunk;
+  src.m_memchunk = 0;
+
+  // Take src's validity and clear src's so it will rebuild if ever touched again.
+  m_b32IsValid = src.m_b32IsValid;
+  src.m_b32IsValid = 0;
 }
 
 int ON_MeshTopology::TopVertexCount() const
@@ -14345,10 +14280,28 @@ void ON_3dmObjectAttributes::DeleteCustomRenderMeshParameters()
 
 bool ON_3dmObjectAttributes::EnableCustomRenderMeshParameters(bool bEnable)
 {
-  ON_PerObjectMeshParameters* ud = ON_PerObjectMeshParameters::FindOrCreate(this,false);
-  if ( 0 != ud )
+  ON_PerObjectMeshParameters* ud = ON_PerObjectMeshParameters::FindOrCreate(this, false);
+  if (0 != ud)
+  {
+    const bool bWasEnabled = ud->m_mp.CustomSettingsEnabled();
     ud->m_mp.SetCustomSettingsEnabled(bEnable);
+    if (bWasEnabled != bEnable && ud->m_userdata_copycount > 0)
+    {
+      ud->m_userdata_copycount++;
+      if (0 == ud->m_userdata_copycount)
+        ud->m_userdata_copycount = 1;
+    }
+  }
   return (!bEnable || nullptr != ud);
+}
+
+bool ON_3dmObjectAttributes::GetEnableCustomRenderMeshParameters() const
+{
+  ON_PerObjectMeshParameters* ud = ON_PerObjectMeshParameters::FindOrCreate(this, false);
+  if (nullptr == ud)
+    return false;
+
+  return ud->m_mp.CustomSettingsEnabled();
 }
 
 void ON_Mesh::DestroyTree( bool bDeleteTree )
@@ -14473,21 +14426,46 @@ static unsigned int* ON_GetPointLocationIdsHelper(
     return Vid;
   }
 
+  //Set up the indicies ready for sorting.
+  for (unsigned int i = 0; i < Vcount; i++)
+  {
+    Vid[i] = i;
+  }
+
+  // Dictionary sort the points: on x then y for 2d, on x then y then z for 3d.
+  //
+  // point_stride is in coordinates, not points, and callers are entitled to
+  // pass more than point_dim - it is a documented parameter of the exported
+  // ON_GetPointLocationIds. So index the coordinate array by hand rather than
+  // doing typed pointer arithmetic over ON_2dPoint/ON_3dPoint, which would
+  // silently assume the points are packed.
+  const size_t stride = point_stride;
+
   if (2 == point_dim)
   {
-    // Dictionary sort the 2d points (sort on x, then y).
     if (nullptr != dPoints)
-      ON_Sort(ON::sort_algorithm::quick_sort, Vid, dPoints, Vcount, point_stride*sizeof(dPoints[0]), compare2dPoint);
+    {
+      ON_ParallelSort(Vid, Vid + Vcount, [dPoints, stride](unsigned int a, unsigned int b)
+        { return 0 > compare2dPoint(dPoints + a*stride, dPoints + b*stride); });
+    }
     else
-      ON_Sort(ON::sort_algorithm::quick_sort, Vid, fPoints, Vcount, point_stride*sizeof(fPoints[0]), compare2fPoint);
+    {
+      ON_ParallelSort(Vid, Vid + Vcount, [fPoints, stride](unsigned int a, unsigned int b)
+        { return 0 > compare2fPoint(fPoints + a*stride, fPoints + b*stride); });
+    }
   }
   else
   {
-    // Dictionary sort the 3d points (sort on x, then y, then z).
     if (nullptr != dPoints)
-      ON_Sort(ON::sort_algorithm::quick_sort, Vid, dPoints, Vcount, point_stride*sizeof(dPoints[0]), (ON_COMPAR_LPVOID_LPVOID)compare3dPoint);
+    {
+      ON_ParallelSort(Vid, Vid + Vcount, [dPoints, stride](unsigned int a, unsigned int b)
+        { return 0 > compare3dPoint((const ON_3dPoint*)(dPoints + a*stride), (const ON_3dPoint*)(dPoints + b*stride)); });
+    }
     else
-      ON_Sort(ON::sort_algorithm::quick_sort, Vid, fPoints, Vcount, point_stride*sizeof(fPoints[0]), (ON_COMPAR_LPVOID_LPVOID)compare3fPoint);
+    {
+      ON_ParallelSort(Vid, Vid + Vcount, [fPoints, stride](unsigned int a, unsigned int b)
+        { return 0 > compare3fPoint((const ON_3fPoint*)(fPoints + a*stride), (const ON_3fPoint*)(fPoints + b*stride)); });
+    }
   }
     
   // Assign a unique temporary id to each group of coincident points.
@@ -14613,7 +14591,8 @@ static unsigned int* ON_GetPointLocationIdsHelper(
   // the point set is transformed. It is important that the id be the
   // same in these situations so that vertex id groups retain the same 
   // id when meshes are rotated.
-  ON_qsort(up, Vcount, sizeof(up[0]), comparedUnsignedPair);
+
+  ON_ParallelSort(up, up + Vcount, [](const tagUnsignedPair& a, const tagUnsignedPair& b) { return 0 > comparedUnsignedPair(&a, &b); });
 
   temporary_id = up[0].m_temporary_id;
   unsigned int id = first_vid;
@@ -15816,6 +15795,18 @@ ON_Mesh* ON_Mesh::CopyComponents(
   if (C)
     mesh_copy->m_C.Reserve(vertex_count1);
 
+  for (int tci = 0; tci < m_TC.Count(); tci++)
+  {
+    // Only copy cached texture coordinates that have the same number of entries as the original mesh's vertex count.
+    if (m_TC[tci].m_T.UnsignedCount() == vertex_count)
+    {
+      ON_TextureCoordinates& newTC = mesh_copy->m_TC.AppendNew();
+      newTC.m_dim = m_TC[tci].m_dim;
+      newTC.m_tag = m_TC[tci].m_tag;
+      newTC.m_T.Reserve(vertex_count1);
+    }
+  }
+
   for ( vi = 0; vi < vertex_count; vi++ )
   {
     if ( ON_UNSET_UINT_INDEX == vertex_map[vi] )
@@ -15834,6 +15825,15 @@ ON_Mesh* ON_Mesh::CopyComponents(
       mesh_copy->m_K.AppendNew() = K[vi];
     if ( C )
       mesh_copy->m_C.AppendNew() = C[vi];
+    for (int tci = 0, targettci = 0; tci < m_TC.Count(); tci++)
+    {
+      // Only copy cached texture coordinates that have the same number of entries as the original mesh's vertex count.
+      if (m_TC[tci].m_T.UnsignedCount() == vertex_count)
+      {
+        mesh_copy->m_TC[targettci].m_T.AppendNew() = m_TC[tci].m_T[vi];
+        targettci++;
+      }
+    }
   }
 
   const unsigned int ngon_count = NgonCount();
@@ -18086,64 +18086,101 @@ static void ClosestPtToTriangle(const ON_3dPoint& input, ON_3dPoint& output, con
   output = baryA * tri[0] + baryB * tri[1] + baryC * tri[2];
 }
 
-void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4])
+// triangleOut - [out] optional - can be nullptr. Receives the ON_MESH_POINT::m_Triangle
+//   code ('A' = vi[0],vi[1],vi[2], 'B' = vi[0],vi[2],vi[3], 'C' = vi[0],vi[1],vi[3],
+//   'D' = vi[1],vi[2],vi[3]) identifying the triangle POut was found on. This is the only
+//   place the quad split is decided, so it is the only place the code can be determined.
+void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4], char* triangleOut)
 {
-  // no need to check input - it should be perfect - if it's not, 
+  // no need to check input - it should be perfect - if it's not,
   // fix bug in tree creation code
 
   const int* face_vi = mesh->m_F[fi].vi;
-  const ON_3fPoint* mesh_V = mesh->m_V;
+  const bool bQuad = (face_vi[2] != face_vi[3]);
+
+  // Read m_dV when the mesh carries double precision vertices: m_V is float32, and at large
+  // coordinates its quantum is far coarser than the tolerances callers test this result against.
+  // The array pointer is taken once and the precision branch is hoisted out of element access.
+  ON_3dPoint c[4];
+  {
+    const ON_3dPoint* dV = mesh->m_dV.Array();
+    if (nullptr != dV && mesh->m_dV.Count() == mesh->m_V.Count())
+    {
+      c[0] = dV[face_vi[0]];
+      c[1] = dV[face_vi[1]];
+      c[2] = dV[face_vi[2]];
+      if (bQuad) c[3] = dV[face_vi[3]];
+    }
+    else
+    {
+      const ON_3fPoint* fV = mesh->m_V.Array();
+      c[0] = fV[face_vi[0]];
+      c[1] = fV[face_vi[1]];
+      c[2] = fV[face_vi[2]];
+      if (bQuad) c[3] = fV[face_vi[3]];
+    }
+  }
+
   ON_3dPoint tri[3];
 
-  if (face_vi[2] == face_vi[3])
+  if (!bQuad)
   {
-    tri[0] = mesh_V[face_vi[0]];
-    tri[1] = mesh_V[face_vi[1]];
-    tri[2] = mesh_V[face_vi[2]];
+    tri[0] = c[0];
+    tri[1] = c[1];
+    tri[2] = c[2];
     ClosestPtToTriangle(ptIn, POut, tri, tOut[0], tOut[1], tOut[2]);
     tOut[3] = 0.0;
+    if (nullptr != triangleOut)
+      *triangleOut = 'A';
   }
   else
   {
     // split quad into two triangles
     ON_3dPoint POut2;
     double tOut2[4] = { 0.0, 0.0, 0.0, 0.0 };
-    double d0 = mesh_V[face_vi[0]].DistanceTo(mesh_V[face_vi[2]]);
-    double d1 = mesh_V[face_vi[1]].DistanceTo(mesh_V[face_vi[3]]);
+    char triangle1 = 0;  // code for the triangle POut is on
+    char triangle2 = 0;  // code for the triangle POut2 is on
+    double d0 = c[0].DistanceTo(c[2]);
+    double d1 = c[1].DistanceTo(c[3]);
     if (d0 <= d1)
     {
       // diagonal from 0 to 2 is shortest, so use triangles 0,1,2 and 0,2,3
-      tri[0] = mesh_V[face_vi[0]];
-      tri[1] = mesh_V[face_vi[1]];
-      tri[2] = mesh_V[face_vi[2]];
+      triangle1 = 'A';
+      triangle2 = 'B';
+      tri[0] = c[0];
+      tri[1] = c[1];
+      tri[2] = c[2];
       ClosestPtToTriangle(ptIn, POut, tri, tOut[0], tOut[1], tOut[2]);
       tOut[3] = 0.0;
 
-      // tri[0] = mesh_V[face_vi[0]];
-      tri[1] = tri[2]; // tri[1] = mesh_V[face_vi[2]];
-      tri[2] = mesh_V[face_vi[3]];
+      // tri[0] = c[0];
+      tri[1] = tri[2]; // tri[1] = c[2];
+      tri[2] = c[3];
       ClosestPtToTriangle(ptIn, POut2, tri, tOut2[0], tOut2[2], tOut2[3]);
       tOut2[1] = 0.0;
     }
     else
     {
       // diagonal from 1 to 3 is shortest, so use triangles 0,1,3 and 1,2,3
-      tri[0] = mesh_V[face_vi[0]];
-      tri[1] = mesh_V[face_vi[1]];
-      tri[2] = mesh_V[face_vi[3]];
+      triangle1 = 'C';
+      triangle2 = 'D';
+      tri[0] = c[0];
+      tri[1] = c[1];
+      tri[2] = c[3];
       ClosestPtToTriangle(ptIn, POut, tri, tOut[0], tOut[1], tOut[3]);
       tOut[2] = 0.0;
 
-      tri[0] = tri[1]; // tri[0] = mesh_V[face_vi[1]];
-      tri[1] = mesh_V[face_vi[2]];
-      //tri[2] = mesh_V[face_vi[3]];
+      tri[0] = tri[1]; // tri[0] = c[1];
+      tri[1] = c[2];
+      //tri[2] = c[3];
       ClosestPtToTriangle(ptIn, POut2, tri, tOut2[1], tOut2[2], tOut2[3]);
       tOut2[0] = 0.0;
     }
 
     d0 = ptIn.DistanceTo(POut);
     d1 = ptIn.DistanceTo(POut2);
-    if (d1 < d0)
+    const bool bSecondTriangle = (d1 < d0);
+    if (bSecondTriangle)
     {
       // point on 2nd triangle was closer
       POut = POut2;
@@ -18152,5 +18189,18 @@ void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& pt
       tOut[2] = tOut2[2];
       tOut[3] = tOut2[3];
     }
+
+    if (nullptr != triangleOut)
+      *triangleOut = bSecondTriangle ? triangle2 : triangle1;
   }
+}
+
+// Preserves the mangled name that shipped before triangleOut was added. This function has no
+// declaration in any header, so nothing can legitimately depend on it, but it is externally
+// visible in the macOS/Linux binaries (nothing sets -fvisibility=hidden) and dropping an exported
+// symbol is not worth the risk. An overload rather than a default argument: a default argument
+// would not emit the old symbol. Windows never exported it -- no ON_DECL, and no .def file.
+void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4])
+{
+  ClosestPtToMeshFace(mesh, fi, ptIn, POut, tOut, nullptr);
 }

@@ -200,6 +200,7 @@ ON__UINT32 ON_LinearWorkflow::DataCRC(ON__UINT32 crc) const
 
 void ON_LinearWorkflow::SetXMLNode(ON_XMLNode& node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_impl->_mutex);
   _impl->SetModelNode(node);
 }
 

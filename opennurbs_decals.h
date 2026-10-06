@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -136,11 +136,17 @@ public:
   // at all, such as decals used by the display. XML will only be used once by each getter to initialize the cache.
   void SetCacheOnly(void);
 
-  // Returns the decal texture's instance id.
-  ON_UUID TextureInstanceId(void) const;
+  // This method is deprecated in favor of AssetInstanceId().
+  ON_DEPRECATED ON_UUID TextureInstanceId(void) const;
 
-  // Sets the decal texture's instance id.
-  void SetTextureInstanceId(const ON_UUID& id);
+  // Returns the decal's asset instance id. This is the instance id of a material or texture.
+  ON_UUID AssetInstanceId(void) const;
+
+  // This method is deprecated in favor of SetAssetInstanceId().
+  ON_DEPRECATED void SetTextureInstanceId(const ON_UUID& id);
+
+  // Sets the decal's asset instance id. This is the instance id of a material or texture.
+  void SetAssetInstanceId(const ON_UUID& id);
 
   // Returns the decal's mapping.
   Mappings Mapping(void) const;
@@ -277,12 +283,11 @@ public:
   void ApplyTransformation(const ON_Xform& xform);
 
 public: // For internal use only.
-  static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32, const ON_XMLNode&);
-  void GetEntireCustomXML(ON_XMLNode&) const;
   void AppendCustomXML(const ON_XMLNode&);
   void GetSavedVectorLengths(double&, double&) const;
   void SetSavedVectorLengths(double, double);
   ON_3dVector GetOriginOffset(void) const;
+  void GetEntireCustomXML(ON_XMLNode& custom_xml) const;
 
 private:
   class CImpl;
@@ -361,6 +366,8 @@ public:
   // Removes any decals that have duplicate CRCs. Returns a pointer to the decal if successful, null if the
   // attributes does not contain such a decal or the wrapper was constructed with a const attributes object.
   bool CullIdenticalDecals(void);
+
+  static const ON_XMLNode* FastDecalsNode(const ON_3dmObjectAttributes& attr);
 
 private:
   friend class ON_DecalCollection;

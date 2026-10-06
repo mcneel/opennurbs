@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -90,13 +90,21 @@ public:
   double Scale( ON::LengthUnitSystem ) const;
 
   // Expert access to member variables
+
+  // Unit system
   ON_UnitSystem m_unit_system = ON_UnitSystem::Millimeters;
-  double m_absolute_tolerance = 0.001;    // in units > 0.0
-  double m_angle_tolerance = ON_PI/180.0; // in radians > 0.0 and <= ON_PI
-  double m_relative_tolerance = 0.01;     // fraction > 0.0 and < 1.0
-  ON::OBSOLETE_DistanceDisplayMode m_distance_display_mode = ON::OBSOLETE_DistanceDisplayMode::Decimal; // decimal or fractional
-  int m_distance_display_precision = 3;   // decimal mode: number of decimal places
-                                          // fractional modes: denominator = (1/2)^m_distance_display_precision
+  // Distance in units, valid values are > 0.0
+  double m_absolute_tolerance = 0.001;
+  // Angle in radians, valid values are > 0.0 and <= ON_PI
+  double m_angle_tolerance = ON_PI/180.0;
+  // Unitless fraction, valid values are > 0.0 and < 1.0
+  double m_relative_tolerance = 0.01;
+  // Enum value Decimal, Fractional, or FeetInches
+  ON::OBSOLETE_DistanceDisplayMode m_distance_display_mode = ON::OBSOLETE_DistanceDisplayMode::Decimal;
+  // Number of decimal places or fractional precision, valid values are >= 0 and <= 20
+  // Decimal mode: number of decimal places
+  // Fractional modes: denominator = (1/2)^m_distance_display_precision
+  int m_distance_display_precision = 3;
 
 public:
   /*
@@ -420,7 +428,7 @@ public:
   // m_floating_viewport is used to track floating viewport information.
   //  0 = the view is docked in the main application window.
   // >0 = the view is floating. When floating, this corresponds to the
-  //      number of monitors on on the user's computer when the file was saved
+  //      number of monitors on the user's computer when the file was saved
   unsigned char m_floating_viewport;
 private:
   // reserved for future use
@@ -530,6 +538,7 @@ public:
   static const ON_UUID Monochrome;       // {E1B5C8A2-ED43-4872-9A01-814E612D5363}
   static const ON_UUID AmbientOcclusion; // {C32B72C3-41BD-4ADC-82A8-B7AEF4456A37}
   static const ON_UUID Raytraced;        // {69E0C7A5-1C6A-46C8-B98B-8779686CD181}
+  static const ON_UUID Architecture;     // {881F20DD-A78E-4930-A7C3-690E5E6B0927}
 
   /*
   Parameters:
@@ -583,10 +592,8 @@ public:
   ON_3dmView();
   ~ON_3dmView();
 
-  // The C++ default copy constructor and operator= work fine.
-  // Do not provide customized versions.
-  // NO // ON_3dmView(const ON_3dmView&);
-  // NO // ON_3dmView& operator=(const ON_3dmView&);
+  ON_3dmView(const ON_3dmView&);
+  ON_3dmView& operator=(const ON_3dmView&);
 
   void Default();
 
@@ -605,7 +612,7 @@ public:
   // After Dec 14, 2010 m_clipping_planes is saved.
   ON_SimpleArray<ON_ClippingPlaneInfo> m_clipping_planes;
 
-  // If true, the the camera location, camera direction,
+  // If true, the camera location, camera direction,
   // and lens angle should not be changed.
   // It is ok to adjust clipping planes.
   bool m_bLockedProjection;
@@ -731,6 +738,36 @@ public:
   void SetRenderingSize(const ON_2iSize& size);
 
   //Focal blur settings - per view for renderers.
+
+  // pageview group interface
+  int PageViewGroupCount() const;
+  int PageViewGroupList(ON_SimpleArray<int>& group_list) const;
+  bool IsInPageViewGroup(int group_index) const;
+  void AddToPageViewGroup(int group_index);
+  void AddToPageViewGroup(const ON_SimpleArray<int>& group_list);
+  void RemoveFromPageViewGroup(int group_index);
+  void RemoveFromAllPageViewGroups();
+
+  // Gets the pageview's sort index within the pageview group with the specified
+  // index. Returns ON_UNSET_INT_INDEX ("unsorted", i.e. use page-number order) if
+  // the pageview is not in the group or has no explicit sort index in it.
+  int PageViewGroupSortIndex(int group_index) const;
+  // Sets the pageview's sort index within the pageview group with the specified
+  // index. If the pageview is not yet in the group, it is added. A sort index of
+  // ON_UNSET_INT_INDEX means "unsorted" (use page-number order).
+  void SetPageViewGroupSortIndex(int group_index, int sort_index);
+
+  // Direct access to the raw pageview group memberships as (group index, sort index)
+  // pairs, where .i = pageview group index and .j = sort index (ON_UNSET_INT_INDEX
+  // when unsorted). Handy for copying or remapping memberships while preserving sort
+  // indices in a single step.
+  const ON_SimpleArray<ON_2dex>& PageViewGroups() const;
+  void SetPageViewGroups(const ON_SimpleArray<ON_2dex>& groups);
+
+  // description
+  ON_wString Description() const;
+  void SetDescription(const wchar_t* description);
+
 private:
   double m_dFocalBlurDistance = 100.0;
   double m_dFocalBlurAperture = 64.0;
@@ -740,7 +777,9 @@ private:
   ON_2iSize m_sizeRendering = ON_2iSize(640, 480);
 
 private:
-  ON__INT_PTR reserved = 0;
+  void Internal_Copy(const ON_3dmView& src);
+  void Internal_Destroy();
+  mutable class ON_3dmViewPrivate* m_private = nullptr;
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -1151,7 +1190,7 @@ public:
     elevation_unit_system - [in]
       length unit system for returned value.
   Returns:
-    Earth location elevation in in elevation_unit_system.
+    Earth location elevation in elevation_unit_system.
     The value is with
     Can be ON_UNSET_VALUE
   */
@@ -1182,13 +1221,7 @@ public:
     double unset_elevation
   ) const;
 
-  /*
-  Parameters:
-    elevation_unit_system - [in]
-      length unit system for returned value.
-    unset_elevation - [in]
-      Value to return if the Earth location elevation is not set.
-  */
+  [[deprecated]]
   double Elevation(
     ON::LengthUnitSystem elevation_unit_system,
     double unset_elevation
@@ -1204,6 +1237,7 @@ public:
     double elevation
   );
 
+  [[deprecated]]
   void SetElevation(
     ON::LengthUnitSystem elevation_unit_system,
     double elevation
@@ -1464,9 +1498,21 @@ public:
   bool Read(ON_BinaryArchive&);
   bool Write(ON_BinaryArchive&) const;
 
-  // bitmaps associated with rendering materials
-  bool m_bSaveTextureBitmapsInFile = false;
+  bool SaveTextures(void) const;
+  void SetSaveTextures(bool bSaveTextures);
 
+  bool UseCompression(void) const;
+  void SetUseCompression(bool bUseCompression);
+
+  // bitmaps associated with rendering materials.  
+  // Consider this private until the SDK changes for real.  Use accessor functions (we may change the backing storage)
+  bool m_bSaveTextureBitmapsInFile = true;
+
+private:
+  bool m_bUseCompression = false;
+  bool m_reserved = false;
+
+public:
   // As of 7 February 2012, the m_idef_link_update setting
   // controls if, when and how linked and linked_and_embedded
   // instance definitions are updated when the source archive

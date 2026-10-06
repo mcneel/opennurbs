@@ -227,30 +227,23 @@ ON_HatchLine::ON_HatchLine(
 
 bool ON_HatchLine::operator==(const ON_HatchLine& src) const
 {
-  if (m_angle_radians != src.m_angle_radians)
-    return false;
-
-  if (m_base != src.m_base)
-    return false;
-
-  if (m_offset != src.m_offset)
-    return false;
-
-  if (m_dashes.Count() != src.m_dashes.Count())
-    return false;
-
-  for (int i = 0; i < m_dashes.Count(); i++)
-  {
-    if (m_dashes[i] != src.m_dashes[i])
-      return false;
-  }
-
-  return true;
+  return(
+    m_angle_radians == src.m_angle_radians
+    && m_base == src.m_base
+    && m_offset == src.m_offset
+    && ON_SimpleArray_IsEqual(m_dashes, src.m_dashes)
+    );
 }
 
 bool ON_HatchLine::operator!=(const ON_HatchLine& src) const
 {
-  return !(*this == src);
+  return
+    (
+    m_angle_radians != src.m_angle_radians
+    || m_base != src.m_base
+    || m_offset != src.m_offset
+    || !ON_SimpleArray_IsEqual(m_dashes, src.m_dashes)
+    );
 }
 
 bool ON_HatchLine::IsValid( ON_TextLog* text_log) const
@@ -1248,7 +1241,7 @@ ON_HatchLoop::ON_HatchLoop( ON_Curve* pCurve2d, eLoopType type)
 }
 
 ON_HatchLoop::ON_HatchLoop( const ON_HatchLoop& src)
-: m_type( src.m_type), m_p2dCurve( nullptr)
+: m_type( src.m_type), m_status( src.m_status), m_p2dCurve( nullptr)
 { 
   if( src.m_p2dCurve)
     m_p2dCurve = src.m_p2dCurve->DuplicateCurve();
@@ -1268,6 +1261,7 @@ ON_HatchLoop& ON_HatchLoop::operator=( const ON_HatchLoop& src)
     m_p2dCurve = src.m_p2dCurve->DuplicateCurve();
 
     m_type = src.m_type;
+    m_status = src.m_status;
   }
   return *this;
 }
@@ -1409,6 +1403,14 @@ ON_HatchLoop::eLoopType ON_HatchLoop::Type() const
 void ON_HatchLoop::SetType( eLoopType type)
 {
   m_type = type;
+}
+
+ON__UINT32 ON_HatchLoop::DataCRC(ON__UINT32 current_remainder) const
+{
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_type), &m_type);
+  if (nullptr != m_p2dCurve)
+    current_remainder = m_p2dCurve->DataCRC(current_remainder);
+  return current_remainder;
 }
 
 //  class ON_Hatch
@@ -1742,6 +1744,24 @@ ON::object_type ON_Hatch::ObjectType() const
   return ON::hatch_object;
 }
 
+ON__UINT32 ON_Hatch::DataCRC(ON__UINT32 current_remainder) const
+{
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_plane), &m_plane);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_pattern_scale), &m_pattern_scale);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_pattern_rotation), &m_pattern_rotation);
+  current_remainder = ON_CRC32(current_remainder, sizeof(m_pattern_index), &m_pattern_index);
+  current_remainder = m_basepoint.DataCRC(current_remainder);
+
+  int i;
+  for (i = 0; i < LoopCount(); i++)
+  {
+    const ON_HatchLoop* loop = Loop(i);
+    if (nullptr != loop)
+      current_remainder = loop->DataCRC(current_remainder);
+  }
+  return current_remainder;
+}
+
 int ON_Hatch::Dimension() const
 {
   return 3;
@@ -1911,42 +1931,77 @@ static void UnrotateHatch(ON_Hatch* hatch)
   
 bool ON_Hatch::Transform( const ON_Xform& xform)
 {
-  if( fabs( fabs( xform.Determinant()) - 1.0) > 1.0e-4)
+  // 17 July 2026, Rajaa, RH-88200
+  // Only the boundary deforms; the fill pattern is regenerated as a uniform tiling on
+  // the new plane (the pattern cannot represent shear / non-uniform scale by design).
+  const int loop_count = LoopCount();
+  const bool bSimilarity = (0 != xform.IsSimilarity());
+
+  // Transform copies of the plane and base point.
+  ON_Plane new_plane(m_plane);
+  if (!new_plane.Transform(xform))
+    return false;
+
+  ON_3dPoint new_base = m_plane.PointAt(m_basepoint.x, m_basepoint.y);
+  new_base.Transform(xform);
+
+  // world (deformed) -> new plane 2d. Depends on the transformed plane.
+  ON_Xform world_to_2d;
+  world_to_2d.Rotation(new_plane, ON_xy_plane);
+
+  // Build the new 2d loops into a temp array
+  ON_SimpleArray<ON_HatchLoop*> new_loops(loop_count);
+  bool ok = true;
+  for (int i = 0; i < loop_count && ok; i++)
   {
-    // xform has a scale component
-    ON_Plane tmp( m_plane);
-    tmp.Transform( xform);
-    ON_Xform A, B, T;
-    A.Rotation( ON_xy_plane, m_plane);
-    B.Rotation( tmp, ON_xy_plane);
-    T = B * xform * A;
-
-    // kill translation and z-scaling
-    T[0][2] = T[0][3] = 0.0;
-    T[1][2] = T[1][3] = 0.0;
-    T[2][0] = T[2][1] = 0.0; T[2][2] = 1.0; T[2][3] = 0.0; 
-    T[3][0] = T[3][1] = T[3][2] = 0.0; T[3][3] = 1.0;
-
-    for( int i = 0; i < LoopCount(); i++)
-      m_loops[i]->m_p2dCurve->Transform( T);
+    const ON_HatchLoop* loop = Loop(i);
+    ON_Curve* c = (nullptr != loop) ? LoopCurve3d(i) : nullptr; // world-space duplicate, we own it
+    if (nullptr == c)
+    {
+      ok = false;
+      break;
+    }
+    if (!bSimilarity)
+    {
+      ON_NurbsCurve* nc = c->NurbsCurve();
+      if (nullptr != nc)
+      {
+        delete c;
+        c = nc;
+      }
+    }
+    // Deform in world space, then bring into the new plane's 2d coordinates.
+    if (!c->Transform(xform) || !c->Transform(world_to_2d) || !c->ChangeDimension(2))
+    {
+      delete c;
+      ok = false;
+      break;
+    }
+    new_loops.Append(new ON_HatchLoop(c, loop->Type()));
   }
-  
-  ON_3dPoint base = m_plane.PointAt(m_basepoint.x, m_basepoint.y);
-  base.Transform(xform);
-  int rc = m_plane.Transform(xform);
-  SetBasePoint(base);
 
-  //ON_3dVector x = m_plane.xaxis;
-  //x.Transform(xform);
-  //double scale = x.Length() * PatternScale();
-  //SetPatternScale(scale);
+  if (!ok)
+  {
+    for (int i = 0; i < new_loops.Count(); i++)
+      delete new_loops[i];
+    return false;
+  }
 
+  // Everything succeeded
+  m_plane = new_plane;
+
+  for (int i = 0; i < m_loops.Count(); i++)
+    delete m_loops[i];
+  m_loops.SetCount(0);
+  m_loops.Append(new_loops.Count(), new_loops.Array());
+
+  SetBasePoint(new_base);
   UnrotateHatch(this);
-
   TransformUserData(xform);
 
-  return rc;
+  return true;
 }
+
 
 bool ON_Hatch::ScalePattern(ON_Xform xform)
 {
@@ -2085,9 +2140,13 @@ bool ON_Hatch::InsertLoop( int index, ON_HatchLoop* loop)
   return false;
 }
 
+// 31 July 2026, Rajaa, RH-97264
+// Inner-only policy belongs to the callers that need it (ON_Hatch::RemoveLoops,
+// ON_Hatch::DeleteComponents, UntrimHoles/DeleteHole, MoveHole/CopyHole), not here.
+// Loop replacement (grips, transform, morph) removes and reinserts any loop type.
 bool ON_Hatch::RemoveLoop( int index)
 {
-  if( index >= 0 && index < m_loops.Count())
+  if( index >= 0 && index < m_loops.Count() && m_loops[index] != nullptr)
   {
     delete m_loops[index];
     m_loops.Remove(index);
@@ -2097,6 +2156,78 @@ bool ON_Hatch::RemoveLoop( int index)
   return false;
 }
 
+//Get the indices that are not in a_indices, where x is the max index, and 0 is the starting index
+ON_SimpleArray<int> getReverseIndices(ON_SimpleArray<int> a_indices, int x)
+{
+  if (a_indices.Count() < 1)
+    return false;
+
+  //order indices
+  a_indices.QuickSort(ON_CompareIncreasing<int>);
+
+  ON_SimpleArray<int> b_indices;
+  int next = 0;
+  for (int i = 0; i < a_indices.Count(); i++)
+  {
+    int a = a_indices[i];
+    // Add all indices before this a_index
+    for (int j = next; j < a; ++j) {
+      b_indices.Append(j);
+    }
+
+    // Skip a itself
+    next = a + 1;
+  }
+
+  // Add everything after the last a_index
+  for (int k = next; k <= x; ++k) {
+    b_indices.Append(k);
+  }
+
+  return b_indices;
+}
+
+bool ON_Hatch::RemoveLoops(ON_SimpleArray<int> loop_indices)
+{
+  if (loop_indices.Count() < 1)
+    return false;
+
+  //remove the outer loop index if it is in the list, since we can't remove the outer loop
+  for (int i = 0; i < loop_indices.Count(); i++)
+  {
+    int index = loop_indices[i];
+    if (index >= 0 && index < m_loops.Count() && ON_HatchLoop::ltOuter == m_loops[index]->Type())
+    {
+      loop_indices.Remove(i);//there is only one outer loop, so we can break after removing it
+      break;
+    }
+  }
+
+  //get indices to keep
+  ON_SimpleArray<int> keep_indices = getReverseIndices(loop_indices, LoopCount() - 1);
+
+  //extract the curves to keep
+  ON_SimpleArray<const ON_Curve*> loop_curves;
+  for (int i = 0; i < keep_indices.Count(); i++)
+  {
+    int index = keep_indices[i];
+    if (index >= 0 && index < m_loops.Count())
+    {
+      const ON_HatchLoop* loop = m_loops[index];
+      if (loop)
+      {
+        const ON_Curve* crv = loop->Curve();
+        if (crv)
+        {
+          loop_curves.Append(crv);
+        }
+      }
+    }
+  }
+
+  //call ReplaceLoops
+  return ReplaceLoops(loop_curves);
+}
 
 bool ON_Hatch::ReplaceLoops(ON_SimpleArray<const ON_Curve*>& loop_curves)
 {
@@ -2559,4 +2690,155 @@ bool ON_Hatch::SetGradientEndPoints(ON_3dPoint startpoint, ON_3dPoint endpoint)
   data->m_start = startpoint;
   data->m_end = endpoint;
   return true;
+}
+
+unsigned int ON_Hatch::ClearComponentStates(
+  ON_ComponentStatus states_to_clear
+) const
+{
+  if (states_to_clear.IsClear())
+    return 0U;
+
+  unsigned int rc = 0U;
+
+  for (int i=0; i<LoopCount(); i++)
+  {
+    const ON_HatchLoop* pL = Loop(i);
+    if (nullptr == pL)
+      continue;
+    rc += pL->m_status.ClearStates(states_to_clear);
+  }
+
+  return rc;
+}
+
+unsigned int ON_Hatch::GetComponentsWithSetStates(
+  ON_ComponentStatus states_filter,
+  bool bAllEqualStates,
+  ON_SimpleArray< ON_COMPONENT_INDEX >& components
+) const
+{
+  components.SetCount(0);
+
+  if (states_filter.IsClear())
+    return 0U;
+
+  for (int i = 0; i < LoopCount(); i++)
+  {
+    const ON_HatchLoop* pL = Loop(i);
+    if (nullptr == pL)
+      continue;
+    if (bAllEqualStates ? pL->m_status.AllEqualStates(states_filter, states_filter) : pL->m_status.SomeEqualStates(states_filter, states_filter))
+      components.Append(ON_COMPONENT_INDEX(ON_COMPONENT_INDEX::hatch_loop, i));
+  }
+
+  return components.UnsignedCount();
+}
+
+static ON_ComponentStatus* HatchComponentStatus(
+  const ON_Hatch& hatch,
+  ON_COMPONENT_INDEX component_index
+)
+{
+  if (component_index.m_index >= 0)
+  {
+    switch (component_index.m_type)
+    {
+    case ON_COMPONENT_INDEX::TYPE::hatch_loop:
+      if (nullptr != hatch.Loop(component_index.m_index))
+        return &hatch.Loop(component_index.m_index)->m_status;
+      break;
+    default:
+      break;
+    }
+  }
+  return nullptr;
+}
+
+unsigned int ON_Hatch::SetComponentStates(
+  ON_COMPONENT_INDEX component_index,
+  ON_ComponentStatus states_to_set
+) const
+{
+  ON_ComponentStatus* s = HatchComponentStatus(*this, component_index);
+  return
+    (nullptr == s)
+    ? 0U
+    : s->SetStates(states_to_set);
+}
+
+unsigned int ON_Hatch::ClearComponentStates(
+  ON_COMPONENT_INDEX component_index,
+  ON_ComponentStatus states_to_clear
+) const
+{
+  ON_ComponentStatus* s = HatchComponentStatus(*this, component_index);
+  return
+    (nullptr == s)
+    ? 0U
+    : s->ClearStates(states_to_clear);
+}
+
+unsigned int ON_Hatch::SetComponentStatus(
+  ON_COMPONENT_INDEX component_index,
+  ON_ComponentStatus status_to_copy
+) const
+{
+  ON_ComponentStatus* s = HatchComponentStatus(*this, component_index);
+  return
+    (nullptr == s)
+    ? 0U
+    : s->SetStatus(status_to_copy);
+}
+
+ON_AggregateComponentStatus ON_Hatch::AggregateComponentStatus() const
+{
+  if (0 == LoopCount())
+    return ON_AggregateComponentStatus::Empty;
+
+  ON_AggregateComponentStatus a = ON_AggregateComponentStatus::Empty;
+
+  for (int i = 0; i < LoopCount(); i++)
+  {
+    const ON_HatchLoop* pL = Loop(i);
+    if (nullptr == pL)
+      continue;
+    a.Add(pL->m_status);
+  }
+
+  return a;
+}
+
+bool ON_Hatch::DeleteComponents(const ON_COMPONENT_INDEX* ci_list, size_t ci_count)
+{
+  if (0 == ci_count || nullptr == ci_list || 0 == LoopCount())
+    return false;
+
+  bool rc = false;
+
+  ON_SimpleArray<bool> bDelete(LoopCount());
+  bDelete.SetCount(LoopCount());
+  bDelete.Zero();
+
+  int i;
+  for (i = 0; i < ci_count; i++)
+  {
+    if (!ci_list[i].IsHatchLoopComponentIndex())
+      continue;
+    if (ci_list[i].m_index < 0 || ci_list[i].m_index >= LoopCount())
+      continue;
+    const ON_HatchLoop* pL = Loop(ci_list[i].m_index);
+    if (nullptr == pL)
+      continue;
+    if (ON_HatchLoop::ltOuter == pL->Type())
+      continue; // only inner loops should be deletable
+    bDelete[ci_list[i].m_index] = true;
+  }
+
+  for (i = LoopCount()-1; i >= 0; i--)
+  {
+    if (bDelete[i] && RemoveLoop(i))
+      rc = true;
+  }
+  return rc;
 }

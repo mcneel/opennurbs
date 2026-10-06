@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -796,6 +796,70 @@ public:
     ON_3dPoint rotation_center
     );
 
+
+
+  /// <summary>
+  /// Create a rotation transformation from an angle in radians,
+  /// a rotation axis, and a rotation center.
+  /// </summary>
+  /// <param name="angle_radians">
+  /// An angle in radians such that the double precision value
+  /// cos(angle_radians)^2  + sin(angle_radians)^2
+  /// is very close to 1.0. This trig function angle validation
+  /// is performed in this call and is done to protect against
+  /// values of angle_radians that are so large that the double
+  /// precision values of cos() and sin() are meaningless.
+  /// </param>
+  /// <param name="rotation_axis">
+  /// A nonzero vector.
+  /// </param>
+  /// <param name="rotation_center">
+  /// A point on the axis of rotation. If the axis is not a world
+  /// coordinate axis, better results will be obtained if you
+  /// choose a point in the region containing the points that
+  /// will be transformed.
+  /// </param>
+  /// <returns>
+  /// If the input is valid, a rotation transformation is returned.
+  /// Otherwise ON_Xform::Nan is returned.
+  /// </returns>
+  static const ON_Xform RotationTransformationFromAngleRadians(
+    double angle_radians,
+    ON_3dVector rotation_axis,
+    ON_3dPoint rotation_center
+  );
+
+  /// <summary>
+  /// Create a rotation transformation from the sine and cosine
+  /// of an angle, a rotation axis, and a rotation center.
+  /// </summary>
+  /// <param name="sin_angle">
+  /// Sine of the rotation angle.
+  /// </param>
+  /// <param name="cos_angle">
+  /// Cosine of the rotation angle.
+  /// </param>
+  /// <param name="rotation_axis">
+  /// A nonzero vector.
+  /// </param>
+  /// <param name="rotation_center">
+  /// A point on the axis of rotation. If the axis is not a world
+  /// coordinate axis, better results will be obtained if you
+  /// choose a point in the region containing the points that
+  /// will be transformed.
+  /// </param>
+  /// <returns>
+  /// If the input is valid, a rotation transformation is returned.
+  /// Otherwise ON_Xform::Nan is returned.
+  /// </returns>
+  static const ON_Xform RotationTransformationFromSineAndCosine(
+    double sin_angle,
+    double cos_angle,
+    ON_3dVector rotation_axis,
+    ON_3dPoint rotation_center
+  );
+
+
   /*
   Description:
     Calculate the minimal transformation that rotates
@@ -829,7 +893,7 @@ public:
   //   X0 - initial frame X
   //   Y0 - initial frame Y
   //   Z0 - initial frame Z
-  //   P1 - initial frame center
+  //   P1 - final frame center
   //   X1 - final frame X
   //   Y1 - final frame Y
   //   Z1 - final frame Z
@@ -855,6 +919,18 @@ public:
     const ON_Plane& plane0,
     const ON_Plane& plane1
     );
+
+  /*
+  Description:
+    Create rotation transformation that maps plane0 to plane1.
+  Parameters:
+    plane0 - [in]
+    plane1 - [in]
+  */
+  static const ON_Xform RotationTransformation(
+    const ON_Plane& plane0,
+    const ON_Plane& plane1
+  );
 
 	/*
 	Description:
@@ -1065,7 +1141,7 @@ Details:
 	where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
 	Returns false if this is not a rotation.
 Notes:
-  alpha and gamma are in the range (-pi, pi] while beta in in the range [0, pi]
+  alpha and gamma are in the range (-pi, pi] while beta in the range [0, pi]
 */
 	bool GetEulerZYZ(double& alpha, double& beta, double& gamma )const;
 
@@ -1356,6 +1432,242 @@ const ON_Xform operator*(double c, const ON_Xform& xform);
 
 ON_DECL
 const ON_Xform operator*(const ON_Xform& xform, double c);
+
+
+// Description:
+//   ON_Xform2d is a 2d affine transformation and is the 2d analog of ON_Xform.
+//   It is intended for use with the traditional 2d drawing APIs which
+//   represents a 2d transformation with six coefficients.
+class ON_CLASS ON_Xform2d
+{
+public:
+  // ON_Xform2d::IdentityTransformation
+  // The linear part is the 2x2 identity and the translation is zero.
+  //     1 0 0
+  //     0 1 0
+  static const ON_Xform2d IdentityTransformation;
+
+  // ON_Xform2d::ZeroTransformation
+  // Every stored coefficient is zero.
+  //     0 0 0
+  //     0 0 0
+  static const ON_Xform2d ZeroTransformation;
+
+  // ON_Xform2d::Unset - every stored coefficient is ON_UNSET_VALUE.
+  static const ON_Xform2d Unset;
+
+  // ON_Xform2d::Nan - every stored coefficient is ON_DBL_QNAN.
+  static const ON_Xform2d Nan;
+
+  double m_xform[2][3]; // [i][j] = row i, column j.  I.e.,
+                        //           [0][0] [0][1] [0][2]
+                        //           [1][0] [1][1] [1][2]
+
+  // Description:
+  //   Like ON_Xform, the default constructor creates the ZERO transformation,
+  //   not the identity transformation. Every coefficient is zero.
+  //   Use ON_Xform2d::IdentityTransformation when you want the identity.
+  ON_Xform2d();
+  ~ON_Xform2d() = default;
+  ON_Xform2d(const ON_Xform2d&) = default;
+  ON_Xform2d& operator=(const ON_Xform2d&) = default;
+
+  ON_Xform2d(double m00, double m01, double m02,
+             double m10, double m11, double m12);
+
+  // Returns &m_xform[i][0] when 0 <= i < 2 and nullptr otherwise.
+  double* operator[](int);
+  const double* operator[](int) const;
+
+  // Intentionally returns false if any coefficient is a nan.
+  bool operator==(const ON_Xform2d& rhs) const;
+
+  // Intentionally returns false if any coefficient is a nan.
+  bool operator!=(const ON_Xform2d& rhs) const;
+
+  ////////////////////////////////////////////////////////////////
+  // standard transformations
+
+  // Right column is (delta.x, delta.y).
+  static const ON_Xform2d TranslationTransformation(const ON_2dVector& delta);
+  static const ON_Xform2d TranslationTransformation(double dx, double dy);
+
+  // Description:
+  //   Create a uniform scale transformation with a specified fixed point.
+  static const ON_Xform2d ScaleTransformation(const ON_2dPoint& fixed_point, double scale_factor);
+
+  // Description:
+  //   Create a non-uniform scale transformation with a specified fixed point.
+  static const ON_Xform2d ScaleTransformation(const ON_2dPoint& fixed_point, double x_scale_factor, double y_scale_factor);
+
+  // Description
+  //   Create a rotation transformation from an angle in radians and a rotation
+  //   center. A positive angle rotates the x axis towards the y axis
+  //   (counter-clockwise in a right handed coordinate system).
+  // Parameters:
+  //   angle_radians [in] - An angle in radians
+  //   rotation_center [in] - The fixed point of the rotation.
+  // Returns:
+  //   If the input is valid, a rotation transformation is returned.
+  //   Otherwise ON_Xform2d::Nan is returned.
+  static const ON_Xform2d RotationTransformationFromAngleRadians(double angle_radians, const ON_2dPoint& rotation_center = ON_2dPoint::Origin);
+
+  // Description
+  //   Create a rotation transformation from the sine and cosine of an
+  //   angle and a rotation center.
+  // Returns:
+  //   If the input is valid, a rotation transformation is returned.
+  //   Otherwise ON_Xform2d::Nan is returned.
+  static const ON_Xform2d RotationTransformationFromSineAndCosine(
+    double sin_angle, double cos_angle, const ON_2dPoint& rotation_center = ON_2dPoint::Origin);
+
+  // Description:
+  //   Calculate the rotation that rotates start_dir to end_dir
+  //   while fixing rotation_center.
+  // Parameters:
+  //   start_dir - [in] nonzero vector
+  //   end_dir - [in] nonzero vector
+  //   rotation_center - [in] the fixed point of the rotation
+  // Returns:
+  //   If the input is valid, a rotation transformation is returned.
+  //   Otherwise ON_Xform2d::Nan is returned.
+  static const ON_Xform2d RotationTransformation(
+    const ON_2dVector& start_dir, const ON_2dVector& end_dir, const ON_2dPoint& rotation_center = ON_2dPoint::Origin);
+
+  ////////////////////////////////////////////////////////////////
+  // operators
+
+  // Note well: The right hand column is the translation. It has an
+  // important effect when transforming a Euclidean point and has no
+  // effect when transforming a vector.
+  ON_2dPoint operator*( const ON_2dPoint& ) const;
+
+  // Note well: The right hand column is the translation. It has an
+  // important effect when transforming a Euclidean point and has no
+  // effect when transforming a vector.
+  ON_2dVector operator*( const ON_2dVector& ) const;
+
+  // The returned transformation applies the right hand side first,
+  // i.e. (A*B)*P == A*(B*P).
+  ON_Xform2d operator*( const ON_Xform2d& /*rhs*/ ) const;
+
+
+  const ON_SHA1_Hash Hash() const;
+  ON__UINT32 CRC32(ON__UINT32 current_remainder) const;
+
+  // Description:
+  //   Well ordered dictionary compare that is nan aware.
+  int Compare( const ON_Xform2d& other ) const;
+
+  // Returns:
+  //   True if ON_IsValid() is true for every coefficient in the
+  //   transformation matrix.
+  bool IsValid() const;
+
+  // Returns:
+  //   True if any coefficient in the transformation matrix is a nan.
+  bool IsNan() const;
+
+  // Returns:
+  //   true if the matrix is the identity transformation
+  bool IsIdentity() const;
+
+  //Returns:
+  //  true if every stored coefficient is zero.
+  bool IsZeroTransformation() const;
+
+  // Returns:
+  //   true if the matrix is a pure translation
+  bool IsTranslation() const;
+
+  // Returns:
+  //   The determinant of the 2x2 linear part,
+  //   m_xform[0][0]*m_xform[1][1] - m_xform[0][1]*m_xform[1][0].
+  //   Because the bottom row is (0,0,1), this is also the determinant of
+  //   the full 3x3 matrix and the signed area scale factor of the
+  //   transformation. A negative determinant means the transformation
+  //   reverses orientation.
+  double Determinant() const;
+
+  // Description:
+  //   If the linear part of this transformation is non-singular, this is
+  //   replaced with its inverse and true is returned. Otherwise this is
+  //   replaced with the pseudo inverse and false is returned.
+  // Parameters:
+  //   determinant - [out] If not nullptr, the determinant of the
+  //     transformation before it was inverted is returned here.
+  // Returns:
+  //   True if this transformation is invertible.
+  bool Invert(double* determinant = nullptr);
+
+  // Description:
+  //   If the linear part of this transformation is non-singular, the
+  //   inverse is returned. Otherwise the pseudo inverse is returned.
+  // Parameters:
+  //   determinant - [out] If not nullptr, the determinant of this
+  //     transformation is returned here.
+  ON_Xform2d Inverse(double* determinant = nullptr) const;
+
+  //Returns:
+  //  The 4x4 transformation that applies this transformation to the
+  //  x and y coordinates and leaves the z coordinate unchanged.
+  //    m00 m01  0  m02
+  //    m10 m11  0  m12
+  //     0   0   1   0
+  //     0   0   0   1
+  const ON_Xform ToXform() const;
+
+  //Description:
+  //  Get the 2d transformation defined by the x and y rows and columns
+  //  of a 4x4 transformation.
+  //Parameters:
+  //  xform - [in]
+  //  zero_tolerance - [in]
+  //    An element of xform is "zero" if fabs(x) <= zero_tolerance and is
+  //    "one" if fabs(1.0-x) <= zero_tolerance.
+  //Returns:
+  //  The 2d transformation
+  //    xform[0][0] xform[0][1] xform[0][3]
+  //    xform[1][0] xform[1][1] xform[1][3]
+  //  if xform is affine and maps the world xy plane to itself, i.e. the
+  //  z row and z column of the linear part are (0,0,1) and xform[2][3]
+  //  is zero. Otherwise ON_Xform2d::Nan is returned.
+  static const ON_Xform2d FromXform(const ON_Xform& xform, double zero_tolerance = 0.0);
+
+  // Description:
+  //   The traditional 2d drawing APIs store an affine transformation as six
+  //   numbers (a,b,c,d,tx,ty) that map a point (x,y) to
+  //     x1 = a*x + c*y + tx
+  //     y1 = b*x + d*y + ty
+  //   These are the six numbers, in this order, used by Eto.Drawing.Matrix,
+  //   Windows GDI+, Direct2D (D2D1_MATRIX_3X2_F), Core Graphics
+  //   (CGAffineTransform), Cairo (cairo_matrix_t), Java 2D, SVG and PDF.
+  //   In terms of ON_Xform2d coefficients,
+  //     a  = m_xform[0][0]   c  = m_xform[0][1]   tx = m_xform[0][2]
+  //     b  = m_xform[1][0]   d  = m_xform[1][1]   ty = m_xform[1][2]
+  //   Note well that (a,b,c,d,tx,ty) is the transpose of the ON_Xform2d
+  //   coefficient order, because those APIs use the row vector convention.
+  //   Composition order is reversed as well. If A2d and B2d are the ON_Xform2d
+  //   equivalents of the platform transformations A and B, then
+  //     A2d * B2d   is the equivalent of   B * A
+  static const ON_Xform2d FromAffineElements(double a, double b, double c, double d, double tx, double ty);
+
+  // From an array of 6 doubles in (a,b,c,d,tx,ty) order.
+  static const ON_Xform2d FromAffineElements(const double abcdtxty[6]);
+
+  // From an array of 6 floats in (a,b,c,d,tx,ty) order.
+  static const ON_Xform2d FromAffineElements(const float abcdtxty[6]);
+
+  // Get the six coefficients used by the traditional 2d drawing APIs.
+  void GetAffineElements(double& a, double& b, double& c, double& d, double& tx, double& ty) const;
+
+  // Fills in an array of 6 doubles in (a,b,c,d,tx,ty) order.
+  void GetAffineElements(double abcdtxty[6]) const;
+
+  // Fills in an array of 6 floats in (a,b,c,d,tx,ty) order.
+  // This is the layout of D2D1_MATRIX_3X2_F.
+  void GetAffineElements(float abcdtxty[6]) const;
+};
 
 class ON_CLASS ON_ClippingRegion
 {
@@ -2173,6 +2485,7 @@ private:
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Xform>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Xform2d>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_Localizer>;
 #endif
 

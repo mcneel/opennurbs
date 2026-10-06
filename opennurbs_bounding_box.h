@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -22,18 +22,63 @@
 class ON_CLASS ON_BoundingBox
 {
 public:
-  static const ON_BoundingBox EmptyBoundingBox; // ((1.0,0.0,0.0),(-1.0,0.0,0.0))
-  static const ON_BoundingBox UnsetBoundingBox; // all coordinates are ON_UNSET_VALUE
-  static const ON_BoundingBox NanBoundingBox;   // all coordinates are ON_DBL_QNAN
 
-  ON_BoundingBox() ON_NOEXCEPT; // creates EmptyBoundingBox
+  /// <summary>
+  /// ((1.0,0.0,0.0),(-1.0,0.0,0.0)) 
+  /// Note that min.x = 1 &gt; max.x = -1 and this makes the box invalid.
+  /// This is a good choice as a return value for a function
+  /// where an empty bounding box could be a reasonable result.
+  /// </summary>
+  static const ON_BoundingBox EmptyBoundingBox;
+  
+  /// <summary>
+  /// All six min/max corner coordinates are ON_UNSET_VALUE.
+  /// This is a good choice to indicate a bounding box
+  /// is not initialized but is expected to become a valid
+  /// bounding box as a calculation progresses.
+  /// </summary>
+  static const ON_BoundingBox UnsetBoundingBox;
+
+  /// <summary>
+  /// All six min/max corner coordinates are ON_DBL_QNAN.
+  /// This is a good choice as a return value for a function
+  /// that is asked to calculate a bounding box with invalid input.
+  /// </summary>
+  static const ON_BoundingBox NanBoundingBox;
+
+  /// <summary>
+  /// The default ON_BoundingBox constructor creates 
+  /// a instance of ON_BoundingBox::EmptyBoundingBox.
+  /// ((1.0,0.0,0.0), (-1.0,0.0,0.0)).
+  /// Note that min.x = 1 &gt; max.x = -1 and this makes the box invalid.
+  /// </summary>
+  ON_BoundingBox() ON_NOEXCEPT;
+
   ~ON_BoundingBox() = default;
   ON_BoundingBox(const ON_BoundingBox&) = default;
   ON_BoundingBox& operator=(const ON_BoundingBox&) = default;
 
+  /// <summary>
+  /// Create a bounding box from min_corner to max_corner. 
+  /// For a valid ON_BoundingBox,
+  /// min_corner.x &lt;= max_corner.x,
+  /// min_corner.y &lt;= max_corner.y and
+  /// min_corner.z &lt;= max_corner.z.
+  /// Experts may pass min_corner and max_corner points that do
+  /// not define a valid bounding box. Generally, it is best
+  /// to use the copy constructor or operator= with one of
+  /// ON_BoundingBox::EmptyBoundingBox, 
+  /// ON_BoundingBox::UnsetBoundingBox or 
+  /// ON_BoundingBox::NanBoundingBox 
+  /// to initialize invalid bounding boxes.
+  /// </summary>
+  /// <param name="min_corner">
+  /// </param>
+  /// <param name="max_corner">
+  /// </param>
 	explicit ON_BoundingBox(
-    const ON_3dPoint&, // min corner of axis aligned bounding box
-    const ON_3dPoint&  // max corner of axis aligned bounding box
+    const ON_3dPoint& min_corner,
+    const ON_3dPoint& max_corner
     );
 
 
@@ -361,7 +406,7 @@ public:
     d - [in] distance (> 0.0)
     P - [in] 
   Returns:
-    True if if the shortest distance from the point P
+    True if the shortest distance from the point P
     to the bounding box is greater than d. 
   */
   bool IsFartherThan( double d, const ON_3dPoint& P ) const;
@@ -419,7 +464,7 @@ public:
     d - [in] distance (> 0.0)
     other - [in] other bounding box
   Returns:
-    True if if the shortest distance from this bounding
+    True if the shortest distance from this bounding
     box to the other bounding box is greater than d. 
   */
   bool IsFartherThan( double d, const ON_BoundingBox& other ) const;
@@ -490,6 +535,12 @@ public:
   Remarks:
     If "this" or other_bbox is invalid, they are treated as
     the empty set, and false is returned.
+    This function always overwrites "this", including when it returns false.
+    The coordinates of an invalid "this" are not meaningful, so check the
+    return value, or ON_BoundingBox::IsValid(), before reading them.
+    To test two boxes for overlap without modifying either one, use
+    ON_BoundingBox::IsDisjoint().  To save the intersection somewhere else,
+    use the two argument Intersection() below.
   */
   bool Intersection(
          const ON_BoundingBox& other_bbox
@@ -504,10 +555,12 @@ public:
   Returns:
     True if the "this" is a non-empty valid bounding box.
     False if the intersection is empty, in which case
-    "this" is set to an invalid bounding box.
+    "this" is set to an invalid bounding box.  The coordinates of an
+    invalid "this" are not meaningful.
   Remarks:
     If bbox_A or bbox_B is invalid, they are treated as
     the empty set, and false is returned.
+    bbox_A and bbox_B are not modified, so "this" may safely be a third box.
   */
   bool Intersection( // this = intersection of two args
          const ON_BoundingBox& bbox_A, 
@@ -565,6 +618,30 @@ public:
   */
   bool IsDisjoint(
     const ON_BoundingBox& other_bbox
+    ) const;
+
+  /*
+  Description:
+    Test to see if "this" and other_bbox are disjoint (do not intersect),
+    allowing a tolerance for the comparison.
+  Parameters:
+    other_bbox - [in]
+    tolerance - [in] Distance tolerance for the comparison.
+      When tolerance > 0.0, the boxes are considered to intersect (not
+      disjoint) if the gap between them is <= tolerance. This is useful as a
+      coarse pre-check when the boxes may be separated by numerical noise but
+      the underlying geometry actually intersects within a working tolerance.
+      When tolerance = 0.0, the result matches IsDisjoint(other_bbox).
+      When tolerance < 0.0, the boxes must overlap by more than |tolerance|
+      to be considered not disjoint.
+  Returns:
+    True if "this" and other_bbox are disjoint.
+  Remarks:
+    If "this" or other_bbox is invalid, then true is returned.
+  */
+  bool IsDisjoint(
+    const ON_BoundingBox& other_bbox,
+    double tolerance
     ) const;
 
   /*

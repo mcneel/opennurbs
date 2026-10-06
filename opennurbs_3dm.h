@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -96,7 +96,7 @@
 
 
 /* The openNURBS toolkit allows users to write all openNURBS classed that are
-// derived from ON_Object using using TCODE_OPENNURBS_CLASS chunks.
+// derived from ON_Object using TCODE_OPENNURBS_CLASS chunks.
 // In the .3dm file these TCODE_OPENNURBS_CLASS chunks are always have the
 // following format.
 */
@@ -131,16 +131,18 @@
 #define TCODE_DIMSTYLE_TABLE  (TCODE_TABLE | 0x0020) /* annotation dimension style table */
 
 #define TCODE_INSTANCE_DEFINITION_TABLE (TCODE_TABLE | 0x0021) /* instance definition table */
+#define TCODE_HATCHPATTERN_TABLE        (TCODE_TABLE | 0x0022) /* hatch pattern table */
+#define TCODE_LINETYPE_TABLE            (TCODE_TABLE | 0x0023) /* linetype table */
+#define TCODE_OBSOLETE_LAYERSET_TABLE   (TCODE_TABLE | 0x0024) /* obsolete layer set table */
+#define TCODE_TEXTURE_MAPPING_TABLE     (TCODE_TABLE | 0x0025) /* texture mappings */
+#define TCODE_HISTORYRECORD_TABLE       (TCODE_TABLE | 0x0026) /* history records */
+#define TCODE_SECTION_STYLE_TABLE       (TCODE_TABLE | 0x0027) /* section style table (May 2025, V9) */
+#define TCODE_MARKUP_TABLE              (TCODE_TABLE | 0x0028) /* markup table (Jan 2026, V9) */
+#define TCODE_PAGEVIEWGROUP_TABLE       (TCODE_TABLE | 0x0029) /* pageview group table (Jan 2026, V9) */
 
-#define TCODE_HATCHPATTERN_TABLE (TCODE_TABLE | 0x0022) /* hatch pattern table */
-
-#define TCODE_LINETYPE_TABLE (TCODE_TABLE | 0x0023) /* linetype table */
-
-#define TCODE_OBSOLETE_LAYERSET_TABLE (TCODE_TABLE | 0x0024) /* obsolete layer set table */
-
-#define TCODE_TEXTURE_MAPPING_TABLE (TCODE_TABLE | 0x0025) /* texture mappings */
-
-#define TCODE_HISTORYRECORD_TABLE (TCODE_TABLE | 0x0026) /* history records */
+#if defined(OPENNURBS_TAG_WIP)
+#define TCODE_TAG_TABLE                 (TCODE_TABLE | 0x002A) /* tag table (Dec 2025, WIP) */
+#endif // OPENNURBS_TAG_WIP
 
 #define TCODE_ENDOFTABLE          0xFFFFFFFF
 
@@ -231,33 +233,46 @@
 /* information saved by the plug-in is in a TCODE_USER_RECORD chunk */
 #define TCODE_USER_RECORD              (TCODE_TABLEREC | 0x0081) 
 
-
 /* records in group table */
-#define TCODE_GROUP_RECORD             (TCODE_TABLEREC  | TCODE_CRC   | 0x0073)
+#define TCODE_GROUP_RECORD                (TCODE_TABLEREC | TCODE_CRC | 0x0073)
 
 /* records in font table */
-#define TCODE_FONT_RECORD             (TCODE_TABLEREC  | TCODE_CRC   | 0x0074)
+#define TCODE_FONT_RECORD                 (TCODE_TABLEREC | TCODE_CRC | 0x0074)
 
 /* records in dimension style table */
-#define TCODE_DIMSTYLE_RECORD          (TCODE_TABLEREC  | TCODE_CRC   | 0x0075)
+#define TCODE_DIMSTYLE_RECORD             (TCODE_TABLEREC | TCODE_CRC | 0x0075)
 
 /* records in instance definition table */
-#define TCODE_INSTANCE_DEFINITION_RECORD  (TCODE_TABLEREC  | TCODE_CRC   | 0x0076)
+#define TCODE_INSTANCE_DEFINITION_RECORD  (TCODE_TABLEREC | TCODE_CRC | 0x0076)
 
 /* records in hatch pattern table */
-#define TCODE_HATCHPATTERN_RECORD  (TCODE_TABLEREC  | TCODE_CRC   | 0x0077)
+#define TCODE_HATCHPATTERN_RECORD         (TCODE_TABLEREC | TCODE_CRC | 0x0077)
 
 /* records in linetye pattern table */
-#define TCODE_LINETYPE_RECORD  (TCODE_TABLEREC  | TCODE_CRC   | 0x0078)
+#define TCODE_LINETYPE_RECORD             (TCODE_TABLEREC | TCODE_CRC | 0x0078)
 
 /* OBSOLETE records in layer set table */
-#define TCODE_OBSOLETE_LAYERSET_RECORD  (TCODE_TABLEREC  | TCODE_CRC   | 0x0079)
+#define TCODE_OBSOLETE_LAYERSET_RECORD    (TCODE_TABLEREC | TCODE_CRC | 0x0079)
 
-/* records in linetye pattern table */
-#define TCODE_TEXTURE_MAPPING_RECORD  (TCODE_TABLEREC  | TCODE_CRC   | 0x007A)
+/* records in linetype pattern table */
+#define TCODE_TEXTURE_MAPPING_RECORD      (TCODE_TABLEREC | TCODE_CRC | 0x007A)
 
 /* records in history record pattern table */
-#define TCODE_HISTORYRECORD_RECORD  (TCODE_TABLEREC  | TCODE_CRC   | 0x007B)
+#define TCODE_HISTORYRECORD_RECORD        (TCODE_TABLEREC | TCODE_CRC | 0x007B)
+
+/* records in section style table (May 2025, V9) */
+#define TCODE_SECTION_STYLE_RECORD        (TCODE_TABLEREC | TCODE_CRC | 0x007C)
+
+/* records in markup table (Jan 2026, V9) */
+#define TCODE_MARKUP_RECORD               (TCODE_TABLEREC | TCODE_CRC | 0x007D)
+
+/* records in pageview group table ((Jan 2026, V9) */
+#define TCODE_PAGEVIEWGROUP_RECORD        (TCODE_TABLEREC | TCODE_CRC | 0x007E)
+
+#if defined(OPENNURBS_TAG_WIP)
+/* records in tag table (Dec 2025, V9) */
+#define TCODE_TAG_RECORD                  (TCODE_TABLEREC | TCODE_CRC | 0x007F)
+#endif // OPENNURBS_TAG_WIP
 
 /* records in object table */
 #define TCODE_OBJECT_RECORD            (TCODE_TABLEREC  | TCODE_CRC   | 0x0070)

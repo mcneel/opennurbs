@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -88,6 +88,10 @@ public:
     const ON_DimStyle* dimstyle
     );
 
+  bool CreateFromRuns(
+    const ON_TextRunArray& runs
+  );
+
   bool ReplaceTextString(
     const wchar_t* RtfString,
     ON::AnnotationType annotation_type, // used to select type specific dimstyle properties like text alignment settings
@@ -98,6 +102,56 @@ public:
     ON::AnnotationType annotation_type,
     const ON_DimStyle* dimstyle
   );
+
+  // V9 run-native dimension text.
+  // The "dimension template" is the authored run array for a dimension: the
+  // user's runs (preserving run-only attributes such as super/subscript) with
+  // the literal "<>" measurement placeholder still present. ON_Dimension
+  // derives the displayed m__runs from this template by substituting the
+  // formatted measurement, so a per-redraw rebuild no longer flattens the text
+  // to a string and re-parses it (which silently dropped run-only attributes).
+  // The template is stored on the (non-published) private implementation.
+  bool HasDimensionTemplate() const;
+  const ON_TextRunArray* DimensionTemplate() const;
+  void SetDimensionTemplate(const ON_TextRunArray& template_runs);
+  void ClearDimensionTemplate();
+
+  /*
+  Description:
+    Re-apply a dim style's font and text height to the authored dimension
+    template runs, in place. The template stores the authored text, so it must
+    follow the dim style's font and text height the way the displayed runs do;
+    rebuilding it from the plain user text instead would drop run-only
+    attributes such as super/subscript.
+    Runs whose font differs from the template's current baseline font are
+    treated as deliberate per-run overrides and are left unchanged.
+  Parameters:
+    dimstyle - [in]
+      The dim style the displayed text is being built for.
+    bResetBaseline - [in]
+      True when the template was just built or adopted for this dim style and
+      its runs already carry that font and height. The style is recorded as the
+      new baseline and no run is modified.
+  */
+  void SyncDimensionTemplateToDimStyle(
+    const ON_DimStyle* dimstyle,
+    bool bResetBaseline
+  );
+
+  /*
+  Description:
+    The dim style font and text height the dimension template runs are
+    currently configured for -- the baseline
+    SyncDimensionTemplateToDimStyle() compares against.
+    ON_TextContent::Create() resets this object to ON_TextContent::Empty and
+    so destroys the template along with this baseline. Callers that re-Create
+    an ON_TextContent and put the template runs back (the GetTextXform dim
+    style reparse) must restore the baseline with it: without it the next sync
+    has nothing to compare against and silently stops tracking the dim style.
+  */
+  const ON_Font* DimensionTemplateFont() const;
+  double DimensionTemplateTextHeight() const;
+  void SetDimensionTemplateBaseline(const ON_Font* font, double text_height);
 
   bool RunReplaceString(
     const wchar_t* repl_str,
@@ -113,6 +167,7 @@ public:
     passed to Create(), ReplaceTextString(), or RebuildRuns().
   */
   ON_SHA1_Hash DimStyleTextPositionPropertiesHash() const;
+  void SetDimStyleTextPositionPropertiesHash(ON_SHA1_Hash hash);
 
   /*
   Returns:
@@ -181,7 +236,11 @@ private:
     bool bComposeAndUpdateRtf
     );
 
+  ON_wString& Internal_GetText() const;
+  void Internal_GetTextFromRuns(ON_wString& text) const;
+  void Internal_SetText(const ON_wString& text);
 public:
+  bool IsContentEmpty() const;
 
   /*
   Returns:
@@ -191,6 +250,7 @@ public:
   */
   const ON_wString RichText() const;
 
+  bool ContainsTextFields() const;
   /*
   Returns:
     Rich text suitable for initializing SDK controls on the current platform (Windows or Apple OS X).
@@ -200,7 +260,6 @@ public:
   */
   const ON_wString PlatformRichTextFromRuns() const;
 
-  
   /*
   Parameters:
     rich_text_style - [in]
@@ -250,6 +309,7 @@ public:
 
 private:
   void Internal_SetRunTextHeight(double height);
+  void Internal_SetRunsFont(const ON_Font* font, bool keep_overrides, const ON_Font* old_font);
 
 public:
   void GetAlignment(ON::TextHorizontalAlignment& horz, ON::TextVerticalAlignment& vert) const;
@@ -383,10 +443,10 @@ public:
 private:
   // Data members
   //-----------------------
-  ON_wString                  m_text;          // Rtf laden string
+  mutable ON_wString          m_text; // Rtf laden string. Always access this string through Internal_GetText() and Internal_SetText(...)
   double                      m_rect_width = 1.0e300;  // formatting rectangle width in model units
   double                      m_rotation_radians = 0.0;   // radians rotation around origin
-  double m_reserved_dbl = 0.0;
+  class ON_TextContentPrivate* m_private = nullptr;
   ON::TextHorizontalAlignment m_h_align = ON::TextHorizontalAlignment::Left;    // Left, Center, Right
   ON::TextVerticalAlignment   m_v_align = ON::TextVerticalAlignment::Bottom;  // Top, Middle, Bottom
   
@@ -432,6 +492,7 @@ private:
 
 public:
   friend class ON_Text;
+  friend class ON_Annotation;
 
   /*
   Description:
@@ -467,6 +528,16 @@ public:
     ON_TextRunArray* runs,
     ON::TextVerticalAlignment v_align,
     ON::TextHorizontalAlignment h_align);
+
+  // Overload that knows the wrap rectangle width. Used when h_align is
+  // Justify: each non-final line is stretched to wrap_width by inflating
+  // word gaps. For L/C/R/Auto, wrap_width has no effect on layout; either
+  // overload produces identical results in those cases.
+  static bool MeasureTextRunArray(
+    ON_TextRunArray* runs,
+    ON::TextVerticalAlignment v_align,
+    ON::TextHorizontalAlignment h_align,
+    double wrap_width);
 
   /*
   Description:
@@ -531,25 +602,57 @@ public:
   // Dimension text formatting
   static bool FormatDistance(
     double distance,
-    ON::LengthUnitSystem units_in,
+    const ON_UnitSystem& units_in,
     const ON_DimStyle* dimstyle,
     bool alternate,                     // Primary or alternate
     ON_wString& formatted_string);      // Output
+
+  //ON_DEPRECATED_MSG("Since v9.0")
+    static bool FormatDistance(
+      double distance,
+      ON::LengthUnitSystem units_in,
+      const ON_DimStyle* dimstyle,
+      bool alternate,                     // Primary or alternate
+      ON_wString& formatted_string);      // Output
 
   static bool FormatTolerance(
     double distance,
-    ON::LengthUnitSystem units_in,
+    const ON_UnitSystem& units_in,
     const ON_DimStyle* dimstyle,
     bool alternate,                     // Primary or alternate
     ON_wString& formatted_string);      // Output
+
+  //ON_DEPRECATED_MSG("Since v9.0")
+    static bool FormatTolerance(
+      double distance,
+      ON::LengthUnitSystem units_in,
+      const ON_DimStyle* dimstyle,
+      bool alternate,                     // Primary or alternate
+      ON_wString& formatted_string);      // Output
 
   static bool FormatDistanceAndTolerance(
     double distance,
-    ON::LengthUnitSystem units_in,
+    const ON_UnitSystem& units_in,
     const ON_DimStyle* dimstyle,
     bool alternate,                     // Primary or alternate
     ON_wString& formatted_string);      // Output
 
+  //ON_DEPRECATED_MSG("Since v9.0")
+    static bool FormatDistanceAndTolerance(
+      double distance,
+      ON::LengthUnitSystem units_in,
+      const ON_DimStyle* dimstyle,
+      bool alternate,                     // Primary or alternate
+      ON_wString& formatted_string);      // Output
+
+  static bool FormatDistanceMeasurement(
+    double distance_in,
+    const ON_UnitSystem& units_in,
+    const ON_DimStyle* dimstyle,
+    const wchar_t* user_text,           // Replace "<>" in user_text with formatted dimension
+    ON_wString& formatted_string);      // Output
+
+  //ON_DEPRECATED_MSG("Since v9.0")
   static bool FormatDistanceMeasurement(
     double distance_in,
     ON::LengthUnitSystem units_in,

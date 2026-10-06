@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -13,6 +13,13 @@
 
 #if !defined(OPENNURBS_INTERNAL_GLYPH_INC_)
 #define OPENNURBS_INTERNAL_GLYPH_INC_
+
+#if defined(ON_RUNTIME_LINUX) && !defined(ON_RUNTIME_ANDROID)
+// Linux RhinoCore has no platform font engine: the installed fonts are found by
+// scanning font files and opened with FreeType (see ON_ManagedFonts). Android
+// also defines ON_RUNTIME_LINUX but keeps its NDK font matcher path instead.
+#define ON_INTERNAL_LINUX_FONT_FILES
+#endif
 
 class ON_Internal_FontGlyphPool : private ON_FixedSizePool
 {
@@ -54,6 +61,50 @@ public:
 
 #if defined (ON_RUNTIME_APPLE_CORE_TEXT_AVAILABLE)
   static void Internal_GetAppleInstalledCTFonts(ON_SimpleArray<const ON_Font*>& platform_font_list);
+#endif
+
+#if defined(ON_INTERNAL_LINUX_FONT_FILES)
+  /*
+  Description:
+    Linux (RhinoCore) has no platform font engine. The installed fonts are the
+    scalable font files in the directories fontconfig searches, a Fonts folder
+    next to the Rhino libraries (the fonts Rhino ships) and the directories in
+    the RHINO_FONT_DIRS environment variable (colon separated). Every face is
+    read with FreeType. Implemented in opennurbs_linux_fonts.cpp.
+  */
+  static void Internal_GetLinuxInstalledFonts(ON_SimpleArray<const ON_Font*>& device_list);
+
+private:
+  // ON_FreeType::CreateFace() (opennurbs_freetype.cpp) opens the face for a
+  // managed font from the file Internal_LinuxFontFile() reports.
+  friend class ON_FreeType;
+
+  /*
+  Description:
+    Finds the font file that provides the glyphs for font. When font is a
+    managed font, its installed font or its substitute is used.
+  Parameters:
+    installed_font - [out] the installed font the file provides.
+  Returns:
+    True if font_file_path and face_index were set.
+  */
+  static bool Internal_LinuxFontFile(
+    const ON_Font& font,
+    const ON_Font*& installed_font,
+    ON_wString& font_file_path,
+    int& face_index
+  );
+
+  /*
+  Description:
+    Chooses the installed font that stands in for a font that is not
+    installed on this Linux device. Family names common in files made on
+    Windows and macOS map to the metric compatible Liberation and DejaVu
+    families; the last resort is the first sans-serif family found.
+  Returns:
+    nullptr when no installed font is available.
+  */
+  static const ON_Font* Internal_LinuxSubstituteFont(const ON_Font* missing_font);
 #endif
 
 private:

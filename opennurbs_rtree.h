@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -423,6 +423,68 @@ public:
     True if successful.
   */
   bool CreateMeshFaceTree( const class ON_Mesh* mesh );
+
+  /*
+  Description:
+    Create an R-tree with an element for each face in the mesh, building the
+    tree bottom-up from spatially sorted faces (packed/bulk load) instead of
+    inserting faces one at a time. This is dramatically faster than
+    CreateMeshFaceTree() for large meshes (e.g. millions of faces) and produces
+    a tree that returns identical query results.
+  Parameters:
+    mesh - [in]
+  Returns:
+    True if successful. On failure the tree is left empty.
+  */
+  bool CreateMeshFaceTreePacked( const class ON_Mesh* mesh );
+
+  /*
+  Description:
+    Create an R-tree with a degenerate (point) element for each vertex in the
+    mesh, using the same packed/bulk bottom-up build as
+    CreateMeshFaceTreePacked(). The element id is set to the index of the
+    vertex. Double precision vertices are used when the mesh has them, single
+    precision vertices otherwise. The tree accepts further Insert() calls
+    afterwards.
+  Parameters:
+    mesh - [in]
+  Returns:
+    True if successful (the mesh has at least one vertex). On failure the tree
+    is left empty.
+  */
+  bool CreateMeshVertexTreePacked( const class ON_Mesh* mesh );
+
+  /*
+  Description:
+    Apply an affine transformation to every node rectangle in the tree, in
+    place, so the tree indexes the transformed geometry without being rebuilt.
+
+    This is for the case where the geometry an R-tree was built from is moved by
+    a rigid/affine transform (e.g. a mesh that is translated or rotated): rather
+    than rebuilding the tree from scratch - O(n log n), and the dominant cost of
+    clipping-section generation on a moved mesh (RH-88674) - the existing tree is
+    reused and only its bounding rectangles are updated, which is O(number of
+    nodes) and allocation-free.
+
+    Each axis-aligned rectangle is replaced by the axis-aligned bounding box of
+    its transformed box (computed with the "absolute value of the linear part"
+    trick: new_center = L*center + t, new_halfwidth = |L|*halfwidth). For a pure
+    translation or axis-aligned scale this is exact; for a rotation it is a tight
+    but conservative enclosure. Because the same transform is applied to every
+    rectangle at every level, and the AABB-of-transformed-box operation is
+    monotone with respect to containment, the R-tree invariant (each node's
+    rectangle contains its children's rectangles) is preserved, so queries remain
+    correct. The only effect of the conservative enclosure under rotation is that
+    a query may return a few extra candidates, which callers already reject with
+    their exact test.
+  Parameters:
+    xform - [in] An affine transform (the bottom row must be [0 0 0 1]).
+  Returns:
+    True if the transform was applied. False (tree left unchanged) if the tree
+    is empty or xform is not affine (e.g. a perspective transform), in which case
+    the caller should rebuild the tree instead.
+  */
+  bool Transform( const class ON_Xform& xform );
 
 
   /*

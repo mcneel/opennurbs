@@ -303,6 +303,7 @@ public:
   using EmbeddedFileMap = std::unordered_map<std::wstring, std::wstring>;
 
   bool GetRDKDocumentXML(ON_wString& xml, bool embedded_files, int archive_3dm_version) const;
+  ONX_Model_UserData* FindRDKDocumentUserData(void) const;
   ONX_Model_UserData* GetRDKDocumentUserData(int archive_3dm_version) const;
   void PopulateDefaultRDKDocumentXML(ON_XMLRootNode& root) const;
   bool PopulateRDKComponents(int archive_3dm_version);
@@ -319,6 +320,9 @@ public:
   ONX_Model& m_model;
   ON__UINT64 m_model_content_version_number = 0;
   ON_ClassArray<ONX_Model::ONX_ModelComponentList> m_mcr_lists;
+
+public:
+  ON_ModelComponentReference m_default_section_style = ON_ModelComponentReference::CreateConstantSystemComponentReference(ON_SectionStyle::Default);
 };
 
 ON_InternalXMLImpl::~ON_InternalXMLImpl()
@@ -332,6 +336,8 @@ ON_InternalXMLImpl::~ON_InternalXMLImpl()
 
 ON_XMLNode& ON_InternalXMLImpl::Node(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   // If the model node pointer is set, return that. This is a pointer to a node owned by the ON_3dmRenderSettings
   // which contains the entire RDK document XML. This is used by objects (Ground Plane, etc.) that are owned by the
   // ON_3dmRenderSettings. In the case of Ground Plane etc, it's a pointer into the ON_3dmRenderSettings XML.
@@ -353,6 +359,8 @@ ON_XMLNode& ON_InternalXMLImpl::Node(void) const
 void ON_InternalXMLImpl::SetModelNode(ON_XMLNode& node)
 {
   ON_ASSERT(_model_node == nullptr);
+
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
 
   if (nullptr != _local_node)
   {
@@ -1134,6 +1142,45 @@ ON_ModelComponentReference ONX_Model::DimensionStyleWithFontCharacteristics(
   return ON_ModelComponentReference::Empty;
 }
 
+
+ON_ModelComponentReference ONX_Model::SectionStyleFromIndex(
+  int section_style_index
+) const
+{
+  ON_ModelComponentReference cr = ComponentFromIndex(ON_ModelComponent::Type::SectionStyle, section_style_index);
+  return cr.IsEmpty() ? DefaultSectionStyle() : cr;
+}
+
+ON_ModelComponentReference ONX_Model::SectionStyleFromId(
+  ON_UUID section_style_id
+) const
+{
+  ON_ModelComponentReference cr = ComponentFromId(ON_ModelComponent::Type::SectionStyle, section_style_id);
+  return cr.IsEmpty() ? DefaultSectionStyle() : cr;
+}
+
+ON_ModelComponentReference ONX_Model::SectionStyleFromName(
+  const wchar_t* section_style_name
+) const
+{
+  ON_ModelComponentReference cr = ComponentFromName(ON_ModelComponent::Type::SectionStyle, ON_nil_uuid, section_style_name);
+  return cr.IsEmpty() ? DefaultSectionStyle() : cr;
+}
+
+ON_ModelComponentReference ONX_Model::SectionStyleFromNameHash(
+  ON_NameHash section_style_name_hash
+) const
+{
+  ON_ModelComponentReference cr = ComponentFromNameHash(ON_ModelComponent::Type::SectionStyle, section_style_name_hash);
+  return cr.IsEmpty() ? DefaultSectionStyle() : cr;
+}
+
+ON_ModelComponentReference ONX_Model::DefaultSectionStyle() const
+{
+  return (nullptr != m_private)
+    ? m_private->m_default_section_style
+    : ON_ModelComponentReference::Empty;
+}
 
 ON_ModelComponentReference ONX_Model::RemoveModelComponent(
   ON_ModelComponent::Type component_type,
@@ -2213,12 +2260,23 @@ void ONX_Model::DumpComponentLists( ON_TextLog& dump ) const
 ON_SHA1_Hash ONX_Model::ContentHash(
 ) const
 {
+  return ContentHash(ON_TextHash::Null);
+}
+
+ON_SHA1_Hash ONX_Model::ContentHash(
+  ON_TextLog& hashed_text
+) const
+{
   const bool bRemapIds = true;
   ON_TextHash hash_log;
   hash_log.SetIdRemap(bRemapIds);
+  if (false == hashed_text.IsNull())
+    hash_log.SetOutputTextLog(&hashed_text);
   Dump(hash_log);
   return hash_log.Hash();
+
 }
+
 
 class ON__CIndexPair
 {
@@ -2278,7 +2336,71 @@ bool ONX_Model::Read(const wchar_t* filename, ON_TextLog* error_log)
   return rc;
 }
 
-bool ONX_Model::IncrementalReadBegin( 
+static bool ONX_Internal_ReadSettings(ONX_Model& model, ON_BinaryArchive& archive)
+{
+  model.Reset();
+
+  // STEP 1: REQUIRED - Read start section
+  if (!archive.Read3dmStartSection(&model.m_3dm_file_version, model.m_sStartSectionComments))
+  {
+    return false;
+  }
+
+  // STEP 2: REQUIRED - Read properties section
+  if (!archive.Read3dmProperties(model.m_properties))
+  {
+    return false;
+  }
+
+  // version of opennurbs used to write the file.
+  model.m_3dm_opennurbs_version = archive.ArchiveOpenNURBSVersion();
+
+  // STEP 3: REQUIRED - Read setting section
+  if (!archive.Read3dmSettings(model.m_settings))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+bool ONX_Model::ReadSettings(const char* filename)
+{
+  bool rc = false;
+
+  if (nullptr != filename)
+  {
+    FILE* fp = ON::OpenFile(filename, "rb");
+    if (nullptr != fp)
+    {
+      ON_BinaryFile file(ON::archive_mode::read3dm, fp);
+      rc = ONX_Internal_ReadSettings(*this, file);
+      ON::CloseFile(fp);
+    }
+  }
+
+  return rc;
+}
+
+bool ONX_Model::ReadSettings(const wchar_t* filename)
+{
+  bool rc = false;
+
+  if (nullptr != filename)
+  {
+    FILE* fp = ON::OpenFile(filename, L"rb");
+    if (nullptr != fp)
+    {
+      ON_BinaryFile file(ON::archive_mode::read3dm, fp);
+      rc = ONX_Internal_ReadSettings(*this, file);
+      ON::CloseFile(fp);
+    }
+  }
+
+  return rc;
+}
+
+bool ONX_Model::IncrementalReadBegin(
   ON_BinaryArchive& archive,
   bool bManageComponents,
   unsigned int table_filter,
@@ -2368,7 +2490,6 @@ bool ONX_Model::IncrementalReadBegin(
     }
   }
 
-
   // STEP 6: REQUIRED - Read render material table
   if ( archive.BeginRead3dmMaterialTable() )
   {
@@ -2412,7 +2533,6 @@ bool ONX_Model::IncrementalReadBegin(
       return false;
     }
   }
-
 
   // STEP 7: REQUIRED - Read line type table
   if ( archive.BeginRead3dmLinetypeTable() )
@@ -2671,6 +2791,115 @@ bool ONX_Model::IncrementalReadBegin(
       return false;
     }
   }
+
+  // STEP 13.1 - read section style table (May 2025, V9)
+  if (archive.BeginRead3dmSectionStyleTable())
+  {
+    if (0 != (static_cast<unsigned int>(ON_3dmArchiveTableType::section_style_table) & table_filter))
+    {
+      for (;;)
+      {
+        ON_SectionStyle* section_style = nullptr;
+        rc = archive.Read3dmSectionStyle(section_style);
+        if (rc == 0)
+          break; // end of style table table
+        if (rc < 0)
+          break;
+        if (AddModelComponentForExperts(section_style, bManageComponents, bResolveIdAndNameConflicts, bUpdateComponentIdentification).IsEmpty())
+          delete section_style;
+      }
+    }
+
+    // If BeginRead3dmSectionStyleTable() returns true, 
+    // then you MUST call EndRead3dmSectionStyleTable().
+    if (!archive.EndRead3dmSectionStyleTable())
+    {
+      return false;
+    }
+  }
+
+  // STEP 13.2 - read markup table (Jan 2026, V9)
+  if (archive.BeginRead3dmMarkupTable())
+  {
+    if (0 != (static_cast<unsigned int>(ON_3dmArchiveTableType::markup_table) & table_filter))
+    {
+      for (;;)
+      {
+        ON_Markup* markup = nullptr;
+        rc = archive.Read3dmMarkup(markup);
+        if (rc == 0)
+          break; // end of markup table
+        if (rc < 0)
+          break;
+        if (AddModelComponentForExperts(markup, bManageComponents, bResolveIdAndNameConflicts, bUpdateComponentIdentification).IsEmpty())
+          delete markup;
+      }
+    }
+
+    // If BeginRead3dmMarkupTable() returns true, 
+    // then you MUST call EndRead3dmMarkupTable().
+    if (!archive.EndRead3dmMarkupTable())
+    {
+      return false;
+    }
+  }
+
+
+  // STEP 13.3 - read pageview group table (Jan 2026, V9)
+  if (archive.BeginRead3dmPageViewGroupTable())
+  {
+    if (0 != (static_cast<unsigned int>(ON_3dmArchiveTableType::pageview_group_table) & table_filter))
+    {
+      for (;;)
+      {
+        ON_PageViewGroup* group = nullptr;
+        rc = archive.Read3dmPageViewGroup(group);
+        if (rc == 0)
+          break; // end of markup table
+        if (rc < 0)
+          break;
+        if (AddModelComponentForExperts(group, bManageComponents, bResolveIdAndNameConflicts, bUpdateComponentIdentification).IsEmpty())
+          delete group;
+      }
+    }
+
+    // If BeginRead3dmPageViewGroupTable() returns true, 
+    // then you MUST call EndRead3dmPageViewGroupTable().
+    if (!archive.EndRead3dmPageViewGroupTable())
+    {
+      return false;
+    }
+  }
+
+
+//#if defined(OPENNURBS_TAG_WIP)
+//  // STEP 13.4 - read tag table (Dec 2025, WIP)
+//  if (archive.BeginRead3dmTagTable())
+//  {
+//    if (0 != (static_cast<unsigned int>(ON_3dmArchiveTableType::tag_table) & table_filter))
+//    {
+//      for (;;)
+//      {
+//        ON_Tag* tag = nullptr;
+//        rc = archive.Read3dmTag(tag);
+//        if (rc == 0)
+//          break; // end of tag table
+//        if (rc < 0)
+//          break;
+//        if (AddModelComponentForExperts(tag, bManageComponents, bResolveIdAndNameConflicts, bUpdateComponentIdentification).IsEmpty())
+//          delete tag;
+//      }
+//    }
+//
+//    // If BeginRead3dmTagTable() returns true, 
+//    // then you MUST call EndRead3dmTagTable().
+//    if (!archive.EndRead3dmTagTable())
+//    {
+//      return false;
+//    }
+//  }
+//#endif // OPENNURBS_TAG_WIP
+
 
   // STEP 14: REQUIRED - Read instance definition table
   if ( archive.BeginRead3dmInstanceDefinitionTable() )
@@ -2999,6 +3228,9 @@ bool ONX_Model::Read(
 bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
                      unsigned int model_object_type_filter, ON_TextLog* error_log)
 {
+  if ( 0 == table_filter )
+    table_filter = 0xFFFFFFFF; // read everything
+
   // STEPS 1 to 14: REQUIRED.
   const bool bManageComponents = true;
   IncrementalReadBegin(archive, bManageComponents, table_filter, error_log);
@@ -3006,7 +3238,7 @@ bool ONX_Model::Read(ON_BinaryArchive& archive, unsigned int table_filter,
     return false;
 
   // STEP 15: REQUIRED - Read object (geometry and annotation) table.
-  if (0 == (static_cast<unsigned int>(ON_3dmArchiveTableType::object_table) & table_filter))
+  if (0 != (static_cast<unsigned int>(ON_3dmArchiveTableType::object_table) & table_filter))
   {
     const bool bManageGeometry = true;
     const bool bManageAttributes = true;
@@ -3434,6 +3666,136 @@ bool ONX_Model::Write(ON_BinaryArchive& archive, int version, ON_TextLog* error_
     if (!ok)
       return false;
   }
+
+  // SECTION STYLE TABLE (May 2025, V9)
+  if (archive.Archive3dmVersion() >= 90 && archive.ArchiveOpenNURBSVersion() >= 2449510828)
+  {
+    ok = archive.BeginWrite3dmSectionStyleTable();
+    if (!ok)
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmSectionStyleTable() failed.\n");
+      return false;
+    }
+
+    for (
+      class ONX_ModelComponentReferenceLink* link = Internal_ComponentListConst(ON_ModelComponent::Type::SectionStyle).m_first_mcr_link;
+      nullptr != link;
+      link = link->m_next
+      )
+    {
+      ok = archive.Write3dmSectionStyleComponent(link->m_mcr);
+      if (!ok)
+      {
+        if (error_log) error_log->Print("ONX_Model::Write archive.Write3dmSectionStyleComponent() failed.\n");
+      }
+    }
+
+    if (!archive.EndWrite3dmSectionStyleTable())
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmSectionStyleTable() failed.\n");
+      return false;
+    }
+    if (!ok)
+      return false;
+  }
+
+  // MARKUP TABLE (Jan 2026, V9)
+  if (archive.Archive3dmVersion() >= 90 && archive.ArchiveOpenNURBSVersion() >= 2449511724)
+  {
+    ok = archive.BeginWrite3dmMarkupTable();
+    if (!ok)
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmMarkupTable() failed.\n");
+      return false;
+    }
+
+    for (
+      class ONX_ModelComponentReferenceLink* link = Internal_ComponentListConst(ON_ModelComponent::Type::Markup).m_first_mcr_link;
+      nullptr != link;
+      link = link->m_next
+      )
+    {
+      ok = archive.Write3dmMarkupComponent(link->m_mcr);
+      if (!ok)
+      {
+        if (error_log) error_log->Print("ONX_Model::Write archive.Write3dmMarkupComponent() failed.\n");
+      }
+    }
+
+    if (!archive.EndWrite3dmMarkupTable())
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmMarkupTable() failed.\n");
+      return false;
+    }
+    if (!ok)
+      return false;
+  }
+
+  // PAGEVIEW GROUP TABLE (Jan 2026, V9)
+  if (archive.Archive3dmVersion() >= 90 && archive.ArchiveOpenNURBSVersion() >= 2449511752)
+  {
+    ok = archive.BeginWrite3dmPageViewGroupTable();
+    if (!ok)
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmPageViewGroupTable() failed.\n");
+      return false;
+    }
+
+    for (
+      class ONX_ModelComponentReferenceLink* link = Internal_ComponentListConst(ON_ModelComponent::Type::PageViewGroup).m_first_mcr_link;
+      nullptr != link;
+      link = link->m_next
+      )
+    {
+      ok = archive.Write3dmPageViewGroupComponent(link->m_mcr);
+      if (!ok)
+      {
+        if (error_log) error_log->Print("ONX_Model::Write archive.Write3dmPageViewGroupComponent() failed.\n");
+      }
+    }
+
+    if (!archive.EndWrite3dmPageViewGroupTable())
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmPageViewGroupTable() failed.\n");
+      return false;
+    }
+    if (!ok)
+      return false;
+  }
+
+#if defined(OPENNURBS_TAG_WIP)
+  // TAG TABLE (Dec 2025, WIP)
+  if (archive.Archive3dmVersion() >= 90 && archive.ArchiveOpenNURBSVersion() >= 2449510828)
+  {
+    ok = archive.BeginWrite3dmTagTable();
+    if (!ok)
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmTagTable() failed.\n");
+      return false;
+    }
+
+    for (
+      class ONX_ModelComponentReferenceLink* link = Internal_ComponentListConst(ON_ModelComponent::Type::Tag).m_first_mcr_link;
+      nullptr != link;
+      link = link->m_next
+      )
+    {
+      ok = archive.Write3dmTagComponent(link->m_mcr);
+      if (!ok)
+      {
+        if (error_log) error_log->Print("ONX_Model::Write archive.Write3dmTagComponent() failed.\n");
+      }
+    }
+
+    if (!archive.EndWrite3dmTagTable())
+    {
+      if (error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmTagTable() failed.\n");
+      return false;
+    }
+    if (!ok)
+      return false;
+  }
+#endif // OPENNURBS_TAG_WIP
 
   // INSTANCE DEFINITION TABLE
   if ( archive.Archive3dmVersion() >= 3 )
@@ -4177,7 +4539,7 @@ unsigned int ONX_ModelTest::Source3dmFileVersion() const
 bool ONX_ModelTest::SkipCompare(unsigned int source_3dm_file_version)
 {
   const bool bSkipCompare
-    = (source_3dm_file_version >= 1 && source_3dm_file_version < 50);
+    = (source_3dm_file_version >= 1 && source_3dm_file_version < 70);
   return bSkipCompare;
 }
 
@@ -4363,8 +4725,9 @@ static void InternalDumpResultAndErrorCount(
   text_log.Print("%s", ONX_ModelTest::ResultToString(result));
   if (false == InternalCleanPass(result,error_counter))
   {
-    text_log.Print(": ");
+    text_log.Print(" (");
     error_counter.Dump(text_log);
+    text_log.Print(")");
   }
   text_log.PrintNewLine();
 }
@@ -4413,7 +4776,8 @@ std::shared_ptr<ONX_Model> ONX_ModelTest::ReadWriteReadModel() const
 
 static const ON_wString Internal_DumpModelfileName(
   const ON_wString source_3dm_file_path,
-  bool bSourceModel
+  bool bSourceModel,
+  bool bIsHashLog
 )
 {
   ON_wString file_name_stem = ON_FileSystemPath::FileNameFromPath(source_3dm_file_path,false);
@@ -4422,34 +4786,43 @@ static const ON_wString Internal_DumpModelfileName(
   ON_wString text_file_path = ON_FileSystemPath::VolumeAndDirectoryFromPath(source_3dm_file_path);
   text_file_path += file_name_stem;
   text_file_path += L"_ONX_ModelTest_";
+  if (bIsHashLog)
+    text_file_path += L"HASH_LOG_";
   if (bSourceModel)
     text_file_path += L"original";
   else
     text_file_path += L"copy";
 
+  if (false == bIsHashLog)
+  {
+    // The C-runtime loat/double formatting 
+    // can change with change with OS and relase/debug.
+    // This information is appended so the person reading
+    // the text file knows the context where it was created.
 #if defined(ON_RUNTIME_WIN)
 #if defined(ON_64BIT_RUNTIME)
-  text_file_path += L"_Win64";
+    text_file_path += L"_Win64";
 #elif defined(ON_32BIT_RUNTIME)
-  text_file_path += L"_Win32";
+    text_file_path += L"_Win32";
 #else
-  text_file_path += L"_Win";
+    text_file_path += L"_Win";
 #endif
 #elif defined(ON_RUNTIME_APPLE_MACOS)
-  text_file_path += L"_MacOS";
+    text_file_path += L"_MacOS";
 #elif defined(ON_RUNTIME_APPLE_IOS)
-  text_file_path += L"_iOS";
+    text_file_path += L"_iOS";
 #elif defined(ON_RUNTIME_APPLE)
-  text_file_path += L"_AppleOS";
+    text_file_path += L"_AppleOS";
 #elif defined(ON_RUNTIME_ANDROID)
-  text_file_path += L"_AndroidOS";
+    text_file_path += L"_AndroidOS";
 #endif
 
 #if defined(ON_DEBUG)
-  text_file_path += L"Debug";
+    text_file_path += L"Debug";
 #else
-  text_file_path += L"Release";
+    text_file_path += L"Release";
 #endif
+  }
 
   text_file_path += L".txt";
   return text_file_path;
@@ -4457,7 +4830,7 @@ static const ON_wString Internal_DumpModelfileName(
 
 bool ONX_ModelTest::DumpSourceModel() const
 {
-  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path,true);
+  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path, true, false);
   return DumpSourceModel(text_file_path);
 }
 
@@ -4493,7 +4866,7 @@ bool ONX_ModelTest::DumpSourceModel(ON_TextLog& text_log) const
 
 bool ONX_ModelTest::DumpReadWriteReadModel() const
 {
-  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path,false);
+  const ON_wString text_file_path = Internal_DumpModelfileName(m_source_3dm_file_path,false, false);
   return DumpReadWriteReadModel(text_file_path);
 }
 
@@ -4529,6 +4902,60 @@ bool ONX_ModelTest::DumpReadWriteReadModel(ON_TextLog& text_log) const
   return ONX_ModelTest::DumpModel(ReadWriteReadModel().get(), text_log);
 }
 
+bool ONX_ModelTest::DumpHashLogs(
+  ON_wString& source_model_hash_log_filename,
+  ON_SHA1_Hash& source_model_hash,
+  ON_wString& copy_model_hash_log_filename,
+  ON_SHA1_Hash& copy_model_hash
+) const
+{
+  source_model_hash_log_filename = ON_wString::EmptyString;
+  source_model_hash = ON_SHA1_Hash::EmptyContentHash;
+  copy_model_hash_log_filename = ON_wString::EmptyString;
+  copy_model_hash = ON_SHA1_Hash::EmptyContentHash;
+
+  for (;;)
+  {
+    const auto source_model_sp = SourceModel();
+    const ONX_Model* source_model = source_model_sp.get();
+    if (nullptr == source_model)
+      break;
+    if (source_model->Manifest().ActiveComponentCount(ON_ModelComponent::Type::Unset) <= 0)
+      break;
+
+    const auto copy_model_sp = ReadWriteReadModel();
+    const ONX_Model* copy_model = copy_model_sp.get();
+    if (nullptr == copy_model)
+      break;
+    if (copy_model->Manifest().ActiveComponentCount(ON_ModelComponent::Type::Unset) <= 0)
+      break;
+
+    source_model_hash_log_filename = Internal_DumpModelfileName(m_source_3dm_file_path, true, true);
+    if (source_model_hash_log_filename.IsEmpty())
+      break;
+    FILE* fp = ON_FileStream::Open(static_cast<const wchar_t*>(source_model_hash_log_filename), L"w");
+    if (nullptr == fp)
+      break;
+    ON_TextLog source_hash_log(fp);
+    source_model_hash = source_model->ContentHash(source_hash_log);
+    ON_FileStream::Close(fp);
+
+    copy_model_hash_log_filename = Internal_DumpModelfileName(m_source_3dm_file_path, false, true);
+    if (copy_model_hash_log_filename.IsEmpty())
+      break;
+    fp = ON_FileStream::Open(static_cast<const wchar_t*>(copy_model_hash_log_filename), L"w");
+    if (nullptr == fp)
+      break;
+    ON_TextLog copy_hash_log(fp);
+    source_model_hash = copy_model->ContentHash(copy_hash_log);
+    ON_FileStream::Close(fp);
+
+    return true;
+  }
+  return false;
+}
+
+
 void ONX_ModelTest::Dump(ON_TextLog& text_log) const
 {
   const ONX_ModelTest::Type test_type = TestType();
@@ -4545,12 +4972,19 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
 
   //const int i_rwrcompare = static_cast<const unsigned char>(ONX_ModelTest::Type::ReadWriteReadCompare);
   const bool bSkipCompare
-    = ONX_ModelTest::SkipCompare(Source3dmFileVersion())
-    && ONX_ModelTest::Type::ReadWriteReadCompare == test_type;
+    = ONX_ModelTest::Type::ReadWriteReadCompare == test_type
+    && InternalCleanPass(m_test_results[0], m_error_counts[0]) // init passed cleanly
+    && InternalCleanPass(m_test_results[1], m_error_counts[1]) // read source passed cleanly
+    && InternalCleanPass(m_test_results[2], m_error_counts[2]) // write temporary passed cleanly
+    && InternalCleanPass(m_test_results[2], m_error_counts[3]) // read temporary passed cleanly
+    && (ONX_ModelTest::SkipCompare(Source3dmFileVersion()) || ONX_ModelTest::Result::Skip == m_test_results[4]);
+    ;
   const unsigned int imax
     = bSkipCompare
     ? static_cast<const unsigned char>(ONX_ModelTest::Type::ReadWriteRead)
     : static_cast<const unsigned char>(test_type);
+
+  // bSkipDetails = true if all tests passed and there are no errors, warnings, failures of any sort.
   bool bSkipDetails = InternalCleanPass(m_test_result, m_error_count);
   for (unsigned int i = 0; i <= imax && bSkipDetails; i++)
   {
@@ -4561,6 +4995,7 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
   {
     if (bSkipCompare)
     {
+      // Let user know we skipped the compare
       text_log.PushIndent();
       text_log.Print("Compare test skipped because source file version is too old.\n");
       text_log.PopIndent();
@@ -4584,13 +5019,13 @@ void ONX_ModelTest::Dump(ON_TextLog& text_log) const
       break;
 
     i++;
-    text_log.Print("Write temporary files: ");
+    text_log.Print("Write temporary file: ");
     InternalDumpResultAndErrorCount(m_test_results[i], m_error_counts[i], text_log);
     if (i >= imax)
       break;
 
     i++;
-    text_log.Print("Read temporary files: ");
+    text_log.Print("Read temporary file: ");
     InternalDumpResultAndErrorCount(m_test_results[i], m_error_counts[i], text_log);
     if (i >= imax)
       break;
@@ -4905,9 +5340,8 @@ ONX_ModelPrivate::~ONX_ModelPrivate()
 {
 }
 
-ONX_Model_UserData* ONX_ModelPrivate::GetRDKDocumentUserData(int archive_3dm_version) const
+ONX_Model_UserData* ONX_ModelPrivate::FindRDKDocumentUserData(void) const
 {
-  // Try to find existing RDK document user data.
   for (int i = 0; i < m_model.m_userdata_table.Count(); i++)
   {
     auto* pUserData = m_model.m_userdata_table[i];
@@ -4917,6 +5351,15 @@ ONX_Model_UserData* ONX_ModelPrivate::GetRDKDocumentUserData(int archive_3dm_ver
         return pUserData; // Found it.
     }
   }
+
+  return nullptr;
+}
+
+ONX_Model_UserData* ONX_ModelPrivate::GetRDKDocumentUserData(int archive_3dm_version) const
+{
+  // Try to find existing RDK document user data.
+  if (auto* pExisting = FindRDKDocumentUserData())
+    return pExisting;
 
   // Not found, so create it.
   auto* ud = new ONX_Model_UserData;
@@ -4947,15 +5390,25 @@ bool ONX_ModelPrivate::GetRDKDocumentXML(ON_wString& xml, bool embedded_files, i
   // Gets the entire RDK document XML as a string in 'xml'. If 'embedded_files' is true,
   // ON_EmbeddedFile objects are created for each embedded file.
 
-  const ONX_Model_UserData* pUserData = GetRDKDocumentUserData(archive_3dm_version);
-  if (nullptr != pUserData)
+  // RH-98217: answer the question without creating the record.
+  //
+  // This runs while reading a model. Asking GetRDKDocumentUserData here created the record for
+  // every model read from a file that had none, so the model carried one from that moment on -
+  // which the following write then stored, and which defeated the check in UpdateRDKUserData
+  // that exists to stop exactly that. A record that is missing means the defaults, so say the
+  // defaults and append nothing.
+  const ONX_Model_UserData* pUserData = FindRDKDocumentUserData();
+  if (nullptr == pUserData)
   {
-    ONX_Model* model = embedded_files ? &m_model : nullptr;
-    if (GetEntireRDKDocument(*pUserData, xml, model))
-      return true;
+    ON_XMLRootNode defaults;
+    PopulateDefaultRDKDocumentXML(defaults);
+    xml = defaults.String();
+    return true;
   }
 
-  return false;
+  ONX_Model* model = embedded_files ? &m_model : nullptr;
+
+  return GetEntireRDKDocument(*pUserData, xml, model);
 }
 
 static bool ContentIsKind(const ON_RenderContent* pContent, RenderContentKinds kind)
@@ -5091,13 +5544,33 @@ bool ONX_ModelPrivate::UpdateRDKUserData(int archive_3dm_version)
   // Convert the mesh modifier collection to fresh XML.
   CreateXMLFromMeshModifiers(m_model, archive_3dm_version);
 
+  ON_wString xml = doc_node.String();
+
+  // RH-98217: do not invent a record for a model that never had one.
+  //
+  // GetRDKDocumentUserData below creates the record if it is missing, so every write used to add
+  // one - a model read from a file with no user table was written back with a default RDK
+  // document record in it. That padded the file, and it froze the render defaults of the moment
+  // into a document that was meant to keep taking them from wherever it is opened.
+  //
+  // Skipping is safe precisely when what we would write is what a reader would invent anyway:
+  // GetRDKDocumentXML reaches the same create-on-miss, so a file with no record behaves
+  // identically to a file whose record holds these defaults. Comparing the two strings means we
+  // can never drop anything a model actually carries.
+  if (nullptr == FindRDKDocumentUserData())
+  {
+    ON_XMLRootNode defaults;
+    PopulateDefaultRDKDocumentXML(defaults);
+    if (xml == defaults.String())
+      return true;
+  }
+
   // Get the RDK document user data.
   ONX_Model_UserData* pUserData = GetRDKDocumentUserData(archive_3dm_version);
   if (nullptr == pUserData)
     return false; // Shouldn't happen because we were able to get the XML earlier.
 
-  // Get the entire document XML as a string and set it to the user data.
-  ON_wString xml = doc_node.String();
+  // Set the document XML to the user data.
   pUserData->m_usertable_3dm_version = archive_3dm_version;
   SetRDKDocumentInformation(xml, *pUserData, archive_3dm_version);
 
@@ -5899,15 +6372,12 @@ static ON_UserData* GetMeshModifierUserData(ON_Object& object, const ON_UUID& uu
   return new_ud;
 }
 
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, int archive_3dm_version)
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier& mm, int archive_3dm_version)
 {
-  if (nullptr == mm)
-    return; // Can't create user data for non-existent mesh modifiers.
-
   ON_XMLRootNode root;
-  mm->AddChildXML(root);
+  mm.AddChildXML(root);
 
-  ON_UserData* ud = GetMeshModifierUserData(object, mm->Uuid());
+  ON_UserData* ud = GetMeshModifierUserData(object, mm.Uuid());
   if (nullptr != ud)
   {
     SetXMLToUserData(root.String(), *ud, archive_3dm_version);

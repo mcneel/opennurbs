@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -60,7 +60,7 @@ public:
   Returns:
     Current value of the callback function for handling
     the base64 encoded stream.  If the callback function is
-    null, the the virtual Out() function is used to
+    null, the virtual Out() function is used to
     handle the output stream.
   */
   ON_StreamCallbackFunction CallbackFunction() const;
@@ -90,7 +90,7 @@ public:
     Call In() one or more times to base64 encode a stream of bytes.
     After the last call to In(), call End().  Calling In() will
     result in at least in_buffer_size/57 and at most 
-    (in_buffer_size+56)/57 calls to to the output stream handler.
+    (in_buffer_size+56)/57 calls to the output stream handler.
   Parameters:
     in_buffer_size - [in]
       number of bytes in in_buffer

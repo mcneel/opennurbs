@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -232,7 +232,7 @@ public:
   /// <param name="aggregate_edge_demographics">
   ///   Value made by bitwise or of ON_ComponentAttributes::EdgeAttributes values for every edge in the object.
   /// </param>
-  /// <returns>If for every edge edge with exactly two faces, those two faces have compatible orientations, then true is returned.
+  /// <returns>If for every edge with exactly two faces, those two faces have compatible orientations, then true is returned.
   /// Otherwise, false is returned.
   ///</returns>
   static bool IsOriented(
@@ -245,7 +245,7 @@ public:
   /// <param name="aggregate_edge_component_attributes">
   ///   Value made by bitwise or of ON_ComponentAttributes::EdgeAttributes values for every edge in the object.
   /// </param>
-  /// <returns>If there is an edge edge with exactly two faces and those faces have incompatible orientations,
+  /// <returns>If there is an edge with exactly two faces and those faces have incompatible orientations,
   /// then true is returned. Otherwise, false is returned.
   ///</returns>
   static bool IsNotOriented(

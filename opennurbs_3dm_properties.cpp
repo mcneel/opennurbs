@@ -12,6 +12,9 @@
 ////////////////////////////////////////////////////////////////
 
 #include "opennurbs.h"
+#if defined (ON_RUNTIME_APPLE_IOS)
+#include <UIKit/UIKit.h>
+#endif
 
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
@@ -153,6 +156,15 @@ int ON_3dmRevisionHistory::NewRevision()
 #endif
 #if defined(ON_RUNTIME_COCOA_AVAILABLE)
   m_sLastEditedBy = NSFullUserName().UTF8String;
+#endif
+#if defined(ON_RUNTIME_APPLE_IOS)
+//  RV-1451 Markup createdBy field empty on iOS
+  UIDevice *device = [UIDevice currentDevice];
+  if (device)
+  {
+    NSString *deviceName = [device name];
+    m_sLastEditedBy = [deviceName UTF8String];
+  }
 #endif
 
   if ( m_revision_count <= 0 ) 
@@ -506,6 +518,31 @@ bool ON_3dmProperties::Read(ON_BinaryArchive& file )
   return rc;
 }
 
+class ON_WriteCompressedBufferHelper
+{
+public:
+  ON_WriteCompressedBufferHelper(ON_BinaryArchive& file)
+    : m_file(file)
+  {
+    // save buffer compression
+    m_bUseBufferCompression = m_file.UseBufferCompression();
+    // use buffer compression
+    m_file.SetUseBufferCompression(true);
+  }
+  ~ON_WriteCompressedBufferHelper()
+  {
+    // restore buffer compression
+    m_file.SetUseBufferCompression(m_bUseBufferCompression);
+  }
+private:
+  ON_BinaryArchive& m_file;
+  bool m_bUseBufferCompression;
+private:
+  ON_WriteCompressedBufferHelper() = delete;
+  ON_WriteCompressedBufferHelper(const ON_WriteCompressedBufferHelper&) = delete;
+  ON_WriteCompressedBufferHelper& operator=(const ON_WriteCompressedBufferHelper&) = delete;
+};
+
 bool ON_3dmProperties::Write(ON_BinaryArchive& file) const
 {
   bool rc = true;
@@ -566,6 +603,8 @@ bool ON_3dmProperties::Write(ON_BinaryArchive& file) const
     rc = file.BeginWrite3dmChunk(TCODE_PROPERTIES_COMPRESSED_PREVIEWIMAGE,0);
     if ( rc ) 
     {
+      // always compress preview image
+      ON_WriteCompressedBufferHelper helper(file);
       rc = m_PreviewImage.WriteCompressed(file);
       if ( !file.EndWrite3dmChunk() )
         rc = false;

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -16,7 +16,7 @@
 
 // If you are using opennurbs as a statically linked library, then
 // you may make calls to the same zlib that opennurbs uses.  This
-// zlib is compiled with z_ symbol projectection.  All the necessary
+// zlib is compiled with z_ symbol protection.  All the necessary
 // header files are included by opennurbs.h.
 // 
 // If you are using opennurbs as a DLL or writing a Rhino plug-in

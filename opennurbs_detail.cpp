@@ -198,6 +198,14 @@ bool ON_DetailView::UpdateFrustum(
   ON::LengthUnitSystem paper_units
 )
 {
+  return UpdateFrustum(ON_UnitSystem(model_units), ON_UnitSystem(paper_units));
+}
+
+bool ON_DetailView::UpdateFrustum(
+  const ON_UnitSystem& model_units,
+  const ON_UnitSystem& paper_units
+)
+{
   if (!m_view.m_vp.IsParallelProjection())
     return false;
   if (!(m_page_per_model_ratio > 0.0))

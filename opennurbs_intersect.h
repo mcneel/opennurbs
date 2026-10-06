@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -120,4 +120,85 @@ int ON_Intersect( const ON_Sphere& sphere0,
                   const ON_Sphere& sphere1, 
                   ON_Circle& circle
                  );
+
+// =====================================================================================
+// Tolerance-bounded curve-mesh intersection events.
+//
+// Each hit is either a single point crossing (Point) or a parameter range over which the
+// curve lies in a face's plane (Overlap). For Point, m_t[0] and m_t[1] are equal and the
+// point slots are equal. For Overlap, m_t[0] < m_t[1] and m_point[0..1] are the curve
+// points at the endpoints of the overlap on the curve.
+//
+// Emission contract: every overlap is reported as TWO Point events (one at each endpoint of
+// the overlap span) plus ONE Overlap event for the span itself. The two endpoint Points are
+// emitted whether or not overlaps are requested; the includeOverlaps flag controls only whether
+// the Overlap span event is also emitted. Disabling overlaps therefore keeps the endpoint Points
+// (the curve's plane entry/exit crossings) and drops only the span body.
+//
+// Each *_tolerance field bounds its value: the true value lies inside
+// [value - tolerance, value + tolerance].
+// =====================================================================================
+
+class ON_CLASS ON_CurveMeshHit
+{
+public:
+  enum HitType : int
+  {
+    NoHit   = 0,
+    Point   = 1,
+    Overlap = 2,
+  };
+
+  // The kind of mesh feature this hit lies on, determined by mesh topology after dedup.
+  // Face means strictly inside a face (including the internal diagonal of a quad split, which
+  // is not a real mesh edge). Edge means on a mesh edge shared by 2+ faces (or a 1-valence
+  // mesh boundary edge). Vertex means at a mesh topology vertex.
+  enum IncidenceType : int
+  {
+    Face   = 0,
+    Edge   = 1,
+    Vertex = 2,
+  };
+
+  HitType m_type = NoHit;
+  IncidenceType m_incidence = Face;
+
+  // Canonical mesh face for this hit (lowest face index when multiple faces share the
+  // incidence; index into ON_Mesh::m_F).
+  int m_face_index = -1;
+
+  // Sub-triangle of m_face_index: 0 for triangle faces, 0 or 1 for the two halves of a quad face.
+  int m_face_triangle_index = 0;
+
+  // When an incidence is shared by multiple faces (curve crossing a mesh edge or vertex),
+  // the full list of participating face indices is written to the optional side-band pool
+  // returned from TL_CurveMeshIntersect. m_face_indices_offset is the position in the pool
+  // where this hit's face list starts; m_face_indices_count is its length. The canonical
+  // m_face_index is included in the list.
+  //
+  // For face-interior hits, hits on a mesh boundary edge (1-valence), or when the caller
+  // omitted the pool, only m_face_index applies: m_face_indices_offset = -1,
+  // m_face_indices_count = 0.
+  int m_face_indices_offset = -1;
+  int m_face_indices_count = 0;
+
+  double m_t[2] = { 0, 0 };
+  ON_3dPoint m_point[2] = { ON_3dPoint::Origin, ON_3dPoint::Origin };
+  ON_3dVector m_barycentric[2] = { ON_3dVector::ZeroVector, ON_3dVector::ZeroVector };
+
+  double m_t_tolerance = 0;
+  double m_point_tolerance = 0;
+  double m_barycentric_tolerance = 0;
+
+  // True iff this hit lies on a mesh-level boundary (m_incidence is Edge or Vertex).
+  bool m_on_boundary = false;
+
+  // Sort comparator: orders hits by the start of the parameter interval (m_t[0]).
+  static int CompareByT(const ON_CurveMeshHit* a, const ON_CurveMeshHit* b);
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_CurveMeshHit>;
+#endif
+
 #endif

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -23,6 +23,11 @@ Parameters
     Use ON::sort_algorithm::heap_sort only after doing meaningful performance
     testing using optimized release builds that demonstrate
     ON::sort_algorithm::heap_sort is significantly better.
+    ON::sort_algorithm::parallel_sort sorts on several threads. It is worth
+    asking for on tens of thousands of elements and up, and below that it
+    quietly sorts on the calling thread. It calls compare() from several
+    threads at once, so only ask for it when compare() does not write to
+    shared state.
   index - [out]
     Pass in an array of count integers.  The returned
     index[] is a permutation of (0,1,..,count-1)
@@ -70,6 +75,11 @@ Parameters
     Use ON::sort_algorithm::heap_sort only after doing meaningful performance
     testing using optimized release builds that demonstrate
     ON::sort_algorithm::heap_sort is significantly better.
+    ON::sort_algorithm::parallel_sort sorts on several threads. It is worth
+    asking for on tens of thousands of elements and up, and below that it
+    quietly sorts on the calling thread. It calls compare() from several
+    threads at once, so only ask for it when compare() does not write to
+    shared state.
   index - [out]
     Pass in an array of count integers.  The returned
     index[] is a permutation of (0,1,..,count-1)
@@ -114,7 +124,7 @@ void ON_Sort(
 Description:
   Various sorts. When in doubt, use ON_qsort().
   ON_qsort - quick sort.
-  ON_hsort = hearp sort.
+  ON_hsort = heap sort.
 Parameters
   base - [in]
     array of count elements
@@ -232,6 +242,27 @@ void ON_SortDoubleArrayDecreasing(
 
 /*
 Description:
+  Sort an array of floats in place.
+Parameters:
+  sort_algorithm - [in]
+    ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
+    Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
+    optimized release builds and are confident heap sort is
+    significantly faster in your case.
+  a - [in / out]
+    The values in a[] are sorted so that a[i] <= a[i+1].
+  nel - [in]
+    length of array a[]
+*/
+ON_DECL
+void ON_SortFloatArray(
+  ON::sort_algorithm sort_algorithm,
+  float* a,
+  size_t nel
+);
+
+/*
+Description:
   Sort an array of ints in place.
 Parameters:
   sort_algorithm - [in]
@@ -271,6 +302,96 @@ void ON_SortUnsignedIntArray(
         unsigned int* a,
         size_t nel
         );
+
+
+/*
+Description:
+  A (key, index) pair for the distribution sorts below. The point of sorting
+  these rather than the values themselves is that the values are usually much
+  bigger than 16 bytes, and a distribution sort moves every element on every
+  pass.
+*/
+class ON_CLASS ON_SortKeyIndex
+{
+public:
+  ON__UINT64   m_key = 0;
+  unsigned int m_index = 0;
+};
+
+/*
+Description:
+  Sort (key, index) pairs by key with a least-significant-digit radix sort,
+  one byte per pass. O(n) in the number of pairs, with no comparisons.
+
+  Use this when the keys are wide - a Morton code, a hash, a packed composite -
+  and there is no small dense range to count over. For keys that are already a
+  small dense range of integers, ON_CountingSortIndices() is one pass instead of
+  eight and will be quicker.
+Parameters:
+  a - [in/out]
+    The pairs to sort. On return this array holds the sorted result if
+    key_byte_count is even, and is scratch if it is odd - so use the returned
+    pointer rather than assuming.
+  b - [in/out]
+    Scratch, at least as long as a[]. Contents on return are unspecified.
+  count - [in]
+    Number of pairs in a[] and capacity of b[].
+  key_byte_count - [in]
+    How many low bytes of the key to sort on, 1 to 8. Passing fewer than the
+    keys actually use will silently sort on a prefix, so pass 8 unless the key
+    range is known - for example 3 for a 24 bit key, or 5 for Morton codes of
+    quantized 13 bit coordinates.
+Returns:
+  Pointer to whichever of a[] or b[] holds the sorted pairs, or nullptr if the
+  parameters are invalid. Nothing is allocated.
+*/
+ON_DECL
+ON_SortKeyIndex* ON_RadixSortKeyIndex(
+  ON_SortKeyIndex* a,
+  ON_SortKeyIndex* b,
+  size_t count,
+  unsigned int key_byte_count
+  );
+
+/*
+Description:
+  Stable counting sort of an index array by an unsigned integer key drawn from a
+  small dense range. One counting pass and one scatter pass, so O(n + key_range).
+
+  Being stable, calling this repeatedly from the least significant key to the
+  most significant sorts by a composite key without ever comparing anything -
+  which is how to order by, say, (vertex, face) without packing the two into one
+  wide key first.
+Parameters:
+  keys - [in]
+    keys[i] is the key of item i. Every value must be < key_range.
+  key_range - [in]
+    One more than the largest key. The counting array is this long, so this
+    wants to be comparable to count, not vastly larger.
+  in_order - [in]
+    The order to sort. Pass nullptr to start from 0, 1, 2, ... which is what the
+    first (least significant) pass wants; pass the previous pass's output for
+    later passes.
+  out_order - [out]
+    Receives the sorted order. Must be at least count long, and must not alias
+    in_order.
+  count - [in]
+    Number of entries in in_order[] and out_order[].
+  counts - [in/out]
+    Scratch, at least key_range + 1 long. Contents on return are unspecified.
+Returns:
+  True if the order was written. False if a parameter is invalid or a key is out
+  of range, in which case out_order[] is not usable. Nothing is allocated.
+*/
+ON_DECL
+bool ON_CountingSortIndices(
+  const unsigned int* keys,
+  unsigned int key_range,
+  const unsigned int* in_order,
+  unsigned int* out_order,
+  size_t count,
+  unsigned int* counts
+  );
 
 /*
 Description:
@@ -808,7 +929,6 @@ public:
 
 private:
   ON_StringBuffer(const ON_StringBuffer&);
-  ON_StringBuffer& operator=(const ON_StringBuffer&);
   char* m_heap_buffer;
   size_t m_heap_buffer_capacity;
 };
@@ -834,7 +954,6 @@ public:
 
 private:
   ON_wStringBuffer(const ON_wStringBuffer&);
-  ON_wStringBuffer& operator=(const ON_wStringBuffer&);
   wchar_t* m_heap_buffer;
   size_t m_heap_buffer_capacity;
 };
@@ -3843,9 +3962,9 @@ public:
     s - [in]
       string to parse.
       s[0] must be a sign or a digit. It can be the ordinary characters or superscripts.
-      If the first digit is an ordinary digit, the the numerator and denominator must all
+      If the first digit is an ordinary digit, the numerator and denominator must all
       be ordinary digits.
-      If the first digit is a superscript digit, the the numerator must be all superscript
+      If the first digit is a superscript digit, the numerator must be all superscript
       digits and the denominator be all subscript digits.
     len - [in]
       maximum number of characters to parse.
@@ -5340,7 +5459,7 @@ public:
       a positive number
   Example:
       // 1 League = 5556 meters
-      const ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 1.0/5556.0);
+      const ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 5556.0);
   */
   static ON_UnitSystem CreateCustomUnitSystem(
     const wchar_t* custom_unit_name,
@@ -5394,6 +5513,8 @@ public:
 public:
   bool operator==(const ON_UnitSystem&) const;
   bool operator!=(const ON_UnitSystem&) const;
+  bool operator==(ON::LengthUnitSystem) const;
+  bool operator!=(ON::LengthUnitSystem) const;
 
   /*
   Returns
@@ -5440,9 +5561,9 @@ public:
   Example:
       // 1 League = 5556 meters
       ON_UnitSystem Leagues;
-      Leagues.SetCustomUnitSystem( L"Leagues", 1.0/5556.0);
+      Leagues.SetCustomUnitSystem( L"Leagues", 5556.0);
       // or
-      ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 1.0/5556.0);
+      ON_UnitSystem Leagues = ON_UnitSystem::CreateCustomUnitSystem(L"Leagues", 5556.0);
   */
   void SetCustomUnitSystem(
     const wchar_t* custom_unit_name,
@@ -5529,7 +5650,7 @@ private:
   // The m_meters_per_custom_unit and m_custom_unit_name values apply when
   // m_unit_system = ON::LengthUnitSystem::CustomUnits.
   // In all other cases they should be ignored.
-  double m_meters_per_custom_unit = 1.0;  // 1 meter = m_meters_per_custom_unit custom units
+  double m_meters_per_custom_unit = 1.0;  // 1 custom-unit = m_meters_per_custom_unit meters.
   ON_wString m_custom_unit_name;   // name of custom units
 };
 #endif

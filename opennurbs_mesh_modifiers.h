@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -241,7 +241,9 @@ public:
   {
   public:
     static int RefineStepCount(void);
+    static bool Fair(void);
     static int FairingAmount(void);
+    static bool LimitFaces(void);
     static int FaceLimit(void);
     static int ChannelNumber(void);
     static int MeshMemoryLimit(void);
@@ -684,29 +686,32 @@ public:
   const ON_MeshModifiers& operator = (const ON_MeshModifiers& mm);
 
   // Get an object that provides access to displacement information.
-  // If there is no displacement information and 'allow_creation' is false, the method returns null.
-  // If there is no displacement information and 'allow_creation' is true, a default displacement object is created.
-  ON_Displacement* Displacement(bool allow_creation=false);
+  ON_Displacement& Displacement(void);
+  const ON_Displacement* Displacement(void) const;
 
   // Get an object that provides access to edge softening information.
-  // If there is no edge softening information and 'allow_creation' is false, the method returns null.
-  // If there is no edge softening information and 'allow_creation' is true, a default edge softening object is created.
-  ON_EdgeSoftening* EdgeSoftening(bool allow_creation=false);
+  ON_EdgeSoftening& EdgeSoftening(void);
+  const ON_EdgeSoftening* EdgeSoftening(void) const;
 
   // Get an object that provides access to thickening information.
-  // If there is no thickening information and 'allow_creation' is false, the method returns null.
-  // If there is no thickening information and 'allow_creation' is true, a default thickening object is created.
-  ON_Thickening* Thickening(bool allow_creation=false);
+  ON_Thickening& Thickening(void);
+  const ON_Thickening* Thickening(void) const;
 
   // Get an object that provides access to curve piping information.
-  // If there is no curve piping information and 'allow_creation' is false, the method returns null.
-  // If there is no curve piping information and 'allow_creation' is true, a default curve piping object is created.
-  ON_CurvePiping* CurvePiping(bool allow_creation=false);
+  ON_CurvePiping& CurvePiping(void);
+  const ON_CurvePiping* CurvePiping(void) const;
 
   // Get an object that provides access to shut-lining information.
-  // If there is no shut-lining information and 'allow_creation' is false, the method returns null.
-  // If there is no shut-lining information and 'allow_creation' is true, a default shut-lining object is created.
-  ON_ShutLining* ShutLining(bool allow_creation=false);
+  ON_ShutLining& ShutLining(void);
+  const ON_ShutLining* ShutLining(void) const;
+
+
+  //Use the const-friendly versions above. These are only here for backwards compatibility with the old API and should not be used in new code.
+  ON_DEPRECATED ON_Displacement* Displacement(bool allow_creation);
+  ON_DEPRECATED ON_EdgeSoftening* EdgeSoftening(bool allow_creation);
+  ON_DEPRECATED ON_Thickening* Thickening(bool allow_creation);
+  ON_DEPRECATED ON_CurvePiping* CurvePiping(bool allow_creation);
+  ON_DEPRECATED ON_ShutLining* ShutLining(bool allow_creation);
 
 public: // For internal use only.
   void LoadFromXML(const ON_XMLRootNode&);

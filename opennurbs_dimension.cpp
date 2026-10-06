@@ -127,6 +127,10 @@ void ON_Dimension::SetUserText(const wchar_t* text)
     else
       m_user_text = text;
     m_plain_user_text.Empty();
+    // The authored text changed; drop any cached run-native template so the
+    // next UpdateDimensionText rebuilds it from the new UserText().
+    if (nullptr != m_text)
+      m_text->ClearDimensionTemplate();
   }
 }
 
@@ -179,7 +183,7 @@ bool ON_Dimension::GetTextRect(ON_3dPoint text_rect[4]) const
 }
 
 ON_TextContent* ON_Dimension::RebuildDimensionText(
-  ON::LengthUnitSystem units_in,
+  const ON_UnitSystem& units_in,
   const ON_DimStyle* dimstyle,
   bool expandanglebrackets
 ) const
@@ -196,7 +200,13 @@ ON_TextContent* ON_Dimension::RebuildDimensionText(
   }
   else
   {
-    displaytext = displaytext + UserText();
+    // October 2, 2025 - Tim
+    // As far as I can tell RebuildDimensionText only gets called with 
+    // expandanglebrackets set to false from the acad export plugin otherwise
+    // I would be jumpy about making these changes.
+    // These changes fix https://mcneel.myjetbrains.com/youtrack/issue/RH-89323
+
+    displaytext = PlainText();
     if (dimstyle->Prefix().IsNotEmpty() || dimstyle->Suffix().IsNotEmpty())
     {
       int ci = displaytext.Find(L"<>");
@@ -206,7 +216,7 @@ ON_TextContent* ON_Dimension::RebuildDimensionText(
         if (displaytext.Length() > ci + 2)
           right = displaytext.Right(displaytext.Length() - ci - 2);
         displaytext = displaytext.Left(ci);
-        displaytext = displaytext + dimstyle->Prefix();
+        displaytext = dimstyle->Prefix() + displaytext;
         displaytext = displaytext + L"<>";
         displaytext = displaytext + dimstyle->Suffix();
         displaytext = displaytext + right;
@@ -230,25 +240,302 @@ ON_TextContent* ON_Dimension::RebuildDimensionText(
   return newtext;
 }
 
+ON_TextContent* ON_Dimension::RebuildDimensionText(
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  bool expandanglebrackets
+) const
+{
+  return RebuildDimensionText((ON_UnitSystem)units_in, dimstyle, expandanglebrackets);
+}
+
+// ---------------------------------------------------------------------------
+// V9 run-native dimension text.
+//
+// The displayed run array is derived from an authored "template" (the user's
+// runs plus the literal "<>" measurement placeholder) by splicing in the
+// formatted measurement, instead of flattening the text to a string and
+// re-parsing it on every redraw. The string round-trip silently dropped
+// run-only attributes such as super/subscript (m_text_stacked), which is why
+// a dimension lost super/subscript in the viewport even though the editor
+// applied it correctly. Keeping the authored runs as the source of truth and
+// substituting only the measurement preserves those attributes.
+// ---------------------------------------------------------------------------
+
+// Append a managed copy of src to dest. (dest takes ownership.)
+static void Internal_DimAppendRunCopy(ON_TextRunArray& dest, const ON_TextRun& src)
+{
+  ON_TextRun* r = ON_TextRun::GetManagedTextRun(src);
+  if (nullptr != r)
+    dest.AppendRun(r); // takes ownership, nulls r
+}
+
+// Append a managed run that inherits proto's attributes (font, height, color,
+// stacked super/subscript, ...) but carries the supplied text. Skips empties.
+static void Internal_DimAppendTextPiece(ON_TextRunArray& dest, const ON_TextRun& proto, const ON_wString& text)
+{
+  if (text.IsEmpty())
+    return;
+  ON_TextRun* r = ON_TextRun::GetManagedTextRun(proto);
+  if (nullptr == r)
+    return;
+  ON__UINT32* cp = nullptr;
+  int cpcount = ON_TextContext::ConvertStringToCodepoints(static_cast<const wchar_t*>(text), cp);
+  r->SetUnicodeString(cpcount, cp);
+  if (nullptr != cp)
+    onfree(cp);
+  r->SetType(ON_TextRun::RunType::kText);
+  dest.AppendRun(r);
+}
+
+// Append the runs that replace the "<>" placeholder with the formatted
+// measurement "insert_str". For the common case (no stacked-fraction / rtf
+// markup) this is a single run cloned from proto, so nothing is parsed. When
+// the measurement carries markup ([[a/b]] fractions, {\htscale} scaled
+// tolerance, {\par} alternate-below) the dimstyle-generated markup is turned
+// into runs by the existing parser. That is generated content with no
+// user-authored run attributes to lose, so no information is dropped.
+static void Internal_DimAppendMeasurementRuns(
+  ON_TextRunArray& dest,
+  const ON_TextRun& proto,
+  const ON_wString& insert_str,
+  ON::AnnotationType annotation_type,
+  const ON_DimStyle* dimstyle)
+{
+  if (insert_str.IsEmpty())
+    return;
+  const bool has_markup = (insert_str.Find(L"[[") >= 0) || (insert_str.Find(L"{\\") >= 0);
+  if (!has_markup)
+  {
+    Internal_DimAppendTextPiece(dest, proto, insert_str);
+    return;
+  }
+  ON_TextContent measurement;
+  if (measurement.Create(insert_str, annotation_type, dimstyle))
+  {
+    const ON_TextRunArray* mruns = measurement.TextRuns(true);
+    if (nullptr != mruns)
+    {
+      for (int i = 0; i < mruns->Count(); i++)
+      {
+        const ON_TextRun* r = (*mruns)[i];
+        if (nullptr != r)
+          Internal_DimAppendRunCopy(dest, *r);
+      }
+    }
+  }
+}
+
+static bool Internal_DimIsAngular(ON::AnnotationType annotation_type)
+{
+  return ON::AnnotationType::Angular == annotation_type
+    || ON::AnnotationType::Angular3pt == annotation_type;
+}
+
+// Derive the displayed runs from the authored template by substituting the
+// formatted measurement at the first "<>" placeholder.
+static void Internal_DimBuildDisplayRuns(
+  const ON_TextRunArray& template_runs,
+  double measurement,
+  const ON_UnitSystem& units_in,
+  const ON_DimStyle* dimstyle,
+  ON::AnnotationType annotation_type,
+  ON_TextRunArray& display)
+{
+  // Prefix + value + suffix (+ alternate units) for the "<>" substitution.
+  // Passing "<>" as the user text yields exactly the substitution string.
+  // Angular dimensions measure an angle (radians) and carry no length unit.
+  ON_wString insert_str;
+  if (Internal_DimIsAngular(annotation_type))
+    ON_TextContent::FormatAngleMeasurement(measurement, dimstyle, L"<>", insert_str);
+  else
+    ON_TextContent::FormatDistanceMeasurement(measurement, units_in, dimstyle, L"<>", insert_str);
+
+  bool spliced = false;
+  for (int i = 0; i < template_runs.Count(); i++)
+  {
+    const ON_TextRun* run = template_runs[i];
+    if (nullptr == run)
+      continue;
+
+    if (!spliced && ON_TextRun::RunType::kText == run->Type())
+    {
+      ON_wString s = run->TextString();
+      int mi = s.Find(L"<>");
+      if (mi >= 0)
+      {
+        ON_wString pre = (mi > 0) ? s.Left(mi) : ON_wString::EmptyString;
+        ON_wString post = (s.Length() > mi + 2) ? s.Right(s.Length() - mi - 2) : ON_wString::EmptyString;
+        Internal_DimAppendTextPiece(display, *run, pre);
+        Internal_DimAppendMeasurementRuns(display, *run, insert_str, annotation_type, dimstyle);
+        Internal_DimAppendTextPiece(display, *run, post);
+        spliced = true;
+        continue;
+      }
+    }
+    Internal_DimAppendRunCopy(display, *run);
+  }
+}
+
+// True if any text run still carries the literal "<>" measurement placeholder,
+// i.e. these are authored runs (just delivered by the editor or a script via
+// SetTextRuns) that have not yet had the measurement substituted.
+static bool Internal_DimRunsContainMarker(const ON_TextRunArray* runs)
+{
+  if (nullptr == runs)
+    return false;
+  for (int i = 0; i < runs->Count(); i++)
+  {
+    const ON_TextRun* run = (*runs)[i];
+    if (nullptr != run && ON_TextRun::RunType::kText == run->Type())
+    {
+      if (ON_wString(run->TextString()).Find(L"<>") >= 0)
+        return true;
+    }
+  }
+  return false;
+}
+
+// Legacy string rebuild for the cases the run-native path cannot serve: the
+// user replaced the "<>" placeholder with literal text (nothing to splice), or
+// the template could not be built. Angular dimensions format an angle, every
+// other type a distance.
+static ON_TextContent* Internal_DimLegacyRebuild(
+  const ON_Dimension& dim,
+  const ON_UnitSystem& units_in,
+  const ON_DimStyle* dimstyle)
+{
+  const ON_DimAngular* angular = ON_DimAngular::Cast(&dim);
+  if (nullptr == angular)
+    return dim.RebuildDimensionText(units_in, dimstyle, true);
+
+  ON_wString displaytext;
+  if (!angular->GetAngleDisplayText(dimstyle, displaytext))
+    return nullptr;
+
+  const ON_TextContent* text = dim.Text();
+  const bool wrapped = (nullptr != text) ? text->TextIsWrapped() : false;
+  const double rect_width = (nullptr != text) ? text->FormattingRectangleWidth() : 0.0;
+  const double rotation = (nullptr != text) ? text->TextRotationRadians() : 0.0;
+
+  ON_TextContent* newtext = new ON_TextContent;
+  if (!newtext->Create(displaytext, dim.Type(), dimstyle, wrapped, rect_width, rotation))
+  {
+    delete newtext;
+    return nullptr;
+  }
+  return newtext;
+}
+
+bool ON_Dimension::UpdateDimensionText(
+  const ON_UnitSystem& units_in,
+  const ON_DimStyle* dimstyle
+) const
+{
+  // Angular dimensions come through here too (ON_DimAngular::UpdateDimensionText
+  // delegates): the template handling is the same, only the measurement
+  // formatting differs, and Internal_DimBuildDisplayRuns / Internal_DimLegacyRebuild
+  // pick the angle formatter for them.
+  const ON::AnnotationType annotation_type = Type();
+  if (annotation_type == ON::AnnotationType::CenterMark)
+    return false;
+
+  if (nullptr == dimstyle)
+    dimstyle = &ON_DimStyle::Default;
+
+  const wchar_t* utp = UserText();
+  const ON_wString user_text = (nullptr != utp && 0 != utp[0]) ? ON_wString(utp) : ON_wString(L"<>");
+
+  // Rare case: the user replaced the "<>" placeholder with literal text. There
+  // is no measurement to splice, so fall back to the legacy string rebuild.
+  if (user_text.Find(L"<>") < 0)
+  {
+    ON_TextContent* newtext = Internal_DimLegacyRebuild(*this, units_in, dimstyle);
+    if (nullptr != newtext)
+    {
+      SetText(newtext);
+      return true;
+    }
+    return false;
+  }
+
+  // If the current runs still contain the "<>" placeholder, the editor (or a
+  // script via SetTextRuns) just delivered authored runs that haven't been
+  // expanded yet. Adopt them as the template so run-only attributes such as
+  // super/subscript survive the measurement substitution below.
+  bool adopted = false;
+  bool rebuilt = false;
+  if (nullptr != m_text && Internal_DimRunsContainMarker(m_text->TextRuns(true)))
+  {
+    m_text->SetDimensionTemplate(*m_text->TextRuns(true));
+    m_text->SetDimStyleTextPositionPropertiesHash(dimstyle->TextPositionPropertiesHash());
+    adopted = true;
+  }
+
+  // Otherwise ensure m_text carries the authored template (user runs + literal
+  // "<>") configured for this dimstyle. The template is (re)built from
+  // UserText() when absent or when the dimstyle's text-position properties
+  // change; it otherwise persists across redraws so run-only attributes survive.
+  if (!adopted
+    && (nullptr == m_text
+      || !m_text->HasDimensionTemplate()
+      || m_text->DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash()))
+  {
+    const bool wrapped = (nullptr != m_text) ? m_text->TextIsWrapped() : false;
+    const double rect_width = (nullptr != m_text) ? m_text->FormattingRectangleWidth() : 0.0;
+    const double rotation = (nullptr != m_text) ? m_text->TextRotationRadians() : 0.0;
+
+    ON_TextContent* fresh = new ON_TextContent;
+    if (nullptr == fresh || !fresh->Create(user_text, annotation_type, dimstyle, wrapped, rect_width, rotation))
+    {
+      if (nullptr != fresh)
+        delete fresh;
+      // Last-ditch: legacy rebuild so the dimension still draws something.
+      ON_TextContent* newtext = Internal_DimLegacyRebuild(*this, units_in, dimstyle);
+      if (nullptr != newtext)
+      {
+        SetText(newtext);
+        return true;
+      }
+      return false;
+    }
+    fresh->SetDimensionTemplate(*fresh->TextRuns(true));
+    SetText(fresh);
+    rebuilt = true;
+  }
+
+  // The template carries the run attributes the display is derived from, the
+  // font and text height included, so it has to follow the dim style. It is
+  // only rebuilt above when the style's text-position hash changed, and
+  // ON_Annotation::SetAnnotationFont stamps that hash on m_text when it
+  // patches the displayed runs after a style font change -- which left the
+  // template, and therefore every later redraw, on the old font and height
+  // (RH-97941). Re-apply the style to the authored runs in place instead.
+  m_text->SyncDimensionTemplateToDimStyle(dimstyle, adopted || rebuilt);
+
+  const ON_TextRunArray* template_runs = m_text->DimensionTemplate();
+  if (nullptr == template_runs)
+    return false;
+
+  ON_TextRunArray display;
+  Internal_DimBuildDisplayRuns(*template_runs, Measurement(), units_in, dimstyle, annotation_type, display);
+  if (display.Count() <= 0)
+    return false;
+
+  SetText(display); // ON_TextContent::CreateFromRuns in place; template (m_private) survives
+  return true;
+}
+
 bool ON_Dimension::UpdateDimensionText(
   ON::LengthUnitSystem units_in,
   const ON_DimStyle* dimstyle
 ) const
 {
-  if (Type() == ON::AnnotationType::CenterMark)
-    return false;
-
-  ON_TextContent* newtext = RebuildDimensionText(units_in, dimstyle,  true);
-  if (nullptr != newtext)
-  {
-    SetText(newtext);
-    return true;
-  }
-  return false;
+  return UpdateDimensionText((ON_UnitSystem)units_in, dimstyle);
 }
 
 bool ON_Dimension::GetDistanceDisplayText(
-  ON::LengthUnitSystem units_in,
+  const ON_UnitSystem& units_in,
   const ON_DimStyle* dimstyle,
   ON_wString& displaytext) const
 {
@@ -264,7 +551,13 @@ bool ON_Dimension::GetDistanceDisplayText(
   return true;
 }
 
-
+bool ON_Dimension::GetDistanceDisplayText(
+  ON::LengthUnitSystem units_in,
+  const ON_DimStyle* dimstyle,
+  ON_wString& displaytext) const
+{
+  return GetDistanceDisplayText((ON_UnitSystem)units_in, dimstyle, displaytext);
+}
 
 bool ON_Dimension::ArrowIsFlipped(int i) const
 {
@@ -272,6 +565,35 @@ bool ON_Dimension::ArrowIsFlipped(int i) const
     return m_flip_arrow_1;
   else
     return m_flip_arrow_2;
+}
+
+// RH-66603
+bool ON_Dimension::ArrowIsHiddenByDimLineSuppression(int which_end, const ON_DimStyle* style) const
+{
+  if (nullptr == style)
+    return false;
+
+  // The flags take the arrowhead along with the half of the dimension line
+  // they hide, but only for the dimension types whose GetDisplayLines honors
+  // them. Anything else would drop the arrow and leave the line.
+  const ON::AnnotationType type = Type();
+  if (!ON_DimLinear::IsValidLinearDimensionType(type)
+    && !ON_DimAngular::IsValidAngularDimensionType(type))
+    return false;
+
+  return (0 == which_end) ? style->SuppressDimLine1() : style->SuppressDimLine2();
+}
+
+// RH-66603
+bool ON_Dimension::ArrowIsSuppressed(int which_end, const ON_DimStyle* style) const
+{
+  if (nullptr == style)
+    return false;
+
+  if ((0 == which_end) ? style->SuppressArrow1() : style->SuppressArrow2())
+    return true;
+
+  return ArrowIsHiddenByDimLineSuppression(which_end, style);
 }
 
 void ON_Dimension::FlipArrow(int i, bool flip) const
@@ -378,7 +700,7 @@ void ON_Dimension::SetArrowFit(
   if (nullptr != override_style)
   {
     override_style->SetArrowFit(arrowfit);
-    override_style->SetFieldOverride(ON_DimStyle::field::TextFit, bCreate);
+    override_style->SetFieldOverride(ON_DimStyle::field::ArrowFit, bCreate); // RH-71499
   }
 }
 
@@ -432,7 +754,8 @@ bool ON_Dimension::Internal_WriteDimension(
 ) const
 {
   // content_version = 1 added m_force_textpos
-  const int content_version = 1;
+  // content_version = 2 added the authored dimension-template RTF
+  const int content_version = 2;
   if (false == archive.BeginWrite3dmAnonymousChunk(content_version))
     return false;
 
@@ -468,6 +791,27 @@ bool ON_Dimension::Internal_WriteDimension(
     // content_version 1
     const unsigned int legacy_text_fit = static_cast<unsigned int>(TextFit(&ds));
     if (!archive.WriteInt(legacy_text_fit))
+      break;
+
+    // content_version 2: persist the authored "dimension template" (the "<>"
+    // form WITH run-only attributes such as super/subscript) as RTF, so a
+    // save/reload round-trip preserves them -- the displayed m_text has the
+    // measurement substituted and the "<>" consumed, and UpdateDimensionText
+    // re-substitutes into this template, so the template must survive. Composed
+    // and parsed exactly like a text entity's runs; only the serialization uses
+    // RTF, the runtime stays run-native.
+    ON_wString template_rtf;
+    if (nullptr != m_text && m_text->HasDimensionTemplate())
+    {
+      const ON_TextRunArray* tmpl = m_text->DimensionTemplate();
+      if (nullptr != tmpl)
+      {
+        ON_TextContent tc;
+        tc.CreateFromRuns(*tmpl);
+        template_rtf = tc.RichText();
+      }
+    }
+    if (!archive.WriteString(template_rtf))
       break;
 
     rc = true;
@@ -533,6 +877,33 @@ bool ON_Dimension::Internal_ReadDimension(
     // content_version 1
     if (!archive.ReadInt(&legacy_text_fit))
       break;
+
+    if (content_version <= 1)
+    {
+      rc = true;
+      break;
+    }
+
+    // content_version 2: restore the authored "dimension template" (RTF), so
+    // UpdateDimensionText re-substitutes the measurement into the authored runs
+    // (preserving super/subscript) rather than rebuilding from the plain
+    // UserText, which would drop them.
+    {
+      ON_wString template_rtf;
+      if (!archive.ReadString(template_rtf))
+        break;
+      if (template_rtf.IsNotEmpty() && nullptr != m_text)
+      {
+        const ON_DimStyle& tmpl_ds = archive.ArchiveCurrentDimStyle();
+        ON_TextContent tc;
+        if (tc.Create(template_rtf, Type(), &tmpl_ds))
+        {
+          m_text->SetDimensionTemplate(*tc.TextRuns(true));
+          // The runs were just built for tmpl_ds, so that is their baseline.
+          m_text->SetDimensionTemplateBaseline(tmpl_ds.Font().ManagedFont(), tmpl_ds.TextHeight());
+        }
+      }
+    }
 
     rc = true;
     break;
@@ -713,6 +1084,38 @@ bool ON_DimLinear::GetTextXform(
 }
 
 
+// How far an arrowhead reaches outward past the extension line, counting only the
+// part of it inside a given vertical band. Arrowhead polygons are unit sized and
+// lie along -x with the tip at the origin (ON_Arrowhead::GetPoints), so a flipped
+// arrow is the same polygon mirrored into +x. Band limits are distances from the
+// dimension line; the polygons are read symmetrically so the caller does not have
+// to resolve which side the text ended up on. Returns 0 when nothing is in band.
+static double Internal_ArrowOutwardExtent(
+  ON_Arrowhead::arrow_type arrow_type,
+  double asz,
+  bool flipped,
+  double band_lo,
+  double band_hi)
+{
+  const double* pts = nullptr;
+  const ON__UINT32 count = ON_Arrowhead::GetPoints(arrow_type, pts);
+  if (0 == count || nullptr == pts || asz <= 0.0)
+    return 0.0;
+
+  double extent = 0.0;
+  for (ON__UINT32 i = 0; i < count; i++)
+  {
+    const double y = fabs(pts[2 * i + 1]) * asz;
+    if (y < band_lo || y > band_hi)
+      continue;
+    const double x = (flipped ? -pts[2 * i] : pts[2 * i]) * asz;
+    if (x > extent)
+      extent = x;
+  }
+  return extent;
+}
+
+
 bool ON_DimLinear::GetTextXform(
   const ON_Xform * model_xform,
   const ON_3dVector view_x,
@@ -738,12 +1141,38 @@ bool ON_DimLinear::GetTextXform(
   // would change its appearance
   if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
   {
+    // Preserve the run-native authored template across this position-property
+    // reparse. ON_TextContent::Create does *this = ON_TextContent::Empty, which
+    // destroys m_private (the authored "<>" template). Without restoring it,
+    // the next UpdateDimensionText finds no template and rebuilds from the
+    // plain UserText, dropping run-only attributes such as super/subscript.
+    const bool hadTemplate = text->HasDimensionTemplate();
+    ON_TextRunArray savedTemplate;
+    // Save the template's dim style baseline with it: Create() below destroys
+    // it, and SyncDimensionTemplateToDimStyle needs it to tell a stale template
+    // apart from deliberate per-run font overrides.
+    const ON_Font* savedTemplateFont = nullptr;
+    double savedTemplateTextHeight = 0.0;
+    if (hadTemplate)
+    {
+      savedTemplate = *text->DimensionTemplate();
+      savedTemplateFont = text->DimensionTemplateFont();
+      savedTemplateTextHeight = text->DimensionTemplateTextHeight();
+    }
+
     ON_wString rtfstr = text->RtfText();
     ON::AnnotationType annotation_type = this->Type();
     bool wrapped = text->TextIsWrapped();
     double width = text->FormattingRectangleWidth();
     double rot = text->TextRotationRadians();
     const_cast<ON_TextContent*>(text)->Create(rtfstr, annotation_type, dimstyle, wrapped, width, rot);
+
+    if (hadTemplate)
+    {
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplate(savedTemplate);
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplateBaseline(
+        savedTemplateFont, savedTemplateTextHeight);
+    }
   }
 
   double text_width = 0.0;
@@ -825,7 +1254,11 @@ bool ON_DimLinear::GetTextXform(
     text_outside = false;
   }
   else if (0.0 < total_text_width)
-    total_text_width += text_gap;
+  {
+    // RH-83402
+    if (ON_DimStyle::TextLocation::InDimLine == text_location)
+      total_text_width += text_gap;
+  }
 
   static double arrow_width_factor = 1.1;
   double total_arrow_width = asz * arrow_width_factor * 2;
@@ -861,18 +1294,36 @@ bool ON_DimLinear::GetTextXform(
   ON_2dPoint text_pt = TextPoint();
   if (text_outside && ON_DimStyle::ContentAngleStyle::Horizontal != text_angle_style && UseDefaultTextPoint())
   {
-    // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
-    double x = (text_width * 0.5) + (text_gap * 3.0);
+    // Where the text lands depends on the text location, which this used to ignore.
+    // Text in the dimension line has to clear the arrow and sit at the end of the
+    // line - unchanged below. Text above the line does not: GetDisplayLines extends
+    // the dimension line out underneath it, so it sits over a flipped arrow instead
+    // of past it, and one text gap of clear space is enough. That is the same
+    // standoff already used vertically further down. An arrowhead tall enough to
+    // reach into the text's own band - a tick, typically - is still stepped around.
+    // text_width * 0.5 is not clearance: the text content is centered, so the half
+    // width only puts the near edge of the text on text_pt.
+    const bool text_above_dimline = (ON_DimStyle::TextLocation::AboveDimLine == text_location);
+    const double band_lo = text_gap;
+    // fabs: text_height is repurposed as a negative above (alternate-below styles),
+    // and an inverted band would silently drop the arrow term.
+    const double band_hi = text_gap + fabs(text_height);
+
+    double x = (text_width * 0.5) + (text_above_dimline ? text_gap : (text_gap * 3.0));
     if (text_fit == ON_DimStyle::text_fit::TextLeft || text_fit == ON_DimStyle::text_fit::TextHintLeft)
     {
-      if (arrowflipped[0])
+      if (text_above_dimline)
+        x += Internal_ArrowOutwardExtent(dimstyle->ArrowType1(), asz, arrowflipped[0], band_lo, band_hi);
+      else if (arrowflipped[0])
         x += (asz * arrow_width_factor);
       text_pt = ArrowPoint1().x < ArrowPoint2().x ? ArrowPoint1() : ArrowPoint2();
       text_pt.x -= x;
     }
     else  // right or auto
     {
-      if (arrowflipped[1])
+      if (text_above_dimline)
+        x += Internal_ArrowOutwardExtent(dimstyle->ArrowType2(), asz, arrowflipped[1], band_lo, band_hi);
+      else if (arrowflipped[1])
         x += (asz * arrow_width_factor);
       text_pt = ArrowPoint1().x < ArrowPoint2().x ? ArrowPoint2() : ArrowPoint1();
       text_pt.x += x;
@@ -1085,9 +1536,7 @@ bool ON_DimLinear::GetAnnotationBoundingBox(
 
   for (int ai = 0; ai < 2; ai++)
   {
-    if (0 == ai && dimstyle->SuppressArrow1())
-      continue;
-    if (1 == ai && dimstyle->SuppressArrow2())
+    if (ArrowIsSuppressed(ai, dimstyle))
       continue;
 
     ON_Xform arrow_xform(1.0);
@@ -1525,6 +1974,35 @@ void ON_DimLinear::Set3dDefPoint2(ON_3dPoint pt)
     m_plane.ClosestPointTo(pt, &m_def_pt_2.x, &m_def_pt_2.y);
 }
 
+// In-view text only needs clipping out of the dimension line while it is off-plane.
+// Viewed down the plane normal, GetTextXform's in-view rotation is the identity and
+// the text lands back in the dimension plane, where the above/below-the-line rules
+// apply to it just like aligned text. Test the view direction, not the rect corners:
+// it is the same answer for every dimension in the view and does not vary with text
+// size. Only when there is no viewport (explode, export) fall back to the corners -
+// GetTextXform then built the in-view frame from the world axes.
+static bool TextIsInDimPlane(
+  const ON_Viewport* vp,
+  const ON_Plane& dimplane,
+  const ON_3dPoint text_rect[4],
+  double tol)
+{
+  if (nullptr != vp)
+  {
+    // cos(2 degrees). Past a couple of degrees off normal the frustum clip below
+    // already lands correctly, so leave that case exactly as it was.
+    const double cos_tol = 0.99939;
+    return fabs(vp->CameraZ() * dimplane.Normal()) >= cos_tol;
+  }
+
+  for (int i = 0; i < 4; i++)
+  {
+    if (fabs(dimplane.DistanceTo(text_rect[i])) > tol)
+      return false;
+  }
+  return true;
+}
+
 static int ClipLineToTextRect(
   const ON_Viewport* vp,
   const ON_Line dimline,
@@ -1537,12 +2015,14 @@ static int ClipLineToTextRect(
 
   if (nullptr == vp)
   {
-    cam_loc = ON_3dPoint::Origin;
     ON_3dVector xdir = text_rect[1] - text_rect[0]; xdir.Unitize();
     ON_3dVector ydir = text_rect[3] - text_rect[0]; ydir.Unitize();
     cam_dir = ON_CrossProduct(xdir, ydir);
     cam_dir = cam_dir * 100.0;
-    cam_loc = cam_loc + cam_dir;
+    // Anchor to the text rectangle instead of the world origin so the fake camera
+    // stays close to the dimension's own geometry - offsetting from the origin loses
+    // precision (frustum planes collapse) when the dimension is far from the origin.
+    cam_loc = text_rect[0] + cam_dir;
     cam_dir = cam_dir + cam_dir;
   }
   else
@@ -1553,32 +2033,59 @@ static int ClipLineToTextRect(
   cam_plane_eq.Create(cam_loc, cam_dir);
 
   ON_PlaneEquation frust_plane_eq[4];
-  ON_3dVector v0, v1;
-  v0 = text_rect[3] - cam_loc;
-  if (!v0.Unitize())
-    return 0;
 
-  bool bTextRectBackwards = false;
+  bool bMaskIsBox = false;
   {
-    ON_3dVector a = text_rect[2] - text_rect[0];
-    ON_3dVector b = text_rect[3] - text_rect[1];
-    ON_3dVector c = ON_CrossProduct(a, b);
-    if ((c * cam_dir) < 0.0)
-      bTextRectBackwards = true;
+    ON_3dVector xdir = text_rect[1] - text_rect[0];
+    ON_3dVector ydir = text_rect[3] - text_rect[0];
+    const double diagonal = text_rect[0].DistanceTo(text_rect[2]);
+    if (diagonal > 0.0 && xdir.Unitize() && ydir.Unitize()
+      && fabs(xdir * ydir) <= ON_SQRT_EPSILON)   // rectangular, so the edges are the face normals
+    {
+      const ON_3dVector normal = ON_CrossProduct(xdir, ydir);
+      const double tol = ON_SQRT_EPSILON * diagonal;
+      if (fabs(normal * (dimline.from - text_rect[0])) <= tol
+        && fabs(normal * (dimline.to - text_rect[0])) <= tol)   // line is in the plane of the text
+      {
+        // Normals point out of the box, so a point is inside the mask only when all four
+        // plane equations are <= 0, same as the planes built below.
+        bMaskIsBox = frust_plane_eq[0].Create(text_rect[0], -xdir)
+          && frust_plane_eq[1].Create(text_rect[1], xdir)
+          && frust_plane_eq[2].Create(text_rect[0], -ydir)
+          && frust_plane_eq[3].Create(text_rect[3], ydir);
+      }
+    }
   }
 
-  for (int i = 0; i < 4; i++)
+  if (!bMaskIsBox)
   {
-    v1 = text_rect[i] - cam_loc;
-    if (!v1.Unitize())
+    ON_3dVector v0, v1;
+    v0 = text_rect[3] - cam_loc;
+    if (!v0.Unitize())
       return 0;
-    // Makes normals facing out of frustum
-    ON_3dVector z = ON_CrossProduct(v0, v1);
-    if (bTextRectBackwards)
-      z = -z;
-    if (!frust_plane_eq[i].Create(cam_loc, z))
-      return 0;
-    v0 = v1;
+
+    bool bTextRectBackwards = false;
+    {
+      ON_3dVector a = text_rect[2] - text_rect[0];
+      ON_3dVector b = text_rect[3] - text_rect[1];
+      ON_3dVector c = ON_CrossProduct(a, b);
+      if ((c * cam_dir) < 0.0)
+        bTextRectBackwards = true;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+      v1 = text_rect[i] - cam_loc;
+      if (!v1.Unitize())
+        return 0;
+      // Makes normals facing out of frustum
+      ON_3dVector z = ON_CrossProduct(v0, v1);
+      if (bTextRectBackwards)
+        z = -z;
+      if (!frust_plane_eq[i].Create(cam_loc, z))
+        return 0;
+      v0 = v1;
+    }
   }
 
   double s[4];
@@ -1672,54 +2179,106 @@ static int ClipLineToTextRect(
   return segcount;
 }
 
+/*
+Description:
+  Splits an angular dimension's arc where the dimension's text covers it, so the arc
+  can be drawn as a gap in the middle rather than running through the text.
+Parameters:
+  vp - [in]
+    Viewport the dimension is being drawn in, or nullptr if there isn't one.
+    Only used when the text is not in the same plane as the arc, which happens when
+    the dimension style's text orientation is ON::TextOrientation::InView and the text
+    is turned to face the viewer. Otherwise what the text covers does not depend on
+    where it is being looked at from, and this is ignored.
+  dimarc - [in]
+    The dimension arc, in world coordinates.
+  text_rect - [in]
+    The four corners of the text, in world coordinates and in order around the
+    rectangle, already grown by the dimension style's text gap. See
+    ON_Dimension::GetTextRect().
+  arcsegs - [out]
+    The pieces of dimarc that the text does not cover, in order along the arc.
+    Only the first Returns() elements are set.
+Returns:
+  0: the text covers the whole arc, or the volume it masks could not be worked out.
+     Nothing should be drawn.
+  1: one piece survives, in arcsegs[0]. Either the text misses the arc, in which case
+     arcsegs[0] is dimarc unchanged, or it covers one end of it.
+  2: the text crosses the middle of the arc and both ends survive, in arcsegs[0] and
+     arcsegs[1].
+*/
 static int ClipArcToTextRect(
   const ON_Viewport* vp,
   const ON_Arc dimarc,
   const ON_3dPoint text_rect[4],
   ON_Arc arcsegs[2])
 {
-  if (nullptr == vp)
-    return 0;
-
-  ON_3dPoint cam_loc = vp->CameraLocation();
-  ON_PlaneEquation cam_plane_eq;
-  ON_3dVector cam_dir = -vp->CameraDirection();
-  cam_plane_eq.Create(cam_loc, cam_dir);
-
   ON_Plane frust_plane[4];
-  ON_3dVector v0, v1;
-  v0 = text_rect[3] - cam_loc;
-  if (!v0.Unitize())
-    return 0;
+  ON_PlaneEquation cam_plane_eq;
 
-  for (int i = 0; i < 4; i++)
+  // When the text is in the same plane as the arc, which is every text
+  // orientation except ON::TextOrientation::InView, the volume the text
+  // masks out is just the text rectangle and the camera plays no part.
+  bool bMaskIsBox = false;
   {
-    if (!frust_plane[i].CreateFromPoints(cam_loc, text_rect[i], text_rect[(i + 1) % 4]))
-      return 0;
+    ON_3dVector xdir = text_rect[1] - text_rect[0];
+    ON_3dVector ydir = text_rect[3] - text_rect[0];
+    const double diagonal = text_rect[0].DistanceTo(text_rect[2]);
+    if (diagonal > 0.0 && xdir.Unitize() && ydir.Unitize()
+      && fabs(xdir * ydir) <= ON_SQRT_EPSILON)   // rectangular, so the edges are the face normals
+    {
+      const ON_3dVector normal = ON_CrossProduct(xdir, ydir);
+      const ON_Plane& arcPlane = dimarc.Plane();
+      bool sameNormal = normal.IsParallelTo(arcPlane.Normal()) == 1;
+      if (sameNormal) // arc is in the plane of the text
+      {
+        // Normals point out of the box, so a point is inside the mask only when all four
+        // plane equations are <= 0, same as the planes built below.
+        bMaskIsBox = frust_plane[0].CreateFromNormal(text_rect[0], -xdir)
+          && frust_plane[1].CreateFromNormal(text_rect[1], xdir)
+          && frust_plane[2].CreateFromNormal(text_rect[0], -ydir)
+          && frust_plane[3].CreateFromNormal(text_rect[3], ydir);
+      }
+    }
   }
 
-  bool bTextRectBackwards = false;
+  if (!bMaskIsBox)
   {
-    ON_3dVector a = text_rect[2] - text_rect[0];
-    ON_3dVector b = text_rect[3] - text_rect[1];
-    ON_3dVector c = ON_CrossProduct(a, b);
-    if ((c * cam_dir) < 0.0)
-      bTextRectBackwards = true;
-  }
+    if (nullptr == vp)
+      return 0;
 
-  for (int i = 0; i < 4; i++)
-  {
-    v1 = text_rect[i] - cam_loc;
-    if (!v1.Unitize())
+    ON_3dPoint cam_loc = vp->CameraLocation();
+    ON_3dVector cam_dir = -vp->CameraDirection();
+    cam_plane_eq.Create(cam_loc, cam_dir);
+
+    ON_3dVector v0, v1;
+    v0 = text_rect[3] - cam_loc;
+    if (!v0.Unitize())
       return 0;
-    // Makes normals facing out of frustum
-    ON_3dVector z = ON_CrossProduct(v0, v1);
-    z.Unitize();
-    if (bTextRectBackwards)
-      z = -z;
-    if(!frust_plane[i].CreateFromNormal(cam_loc, z))
-      return 0;
-    v0 = v1;
+
+    bool bTextRectBackwards = false;
+    {
+      ON_3dVector a = text_rect[2] - text_rect[0];
+      ON_3dVector b = text_rect[3] - text_rect[1];
+      ON_3dVector c = ON_CrossProduct(a, b);
+      if ((c * cam_dir) < 0.0)
+        bTextRectBackwards = true;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+      v1 = text_rect[i] - cam_loc;
+      if (!v1.Unitize())
+        return 0;
+      // Makes normals facing out of frustum
+      ON_3dVector z = ON_CrossProduct(v0, v1);
+      z.Unitize();
+      if (bTextRectBackwards)
+        z = -z;
+      if (!frust_plane[i].CreateFromNormal(cam_loc, z))
+        return 0;
+      v0 = v1;
+    }
   }
 
   double s[8];
@@ -1732,8 +2291,7 @@ static int ClipArcToTextRect(
       icount = 2;
     for (int ip = 0; ip < icount; ip++)
     {
-      double d = cam_plane_eq.ValueAt(p[ip]);
-      if (0.0 < d)
+      if (!bMaskIsBox && 0.0 < cam_plane_eq.ValueAt(p[ip]))
         continue;  // intersection behind camera
 
       bool inside = true;
@@ -1742,7 +2300,7 @@ static int ClipArcToTextRect(
       for (int j = 1; j < 4; j++)
       {
         // eval other planes at p
-        d = frust_plane[(i + j) % 4].plane_equation.ValueAt(p[ip]);
+        double d = frust_plane[(i + j) % 4].plane_equation.ValueAt(p[ip]);
         if (0.0 < d)  // intersection is outside frustum
         {
           inside = false;
@@ -1764,7 +2322,7 @@ static int ClipArcToTextRect(
   ON_3dPoint end1 = dimarc.StartPoint();
   ON_3dPoint end2 = dimarc.EndPoint();
 
-  if (0.0 < cam_plane_eq.ValueAt(end1))
+  if (!bMaskIsBox && 0.0 < cam_plane_eq.ValueAt(end1))
     end_1_inside = false;  // Dimline from point behind camera
   else for (int i = 0; i < 4; i++)
   {
@@ -1775,7 +2333,7 @@ static int ClipArcToTextRect(
     }
   }
 
-  if (0.0 < cam_plane_eq.ValueAt(end2))
+  if (!bMaskIsBox && 0.0 < cam_plane_eq.ValueAt(end2))
     end_2_inside = false;
   else for (int i = 0; i < 4; i++)
   {
@@ -1790,11 +2348,14 @@ static int ClipArcToTextRect(
   {
     if (end_1_inside && end_2_inside)
       return 0;
-    else if (!end_1_inside && !end_2_inside)
+    if (!end_1_inside && !end_2_inside)
     {
       arcsegs[0] = dimarc;
       return 1;
     }
+    // One end in, one out, no crossing: nothing to trim to.
+    // Falling through here read the uninitialized s[0].
+    return 0;
   }
 
   double max_s = s[0];
@@ -1806,13 +2367,13 @@ static int ClipArcToTextRect(
   }
   int segcount = 0;
   ON_Interval domain = dimarc.Domain();
-  if (!end_1_inside && intcount > 0)
+  if (!end_1_inside)
   {
     arcsegs[segcount] = dimarc;
     arcsegs[segcount].Trim(ON_Interval(domain[0], min_s));
     segcount++;
   }
-  if (!end_2_inside && intcount > 0)
+  if (!end_2_inside)
   {
     arcsegs[segcount] = dimarc;
     arcsegs[segcount].Trim(ON_Interval(max_s, domain[1]));
@@ -1821,6 +2382,218 @@ static int ClipArcToTextRect(
   return segcount;
 }
 
+
+/*
+Description:
+  Works out the span of the dimension line that survives SuppressDimLine1 /
+  SuppressDimLine2. Exactly one of the two flags must be set - the caller
+  handles "neither" and "both".
+
+  The split is the text, not the midpoint: each flag owns everything between
+  its own arrow and the far edge of the text, so a text that is wide relative
+  to the measured span leaves only a short stub on the surviving side. That
+  holds both when the text breaks the dimension line and when it sits above
+  it. Falls back to the midpoint when there is no text to split on.
+Parameters:
+  plane - [in] the dimension plane. The dimension line runs along its x axis.
+  arrow_1_x, arrow_2_x - [in] plane x coordinates of the two arrow points.
+    Either may be the larger of the two.
+  bSuppress1 - [in] true when side 1 is the suppressed side, false for side 2.
+  keep - [out] plane x interval that should still be drawn.
+Returns:
+  True if keep was set.
+*/
+// RH-66603
+static bool Internal_DimLineKeepInterval(
+  const ON_Plane& plane,
+  double arrow_1_x,
+  double arrow_2_x,
+  const ON_3dPoint text_rect[4],
+  bool bSuppress1,
+  ON_Interval& keep
+)
+{
+  double text_lo = 0.0;
+  double text_hi = 0.0;
+  if (text_rect[0].DistanceTo(text_rect[2]) > ON_SQRT_EPSILON)
+  {
+    text_lo = ON_DBL_MAX;
+    text_hi = -ON_DBL_MAX;
+    for (int i = 0; i < 4; i++)
+    {
+      double x = 0.0, y = 0.0;
+      if (!plane.ClosestPointTo(text_rect[i], &x, &y))
+        return false;
+      if (x < text_lo) text_lo = x;
+      if (x > text_hi) text_hi = x;
+    }
+  }
+  else
+  {
+    // No text to split on
+    text_lo = text_hi = 0.5 * (arrow_1_x + arrow_2_x);
+  }
+
+  // Which end of the x axis does the suppressed side sit at?
+  const bool bSuppressedSideIsLow =
+    bSuppress1 ? (arrow_1_x <= arrow_2_x) : (arrow_2_x < arrow_1_x);
+
+  if (bSuppressedSideIsLow)
+    keep.Set(text_hi, ON_DBL_MAX);
+  else
+    keep.Set(-ON_DBL_MAX, text_lo);
+
+  return true;
+}
+
+/*
+Description:
+  Trims one dimension line segment to the plane x interval returned by
+  Internal_DimLineKeepInterval. Clears isline when nothing survives.
+*/
+// RH-66603
+static void Internal_TrimDimLineToKeepInterval(
+  const ON_Plane& plane,
+  const ON_Interval& keep,
+  ON_Line& line,
+  bool& isline
+)
+{
+  if (!isline)
+    return;
+
+  double x0 = 0.0, x1 = 0.0, y = 0.0;
+  if (!plane.ClosestPointTo(line.from, &x0, &y) ||
+      !plane.ClosestPointTo(line.to, &x1, &y))
+    return;
+
+  const double dx = x1 - x0;
+  if (fabs(dx) <= ON_ZERO_TOLERANCE)
+  {
+    // Segment has no extent along the dimension line
+    if (!keep.Includes(x0))
+      isline = false;
+    return;
+  }
+
+  // Clamp into the segment's own x range first. keep is half open, so this is
+  // what stops the division below from running off to infinity.
+  const double seg_lo = (x0 < x1) ? x0 : x1;
+  const double seg_hi = (x0 < x1) ? x1 : x0;
+  const double lo = (keep.Min() > seg_lo) ? keep.Min() : seg_lo;
+  const double hi = (keep.Max() < seg_hi) ? keep.Max() : seg_hi;
+
+  if (hi - lo <= ON_ZERO_TOLERANCE)
+  {
+    isline = false;
+    return;
+  }
+
+  double t0 = (lo - x0) / dx;
+  double t1 = (hi - x0) / dx;
+  if (t0 > t1)
+  {
+    const double t = t0;
+    t0 = t1;
+    t1 = t;
+  }
+  if (t0 < 0.0)
+    t0 = 0.0;
+  if (t1 > 1.0)
+    t1 = 1.0;
+
+  if (t1 - t0 <= ON_ZERO_TOLERANCE)
+  {
+    isline = false;
+    return;
+  }
+
+  const ON_Line trimmed(line.PointAt(t0), line.PointAt(t1));
+  line = trimmed;
+}
+
+/*
+Description:
+  Angle space twin of Internal_DimLineKeepInterval, for angular dimensions.
+  The undivided dimension arc always runs from the side 1 arrow at
+  Domain().Min() to the side 2 arrow at Domain().Max(), so the suppressed side
+  is one end of that domain.
+Parameters:
+  dim_arc - [in] the dimension arc before any clipping around the text.
+  bSuppress1 - [in] true when side 1 is the suppressed side, false for side 2.
+  keep - [out] arc parameter (radian) interval that should still be drawn.
+Returns:
+  True when something survives.
+*/
+// RH-66603
+static bool Internal_DimArcKeepInterval(
+  const ON_Arc& dim_arc,
+  const ON_3dPoint text_rect[4],
+  bool bSuppress1,
+  ON_Interval& keep
+)
+{
+  const ON_Interval domain = dim_arc.Domain();
+
+  double text_lo = 0.0;
+  double text_hi = 0.0;
+  if (text_rect[0].DistanceTo(text_rect[2]) > ON_SQRT_EPSILON)
+  {
+    text_lo = ON_DBL_MAX;
+    text_hi = -ON_DBL_MAX;
+    for (int i = 0; i < 4; i++)
+    {
+      // ClosestPointTo clamps to the arc domain, so text that runs off an end
+      // of the arc collapses that side to nothing, which is what we want.
+      double t = 0.0;
+      if (!dim_arc.ClosestPointTo(text_rect[i], &t))
+        return false;
+      if (t < text_lo) text_lo = t;
+      if (t > text_hi) text_hi = t;
+    }
+  }
+  else
+  {
+    // No text to split on
+    text_lo = text_hi = domain.Mid();
+  }
+
+  if (bSuppress1)
+    keep.Set(text_hi, domain.Max());
+  else
+    keep.Set(domain.Min(), text_lo);
+
+  return (keep.Max() - keep.Min() > ON_ZERO_TOLERANCE);
+}
+
+/*
+Description:
+  Trims one dimension arc segment to the parameter interval returned by
+  Internal_DimArcKeepInterval. Clears isarc when nothing survives.
+*/
+// RH-66603
+static void Internal_TrimDimArcToKeepInterval(
+  const ON_Interval& keep,
+  ON_Arc& arc,
+  bool& isarc
+)
+{
+  if (!isarc)
+    return;
+
+  const ON_Interval domain = arc.Domain();
+  const double t0 = (domain.Min() > keep.Min()) ? domain.Min() : keep.Min();
+  const double t1 = (domain.Max() < keep.Max()) ? domain.Max() : keep.Max();
+
+  if (t1 - t0 <= ON_ZERO_TOLERANCE)
+  {
+    isarc = false;
+    return;
+  }
+
+  if (!arc.Trim(ON_Interval(t0, t1)))
+    isarc = false;
+}
 
 bool ON_DimLinear::GetDisplayLines(
   const ON_Viewport* vp,
@@ -1916,7 +2689,49 @@ bool ON_DimLinear::GetDisplayLines(
 
   if (/*UseDefaultTextPoint() &&*/ ON_DimStyle::TextLocation::InDimLine != text_location)
   {
-    if (m_use_default_text_point || fabs(m_user_text_point.y - m_dimline_pt.y) < style->TextGap() * dimscale * 0.75)
+    // Keep the landing while the dimension line still passes under the text block.
+    // The old test allowed the text anchor to stray 3/4 of a text gap off the
+    // dimension line, which is a fifth of a text height in the built-in styles, so
+    // a grip drag with any vertical wander in it silently lost the underline. It
+    // was symmetric as well, scoring a drag down the same as a drag up, though only
+    // one of those leaves the line under anything.
+    // Measured off text_rect rather than m_user_text_point: the rect is the drawn
+    // text, so which side of the line it ended up on is already resolved (the
+    // above/below rise in GetTextXform flips with the view, and that is not known
+    // here). Callers inflate the box by one text gap, putting its near edge on the
+    // dimension line at rest, so allowing the line one gap of penetration is the
+    // point where it would start striking through the glyphs.
+    static const double landing_text_height_factor = 1.0;
+    bool draw_landing = m_use_default_text_point;
+    if (!draw_landing)
+    {
+      double v_min = ON_DBL_MAX;
+      double v_max = -ON_DBL_MAX;
+      for (int i = 0; i < 4; i++)
+      {
+        double u = 0.0, v = 0.0;
+        if (!m_plane.ClosestPointTo(text_rect[i], &u, &v))
+          continue;
+        if (v < v_min) v_min = v;
+        if (v > v_max) v_max = v;
+      }
+      if (v_min <= v_max)
+      {
+        const double dl = m_dimline_pt.y;
+        double d;
+        if (v_min >= dl)
+          d = v_min - dl;                             // text sits above the line
+        else if (v_max <= dl)
+          d = dl - v_max;                             // text sits below it
+        else
+          d = -(((dl - v_min) < (v_max - dl)) ? (dl - v_min) : (v_max - dl));  // line is inside the box
+
+        const double text_gap = style->TextGap() * dimscale;
+        const double text_height = style->TextHeight() * dimscale;
+        draw_landing = (d >= -text_gap && d <= text_height * landing_text_height_factor);
+      }
+    }
+    if (draw_landing)
     {
       // If the dimline is under the text, and the text extends past the end of the dimline,
       // make the dim line as long as the text if the text is offset sideways from the 
@@ -1933,6 +2748,29 @@ bool ON_DimLinear::GetDisplayLines(
         {
           double t = t0; t0 = t1; t1 = t;
         }
+
+        // The display inflates text_rect by a margin before passing it here, and swaps
+        // TextGap for MaskBorder when a rectangular frame is on. Mirror that, then leave
+        // the frame in - it is part of the drawn block, being the text box grown by
+        // MaskBorder - so the line lands on the block instead of a gap past it.
+        // DimExtension sizes any overshoot, not de[], which becomes ArrowSize * 1.5
+        // when the arrows are flipped.
+        const ON_TextMask::MaskFrame mask_frame = style->MaskFrameType();
+        const double mask_border = style->TextMask().MaskBorder();
+
+        double text_margin = (ON_TextMask::MaskFrame::RectFrame == mask_frame) ? mask_border : style->TextGap();
+        if (ON_TextMask::MaskFrame::NoFrame != mask_frame)
+          text_margin -= mask_border;
+        text_margin -= style->DimExtension();
+
+        const double dimline_length = lines[2].Length();
+        if (dimline_length > ON_ZERO_TOLERANCE)
+        {
+          const double dt = text_margin * dimscale / dimline_length;
+          t0 += dt;
+          t1 -= dt;
+        }
+
         ON_Line l = lines[2];
         if (t0 < 0.0 && t1 < 1.0)
           l.from = lines[2].PointAt(t0);
@@ -1957,7 +2795,39 @@ bool ON_DimLinear::GetDisplayLines(
     || ON_DimStyle::ContentAngleStyle::Aligned != text_angle_style
     ) // Means line has to be clipped around text
   {
-    if (text_rect[0].DistanceTo(text_rect[2]) > ON_SQRT_EPSILON)
+    // RH-67077: Text placed above/below the line (not "in line") that sits
+    // wholly on one side of the dimension line must not break it. This is the
+    // case for forced-horizontal text on a dimension whose line runs parallel
+    // to the text (horizontal dims): the text is above the line and never
+    // crosses it. Only clip when the text rectangle actually straddles the
+    // line.
+    bool clip_around_text = true;
+    if (ON_DimStyle::TextLocation::InDimLine != text_location)
+    {
+      // text_rect includes a text-gap margin on all sides (same margin the
+      // caller used to build it), so a straddle of up to one gap means the
+      // actual glyphs are still at or above/below the line. Tolerate that.
+      double text_gap = style->TextGap();
+      if (ON_TextMask::MaskFrame::RectFrame == style->MaskFrameType())
+        text_gap = style->TextMask().MaskBorder();
+      const double tol = text_gap * dimscale + ON_SQRT_EPSILON;
+
+      double vmin = ON_DBL_MAX, vmax = -ON_DBL_MAX;
+      for (int i = 0; i < 4; i++)
+      {
+        double u = 0.0, v = 0.0;
+        m_plane.ClosestPointTo(text_rect[i], &u, &v);
+        if (v < vmin) vmin = v;
+        if (v > vmax) vmax = v;
+      }
+      // No straddle => text is wholly above or below the dimension line. In-view
+      // text qualifies only while it is still in the dimension plane (RH-77966).
+      if (TextIsInDimPlane(vp, m_plane, text_rect, tol)
+        && (vmin >= m_dimline_pt.y - tol || vmax <= m_dimline_pt.y + tol))
+        clip_around_text = false;
+    }
+
+    if (clip_around_text && text_rect[0].DistanceTo(text_rect[2]) > ON_SQRT_EPSILON)
     {
       ON_Line dimline(lines[2]);
       ON_Line line_segs[2];
@@ -1977,6 +2847,31 @@ bool ON_DimLinear::GetDisplayLines(
       }
     }
   }
+
+  // RH-66603
+  // Runs last so it applies to whichever of the three branches above produced
+  // lines[2] and lines[3]. Those two slots do not map to a fixed side of the
+  // dimension - only their plane x coordinates do - so trim by position.
+  const bool bSuppressDimLine1 = style->SuppressDimLine1();
+  const bool bSuppressDimLine2 = style->SuppressDimLine2();
+  if (bSuppressDimLine1 || bSuppressDimLine2)
+  {
+    if (bSuppressDimLine1 && bSuppressDimLine2)
+    {
+      isline[2] = false;
+      isline[3] = false;
+    }
+    else
+    {
+      ON_Interval keep;
+      if (Internal_DimLineKeepInterval(m_plane, 0.0, m_def_pt_2.x, text_rect, bSuppressDimLine1, keep))
+      {
+        Internal_TrimDimLineToKeepInterval(m_plane, keep, lines[2], isline[2]);
+        Internal_TrimDimLineToKeepInterval(m_plane, keep, lines[3], isline[3]);
+      }
+    }
+  }
+
   return true;
 }
 
@@ -2887,12 +3782,38 @@ bool ON_DimAngular::GetTextXform(
   // would change its appearance
   if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
   {
+    // Preserve the run-native authored template across this position-property
+    // reparse. ON_TextContent::Create does *this = ON_TextContent::Empty, which
+    // destroys m_private (the authored "<>" template). Without restoring it,
+    // the next UpdateDimensionText finds no template and rebuilds from the
+    // plain UserText, dropping run-only attributes such as super/subscript.
+    const bool hadTemplate = text->HasDimensionTemplate();
+    ON_TextRunArray savedTemplate;
+    // Save the template's dim style baseline with it: Create() below destroys
+    // it, and SyncDimensionTemplateToDimStyle needs it to tell a stale template
+    // apart from deliberate per-run font overrides.
+    const ON_Font* savedTemplateFont = nullptr;
+    double savedTemplateTextHeight = 0.0;
+    if (hadTemplate)
+    {
+      savedTemplate = *text->DimensionTemplate();
+      savedTemplateFont = text->DimensionTemplateFont();
+      savedTemplateTextHeight = text->DimensionTemplateTextHeight();
+    }
+
     ON_wString rtfstr = text->RtfText();
     ON::AnnotationType annotation_type = this->Type();
     bool wrapped = text->TextIsWrapped();
     double width = text->FormattingRectangleWidth();
     double rot = text->TextRotationRadians();
     const_cast<ON_TextContent*>(text)->Create(rtfstr, annotation_type, dimstyle, wrapped, width, rot);
+
+    if (hadTemplate)
+    {
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplate(savedTemplate);
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplateBaseline(
+        savedTemplateFont, savedTemplateTextHeight);
+    }
   }
 
   double text_width = 0.0;
@@ -2948,15 +3869,25 @@ bool ON_DimAngular::GetTextXform(
   double asz = dimstyle->ArrowSize() * dimscale;
   double dist = Radius() * Measurement();
 
+  // The hint modes only move text out when it won't fit, so they have to fall through
+  // to the fit test below instead of forcing text_outside. Mirrors ON_DimLinear.
   double total_text_width = text_width;
-  if (text_fit != ON_DimStyle::text_fit::Auto)
+  if (ON_DimStyle::text_fit::TextLeft == text_fit || ON_DimStyle::text_fit::TextRight == text_fit)
+  {
     total_text_width = 0.0;
-  else if (0.0 < total_text_width)
-    total_text_width += text_gap;
-
-  if (text_fit != ON_DimStyle::text_fit::Auto &&
-      text_fit != ON_DimStyle::text_fit::TextInside)
     text_outside = true;
+  }
+  else if (ON_DimStyle::text_fit::TextInside == text_fit)
+  {
+    total_text_width = 0.0;
+    text_outside = false;
+  }
+  else if (0.0 < total_text_width)
+  {
+    // RH-83402
+    if (ON_DimStyle::TextLocation::InDimLine == text_location)
+      total_text_width += text_gap;
+  }
 
   static double arrow_width_factor = 1.5;
   double total_arrow_width = asz * arrow_width_factor * 2;  // min arrow tail space is asz/2
@@ -2994,20 +3925,17 @@ bool ON_DimAngular::GetTextXform(
   if (text_outside && ON_DimStyle::ContentAngleStyle::Horizontal != text_angle_style && UseDefaultTextPoint())
   {
     double radius = Radius();
-    // move textpoint outside right arrow by 1/2 text width + 1-1/2 arrow width
+
+    // Left and Right were reversed. Like ON_DimLinear these are in the dimension's own frame,
+    // not the view's: AdjustFromPoints rotates the plane onto extension 1 and normalizes the
+    // sweep so the dimline point falls inside it, which leaves extension 1 the right-hand end
+    // and extension 2 the left. TextHintLeft was never tested at all, so it went right too.
+    const bool text_left =
+      (ON_DimStyle::text_fit::TextLeft == text_fit || ON_DimStyle::text_fit::TextHintLeft == text_fit);
+
+    // move textpoint outside the chosen arrow by 1/2 text width + 1-1/2 arrow width
     double x = text_width * 0.5 + text_gap;
-    if (text_fit == ON_DimStyle::text_fit::TextLeft)
-    {
-      //if (arrowflipped[0])
-      x += 1.5 * asz * arrow_width_factor;
-      text_pt_2d = ArrowPoint1();
-      if (0.0 < radius)
-      {
-        double d_ang = x / radius;
-        text_pt_2d.Rotate(-d_ang, ON_2dPoint::Origin);
-      }
-    }
-    else
+    if (text_left)
     {
       //if (arrowflipped[1])
       x += asz * arrow_width_factor;
@@ -3016,6 +3944,17 @@ bool ON_DimAngular::GetTextXform(
       {
         double d_ang = x / radius;
         text_pt_2d.Rotate(d_ang, ON_2dPoint::Origin);
+      }
+    }
+    else
+    {
+      //if (arrowflipped[0])
+      x += 1.5 * asz * arrow_width_factor;
+      text_pt_2d = ArrowPoint1();
+      if (0.0 < radius)
+      {
+        double d_ang = x / radius;
+        text_pt_2d.Rotate(-d_ang, ON_2dPoint::Origin);
       }
     }
   }
@@ -3122,8 +4061,22 @@ bool ON_DimAngular::GetTextXform(
     {
       ON_3dVector zdir = ON_CrossProduct(dim_xdir, dim_ydir);
       ON_3dVector text_up_dir_local = ON_CrossProduct(zdir, text_right_dir_local);
-      bool fx = (0.0 > view_xdir * text_right_dir_local);
-      bool fy = (0.0 > view_ydir * text_up_dir_local);
+      bool fx = false;
+      bool fy = false;
+
+      // 20 March 2026, Mikko, RH-94174:
+      // Fixed dimension text getting incorrectly flipped.
+      // Check if the text is mostly vertical instead of horizontal.
+      if (fabs(text_up_dir_local * view_xdir) > fabs(text_up_dir_local * view_ydir))
+      {
+        fx = (0.0 > view_xdir * text_up_dir_local);
+        fy = (0.0 > -view_ydir * text_right_dir_local);
+      }
+      else
+      {
+        fx = (0.0 > view_xdir * text_right_dir_local);
+        fy = (0.0 > view_ydir * text_up_dir_local);
+      }
 
       ON_Xform mxf;  // Mirror xform for backwards text to adjust DrawForward
       if (fx)
@@ -3144,27 +4097,15 @@ bool ON_DimAngular::GetTextXform(
 
 bool ON_DimAngular::UpdateDimensionText(const ON_DimStyle* dimstyle) const
 {
-  ON_wString displaytext;
-
-  if (!GetAngleDisplayText(dimstyle, displaytext))
-    return false;
-
-  ON_TextContent* newtext = new ON_TextContent;
-  if (nullptr != newtext)
-  {
-    bool wrapped = m_text ? m_text->TextIsWrapped() : false;
-    double rect_width = m_text ? m_text->FormattingRectangleWidth() : 0.0;
-    double rotation = m_text ? m_text->TextRotationRadians() : 0.0;
-    if (newtext->Create(displaytext, Type(), dimstyle,   wrapped, rect_width, rotation))
-    {
-#ifdef _DEBUG
-      newtext->IsValid();
-#endif
-      SetText(newtext);
-      return true;
-    }
-  }
-  return false;
+  // Route through the run-native path in ON_Dimension so the authored "<>"
+  // template is kept and the angle is spliced into it at display time, the
+  // same as linear, radial and ordinate dimensions. Until this the angular
+  // text was rebuilt from a string on every update, so no template existed:
+  // the editor was handed the resolved value instead of "<>", and its
+  // write-back baked that value into UserText, after which resolution and
+  // format changes no longer had any effect (RH-98476). Angles carry no
+  // length unit, so the unit system is irrelevant here.
+  return ON_Dimension::UpdateDimensionText(ON_UnitSystem::None, dimstyle);
 }
 
 bool ON_DimAngular::GetAngleDisplayText(
@@ -3599,12 +4540,8 @@ bool ON_DimAngular::GetDisplayLines(
     if (0.0 < dim_ext[1])
       dim_ext_ang[1] = dim_ext[1] / radius;
 
-    // 6-Jan-2024 Dale Fugier, ON_ZERO_TOLERANCE is too
-    // small for an angle tolerace. 1e-6 is more than accurate
-    // but let's start with 1e-8.
-    //const double atol = ON_ZERO_TOLERANCE;
-    const double atol = 1e-8;
-    while (a0 + atol > ON_PI * 2.0)
+    // RH-98722
+    if (a0 > a1 && a0 > ON_PI)
       a0 -= ON_PI * 2.0;
     a0 -= dim_ext_ang[0];
     a1 += dim_ext_ang[1];
@@ -3616,6 +4553,13 @@ bool ON_DimAngular::GetDisplayLines(
       isarc[0] = true;
     }
   }
+
+  // RH-66603
+  // Keep the undivided arc. The suppression post-pass at the end of this
+  // function needs it to work out where the text splits the arc, whether or
+  // not the clip below ran.
+  const ON_Arc full_dim_arc(arcs[0]);
+  const bool bHasFullDimArc = isarc[0];
 
   // This part clips dimarc to textbox except when text is above line
   //ON_INTERNAL_OBSOLETE::V5_TextDisplayMode text_mode = style->TextAlignment();
@@ -3630,7 +4574,27 @@ bool ON_DimAngular::GetDisplayLines(
     || ON_DimStyle::ContentAngleStyle::Aligned != text_angle_style
     )
   {
-    if (text_rect[0].DistanceTo(text_rect[2]) > ON_SQRT_EPSILON)
+    // RH-67077: When the text is placed above/below the arc (not "in line"),
+    // the arc must stay unbroken - honoring the "except when text is above
+    // line" intent noted above (e.g. forced-horizontal text on an angular
+    // dim). Unlike a straight dimension line, a horizontal text box over a
+    // curved arc always overlaps the arc radius band at its corners even when
+    // the visible text is entirely outside the arc, so there is no meaningful
+    // "straddle" test here: above/below text simply should not clip.
+
+    // In-view text is subject to the same rule while it is still in the dimension
+    // plane; off-plane it keeps needing the frustum clip (RH-77968).
+    double tol = style->TextGap();
+    if (ON_TextMask::MaskFrame::RectFrame == style->MaskFrameType())
+      tol = style->TextMask().MaskBorder();
+    tol = tol * dimscale + ON_SQRT_EPSILON;
+
+    bool clip_around_text =
+      (ON_DimStyle::TextLocation::InDimLine == text_location
+        || (ON::TextOrientation::InView == text_orientation
+          && !TextIsInDimPlane(vp, m_plane, text_rect, tol)));
+
+    if (clip_around_text && text_rect[0].DistanceTo(text_rect[2]) > ON_SQRT_EPSILON)
     {
       ON_Arc dimarc(arcs[0]);
       ON_Arc arc_segs[2];
@@ -3654,7 +4618,45 @@ bool ON_DimAngular::GetDisplayLines(
     }
   }
 
+  // RH-66603
+  // Runs last so it applies whether or not the arc was clipped around the text.
+  const bool bSuppressDimLine1 = style->SuppressDimLine1();
+  const bool bSuppressDimLine2 = style->SuppressDimLine2();
+  if (bSuppressDimLine1 || bSuppressDimLine2)
+  {
+    if (bSuppressDimLine1 && bSuppressDimLine2)
+    {
+      isarc[0] = false;
+      isarc[1] = false;
+    }
+    else if (bHasFullDimArc)
+    {
+      ON_Interval keep;
+      if (Internal_DimArcKeepInterval(full_dim_arc, text_rect, bSuppressDimLine1, keep))
+      {
+        Internal_TrimDimArcToKeepInterval(keep, arcs[0], isarc[0]);
+        Internal_TrimDimArcToKeepInterval(keep, arcs[1], isarc[1]);
+      }
+      else
+      {
+        isarc[0] = false;
+        isarc[1] = false;
+      }
+    }
+  }
+
   return true;
+}
+
+// Ticks and dots are centered on the arrow point rather than trailing back from it,
+// so the chord adjustment that seats a trailing arrowhead on the dimension arc has
+// nothing to correct on them and only tilts them off the arc tangent.
+static bool Internal_ArrowheadTrailsArrowPoint(ON_Arrowhead::arrow_type arrowtype)
+{
+  return (
+    ON_Arrowhead::arrow_type::Tick != arrowtype
+    && ON_Arrowhead::arrow_type::Dot != arrowtype
+    );
 }
 
 void ON_DimAngular::GetArrowXform(
@@ -3662,6 +4664,17 @@ void ON_DimAngular::GetArrowXform(
   double arrowlength,
   bool arrowflipped,
   bool from_the_back,
+  ON_Xform& arrow_xform_out) const
+{
+  GetArrowXform(which_end, arrowlength, arrowflipped, from_the_back, ON_Arrowhead::arrow_type::SolidTriangle, arrow_xform_out);
+}
+
+void ON_DimAngular::GetArrowXform(
+  int which_end,
+  double arrowlength,
+  bool arrowflipped,
+  bool from_the_back,
+  ON_Arrowhead::arrow_type arrowtype,
   ON_Xform& arrow_xform_out) const
 {
   ON_Xform xf(1.0), xfp, xfs, xfr;
@@ -3687,14 +4700,18 @@ void ON_DimAngular::GetArrowXform(
   while (rotang < 0.0)
     rotang += (2.0 * ON_PI);
 
-  // little adjustment so dimension arc leaves arrow in the middle
-  double f = (arrowlength * 0.5) / Radius();
-  if (f > 1.0) f = 1.0;
-  double adjust = asin(f);
-  if (which_end == 1)
-    adjust = -adjust;
-  if (ArrowIsFlipped(which_end))
-    adjust = -adjust;
+  double adjust = 0.0;
+  if (Internal_ArrowheadTrailsArrowPoint(arrowtype))
+  {
+    // little adjustment so dimension arc leaves arrow in the middle
+    double f = (arrowlength * 0.5) / Radius();
+    if (f > 1.0) f = 1.0;
+    adjust = asin(f);
+    if (which_end == 1)
+      adjust = -adjust;
+    if (ArrowIsFlipped(which_end))
+      adjust = -adjust;
+  }
 
   xfr.Rotation(rotang+adjust, ON_3dVector::ZAxis, ON_3dPoint::Origin);
   xf = xft * xfr;
@@ -4077,12 +5094,38 @@ bool ON_DimRadial::GetTextXform(
   // would change its appearance
   if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
   {
+    // Preserve the run-native authored template across this position-property
+    // reparse. ON_TextContent::Create does *this = ON_TextContent::Empty, which
+    // destroys m_private (the authored "<>" template). Without restoring it,
+    // the next UpdateDimensionText finds no template and rebuilds from the
+    // plain UserText, dropping run-only attributes such as super/subscript.
+    const bool hadTemplate = text->HasDimensionTemplate();
+    ON_TextRunArray savedTemplate;
+    // Save the template's dim style baseline with it: Create() below destroys
+    // it, and SyncDimensionTemplateToDimStyle needs it to tell a stale template
+    // apart from deliberate per-run font overrides.
+    const ON_Font* savedTemplateFont = nullptr;
+    double savedTemplateTextHeight = 0.0;
+    if (hadTemplate)
+    {
+      savedTemplate = *text->DimensionTemplate();
+      savedTemplateFont = text->DimensionTemplateFont();
+      savedTemplateTextHeight = text->DimensionTemplateTextHeight();
+    }
+
     ON_wString rtfstr = text->RtfText();
     ON::AnnotationType annotation_type = this->Type();
     bool wrapped = text->TextIsWrapped();
     double width = text->FormattingRectangleWidth();
     double rot = text->TextRotationRadians();
     const_cast<ON_TextContent*>(text)->Create(rtfstr, annotation_type, dimstyle, wrapped, width, rot);
+
+    if (hadTemplate)
+    {
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplate(savedTemplate);
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplateBaseline(
+        savedTemplateFont, savedTemplateTextHeight);
+    }
   }
 
   ON_3dPoint text_center = ON_3dPoint::Origin;
@@ -4895,12 +5938,38 @@ bool ON_DimOrdinate::GetTextXform(
   // would change its appearance
   if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
   {
+    // Preserve the run-native authored template across this position-property
+    // reparse. ON_TextContent::Create does *this = ON_TextContent::Empty, which
+    // destroys m_private (the authored "<>" template). Without restoring it,
+    // the next UpdateDimensionText finds no template and rebuilds from the
+    // plain UserText, dropping run-only attributes such as super/subscript.
+    const bool hadTemplate = text->HasDimensionTemplate();
+    ON_TextRunArray savedTemplate;
+    // Save the template's dim style baseline with it: Create() below destroys
+    // it, and SyncDimensionTemplateToDimStyle needs it to tell a stale template
+    // apart from deliberate per-run font overrides.
+    const ON_Font* savedTemplateFont = nullptr;
+    double savedTemplateTextHeight = 0.0;
+    if (hadTemplate)
+    {
+      savedTemplate = *text->DimensionTemplate();
+      savedTemplateFont = text->DimensionTemplateFont();
+      savedTemplateTextHeight = text->DimensionTemplateTextHeight();
+    }
+
     ON_wString rtfstr = text->RtfText();
     ON::AnnotationType annotation_type = this->Type();
     bool wrapped = text->TextIsWrapped();
     double width = text->FormattingRectangleWidth();
     double rot = text->TextRotationRadians();
     const_cast<ON_TextContent*>(text)->Create(rtfstr, annotation_type, dimstyle, wrapped, width, rot);
+
+    if (hadTemplate)
+    {
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplate(savedTemplate);
+      const_cast<ON_TextContent*>(text)->SetDimensionTemplateBaseline(
+        savedTemplateFont, savedTemplateTextHeight);
+    }
   }
 
   double text_width = 0.0;

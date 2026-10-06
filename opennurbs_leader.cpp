@@ -1,3 +1,4 @@
+
 //
 // Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
@@ -241,9 +242,18 @@ bool ON_Leader::GetTextXform(
     text_shift.x = 0.0;
     text_shift.y = 0.0;
 
-    if (ON_TextMask::MaskFrame::CapsuleFrame != maskframe &&
-        ON_TextMask::MaskFrame::HexagonCapsuleFrame != maskframe &&
-        ON_TextMask::MaskFrame::RoundRectFrame != maskframe)
+    double landing_length = dimstyle->LeaderHasLanding() ? dimstyle->LeaderLandingLength() : 0;
+
+    bool adjustY = true;
+    if (ON_TextMask::MaskFrame::CapsuleFrame == maskframe ||
+        ON_TextMask::MaskFrame::HexagonCapsuleFrame == maskframe ||
+        ON_TextMask::MaskFrame::RoundRectFrame == maskframe)
+    {
+      if (fabs(tail_dir.x) <= 0.1)
+        adjustY = false;
+    }
+
+    if (adjustY)
     {
       // LeaderAttachStyle - Vertical alignment of text with leader text point
       ON::TextVerticalAlignment attach = dimstyle->LeaderTextVerticalAlignment();
@@ -278,22 +288,22 @@ bool ON_Leader::GetTextXform(
     if (0 < m_points.Count())
       text_pt2 = m_points[m_points.Count() - 1];
 
-    double landing_length = 0.0;
-    if (dimstyle->LeaderHasLanding())
-      landing_length = dimstyle->LeaderLandingLength();
     double text_gap = dimstyle->TextGap();
 
+    double mask_border = 0;
     if (maskframe != ON_TextMask::MaskFrame::NoFrame)
     {
-      text_gap += dimstyle->TextMask().MaskBorder(); // RH-71452
+      mask_border = dimstyle->TextMask().MaskBorder(); // RH-71452
+      text_gap += mask_border;
     }
 
     switch (maskframe)
     {
       case ON_TextMask::MaskFrame::CapsuleFrame:
+      case ON_TextMask::MaskFrame::HexagonCapsuleFrame:
         {
-          double half_height = dimscale * (textblock_height * 0.5 + text_gap);
-          double radius = ON_2dVector(half_height, half_height).Length();
+          double half_height = dimscale * (textblock_height * 0.5 + mask_border);
+          double radius = half_height;
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
@@ -304,18 +314,19 @@ bool ON_Leader::GetTextXform(
           {
             text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
           }
-          else if (fabs(tail_dir.x) > 0.1 && textblock_width > textblock_height)
+          else if (fabs(tail_dir.x) > 0.1)
           {
             if (tail_dir.x > 0)
             {
-              text_pt2.x += (textblock_width * 0.5 + text_gap - radius * 0.5);
+              text_pt2.x += (dimscale * (textblock_width * 0.5) - 0.25 * radius);
             }
             else
             {
-              text_pt2.x -= (textblock_width * 0.5 + text_gap - radius * 0.5);
+              text_pt2.x -= (dimscale * (textblock_width * 0.5) - 0.25 * radius);
             }
           }
-          text_pt2 = text_pt2 + (tail_dir * radius);
+          double gap = dimscale * dimstyle->TextGap();
+          text_pt2 = text_pt2 + (tail_dir * (radius + gap + dimscale*mask_border));
         }
         break;
       case ON_TextMask::MaskFrame::CircleFrame:
@@ -493,71 +504,6 @@ bool ON_Leader::GetTextXform(
             }
           }
           
-          text_pt2 = text_pt2 + (tail_dir * distance);
-        }
-        break;
-      case ON_TextMask::MaskFrame::HexagonCapsuleFrame:
-        {
-          double half_height = dimscale * (textblock_height * 0.5 + text_gap);
-          double radius = ON_2dVector(half_height, half_height).Length();
-          ON_3dPoint center(0,0,0);
-          double width = textblock_width;
-
-          if (landing_length > 0.0)
-          {
-            tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
-          }
-
-          if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
-          {
-            text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
-          }
-          else if (fabs(tail_dir.x) > 0.1)
-          {
-            if (tail_dir.x > 0)
-            {
-              text_pt2.x += (textblock_width * 0.5 + text_gap - radius * 0.5);
-            }
-            else
-            {
-              text_pt2.x -= (textblock_width * 0.5 + text_gap - radius * 0.5);
-            }
-          }
-          
-          ON_2dVector corner(0,radius);
-          corner.Rotate(-ON_PI/6.0);
-          
-          ON_2dPoint rightCenter(width * 0.5 - (radius * 0.5), 0);
-          ON_2dPoint rightCorner = rightCenter + corner;
-
-          ON_2dVector along(tail_dir);
-          along *= radius;
-          along.x = fabs(along.x);
-          along.y = fabs(along.y);
-
-          ON_Line lineFromTextCenter(ON_3dPoint::Origin,ON_3dPoint(along.x,along.y,0));
-          ON_Line boundary(ON_3dPoint(-rightCorner.x,rightCorner.y,0), ON_3dPoint(rightCorner.x, rightCorner.y,0));
-          double a = 0.0;
-          double b = 0.0;
-          double distance = radius;
-          if (ON_Intersect(lineFromTextCenter, boundary,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
-          {
-            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
-            ON_3dVector v(pt);
-            distance = v.Length();
-          }
-          
-          corner.Rotate(-2.0*ON_PI/6.0);
-          ON_2dPoint endCorner = rightCenter + corner;
-          ON_Line boundary2(ON_3dPoint(rightCorner.x, rightCorner.y, 0), ON_3dPoint(endCorner.x, endCorner.y, 0));
-          if (ON_Intersect(lineFromTextCenter, boundary2,&a, &b) && a >= 0.0 && b >= 0.0 && b <= 1.0)
-          {
-            ON_3dPoint pt = lineFromTextCenter.PointAt(a);
-            ON_3dVector v(pt);
-            distance = v.Length();
-          }
-
           text_pt2 = text_pt2 + (tail_dir * distance);
         }
         break;
@@ -783,6 +729,16 @@ bool  ON_Leader::GetAnnotationBoundingBox(
     curve->GetTightBoundingBox(curve_box);
     bbox.Union(curve_box);
   }
+  else
+  {
+    // When the leader curve type is None there is no curve to bound, and a
+    // leader with no text would otherwise produce an empty bounding box - which
+    // causes the object (including its arrowhead) to be culled from display and
+    // picking. Enclose the leader's vertex points so the box stays valid and the
+    // arrowhead remains visible. RH-81329
+    for (int i = 0; i < m_points.Count(); i++)
+      bbox.Set(m_plane.PointAt(m_points[i].x, m_points[i].y), true);
+  }
 
   return Internal_GetBBox_End(bbox, hash, boxmin, boxmax, bGrow);
 }
@@ -824,6 +780,17 @@ bool ON_Leader::GetTextGripPoints(
   const ON_DimStyle* dimstyle,
   double dimscale) const
 {
+  return GetTextGripPoints(nullptr, base, width, dimstyle, dimscale);
+}
+
+// returns the base point and width grip using the current alignments
+bool ON_Leader::GetTextGripPoints(
+  const ON_Viewport* vp,
+  ON_2dPoint& base,
+  ON_2dPoint& width,
+  const ON_DimStyle* dimstyle,
+  double dimscale) const
+{
   const ON_TextContent* text = Text();
   if (nullptr == text)
     return false;
@@ -832,20 +799,50 @@ bool ON_Leader::GetTextGripPoints(
   if (!text->Get3dCorners(q))
     return false;
 
-  ON_2dVector taildir = TailDirection(dimstyle);
+  // The two vertical edge-midpoints of the text box, in the text's local frame.
+  ON_3dPoint mid_a = (q[0] + q[3]) / 2.0;
+  ON_3dPoint mid_b = (q[1] + q[2]) / 2.0;
 
-  ON_3dPoint wp3 = (taildir.x < 0.0)
-    ? (q[0] + q[3]) / 2.0
-    : (q[1] + q[2]) / 2.0;
-
-  ON_3dPoint bp3 = (taildir.x < 0.0)
-    ? (q[1] + q[2]) / 2.0
-    : (q[0] + q[3]) / 2.0;
-
+  // Evaluate the text transform against the active viewport so the DrawForward
+  // flip matches the drawn text, then move the candidate grip points to world.
   ON_Xform xform;
-  GetTextXform(nullptr, dimstyle, dimscale, xform);
-  bp3.Transform(xform);
-  wp3.Transform(xform);
+  GetTextXform(vp, dimstyle, dimscale, xform);
+  mid_a.Transform(xform);
+  mid_b.Transform(xform);
+
+  // Assign base vs. width by geometry, AFTER the transform: the base (landing)
+  // grip is the text-box edge nearest the leader's text-attach point and the
+  // width grip is the far edge. Choosing by the sign of taildir.x instead (as
+  // this did) does not account for the DrawForward X-mirror that GetTextXform
+  // applies when the leader plane faces away from the view, so base and width
+  // came out swapped whenever the text was flipped - e.g. page-space leaders
+  // whose plane x-axis points opposite the view x-axis. RH-76943. (RH-69714 was
+  // the same symptom from a different, view-axis, cause; threading vp above does
+  // not help here because a page viewport's axes already equal the world axes.)
+  ON_3dPoint bp3, wp3;
+  const int lastpt = m_points.Count() - 1;
+  if (lastpt >= 0)
+  {
+    const ON_3dPoint attach = Plane().PointAt(m_points[lastpt].x, m_points[lastpt].y);
+    if (attach.DistanceTo(mid_a) <= attach.DistanceTo(mid_b))
+    {
+      bp3 = mid_a;
+      wp3 = mid_b;
+    }
+    else
+    {
+      bp3 = mid_b;
+      wp3 = mid_a;
+    }
+  }
+  else
+  {
+    // Degenerate leader with no points: fall back to the old tail-direction choice.
+    const ON_2dVector taildir = TailDirection(dimstyle);
+    bp3 = (taildir.x < 0.0) ? mid_b : mid_a;
+    wp3 = (taildir.x < 0.0) ? mid_a : mid_b;
+  }
+
   Plane().ClosestPointTo(bp3, &base.x, &base.y);
   Plane().ClosestPointTo(wp3, &width.x, &width.y);
 

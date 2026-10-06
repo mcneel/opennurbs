@@ -210,16 +210,24 @@ int ON_SubDComponentRegionIndex::CompareMinimumSubregion(
     return 1;
   if (nullptr == rhs)
     return -1;
-  unsigned short subdivision_count0 = (lhs->m_subdivision_count < rhs->m_subdivision_count) ? lhs->m_subdivision_count : rhs->m_subdivision_count;
-  if (subdivision_count0 > ON_SubDComponentRegionIndex::IndexCapacity)
-    subdivision_count0 = ON_SubDComponentRegionIndex::IndexCapacity;
-  for (unsigned short i = 0; i < subdivision_count0; i++)
+  const unsigned short lhs_K = lhs->m_subdivision_count;
+  const unsigned short rhs_K = rhs->m_subdivision_count;
+  const unsigned short min_K = (lhs_K <= rhs_K) ? lhs_K : rhs_K;
+  const unsigned short K = (min_K <= ON_SubDComponentRegionIndex::IndexCapacity) ? min_K : ON_SubDComponentRegionIndex::IndexCapacity;
+  for (unsigned short i = 0; i < K; i++)
   {
     if (lhs->m_index[i] < rhs->m_index[i])
       return -1;
     if (lhs->m_index[i] > rhs->m_index[i])
       return 1;
   }
+
+  // smaller regions < larger regions
+  if (lhs_K > rhs_K)
+    return -1;
+  if (lhs_K < rhs_K)
+    return 1;
+
   return 0;
 }
 
@@ -378,7 +386,6 @@ unsigned short ON_SubDComponentRegion::SubdivisionCount() const
   return m_region_index.m_subdivision_count;
 }
 
-
 unsigned short ON_SubDComponentRegionIndex::Index(
   unsigned short i
 ) const
@@ -391,7 +398,398 @@ unsigned short ON_SubDComponentRegionIndex::Index(
 
 const ON_SubDFace* ON_SubDFaceRegion::Level0Face() const
 {
-  return this->m_face_region.m_level0_component.Face();
+  const ON_SubDFace* f =
+    this->m_face_region.m_region_index.m_subdivision_count < 0xFFFF
+    ? this->m_face_region.m_level0_component.Face()
+    : nullptr;
+  if (nullptr != f && 0 == this->m_face_region.m_region_index.m_subdivision_count && f->m_edge_count != 4)
+  {
+    // regions are always quads
+    return nullptr;
+  }
+  return f;
+}
+
+const ON_SubDFace* ON_SubDFaceRegion::Level0PersistentFace() const
+{
+  return 
+    (this->m_face_region.IsPersistentId())
+    ? this->m_face_region.m_level0_component.Face() 
+    : nullptr;
+}
+
+unsigned ON_SubDFaceRegion::Level0PersistentFaceId() const
+{
+  const ON_SubDFace* f = this->Level0PersistentFace();
+  return (nullptr != f) ? f->m_id : 0;
+}
+
+const ON_SubDVertex* ON_SubDFaceRegion::Level0PersistentVertex() const
+{
+  const ON_SubDFace* f = Level0PersistentFace();
+  return
+    (nullptr != f && f->m_edge_count >= 3 && m_face_region.m_region_index.m_subdivision_count > 0 && m_face_region.m_region_index.m_index[0] < f->m_edge_count)
+    ? f->Vertex(m_face_region.m_region_index.m_index[0])
+    : nullptr;
+}
+
+
+unsigned ON_SubDFaceRegion::Level0PersistentVertexId() const
+{
+  const ON_SubDVertex* v = this->Level0PersistentVertex();
+  return (nullptr != v) ? v->m_id : 0;
+}
+
+ON_SubDFaceRegion::Type ON_SubDFaceRegion::RegionType() const
+{
+  Internal_GetExtraordinaryAttributes();
+  return (ON_SubDFaceRegion::Type)(m_extraordinary_attributes & 0x07);
+}
+
+ON_SubDFaceRegion::ExtraordinarySource ON_SubDFaceRegion::RegionExtraordinarySource() const
+{
+  Internal_GetExtraordinaryAttributes();
+  return (ON_SubDFaceRegion::ExtraordinarySource)((m_extraordinary_attributes & 0x38) >> 3);
+}
+
+unsigned ON_SubDFaceRegion::RegionExtraordinaryValence() const
+{
+  switch (RegionExtraordinarySource())
+  {
+  case ON_SubDFaceRegion::ExtraordinarySource::Unset:
+    break;
+  case ON_SubDFaceRegion::ExtraordinarySource::None:
+    break;
+  
+  case ON_SubDFaceRegion::ExtraordinarySource::Level0ExtraordinaryVertex:
+  {
+    const ON_SubDVertex* v = this->Level0PersistentVertex();
+    if (nullptr != v && v->m_edge_count == v->m_face_count)
+      return v->m_edge_count;
+  }
+  break;
+
+  case ON_SubDFaceRegion::ExtraordinarySource::Level1NgonCenterVertex:
+  {
+    const ON_SubDFace* f = this->Level0PersistentFace();
+    if (nullptr != f && f->m_edge_count >= 3)
+      return f->m_edge_count;
+  }
+  break;
+  }
+
+  return 0;
+}
+
+int ON_SubDFaceRegion::CompareSourceLevel0IdAndType(
+  const ON_SubDFaceRegion* lhs,
+  const ON_SubDFaceRegion* rhs
+)
+{
+  if (lhs == rhs)
+    return 0;
+
+  // nonnullptr < nullptr 
+  if (nullptr == lhs)
+    return 1;
+  if (nullptr == lhs)
+    return -1;
+
+  const unsigned short lhs_K = lhs->m_face_region.SubdivisionCount();
+  const unsigned short rhs_K = rhs->m_face_region.SubdivisionCount();
+  if (lhs_K < rhs_K)
+  {
+    ON_ERROR("This should never happen.");
+    return -1;
+  }
+  if (lhs_K > rhs_K)
+  {
+    ON_ERROR("This should never happen.");
+    return 1;
+  }
+
+  const ON_SubDFaceRegion::ExtraordinarySource lhs_src = lhs->RegionExtraordinarySource();
+  const ON_SubDFaceRegion::ExtraordinarySource rhs_src = rhs->RegionExtraordinarySource();
+  if (lhs_src != rhs_src)
+  {
+    // (Unset < Level0ExtraordinaryVertex < Level1NgonCenterVertex)
+    return ((unsigned char)lhs_src < (unsigned char)rhs_src) ? -1 : 1;
+  }
+
+  if (ON_SubDFaceRegion::ExtraordinarySource::Level0ExtraordinaryVertex == lhs_src)
+  {
+    // regions around a level 0 extraordinary vertex
+    // are first sorted by the vertex id
+    const ON_SubDVertex* lhs_v = lhs->Level0PersistentVertex();
+    const ON_SubDVertex* rhs_v = rhs->Level0PersistentVertex();
+    if (lhs_v != rhs_v)
+    {
+      // nonnullptr < nullptr 
+      if (nullptr == lhs_v)
+        return 1;
+      if (nullptr == rhs_v)
+        return -1;
+      if (lhs_v->m_id < rhs_v->m_id)
+        return -1;
+      if (lhs_v->m_id > rhs_v->m_id)
+        return 1;
+    }
+  }
+  else
+  {
+    // sort by face id
+    const ON_SubDFace* lhs_f = lhs->Level0PersistentFace();
+    const ON_SubDFace* rhs_f = rhs->Level0PersistentFace();
+    // regions at the center of an ngon face
+    // are first sorted by the face id
+    if (lhs_f != rhs_f)
+    {
+      // nonnullptr < nullptr 
+      if (nullptr == lhs_f)
+        return 1;
+      if (nullptr == rhs_f)
+        return -1;
+      if (lhs_f->m_id < rhs_f->m_id)
+        return -1;
+      if (lhs_f->m_id > rhs_f->m_id)
+        return 1;
+    }
+  }
+
+  const ON_SubDFaceRegion::Type lhs_type = lhs->RegionType();
+  const ON_SubDFaceRegion::Type rhs_type = rhs->RegionType();
+
+  if (lhs_type != rhs_type)
+  {
+    // (Unset < Level0ExtraordinaryVertex < Level1NgonCenterVertex)
+    return ((unsigned char)lhs_type < (unsigned char)rhs_type) ? -1 : 1;
+  }
+
+
+  return 0;
+}
+
+void ON_SubDFaceRegion::Internal_GetExtraordinaryAttributes() const
+{
+  if (0 != m_extraordinary_attributes)
+    return;
+
+  ON_SubDFaceRegion::Type type = ON_SubDFaceRegion::Type::Ordinary;
+  ON_SubDFaceRegion::ExtraordinarySource source = ON_SubDFaceRegion::ExtraordinarySource::None;
+  for (;;)
+  {
+    const ON_SubDFace* level0_face = this->Level0PersistentFace();
+    if (nullptr == level0_face)
+      break;
+    unsigned short level_0_face_edge_count = level0_face->m_edge_count;
+    if (level_0_face_edge_count < 3)
+      break;
+
+    const ON_SubDComponentRegionIndex& rdex = this->m_face_region.m_region_index;
+    const unsigned short K = rdex.m_subdivision_count;
+    if (K < 2)
+    {
+      // The code that generates the NURBS patches always subdivides at 
+      // least twice around extraordinary vertices or centers of N-gons.
+      break;
+    }
+
+    // In the comments below "face" is a level 0 SubD face that is being subdivided into smaller
+    // quad faces.
+    // 
+    // The level 1 subdivision of face has level_0_face_edge_count quads.
+    // The level 2 subdivision of face has 4*level_0_face_edge_count quads.
+    // The level K subdivision of face has (4^K)*level_0_face_edge_count quads.
+    // 
+    // The rdex.m_index[] array has length K
+    // and identifies a quad in the level K subdivision of the level 0 face.
+    // 
+    // This function is used to identifiy the location of the subdivision quads 
+    // near the corners of face and near the center of faces that are not quads.
+    // The purpose is to get the subdivided quad regions around points on the face
+    // that do not have a bicubic bezier surface representation.
+    // 
+
+    const unsigned short fvi = rdex.m_index[0];
+
+    if (level_0_face_edge_count < 3 || fvi >= level_0_face_edge_count)
+    {
+      ON_ERROR("rdex.m_index[0] is not valid");
+      break;
+    }
+
+    const unsigned short n = rdex.m_index[1];
+    if (n >= 4)
+    {
+      ON_ERROR("rdex.m_index[1] is not valid");
+      break;
+    }
+
+    if (rdex.m_index[K - 1] >= 4)
+    {
+      ON_ERROR("rdex.m_index[K-1] is not valid");
+      break;
+    }
+
+    // 0 <= rdex.m_index[0] < level_0_face_edge_count and the value
+    // identifies one of the quads in the level 1 subdivision of the level 0 face.
+    // 
+    // For 1 <= i < rdex.m_subdivision_count, 0 <= rdex.m_index[i] < 4
+    // and the value identifies one of four level (i+1) quads in the level i quad.
+    // Thus rdex.m_index[1] identifies one of four quads in the level 2 subdivision of 
+    // the level 1 quad identified by rdex.m_index[0].
+    // rdex.m_index[2] identifies one of four level 3 quads in the level 2 quad
+    // identified by {rdex.m_index[0], rdex.m_index[1]} and so on.
+
+
+    // We are interested in two sitations:
+    // The regions around a level 0 extraordinary vertex
+    // and the regions arount the level 1 extraordinary vertex at the center of an ngon.
+    const bool bFaceIsNgon = (4 != level_0_face_edge_count);
+    const bool bLevel0ExtraordinaryVertexSituation
+      = (false == bFaceIsNgon && n == fvi)
+      || (bFaceIsNgon && 2 == n);
+    const bool bLevel0NgonCenterSituation
+      = (bFaceIsNgon && 0 == n);
+    if (bLevel0ExtraordinaryVertexSituation && bLevel0NgonCenterSituation)
+    {
+      // both can be false but both cannot be true
+      ON_ERROR("Bug in the calculation of these bool values.");
+      break;
+    }
+
+    unsigned short i;
+    if (bLevel0ExtraordinaryVertexSituation)
+    {
+      const ON_SubDVertex* v = level0_face->Vertex(fvi);
+      if (nullptr == v || ON_SubDVertexTag::Smooth != v->m_vertex_tag || v->m_face_count < 3)
+        break;
+      if (v->m_face_count < 3 || v->m_face_count == 4 || v->m_edge_count != v->m_face_count)
+        break;
+
+      if (false == bFaceIsNgon)
+      {
+        if ((n + 2) % 4 == rdex.m_index[K - 1])
+          break;
+
+        // If we get here, then face is a quad and face->Vertex(fvi) is an extraordinary vertex.
+        // We are looking for regions around this extraordinary vertex.
+        for (i = 2; i < K - 1; ++i)
+        {
+          if (n != rdex.m_index[i])
+          {
+            // This region is too far from the extraordinary vertex to be of interest.
+            break;
+          }
+        }
+        if (i >= K - 1)
+        {
+          source = ON_SubDFaceRegion::ExtraordinarySource::Level0ExtraordinaryVertex;
+          if (n == rdex.m_index[K - 1])
+          {
+            // This is the level K extraordinary region that has a vertex at the 
+            // level K subdivision of face->Vertex(fvi). This is the region
+            // that needs to be APPROXIMATED by a bibezier or NURBS patch of some sort.
+            type = ON_SubDFaceRegion::Type::Extraordinary;
+          }
+          else
+          {
+            // This is one of two level K exact regions that share an edge with the extraordinary region.
+            // The bibeziers we have for these regions are exact. The edge they share with the
+            // extraordinary region can be used a a boundary condition for calculating
+            // a NURBS approximation to the extraordinary region.
+            type = ON_SubDFaceRegion::Type::ExtraordinaryAdjacent;
+          }
+        }
+      }
+      else
+      {
+        // If we get here, then face is an ngon and face->Vertex(fvi) is an extraordinary vertex.
+        // We are looking for regions around this extraordinary vertex.
+
+        if (0 == rdex.m_index[K - 1])
+        {
+          break;
+        }
+
+        // When the level 0 face is not a quad and n = 2, 
+        // rdex.m_index[] indentifies a regions near 
+        // the subdivisions of the level 0 vertex face->Vertex(fvi).
+        for (i = 2; i < K - 1; ++i)
+        {
+          if (2 != rdex.m_index[i])
+          {
+            // This region is too far from the extraordinary vertex to be of interest.
+            break;
+          }
+        }
+        if (i >= K - 1)
+        {
+          source = ON_SubDFaceRegion::ExtraordinarySource::Level0ExtraordinaryVertex;
+          if (2 == rdex.m_index[K - 1])
+          {
+            // face->Vertex(fvi) is an extraordinary vertex 
+            // and is on a corner of this region.
+            type = ON_SubDFaceRegion::Type::Extraordinary;
+          }
+          else
+          {
+            type = ON_SubDFaceRegion::Type::ExtraordinaryAdjacent;
+          }
+        }
+      }
+    }
+    else if (bLevel0NgonCenterSituation)
+    {
+      // If we get here, we are looking for regions around the 
+      // level 1 extraordinary vertex that is created 
+      // at the center of the level 0 ngon face.
+
+      // When the level 0 face is not a quad and n = 0, 
+      // rdex.m_index[] indentifies a regions near the 
+      // level 1 vertex created at the centroid of the level 0 face.
+      // This level 1 vertex is smooth with valence = level_0_face_edge_count
+      // and is therefore and extraordinary vertex.
+
+      if (2 == rdex.m_index[K - 1])
+        break;
+
+      for (i = 2; i < K - 1; ++i)
+      {
+        if (0 != rdex.m_index[i])
+        {
+          // This region is too far from the center of the level 0 ngon to be of interest.
+          break;
+        }
+      }
+
+      if (i >= K - 1)
+      {
+        source = ON_SubDFaceRegion::ExtraordinarySource::Level1NgonCenterVertex;
+        if (0 == rdex.m_index[K - 1])
+        {
+          // This is the level K extraordinary region that has a vertex at the 
+          // center of the ngon. This is the region that needs to be APPROXIMATED 
+          // by a bibezier or NURBS patch of some sort.
+          type = ON_SubDFaceRegion::Type::Extraordinary;
+        }
+        else
+        {
+          // This is one of two level K exact regions that share an edge with the extraordinary region.
+          // The bibeziers we have for these regions are exact. The edge they share with the
+          // extraordinary region can be used a a boundary condition for calculating
+          // a NURBS approximation to the extraordinary region.
+          type = ON_SubDFaceRegion::Type::ExtraordinaryAdjacent;
+        }
+      }
+    }
+
+    break;
+  }
+
+  const unsigned char a = (unsigned char)type;
+  const unsigned char b = (unsigned char)source;
+  m_extraordinary_attributes = a | (b << 3);
 }
 
 unsigned int ON_SubDFaceRegion::CornerIndexFromVertexId(
@@ -429,7 +827,7 @@ void ON_SubDFaceRegion::Push(unsigned int quadrant_index)
   }
 
   const int surviving_vi
-    = ((4 != m_level0_edge_count) && (1 == m_face_region.SubdivisionCount()))
+    = ((4 != m_level0_edge_count_WHY_NEVER_SET) && (1 == m_face_region.SubdivisionCount()))
     ? 2
     : quadrant_index;
   m_vertex_id[(surviving_vi+1)%4] = 0;

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -19,6 +19,50 @@
 
 #if !defined(OPENNURBS_SUBD_INC_)
 #define OPENNURBS_SUBD_INC_
+
+// ON_SubDVertexPtr, ON_SubDEdgePtr, and ON_SubDFacePtr are unsigned ints that store a
+// pointer to an ON_SubDVertex, ON_SubDEdge, or ON_SubDFace along with a direction bit
+// that is 0 or 1. The direction bit indicates whether the component is being referenced
+// with its natural orientation (0) or the reverse of its natural orientation (1).
+//
+// ON_SubDComponentPtr additionally stores a type value indicating whether the component
+// is a vertex (2), an edge (4), or a face (6).
+//
+// This packing assumes that ON_SubDVertex, ON_SubDEdge and ON_SubDFace are allocated on
+// an 8 byte boundary (they contain doubles) and that pointers are 8 bytes wide.
+static_assert(8 == ON_SIZEOF_POINTER, "SubD component pointers require 64-bit pointers.");
+
+// NOTE: RhinoCommon mirrors this bit layout in the internal
+// Rhino.Geometry.SubDComponent.SubDComponentPtr struct, so that the .NET SDK can decode a
+// component pointer without a round trip. The .NET enum is generated from this one, which
+// keeps the two from drifting apart. It is typed as ulong there, which assumes 64-bit
+// pointers; the static_assert below enforces that.
+#pragma region RH_C_SHARED_ENUM [ON_SubDComponentPtrTypesAndMasks] [Rhino.Geometry.SubDComponent.SubDComponentPtrTypesAndMasks] [internal:ulong:nested]
+/// <summary>
+/// ON_SubDComponentPtrTypesAndMasks contains the bit layout used by ON_SubDComponentPtr,
+/// ON_SubDVertexPtr, ON_SubDEdgePtr and ON_SubDFacePtr to pack a component pointer, a
+/// direction bit and a component type into a single unsigned integer.
+/// </summary>
+enum class ON_SubDComponentPtrTypesAndMasks : ON__UINT_PTR
+{
+  /// <summary>The component type is not set.</summary>
+  UnsetType =     0x0U,
+  /// <summary>Bit storing the component direction (0 = natural, 1 = reversed).</summary>
+  DirectionMask = 0x1U,
+  /// <summary>The component is an ON_SubDVertex.</summary>
+  VertexType =    0x2U,
+  /// <summary>The component is an ON_SubDEdge.</summary>
+  EdgeType =      0x4U,
+  /// <summary>The component is an ON_SubDFace.</summary>
+  FaceType =      0x6U,
+  /// <summary>Bits storing the component type.</summary>
+  TypeMask =      0x6U,
+  /// <summary>Bits storing the component type and direction.</summary>
+  FlagsMask =     0x7U,
+  /// <summary>Bits storing the component pointer.</summary>
+  PointerMask =   0xFFFFFFFFFFFFFFF8U
+};
+#pragma endregion
 
 /// <summary>
 /// ON_SubDGetControlNetMeshPriority specifies what type of ON_SubD information
@@ -46,6 +90,7 @@ enum class ON_SubDGetControlNetMeshPriority : unsigned char
 };
 
 
+#pragma region RH_C_SHARED_ENUM [ON_SubDTextureCoordinateType] [Rhino.Geometry.SubDTextureCoordinateType] [byte]
 /// <summary>
 /// ON_SubDTextureCoordinateType identifies the way ON_SubDMeshFragment texture coordinates are set from an ON_SubDFace.
 /// </summary>
@@ -91,6 +136,7 @@ enum class ON_SubDTextureCoordinateType : unsigned char
   ///</summary>
   FromMapping = 7,
 };
+#pragma endregion
 
 #pragma region RH_C_SHARED_ENUM [ON_SubDVertexTag] [Rhino.Geometry.SubDVertexTag] [byte]
 /// <summary>
@@ -282,7 +328,7 @@ enum class ON_SubDHashType : unsigned char
   /// <summary>
   /// The Topology hash includes component ids, and all topological relationships 
   /// between vertices, edges, and faces. If two SubDs have the same topology hash,
-  /// then the the have identical labeled control net topology.
+  /// then the have identical labeled control net topology.
   /// </summary>
   Topology = 3,
 
@@ -332,8 +378,8 @@ public:
 
 public:
   /// <summary>
-  /// ON_SubDEdgeSharpness::MaximumValue = 4.
-  /// SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
+  /// ON_SubDEdgeSharpness::MaximumValue = 4.0.
+  /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
   /// </summary>
   static const double MaximumValue;
 
@@ -347,9 +393,9 @@ public:
   /// <summary>
   /// ON_SubDEdgeSharpness::CreaseValue = ON_SubDEdgeSharpness::MaximumValue + 1.
   /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
-  /// This value is used when it is convenient to use and ON_SubDEdgeSharpness to
+  /// This value is used when it is convenient to use an ON_SubDEdgeSharpness to
   /// indicate an edge has a crease tag. Edges with crease tags always have a 
-  /// sharpness property of ON_SubDEdgeSharpness::Smooth.
+  /// sharpness property of ON_SubDEdgeSharpness::Crease.
   /// </summary>
   static const double CreaseValue;
 
@@ -375,9 +421,9 @@ public:
   /// <summary>
   /// An edge sharpness with both end values = ON_SubDEdgeSharpness::CreaseValue.
   /// This value is not a valid sharpness value for a sharp edge 
-  /// (A sharp edge a smooth edge with nonzero sharpness).
-  /// When working with edges, it is sometimes convenient to have
-  /// an ON_SubDEdgeSharpness value that indicated the edge is a crease. 
+  /// (a sharp edge is a smooth edge with nonzero sharpness).
+  /// When working with edges, it is sometimes convenient to have 
+  /// an ON_SubDEdgeSharpness value that indicates that the edge is a crease. 
   /// ON_SubDEdgeSharpness::Crease is used for this purpose.
   /// </summary>
   static const ON_SubDEdgeSharpness Crease;
@@ -407,7 +453,7 @@ public:
   /// This is useful in user interface code that expresses sharpness in percentages.
   /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue,
   /// valid, a number followed by a percent sign is returned.
-  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, "crease" is returned.
+  /// If sharpness == ON_SubDEdgeSharpness::CreaseValue, "crease" is returned.
   /// If the sharpness is not valid, a warning sign is returned.
   /// </summary>
   /// <param name="sharpness"></param>
@@ -416,19 +462,19 @@ public:
 
   /// <summary>
   /// Convert sharpness to a percentage from 0 to 100.0.
-  /// This is useful in user interface code that experesses sharpness in percentages.
+  /// This is useful in user interface code that expresses sharpness in percentages.
   /// </summary>
   /// <param name="sharpness"></param>
   /// <param name="crease_percentage"></param>
   /// <returns>
   /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpness/ON_SubDEdgeSharpness::MaximumValue is returned.
-  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
+  /// If sharpness == ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
   /// Otherwise ON_DBL_QNAN is returned.
   /// </returns>
   static double ToPercentage(double sharpness, double crease_percentage);
 
   /// <returns>
-  /// If the sharpness value is valid and contant, returns true.
+  /// If the sharpness value is valid and constant, returns true.
   /// Otherwise returns false.
   /// Note that ON_SubDEdgeSharpness::Crease.IsConstant() and ON_SubDEdgeSharpness::Nan.IsConstant() are both false.
   ///</returns>
@@ -439,19 +485,19 @@ public:
   /// </param>
   /// <returns>
   /// If this is equal to ON_SubDEdgeSharpness::Crease, returns bCreaseResult.
-  /// If the sharpness value is valid and contant, returns true.
+  /// If the sharpness value is valid and constant, returns true.
   /// Otherwise returns false.
   /// </returns>
   bool IsConstant( bool bCreaseResult ) const;
 
   /// <returns>
-  /// If EndSharpness(0) &gt; EndSharpness(1), true is returned.
+  /// If EndSharpness(0) &lt; EndSharpness(1), true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool IsIncreasing() const;
 
   /// <returns>
-  /// If EndSharpness(0) &lt; EndSharpness(1), true is returned.
+  /// If EndSharpness(0) &gt; EndSharpness(1), true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool IsDecreasing() const;
@@ -520,8 +566,8 @@ public:
   /// <param name="eptr0"></param>
   /// <param name="eptr1"></param>
   /// <returns>
-  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
-  /// then ON_SubDEdgeSharpness::EqualEndSharpness(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// If the edges have the same tag, and eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0),
+  /// then ON_SubDEdgeSharpness::EqualEndSharpness(eptr0.RelativeSharpness(true), eptr1.RelativeSharpness(true)) is returned.
   /// Otherwise false is returned.
   /// </returns>
   static bool EqualEndSharpness(
@@ -530,13 +576,13 @@ public:
   );
 
   /// <summary>
-  /// Determine if edges are adjacent, have the same sharpness trend, and equal adjacent sharpness values.
+  /// Determine if edges are adjacent, have the same sharpness delta, and equal adjacent sharpness values.
   /// </summary>
   /// <param name="eptr0"></param>
   /// <param name="eptr1"></param>
   /// <returns>
   /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
-  /// then ON_SubDEdgeSharpness::EqualTrend(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// then ON_SubDEdgeSharpness::EqualTrend(eptr0.RelativeSharpness(), eptr1.RelativeSharpness()) is returned.
   /// Otherwise false is returned.
   /// </returns>
   static bool EqualTrend(
@@ -550,8 +596,8 @@ public:
   /// <param name="eptr0"></param>
   /// <param name="eptr1"></param>
   /// <returns>
-  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
-  /// then ON_SubDEdgeSharpness::EqualDelta(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// If the edges have the same tag, and eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0),
+  /// then ON_SubDEdgeSharpness::EqualDelta(eptr0.RelativeSharpness(1), eptr1.RelativeSharpness(0)) is returned.
   /// Otherwise false is returned.
   /// </returns>
   static bool EqualDelta(
@@ -561,7 +607,7 @@ public:
 
 
   /// <summary>
-  /// Determine if all the input edges have idential constant sharpeness.
+  /// Determine if all the input edges have identical constant sharpness.
   /// </summary>
   /// <param name="edges"></param>
   /// <param name="bCreaseResult">
@@ -660,41 +706,91 @@ public:
   );
 
   /// <summary>
-  /// Create a constant ON_SubDEdgeSharpness;
+  /// Create a constant ON_SubDEdgeSharpness.
   /// </summary>
   /// <param name="sharpness">0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
-  /// If the input values is valid, an ON_SubDEdgeSharpness 
+  /// If the input value is valid, an ON_SubDEdgeSharpness 
   /// with constant value sharpness is returned. 
-  /// If the input vaue is ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
+  /// If the input value is ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromConstant(double sharpness);
 
   /// <summary>
-  /// Create a variable ON_SubDEdgeSharpness;
+  /// Create a variable ON_SubDEdgeSharpness.
   /// </summary>
   /// <param name="sharpness0">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <param name="sharpness1">0 &lt;= sharpness1 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
   /// If both input values are valid, an edge sharpness 
   /// with start value sharpness0 and end value sharpness1 is returned. 
-  /// If both input values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease::Crease is returned.
+  /// If both input values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromInterval(double sharpness0, double sharpness1);
 
   /// <summary>
-  /// Create a variable ON_SubDEdgeSharpness;
+  /// Create a variable ON_SubDEdgeSharpness.
   /// </summary>
-  /// <param name="sharpness_interval">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
+  /// <param name="sharpness_interval">
+  /// 0 &lt;= sharpness_interval[0] &lt;= ON_SubDEdgeSharpness::MaximumValue
+  /// 0 &lt;= sharpness_interval[1] &lt;= ON_SubDEdgeSharpness::MaximumValue
+  /// </param>
   /// <returns>
   /// If the interval's values are valid, an edge sharpness 
   /// with start value sharpness_interval[0] and end value sharpness_interval[1] is returned. 
-  /// If both sharpness_interval[] values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease::Crease is returned.
+  /// If both sharpness_interval[] values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromInterval(const class ON_Interval& sharpness_interval);
+
+  /// <summary>
+  /// Create a constant ON_SubDEdgeSharpness from a percentage.
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// </summary>
+  /// <param name="percentage">0 &lt;= percentage &lt;= 100.0, or ON_DBL_MAX for a crease.</param>
+  /// <returns>
+  /// If the input value is valid, an ON_SubDEdgeSharpness with constant value
+  /// (percentage * ON_SubDEdgeSharpness::MaximumValue / 100.0) is returned.
+  /// If the input value is ON_DBL_MAX, ON_SubDEdgeSharpness::Crease is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromConstantPercentage(double percentage);
+
+  /// <summary>
+  /// Create a variable ON_SubDEdgeSharpness from percentages.
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// </summary>
+  /// <param name="percentage0">0 &lt;= percentage0 &lt;= 100.0, or ON_DBL_MAX for a crease.</param>
+  /// <param name="percentage1">0 &lt;= percentage1 &lt;= 100.0, or ON_DBL_MAX for a crease.</param>
+  /// <returns>
+  /// If both input values are valid, an edge sharpness with start value
+  /// (percentage0 * ON_SubDEdgeSharpness::MaximumValue / 100.0) and end value
+  /// (percentage1 * ON_SubDEdgeSharpness::MaximumValue / 100.0) is returned.
+  /// If both input values are ON_DBL_MAX, ON_SubDEdgeSharpness::Crease is returned.
+  /// Note that mixing ON_DBL_MAX with a valid percentage returns
+  /// ON_SubDEdgeSharpness::Nan: an edge is either a crease or it is not.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromIntervalPercentage(double percentage0, double percentage1);
+
+  /// <summary>
+  /// Create a variable ON_SubDEdgeSharpness from percentages.
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// </summary>
+  /// <param name="percentage_interval">
+  /// 0 &lt;= percentage_interval[0] &lt;= 100.0, or ON_DBL_MAX for a crease.
+  /// 0 &lt;= percentage_interval[1] &lt;= 100.0, or ON_DBL_MAX for a crease.
+  /// </param>
+  /// <returns>
+  /// If the interval's values are valid, an edge sharpness with start value
+  /// (percentage_interval[0] * ON_SubDEdgeSharpness::MaximumValue / 100.0) and end value
+  /// (percentage_interval[1] * ON_SubDEdgeSharpness::MaximumValue / 100.0) is returned.
+  /// If both percentage_interval[] values are ON_DBL_MAX, ON_SubDEdgeSharpness::Crease is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromIntervalPercentage(const class ON_Interval& percentage_interval);
 
   /// <summary>
   /// Return a sharpness interval that is the union of the nonzero input sharpness intervals.
@@ -714,9 +810,9 @@ public:
   );
 
   /// <summary>
-  /// Sharpness value for a subdivided edge.
+  /// Sharpness value that an edge with this sharpness would have once subdivided.
   /// </summary>
-  /// <param name="end_index"0 or 1.</param>
+  /// <param name="end_index">0 or 1.</param>
   /// <returns>Subdivided sharpness or ON_SubDEdgeSharpness::Smooth if index is out of range.</returns>
   const ON_SubDEdgeSharpness Subdivided(int end_index) const;
 
@@ -790,7 +886,7 @@ public:
   /// <summary>
   /// Get the edge sharpness at the start or end.
   /// </summary>
-  /// <param name="end_index"0 or 1.</param>
+  /// <param name="end_index">0 or 1.</param>
   /// <returns>EndSharpness(end_index).</returns>
   double operator[](int end_index) const;
 
@@ -835,16 +931,16 @@ public:
   /// <param name="vertex_tag">
   /// The vertex tag (smooth, crease, dart, corner). 
   /// For smooth, crease, and dart, this is used to determine the number of attached crease edges.
-  /// COrner vertices always have sharpness = 0.
+  /// Corner vertices always have sharpness = 0.
   /// </param>
   /// <param name="interior_crease_vertex_sharpness">
   /// If the original source of the vertex is an interior crease vertex 
   /// (vertex_tag = ON_SubDVertexTag::Crease, 2 sectors, EdgeCount() = FaceCount() &gt;= 2),
   /// then interior_crease_vertex_sharpness is the maximum edge sharpness at the
   /// vertex's end of all smooth edges from both sectors. 
-  /// This paramter is important in special situations that occur
+  /// This parameter is important in special situations that occur
   /// in low level SubD evaluation code where information from only one
-  /// sector is present. In all other cases, this value doesn't matter as long
+  /// sector is present. In all other cases, this parameter doesn't matter as long
   /// as interior_crease_vertex_sharpness &lt;= maximum_edge_sharpness_at_vertex.
   /// When in doubt pass 0.0 or ON_DBL_QNAN.
   /// </param>
@@ -867,7 +963,7 @@ public:
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
-  /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
+  /// the input sharpness is within ON_SubDEdgeSharpness::Tolerance of an integer.
   /// </summary>
   /// <param name="sharpness"></param>
   /// <param name="invalid_input_result">Value returned when the sharpness parameter is invalid.</param>
@@ -879,7 +975,7 @@ public:
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
-  /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
+  /// the input sharpness is within ON_SubDEdgeSharpness::Tolerance of an integer.
   /// </summary>
   /// <param name="sharpness"></param>
   /// <returns>SubD edge sharpness value that makes sense or 0.0 if the input sharpness is invalid.</returns>
@@ -984,7 +1080,7 @@ public:
   /// <summary>
   /// If this class was created using the constructor that has a vertex tag
   /// and that tag was ON_SubDVertexTag::Smooth or ON_SubDVertexTag::Dart,
-  /// or ON_SubDVertexTag::Crease, then you you must call this function for
+  /// or ON_SubDVertexTag::Crease, then you must call this function for
   /// every sharp edge connected to the vertex. 
   /// </summary>
   /// <param name="sharpness_at_vertex">
@@ -1014,8 +1110,6 @@ public:
   bool AddCreaseEdgeControlNetPoint(
     ON_3dPoint other_end_control_net_point
   );
-
-  int junnkkkkkk() const;
 
   /// <returns>
   /// If the vertex has been set, true is returned.
@@ -1131,7 +1225,7 @@ private:
 /// <summary>
 /// A ON_SubDFaceCornerDex is a value that identifies a subd face corner.
 /// </summary>
-class ON_WIP_CLASS ON_SubDFaceCornerDex
+class ON_CLASS ON_SubDFaceCornerDex
 {
 private:
   unsigned short m_corner_index = 0;
@@ -1262,7 +1356,7 @@ public:
   const ON_SubDEdgePtr EdgePtr(const class ON_SubDFace* face, unsigned corner_edge_dex) const;
 
   /// <summary>
-  /// Get the edge of face that goes from the the previous
+  /// Get the edge of face that goes from the previous
   /// face corner to this face corner. The edge pointer 
   /// is oriented from PreviousCornerVertex() to CornerVertex().
   /// If this is not set, face is nullptr, or face->EdgeCount() != this->EdgeCount(),
@@ -1284,7 +1378,7 @@ public:
   const ON_SubDEdgePtr RightEdgePtr(const class ON_SubDFace* face) const;
 };
 
-class ON_WIP_CLASS ON_SubDFaceParameter
+class ON_CLASS ON_SubDFaceParameter
 {
 public:
   ON_SubDFaceParameter() = default;
@@ -1295,10 +1389,10 @@ public:
 
   /// <summary>
   /// Create a SubD face parameter that identifies a point on the face. 
-  /// The parameters (0,0) correspond the the corner vertex cdex.Vertex(face). 
+  /// The parameters (0,0) correspond the corner vertex cdex.Vertex(face). 
   /// The corner_s parameter runs from the corner vertex to the midpoint of cdex.RightEdge(face).
   /// The corner_t parameter runs from the corner vertex to the midpoint of cdex.LeftEdge(face).
-  /// The parameters (1/2, 1/2) correspond the the center of the face.
+  /// The parameters (1/2, 1/2) correspond the center of the face.
   /// </summary>
   /// <param name="cdex">
   /// Identifies the face's corner subdivison quad.
@@ -1316,7 +1410,7 @@ public:
   );
 
   /// <summary>
-  /// Create at ON_SubDFaceParameter the corresponds to the the specified quad face parameters.
+  /// Create at ON_SubDFaceParameter the corresponds to the specified quad face parameters.
   /// The quad face parameters for face.Vertex(0) are (0,0).
   /// The quad face parameters for face.Vertex(1) are (1,0).
   /// The quad face parameters for face.Vertex(2) are (1,1).
@@ -1342,12 +1436,6 @@ public:
   /// </summary>
   static const ON_SubDFaceParameter Nan;
 
-  /// <returns>True if all values are valid.</returns>
-  bool IsSet();
-
-  /// <returns>True if all values are not valid.</returns>
-  bool IsNotSet();
-
   /// <summary>
   /// Well ordered dictionary compare of m_cdex, m_s, and m_t using
   /// ON_SubDFaceCornerDex::CompareAll() and ON_DBL::CompareValue().
@@ -1371,8 +1459,10 @@ public:
   /// <returns></returns>
   static int Compare(const ON_SubDFaceParameter* lhs, const ON_SubDFaceParameter* rhs);
 
+  /// <returns>True if all values are valid.</returns>
   bool IsSet() const;
 
+  /// <returns>True if any value is not valid.</returns>
   bool IsNotSet() const;
 
   /// <summary>
@@ -1475,13 +1565,6 @@ private:
   /// </summary>
   double m_t = ON_DBL_QNAN;
 };
-
-ON_WIP_DECL
-bool operator==(const ON_SubDFaceParameter& lhs, const ON_SubDFaceParameter& rhs);
-
-ON_WIP_DECL
-bool operator!=(const ON_SubDFaceParameter& lhs, const ON_SubDFaceParameter& rhs);
-
 
 /// <summary>
 /// ON_SubDHash provides a simple way to save a SubD's vertex, edge, and face SHA1 hashes.
@@ -1663,14 +1746,17 @@ public:
   /*
   Description:
     Default ON_SubDToBrepParameters settings.
-  Remarks: 
-    These are the settings used by ON_SubD::BrepForm()
   */
   static const ON_SubDToBrepParameters Default;
 
   /*
   Description:
     Default ON_SubDToBrepParameters settings for creating an unpacked brep.
+  Remarks: 
+    These are the settings used by ON_SubD::BrepForm(), which NEEDS to be unpacked.
+    When picking proxy Brep components from a SubD, we need a close to 1-1 correspondence
+    between proxy Brep components and SubD components. The only way to do that is to
+    an unpacked proxy Brep.
   */
   static const ON_SubDToBrepParameters DefaultUnpacked;
 
@@ -1783,6 +1869,12 @@ public:
   bool Write(ON_BinaryArchive& archive) const;
 
 private:
+  // 2025-09-25, Pierre, RH-89417
+  // Default (used for getting the proxy Brep in ON_SubD::BrepForm) NEEDS to be unpacked.
+  // When picking proxy Brep components from a SubD, we need a close to 1-1 correspondence
+  // between proxy Brep components and SubD components. The only way to do that is to get
+  // an unpacked proxy Brep. We might be able to change that with a major refactor in
+  // how Internal_ToBrep() (in opennurbs_plus_subd_mesh.cpp) manages component maps.
   bool m_bPackFaces = false;
   ON_SubDToBrepParameters::VertexProcess m_extraordinary_vertex_process = ON_SubDToBrepParameters::VertexProcess::LocalG1x;
   unsigned short m_reserved1 = 0;
@@ -1811,12 +1903,6 @@ public:
   /// Otherwise, 0 is returned.
   /// </returns>
   unsigned int VertexId() const;
-
-  /// <returns>
-  /// If Vertex() is not nullptr, Vertex()->m_vertex_tag is returned.
-  /// Otherwise, ON_SubDVertexTag::Unset is returned.
-  /// </returns>
-  ON_SubDVertexTag VertexTag() const;
 
   /*
   Returns:
@@ -1929,6 +2015,15 @@ public:
     bool bClearNeighborhood
   ) const;
 
+
+  /*
+  Description:
+    Compares VertexId(), with similar null rules as ON_SubDComponentPtr::CompareComponentId.
+  */
+  static int CompareVertexId(
+    const ON_SubDVertexPtr* a,
+    const ON_SubDVertexPtr* b
+  );
 };
 
 ON_DECL
@@ -2162,7 +2257,7 @@ public:
     point_location - [in]
       Used to select control net or limit surface point.
   Returns:
-    The requested vertex point with with EdgeDirection() taken into account.
+    The requested vertex point with EdgeDirection() taken into account.
     ON_3dPoint::NanPoint if relative_vertex_index, Edge() is nullptr, or Edge()->Vertex() is nullptr.
   */
   const ON_3dPoint RelativeVertexPoint(
@@ -2200,7 +2295,7 @@ public:
     If (relative_vertex_index = 0), returns Edge()->m_sector_coefficient(1-EdgeDirection())
     Otherwise ON_SubDSectorType::ErrorSectorCoefficient is returned.
   Remarks:
-    The name "sector coefficient" is used because is is a property of the
+    The name "sector coefficient" is used because is a property of the
     vertex's sector (every edge in vertex sector has the same value at the tagged vertex).
     The sector coefficient does not change when a subdivision is applied.
   */
@@ -2234,7 +2329,7 @@ public:
     points in the opposite direction as the face's oriented boundary.
     If an edge is nonmanifold (3 or more faces), then nullptr is always returned.
     If an edge has two faces that do not attach to this edge with opposite orientations
-    (nonoriented manifold edge), then nullptr is returned.    
+    (nonoriented manifold edge), then nullptr is returned.
   Parameters:
     relative_face_index - [in]
       0: return face on the left side of the edge with respect to EdgeOrientation().
@@ -2243,6 +2338,23 @@ public:
     The requested face.
   */
   const class ON_SubDFace* RelativeFace(
+    int relative_face_index
+  ) const;
+
+  /*
+  Description:
+    Same as RelativeFace(), but returns an ON_SubDFacePtr whose direction bit is set
+    so the face's boundary is oriented in the same direction as this ON_SubDEdgePtr.
+    Use this instead of RelativeFace() when the caller needs the face orientation
+    relative to the edge, not just the face itself.
+  Parameters:
+    relative_face_index - [in]
+      0: return face on the left side of the edge with respect to EdgeOrientation().
+      1: return face on the right side of the edge with respect to EdgeOrientation().
+  Returns:
+    The requested face, or ON_SubDFacePtr::Null if there is no such face.
+  */
+  const class ON_SubDFacePtr RelativeFacePtr(
     int relative_face_index
   ) const;
 
@@ -2472,6 +2584,16 @@ public:
   ) const;
 
   ON__UINT8 ClearMarkBits() const;
+
+
+  /*
+  Description:
+    Compares EdgeId(), with similar null rules as ON_SubDComponentPtr::CompareComponentId.
+  */
+  static int CompareEdgeId(
+    const ON_SubDEdgePtr* a,
+    const ON_SubDEdgePtr* b
+  );
 };
 
 ON_DECL
@@ -2553,6 +2675,16 @@ public:
   static int CompareFacePointer(
     const ON_SubDFacePtr* lhs,
     const ON_SubDFacePtr* rhs
+  );
+
+
+  /*
+  Description:
+    Compares FaceId(), with similar null rules as ON_SubDComponentPtr::CompareComponentId.
+  */
+  static int CompareFaceId(
+    const ON_SubDFacePtr* a,
+    const ON_SubDFacePtr* b
   );
 
   /*
@@ -2683,10 +2815,10 @@ public:
   /// </summary>
   enum class Type : unsigned char
   {
-    Unset = 0,
-    Vertex = 2,
-    Edge = 4,
-    Face = 6
+    Unset  = (unsigned char)ON_SubDComponentPtrTypesAndMasks::UnsetType,
+    Vertex = (unsigned char)ON_SubDComponentPtrTypesAndMasks::VertexType,
+    Edge   = (unsigned char)ON_SubDComponentPtrTypesAndMasks::EdgeType,
+    Face   = (unsigned char)ON_SubDComponentPtrTypesAndMasks::FaceType
   };
 
   static ON_SubDComponentPtr::Type ComponentPtrTypeFromUnsigned(
@@ -2895,7 +3027,7 @@ public:
     The use of this value varies depending on the context.
     Frequently, 0 means the referenced component is being used with its
     natural orientation and 1 means the referenced component is being used
-    with the reverse of its natural oreientation.
+    with the reverse of its natural orientation.
   */
   ON__UINT_PTR ComponentDirection() const;
 
@@ -2916,7 +3048,7 @@ public:
   /*
   Returns:
     An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
-    with ON_SubDComponentPtr.ComponentDirection() = 1.
+    with ON_SubDComponentPtr.ComponentDirection() = dir.
   */
   const ON_SubDComponentPtr SetComponentDirection(ON__UINT_PTR dir) const;
    
@@ -3607,10 +3739,11 @@ private:
   void Internal_SetType(ON_SubDComponentPtr::Type type);
   void Internal_SetDir(unsigned dir);
 
-  // The "A" and "B" values are two 12 bit unsigned integer values 
+  // The "A" and "B" values are two 12 bit unsigned integer values
   // (0 to 4095 decimal) that are encoded in the 3 bytes m_valueAB[].
-  // When the referenced component is a SubD face, A = number of face edges
-  // and B = face corner index.
+  // When the referenced component is a SubD face, A = face corner index
+  // and B = number of face edges. This is the order FaceCornerDex()
+  // uses to build an ON_SubDFaceCornerDex(corner_index, edge_count).
   void Internal_SetValueA(unsigned a);
   void Internal_SetValueB(unsigned b);
   unsigned Internal_ValueA() const;
@@ -3976,7 +4109,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If v is in sorted_tags[], the VertexTag() from from sorted_tags[] is returned.
+    If v is in sorted_tags[], the VertexTag() from sorted_tags[] is returned.
     Otherwise v->m_vertex_tag is returned.
   */
   static ON_SubDVertexTag OriginalVertexTag(
@@ -3990,7 +4123,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If vertex_id is in sorted_tags[], the VertexTag() from from sorted_tags[] is returned.
+    If vertex_id is in sorted_tags[], the VertexTag() from sorted_tags[] is returned.
     Otherwise ON_SubDVertexTag::Unset is returned.
   */
   static ON_SubDVertexTag OriginalVertexTag(
@@ -4004,7 +4137,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If e is in sorted_tags[], the EdgeTag() from from sorted_tags[] is returned.
+    If e is in sorted_tags[], the EdgeTag() from sorted_tags[] is returned.
     Otherwise e->m_edge_tag is returned.
   */
   static ON_SubDEdgeTag OriginalEdgeTag(
@@ -4018,7 +4151,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If edge_id is in sorted_tags[], the EdgeTag() from from sorted_tags[] is returned.
+    If edge_id is in sorted_tags[], the EdgeTag() from sorted_tags[] is returned.
     Otherwise ON_SubDEdgeTag::Unset is returned.
   */
   static ON_SubDEdgeTag OriginalEdgeTag(
@@ -4032,7 +4165,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If f is in sorted_tags[], the FaceTag() from from sorted_tags[] is returned.
+    If f is in sorted_tags[], the FaceTag() from sorted_tags[] is returned.
     Otherwise 0 is returned.
   */
   static unsigned char OriginalFaceTag(
@@ -4046,7 +4179,7 @@ public:
     sorted_tags[] - [in]
       Array sorted by ON_SubD_ComponentIdTypeAndTag::CompareTypeAndId().
   Returns:
-    If face_id is in sorted_tags[], the FaceTag() from from sorted_tags[] is returned.
+    If face_id is in sorted_tags[], the FaceTag() from sorted_tags[] is returned.
     Otherwise ON_SubDFaceTag::Unset is returned.
   */
   static unsigned char OriginalFaceTag(
@@ -4136,24 +4269,6 @@ public:
   static const ON_SubDSectorId Invalid;
 
 public:
-  /*
-  Description:
-    Dictionary compare of VertexId() and MinimumFaceId() in that order.
-  */
-  static int CompareVertexIdAndMinimumFaceId(ON_SubDSectorId lhs, ON_SubDSectorId rhs);
-
-  static int CompareVertexId(ON_SubDSectorId lhs, ON_SubDSectorId rhs);
-  static int CompareMinimumFaceId(ON_SubDSectorId lhs, ON_SubDSectorId rhs);
-
-  /*
-  Description:
-    Dictionary compare of VertexId() and MinimumFaceId() in that order.
-  */
-  static int CompareVertexIdAndMinimumFaceIdFromPointers(const ON_SubDSectorId* lhs, const ON_SubDSectorId* rhs);
-
-  static int CompareVertexIdFromPointers(const ON_SubDSectorId* lhs, const ON_SubDSectorId* rhs);
-  static int CompareMinimumFaceIdFromPointers(const ON_SubDSectorId* lhs, const ON_SubDSectorId* rhs);
-
   /*
   Description:
     Dictionary compare of VertexId(), MinimumFaceId(), and SectorFaceCount() in that order.
@@ -4745,6 +4860,81 @@ public:
 class ON_CLASS ON_SubDFaceRegion
 {
 public:
+
+  /// <summary>
+  /// ON_SubDFaceRegion::Type has meaning only for regions of a SubD face that 
+  /// result from two or more subdivisions. The Type is used in creating
+  /// NURBS approximations of SubD near level 0 extraordinary vertices
+  /// level 1 extraordinary vertices that result from subdividing
+  /// level 0 faces that have 3 or 5 or more edges (also called N-gon faces).
+  /// </summary>
+  enum class Type : unsigned char
+  {
+    Unset = 0,
+
+    /// <summary>
+    /// Ordinary subdivision regions are bounded by 4 smooth subdivision edges.
+    /// Ordinary subdivision regions can be represents with a bibezier
+    /// whose control points conincide whte the subdivided SubD's control points.
+    /// Orindary regions do not chare a smooth edge with Extraordinary regions.
+    /// </summary>
+    Ordinary = 1,
+
+    /// <summary>
+    /// Extraordinary subdivision regions are bounded by 4 smooth subdivision edges.
+    /// Extraordinary subdivision regions have a corner at either a
+    /// level 0 extraordinary vertex or a level 1 extraordinary vertex
+    /// created at the center of a level 0 ngon face (3 or 5 or more edges).
+    /// In general, the SubD limit surface of these regions cannot be exactly
+    /// represented by an rational polynomial surface. No amount of
+    /// subdivsion changes this in the general case. Thus, any bibezier 
+    /// or NURBS patch representing these regions is an approximation.
+    /// </summary>
+    Extraordinary = 2,
+
+    /// <summary>
+    /// ExtraordinaryAdjacent subdivision regions are bounded by 4 smooth subdivision edges.
+    /// ExtraordinaryAdjacent regions share an edge with Extraordinary regions.
+    /// Mathematically, Ordindary and ExtraordinaryAdjacent regions have the same 
+    /// subdivion properties. ExtraordinaryAdjacent get a special identifying mark
+    /// because they are used to specify boundary conditions for calculating
+    /// NURBS patches that approximate Extraordinary regions.
+    /// There are 2 ExtraordinaryAdjacent regions for each Extraordinary
+    /// region. A subdivision levels&gt;= 2, these regions can be exactly 
+    /// represented by a bicubicbezier patch with 16 control points equal 
+    /// to the SubD level 2 control points around the region.
+    /// </summary>
+    ExtraordinaryAdjacent = 3,
+  };
+
+  /// <summary>
+  /// When a ON_SubDFaceRegion::Type is Extraordinary or ExtraordinaryAdjacent,
+  /// the ExtraordinarySource enum indicates if the source of the extraordinary 
+  /// vertex was a level 0 extraordinary vertex or a level 1 extraordinary vertex 
+  /// at the center of a level 0 N-gon face.
+  /// </summary>
+  enum class ExtraordinarySource : unsigned char
+  {
+    Unset = 0,
+
+    None = 1,
+
+    /// <summary>
+    /// The regions are around a level 0 extraordinary vertex.
+    /// These are smooth vertices that have 3 or 5 or more smooth edges.
+    /// </summary>
+    Level0ExtraordinaryVertex = 2,
+
+    /// <summary>
+    /// The regions are around a level 1 extraordinary vertex
+    /// created at the center of a level 0 N-gon face. 
+    /// These level 1 vertices are smooth and have N smooth edges.
+    /// </summary>
+    Level1NgonCenterVertex = 3
+  };
+
+
+public:
   ON_SubDFaceRegion() = default;
   ~ON_SubDFaceRegion() = default;
   ON_SubDFaceRegion(const ON_SubDFaceRegion&) = default;
@@ -4756,7 +4946,77 @@ public:
   // Identifies a region of an ON_SubDFace
   ON_SubDComponentRegion m_face_region;
 
+  /// <summary>
+  /// An ON_SubDFaceRegion is a subdivision quad of a face. 
+  /// When that face is a level 0 face in an ON_SubD, 
+  /// it is called a persistent face.
+  /// This function returns faces that have been set
+  /// as persistent level 0 faces.
+  /// </summary>
+  /// <returns>
+  /// A pointer to the level 0 persistent face.
+  /// It is the caller's responsibility to check for a 
+  /// nullptr and to insure the parent ON_SubD exists before 
+  /// dereferencing this pointer.
+  /// </returns>
+  const ON_SubDFace* Level0PersistentFace() const;
+
+  /// <summary>
+  /// An ON_SubDFaceRegion is a subdivision quad of a face. 
+  /// When that face is a level 0 face in an ON_SubD, 
+  /// it is called a persistent face.
+  /// This function returns faces that have been set
+  /// as persistent level 0 faces.
+  /// </summary>
+  /// <returns>
+  /// The id of the level 0 persistent face or 0 if it is not available.
+  /// </returns>
+  unsigned Level0PersistentFaceId() const;
+
+  /// <summary>
+  /// An ON_SubDFaceRegion is a subdivision quad of a face. 
+  /// When that face is a level 0 face on from an ON_SubD, it is
+  /// a persistent face and the level 1 quad has one corner at
+  /// a face vertex. This vertex is returned by Level0PersistentVertex().
+  /// NOTE WELL:
+  /// The caller must insure the parent ON_SubD exists before calling 
+  /// Level0PersistentVertex().
+  /// </summary>
+  /// <returns>
+  /// A pointer to the level 0 persistent vertex.
+  /// It is the caller's responsibility to check for a 
+  /// nullptr and to insure the parent ON_SubD exists before 
+  /// dereferencing this pointer.
+  /// </returns>
+  const ON_SubDVertex* Level0PersistentVertex() const;
+
+  /// <summary>
+  /// An ON_SubDFaceRegion is a subdivision quad of a face. 
+  /// When that face is a level 0 face on from an ON_SubD, it is
+  /// a persistent face and the level 1 quad has one corner at
+  /// a face vertex. This vertex is returned by Level0PersistentVertex().
+  /// NOTE WELL:
+  /// The caller must insure the parent ON_SubD exists before calling 
+  /// Level0PersistentVertex().
+  /// </summary>
+  /// <returns>
+  /// The id of the level 0 persistent vertex or 0 if it is not available.
+  /// </returns>
+  unsigned Level0PersistentVertexId() const;
+
+  /// <summary>
+  /// This is an expert user function that can return either 
+  /// Level0PersistentFace() or a transient face. Using this pointer 
+  /// depends on the constext. If you are not managing the entire
+  /// creation process of the ON_SubDFaceRegion, you should
+  /// be using Level0PersistentFace().
+  /// </summary>
+  /// <returns>
+  /// A persistent or transient face that depends on the context
+  /// of this ON_SubDFaceRegion class.
+  /// </returns>
   const ON_SubDFace* Level0Face() const;
+
 
   // When the face region is a quad, m_edge_region[4] identifies regions of ON_SubDEdge elements.
   // When the face region is a sub-quad, these edges may be null or have null ON_SubDEdge pointers 
@@ -4765,10 +5025,94 @@ public:
   // a persistent edge in the ON_SubD.
   ON_SubDComponentRegion m_edge_region[4];
 
-  unsigned int m_level0_edge_count = 0;
+  /// <summary>
+  /// RegionType() applys only when the regions is a result of 2 or more subdivisions.
+  /// </summary>
+  /// <returns>
+  /// </returns>
+  ON_SubDFaceRegion::Type RegionType() const;
+
+  /// <summary>
+  /// RegionExtraordinarySource() applies only when RegionType() is 
+  /// Extraordinary or ExtraordinaryAdjacent
+  /// and the region is a result of 2 or more subdivisions.
+  /// </summary>
+  /// <returns></returns>
+  ON_SubDFaceRegion::ExtraordinarySource RegionExtraordinarySource() const;
+
+  /// <summary>
+  /// When the region is near a leve 0 or leve 1 extraordinary vertex,
+  /// this function returns the valence of the extraodinary vertex.
+  /// When RegionExtraordinarySource() = Level0ExtraordinaryVertex,
+  /// this is the number of faces and edges around the level 0 vertex.
+  /// When RegionExtraordinarySource() = Level1NgonCenterVertex,
+  /// this is the number edges around the level 0 ngon which
+  /// is also the number of edges and faces around the
+  /// level 1 extraordinary vertex at the center of the ngon.  /// 
+  /// </summary>
+  /// <returns>
+  /// If RegionExtraordinarySource() is Level0ExtraordinaryVertex or 
+  /// Level1NgonCenterVertex, the valance of the extraordinary vertex 
+  /// is returned. Otherwise 0 is returned.
+  /// </returns>
+  unsigned RegionExtraordinaryValence() const;
+
+  /// <summary>
+  /// CompareSourceLevel0IdAndType is used to sort
+  /// regions from the same subdivision level around 
+  /// level 0 extraordinary vertices and 
+  /// level 1 extraordinary vertices at the center of ngons.
+  /// This is typically done in the context of calculating NURBS
+  /// approsimations for subdivision regions that an extraordinary vertex.
+  /// The compare is done as follows.
+  /// 1st compare is RegionExtraordinarySource().
+  /// Unset &lt; None &lt; Level0ExtraordinaryVertex &lt; Level1NgonCenterVertex.
+  /// If lhs and rhs have the same value of RegionExtraordinarySource(),
+  /// the 2nd compare is the component id.
+  /// If the common source is Level0ExtraordinaryVertex, the vertex ids
+  /// of Level0PersistentVertex() are compared. Otherwise the face ids
+  /// of Level0PersistentFace() are compared.
+  /// If lhs and rhs have the same component id, 
+  /// the 3rd compare is RegionType().
+  /// Unset &lt; Ordinary &lt; Extraordinary &lt; ExtraordinaryAdjacent.
+  /// Typically, this sort is happing in the context where the 
+  /// Extraordinary regions are being replaced with NURBS approximations
+  /// that are G2 with ExtraordinaryAdjacent regions.
+  /// </summary>
+  /// <param name="lhs"></param>
+  /// <param name="rhs"></param>
+  /// <returns></returns>
+  static int CompareSourceLevel0IdAndType(
+    const ON_SubDFaceRegion* lhs,
+    const ON_SubDFaceRegion* rhs
+  );
 
 private:
-  unsigned int m_reserved = 0;
+  unsigned short m_level0_edge_count_WHY_NEVER_SET = 0;
+
+  // When the level of subdivision used to create the region
+  // is at least 2, these values are used to mark regions that are 
+  // near to level 0 extraordinary vertices or level 1 extraordinary
+  // vertices that get created by subdividing level 0 ngon faces.
+  // "Extraordinary regions" are regions that have a corner at either
+  // a level 0 extraordinary vertex or a level 1 extraordinary vertex
+  // at the center of an ngon. Extraordinary regions always interior to
+  // the SubD, have three ordinary subdivions vertices, and share 
+  // exactly two edges with neighboring Extraordinary regions.
+  // "Extraordinary adjacent regions" are the regions that share an 
+  // edge with an extraordinary region. For each extraordinary region 
+  // there are exacty two extraordinary adjacent regions.
+  // Then values are mutable because lazy evaluation is used to set
+  // them when RegionType() or RegionExtraordinarySource() is called.
+
+  // 3 bits for Type and 3 bits for ExtraordinarySource
+  mutable unsigned char m_extraordinary_attributes = 0;
+
+  void Internal_GetExtraordinaryAttributes() const;
+
+private:
+  unsigned char m_reserved0 = 0;
+  unsigned int m_reserved2 = 0;
 
 public:
   /*
@@ -4997,19 +5341,19 @@ public:
     Double = 2,
 
     /// <summary>
-    /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+    /// This option applies only when the input is an array of ON_SubDEdgePtrs
     /// that form a single oriented edge chain of manifold interior edges.
     /// A single quad is added to the left of the input edges.
-    /// (The left side of of an oriented interior manifold edge is the face
+    /// (The left side of an oriented interior manifold edge is the face
     /// whose natural boundary orientation is the same as with the ON_SubDEdgePtr direction.)
     /// </summary>
     HalfLeft = 3,
 
     /// <summary>
-    /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+    /// This option applies only when the input is an array of ON_SubDEdgePtrs
     /// that form a single oriented edge chain of manifold interior edges.
     /// A single quad is added to the right of the input edges.
-    /// (The right side of of an oriented interior manifold edge is the face
+    /// (The right side of an oriented interior manifold edge is the face
     /// whose natural boundary orientation is opposite the ON_SubDEdgePtr direction.)
     /// </summary>
     HalfRight = 4,
@@ -5083,7 +5427,7 @@ public:
     const ON_SimpleArray<ON_SubDEdgePtr>& edges
   );
 
-  /// This option applies only when the the input is an array of ON_SubDEdgePtrs
+  /// This option applies only when the input is an array of ON_SubDEdgePtrs
   /// that form a single oriented edge chain. You may use
   /// ON_SubDExpandEdgesParameters::IsValidForVariableOffset() to determine if an
   /// array of ON_SubDEdgePtrs meets the variable offset requirements.
@@ -5093,7 +5437,7 @@ public:
 
   /*
   Description:
-    This option applies only when the the input is an array of ON_SubDEdgePtrs
+    This option applies only when the input is an array of ON_SubDEdgePtrs
     that form a single oriented edge chain. You may use
     ON_SubDExpandEdgesParameters::IsValidForVariableOffset() to determine if an
     array of ON_SubDEdgePtrs meets the variable offset requirements.
@@ -5171,7 +5515,7 @@ private:
 bool operator==(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs);
 bool operator!=(const ON_SubDExpandEdgesParameters& lhs, const ON_SubDExpandEdgesParameters& rhs);
 
-class ON_WIP_CLASS ON_SubDComponentParameter
+class ON_CLASS ON_SubDComponentParameter
 {
 public:
   ON_SubDComponentParameter() = default;
@@ -5299,15 +5643,6 @@ public:
   /// </returns>
   static int CompareAll(const ON_SubDComponentParameter& lhs, const ON_SubDComponentParameter& rhs);
 
-  /// <summary>
-  /// Dictionary compares component type, component id, component direction, first parameter, second parameter
-  /// and safely sorts nullptr to end.
-  /// </summary>
-  /// <param name="lhs"></param>
-  /// <param name="rhs"></param>
-  /// <returns></returns>
-  static int Compare(const ON_SubDComponentParameter* lhs, const ON_SubDComponentParameter* rhs);
-
   const ON_wString ToString(bool bUnsetIsEmptyString) const;
 
   bool IsSet() const;
@@ -5353,7 +5688,7 @@ public:
   /// In that case, this edge is used.
   /// </summary>
   /// <returns>
-  /// The prefered edge attached to this vertex.
+  /// The preferred edge attached to this vertex.
   /// </returns>
   const ON_SubDComponentId VertexEdge() const;
 
@@ -5362,7 +5697,7 @@ public:
   /// In these cases this face is used.
   /// </summary>
   /// <returns>
-  /// The prefered face attached to this vertex.
+  /// The preferred face attached to this vertex.
   /// </returns>
   const ON_SubDComponentId VertexFace() const;
 
@@ -5399,15 +5734,17 @@ public:
 
   /// <summary>
   /// Returns a parameter between 0 and 1 that identifies a point on the edge.
-  /// This is always an intrisic parameter; 
-  /// ComponentDirection() is not taken into account. 
-  /// If the reference component is not an edge, then ON_DBL_QNAN is returned.
+  /// The parameter is measured along the edge as this parameter orients it,
+  /// that is, from EdgePtr(subd).RelativeVertex(0) to
+  /// EdgePtr(subd).RelativeVertex(1). When ComponentDirection() is 1 that is
+  /// the reverse of the edge's natural orientation.
+  /// If the referenced component is not an edge, then ON_DBL_QNAN is returned.
   /// </summary>
   /// <returns>
-  /// Returns a parameter between 0 and 1 identifying the point
-  /// on the edge. Note that ComponentDirection() is not taken
-  /// into account. If this does not reference an edge or the
-  /// parameter is not set, then ON_DBL_QNAN is returned.
+  /// Returns a parameter between 0 and 1 identifying the point on the edge,
+  /// measured in the direction given by ComponentDirection().
+  /// If this does not reference an edge or the parameter is not set,
+  /// then ON_DBL_QNAN is returned.
   /// </returns>
   double EdgeParameter() const;
 
@@ -5416,7 +5753,7 @@ public:
   /// In that case, this face is used.
   /// </summary>
   /// <returns>
-  /// The prefered edge attached to this vertex.
+  /// The preferred edge attached to this vertex.
   /// </returns>
   const ON_SubDComponentId EdgeFace() const;
 
@@ -5457,6 +5794,45 @@ public:
   /// Otherwise ON_SubDFaceParameter::Nan is returned.
   /// </returns>
   const ON_SubDFaceParameter FaceParameter() const;
+
+  /// <summary>
+  /// Get the face and face parameter that identify the same point on the SubD
+  /// surface as this component parameter. The SubD surface evaluators are
+  /// parameterized by (face, ON_SubDFaceParameter), so this is what makes
+  /// vertex, edge and face parameters uniformly evaluable.
+  ///
+  /// A vertex parameter maps to the (0,0) corner parameter of one of the faces
+  /// attached to the vertex. A face attached to the vertex may be specified by
+  /// passing it to the constructor; see VertexFace().
+  ///
+  /// An edge parameter maps to a parameter on the boundary of one of the faces
+  /// attached to the edge. A face attached to the edge may be specified by
+  /// passing it to the constructor; see EdgeFace(). If s is the edge parameter
+  /// measured along the face's orientation of the edge, then the result is
+  /// (s,0) on the corner at the start of the edge when s &lt;= 1/2 and
+  /// (0,1-s) on the corner at the end of the edge when s &gt; 1/2. Both
+  /// describe the same point when s = 1/2.
+  ///
+  /// A face parameter returns Face(subd) and FaceParameter().
+  /// </summary>
+  /// <param name="subd">
+  /// The SubD that contains the component this parameter references.
+  /// </param>
+  /// <param name="face">
+  /// The face to evaluate is returned here, or nullptr if this fails.
+  /// </param>
+  /// <param name="face_parameter">
+  /// The parameter on face to evaluate is returned here, or
+  /// ON_SubDFaceParameter::Nan if this fails.
+  /// </param>
+  /// <returns>
+  /// True if face and face_parameter were set to an evaluable pair.
+  /// </returns>
+  bool GetFaceAndFaceParameter(
+    const class ON_SubD* subd,
+    const class ON_SubDFace*& face,
+    ON_SubDFaceParameter& face_parameter
+  ) const;
 
   /// <summary>
   /// If the subd has a component with the same type and id,
@@ -6216,7 +6592,6 @@ public:
 
 
 
-
   ON_SubD() ON_NOEXCEPT;
   virtual ~ON_SubD();
 
@@ -6266,6 +6641,10 @@ public:
   bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
   //virtual
+  // Uses DumpTopology(text_log, vertex_filter, edge_filter, face_filter) to dump SubD topology:
+  // Dumps all vertices, edges, and faces when text_log.LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail::Maximum)
+  // otherwise, dumps the first 24 vertices, 48 edges, and 16 faces.
+  // Topology checks are only performed on the elements that are dumped. Use IsValid() to check the entire SubD.
   void Dump(
     ON_TextLog&
     ) const override;
@@ -6600,7 +6979,7 @@ public:
       If edge_sharpness = ON_SubDEdgeSharpness::SmoothValue, the edges where box sides meet will be smooth.
       If ON_SubDEdgeSharpness::SmoothValue &lt; edge_sharpness &lt;= ON_SubDEdgeSharpenss::MaximumValue, 
       the edges where box sides meet will have the specified sharpness.
-      If edge_sharpness = ON_SubDEdgeSharpenss::CreaseValue,
+      If edge_sharpness = ON_SubDEdgeSharpness::CreaseValue,
       the edges where box sides meet will be creases.
     facecount_x - [in] Number of faces in x direction
     facecount_y - [in] Number of faces in y direction
@@ -6621,97 +7000,12 @@ public:
   );
 
 
-  /*
-  Description:
-    Creates a SubD cylinder
-  Parameters:
-    box - [in]
-      Location, size and orientation of the cylinder
-    facecount_around - [in] Number of faces around the cylinder
-    facecount_length - [in] Number of faces in the axis direction
-    facecouont_z - [in] Number of faces in z direction
-    destination_subd [out] -
-      If destination_subd is not null, make the SubD box there
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  //static ON_SubD* CreateSubDCylinder(
-  //  const ON_Cylinder cylinder,
-  //  ON_SubDComponentLocation vertex_location,
-  //  unsigned int facecount_around,
-  //  unsigned int facecount_length,
-  //  ON_SubD* destination_subd);
-
-  /*
-  Description:
-    Creates a SubD cone
-  Parameters:
-    cone - [in]
-      Location, size and orientation of the cone
-    facecount_around - [in] Number of faces around the cone
-    facecount_length - [in] Number of faces in the axis direction
-    destination_subd [out] -
-      If destination_subd is not null, make the SubD cone there
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  //static ON_SubD* CreateSubDCone(
-  //  const ON_Cone& cone,
-  //  unsigned int facecount_around,
-  //  unsigned int facecount_length,
-  //  ON_SubD* destination_subd);
-
-  /*
-  Description:
-    Creates a SubD truncated cone
-  Parameters:
-    cone - [in]
-      Location, size and orientation of the cone
-    truncate_param - [in] 0.0 < truncate_param <= 1.0
-        Normalized parameter for truncation
-        0.0: Base of cone
-        1.0: Tip of cone
-    facecount_around - [in] Number of faces around the cone
-    facecount_length - [in] Number of faces in the axis direction
-    destination_subd [out] -
-      If destination_subd is not null, make the SubD cone there
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  //static ON_SubD* CreateSubDTruncatedCone(
-  //  const ON_Cone& cone,
-  //  const double truncate_param,
-  //  unsigned int facecount_around,
-  //  unsigned int facecount_length,
-  //  ON_SubD* destination_subd);
-
-  /*
-  Description:
-    Creates a SubD torus
-  Parameters:
-    torus - [in]
-      Location, size and orientation of the torus
-    major_facecount - [in] Number of faces around the major axis
-    minor_facecount - [in] Number of faces around the minor axis
-    destination_subd [out] -
-      If destination_subd is not null, make the SubD torus there
-  Returns:
-    Pointer to the resulting SubD if successful
-    Null for error
-  */
-  //static ON_SubD* CreaptSubDTorus(
-  //  ON_Torus& torus,
-  //  unsigned int major_facecount,
-  //  unsigned int minor_facecount,
-  //  ON_SubD* destination_subd);
-
+  // Dump all topology information to text log, no filtering
   unsigned int DumpTopology(
     ON_TextLog&
     ) const;
 
+  // Dump all topology information to text log, filter according to id ranges
   unsigned int DumpTopology(
     ON_2udex vertex_id_range,
     ON_2udex edge_id_range,
@@ -7020,6 +7314,8 @@ public:
   */
   unsigned int FaceCount() const;
 
+  bool AllActiveFacesAreQuads() const;
+
   /*
   Parameters:
     hash_type - [in]
@@ -7150,7 +7446,35 @@ public:
 
   /*
   Description:
-    Delete components in cptr_list[]. 
+    Delete components in ci_list[].
+    If a vertex is in ci_list[], the vertex and every edge and face attached
+    to the vertex are deleted.
+    If an edge is in ci_list[], the edge and every face attached
+    to the edge are deleted.
+    If a face is in ci_list[], the face is deleted.
+  Parameters:
+    ci_list - [in]
+    ci_count - [in]
+      length of ci_list[] array.
+    bMarkDeletedFaceEdges - [in]
+      If true, surviving edges attached to deleted faces
+      have their runtime mark set.
+  Returns:
+    True if the deletion succeeded.
+  Remarks:
+    This overload and the ON_SubDComponentPtr one below differ only in the pointer type,
+    so passing a bare nullptr for the list is an ambiguous call. Use a typed null pointer
+    if you need to pass an empty list.
+  */
+  bool DeleteComponents(
+    const ON_COMPONENT_INDEX* ci_list,
+    size_t ci_count,
+    bool bMarkDeletedFaceEdges
+    );
+
+  /*
+  Description:
+    Delete components in cptr_list[].
     If a vertex is in cptr_list[], the vertex and every edge and face attached
     to the vertex are deleted.
     If an edge is in cptr_list[], the edge and every face attached
@@ -7161,11 +7485,10 @@ public:
     cptr_count - [in]
       length of cptr_list[] array.
     bMarkDeletedFaceEdges - [in]
-      If true, surviving edges attached to delete faces 
-      have their runtmime mark set.
+      If true, surviving edges attached to deleted faces
+      have their runtime mark set.
   Returns:
-    1: some state settings changed on the component.
-    1: some state setting changed on the component.
+    True if the deletion succeeded.
   */
   bool DeleteComponents(
     const ON_SubDComponentPtr* cptr_list,
@@ -7173,6 +7496,17 @@ public:
     bool bMarkDeletedFaceEdges
     );
 
+  /*
+  Description:
+    Delete components in cptr_list[]. See the overload above for details.
+  Parameters:
+    cptr_list - [in]
+    bMarkDeletedFaceEdges - [in]
+      If true, surviving edges attached to deleted faces
+      have their runtime mark set.
+  Returns:
+    True if the deletion succeeded.
+  */
   bool DeleteComponents(
     const ON_SimpleArray<ON_SubDComponentPtr>& cptr_list,
     bool bMarkDeletedFaceEdges
@@ -7290,7 +7624,7 @@ public:
     Sets ON_SubDComponent MarkBits() to
     0: component is not in a symmetry set motif
     n>=1: 
-      The component is the the n-th element in the symmetry set
+      The component is the n-th element in the symmetry set
       with n=1 indicating the component in the primary motif.
   */
   void SetComponentMarkBitsFromSymmetryMotif() const;
@@ -8033,7 +8367,7 @@ public:
 
   /*
   Description:
-    Extrude entire subd bay adding a ring of faces around the boundary and moving the original subd.
+    Extrude entire subd by adding a ring of faces around the boundary and moving the original subd.
   */
   unsigned int Extrude(
     const ON_Xform& xform
@@ -8440,7 +8774,7 @@ public:
       The edge will be on the same level as the vertices.
     sharpness - [in]
       If edge_tag is ON_SubDEdge::Smooth or ON_SubDEdge::SmoothX, then
-      the the edge's sharpness is set to sharpness.
+      the edge's sharpness is set to sharpness.
       Otherwise, the sharpness parameter is ignored.
   Returns:
     Pointer to the allocated edge.
@@ -8733,7 +9067,7 @@ public:
       Must be >= 3.
   */
   class ON_SubDFace* AddFaceForExperts(
-    unsigned candidate_face_id,
+    unsigned int candidate_face_id,
     const class ON_SubDEdgePtr* edge,
     unsigned int edge_count
     );
@@ -9691,7 +10025,7 @@ public:
         does not match this->SubDTopologyHash(), then this->FacePackingSubDTopologyHash() is updated
         to the current value of this->SubDTopologyHash().
 
-        If this parameter is false and and this->FacePackingSubDTopologyHash()
+        If this parameter is false and this->FacePackingSubDTopologyHash()
         does not match this->SubDTopologyHash(), then the function returns false.
     Returns:
       True if FacesArePacked() is true, the quad grids meet all the conditions described above,
@@ -10132,7 +10466,7 @@ private:
 //
 // ON_SubDComponentMarksClearAndRestore
 //
-class ON_SubDComponentMarksClearAndRestore
+class ON_CLASS ON_SubDComponentMarksClearAndRestore
 {
 public:
   // Constructor saves current component RuntimeMark() settings and then clears them.
@@ -10162,7 +10496,13 @@ public:
 private:
   ON_SubD m_subd;
 
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC(4251)
+  // C4251: ... : class 'ON_SimpleArray< const class ON_SubDComponentBase* >' 
+  //        needs to have dll-interface to be used by clients ...
+  // m_component_list is private and all code that manages it is explicitly implemented in the DLL.
   ON_SimpleArray< const class ON_SubDComponentBase* > m_component_list;
+#pragma ON_PRAGMA_WARNING_POP
 
   bool m_bRestore = true;
   unsigned char m_reserved1 = 0;
@@ -10557,7 +10897,7 @@ public:
     double error_return_value
   );
 
-  // This value is is used to set sector angles when the
+  // This value is used to set sector angles when the
   // actual value is not needed. This occurs at both ends
   // of a creased edge and when the end of a smooth edge
   // is a smooth vertex.
@@ -10583,7 +10923,7 @@ public:
   static const double ErrorSectorTheta; // = -9992.0;
 
 
-  // This value is is used to set edge sector coefficients when the
+  // This value is used to set edge sector coefficients when the
   // actual value is not needed. This occurs at both ends
   // of a creased edge and when the end of a smooth edge
   // is a smooth vertex.
@@ -10751,12 +11091,6 @@ public:
     unsigned int sector_face_count,
     double sector_corner_angle_radians
     );
-
-  static int Compare(
-    const ON_SubDSectorType& a,
-    const ON_SubDSectorType& b
-    );
-
 
   /*
   Description:
@@ -11286,9 +11620,9 @@ public:
     are the SubD quad corners in counter-clockwise order.
 
     Set 
-    n = grid->GridPointCount()-1 and 
-    k = grid->SideSegmentCount() = (grid->SidePointCount()-1).
-    Note that (k+1)*(k+1) = (n+1) = GridPointCount().
+    n = grid->GridPointCount() - 1 and
+    k = grid->SideSegmentCount() = grid->SidePointCount() - 1.
+    Note that (k+1) * (k+1) = n + 1 = GridPointCount().
 
     When a grid comes from a SubD quad face, the associated grid point indices are
 
@@ -11316,9 +11650,9 @@ public:
     are the SubD quad corners in counter-clockwise order.
 
     Set
-    n = grid->GridPointCount()-1 and
-    k = grid->SideSegmentCount() = (grid->SidePointCount()-1).
-    Note that (k+1)*(k+1) = (n+1) = GridPointCount().
+    n = grid->GridPointCount() - 1 and
+    k = grid->SideSegmentCount() = grid->SidePointCount() - 1.
+    Note that (k+1) * (k+1) = n + 1 = GridPointCount().
 
     When a grid comes from a SubD quad face, the associated grid point indices are
 
@@ -11667,10 +12001,15 @@ public:
 
 private:
   // This field overlaps with ON_FixedSizePoolElement.m_next when a fixed size pool is managing the fragments.
-  // When m_reserved != 0, the framgment is uninitialized. 
+  // When m_reserved != 0, the framgment is uninitialized.
+
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   ON__UINT64 m_reserved;
 
 public:
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   const class ON_SubDFace* m_face;
 
   // m_face_vertex_index[] stores the information needed for the Vertex()
@@ -11685,9 +12024,11 @@ public:
   // Catmull-Clark limit meshes:
   //   When the original SubD face is a quad, a full fragment is created and
   //   m_face_vertex_index[4] = {0,1,2,3}.
-  //   When the original SuD face is an N-gon with N != 4, a partial fragment 
+  //   When the original SubD face is an N-gon with N != 4, a partial fragment 
   //   is delivered and m_face_vertex_index[2] identifies the face vertex 
   //   for that fragment.  m_face_vertex_index[0,1,3] = a value > ON_SubDFace::MaximumEdgeCount
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   unsigned short m_face_vertex_index[4];
 
   const class ON_SubDFace* SubDFace() const;
@@ -11943,6 +12284,8 @@ public:
       0 to 2 for tri grids
   Returns:
     The subd edge that is on the identified side of the grid.
+    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
+    are the only values that correspond to a SubD Edge. The grid only covers half of these edges.
   */
   const class ON_SubDEdgePtr SubDEdgePtr(
     unsigned int grid_side_index
@@ -11957,9 +12300,7 @@ public:
       0, 1, 2, or 3
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    corner that corresponds to a SubD vertex.
   */
   const class ON_SubDVertexPtr SubDVertexPtr(
     unsigned int grid_corner_index
@@ -11971,9 +12312,7 @@ public:
       0, 1, 2, or 3
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    corner that corresponds to a SubD vertex.
   */
   const class ON_SubDVertex* SubDVertex(
     unsigned int grid_corner_index
@@ -11988,9 +12327,9 @@ public:
     Limit surface location at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    corner that corresponds to a SubD vertex.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_3dPoint CornerPoint(
     unsigned int grid_corner_index
@@ -12001,12 +12340,12 @@ public:
     grid_corner_index - [in]
       0, 1, 2, or 3
   Returns:
-    Limit surface normal at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
+    Limit surface normal at the grid corner or ON_3dVector::NanVector if the fragment is empty.
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    corner that corresponds to a SubD vertex.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_3dVector CornerNormal(
     unsigned int grid_corner_index
@@ -12017,12 +12356,12 @@ public:
     grid_corner_index - [in]
       grid side N is between corner index N and corner index (N+1)%4.
   Returns:
-    Limit surface frame at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
+    Limit surface frame at the grid corner or ON_Plane::NanPlane if the fragment is empty.
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    corner that corresponds to a SubD vertex.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_Plane CornerFrame(
     unsigned int grid_corner_index
@@ -12037,8 +12376,8 @@ public:
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex.
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_Color CornerColor(
     unsigned int grid_corner_index
@@ -12053,8 +12392,8 @@ public:
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex.
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_SurfaceCurvature CornerCurvature(
     unsigned int grid_corner_index
@@ -12068,10 +12407,8 @@ public:
   Returns:
     Limit surface location at the midde of the grid side or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
-    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
     For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    correspond to a quarter of original SubD edges.
   */
   const ON_3dPoint SidePoint(
     unsigned int grid_side_index
@@ -12082,12 +12419,10 @@ public:
     grid_side_index - [in]
       grid side N is between corner index N and corner index (N+1)%4.
   Returns:
-    Limit surface normal at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
+    Limit surface normal at the midde of the grid side or ON_3dVector::NanVector if the fragment is empty.
   Remarks:
-    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
     For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    correspond to a quarter of original SubD edges.
   */
   const ON_3dVector SideNormal(
     unsigned int grid_side_index
@@ -12098,36 +12433,37 @@ public:
     grid_side_index - [in]
       grid side N is between corner index N and corner index (N+1)%4.
   Returns:
-    Limit surface frame at the grid corner or ON_3dPoint::NanPoint if the fragment is empty.
+    Limit surface frame at the midde of the grid side or ON_Plane::NanPlane if the fragment is empty.
   Remarks:
-    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
     For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    correspond to a quarter of original SubD edges.
   */
   const ON_Plane SideFrame(
     unsigned int grid_side_index
   ) const;
 
   /*
-  Parameters:
-    grid_side_index - [in]
-      grid side N is between corner index N and corner index (N+1)%4.
   Returns:
     Limit surface location at the center of the grid side or ON_3dPoint::NanPoint if the fragment is empty.
-  Remarks:
-    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
-    corner that corresponds to a SubD vertex. 
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
   */
-  const ON_3dPoint CenterPoint(
-  ) const;
+  const ON_3dPoint CenterPoint() const;
 
+  /*
+  Returns:
+    Limit surface normal at the center of the grid side or ON_3dVector::NanVector if the fragment is empty.
+  */
   const ON_3dVector CenterNormal() const;
 
+  /*
+  Returns:
+    Limit surface frame at the center of the grid side or ON_Plane::NanPlane if the fragment is empty.
+  */
   const ON_Plane CenterFrame() const;
 
+  /*
+  Returns:
+    Texture coordinates at the center of the grid side or ON_3dPoint::NanPoint if the fragment is empty.
+  */
   const ON_3dPoint CenterTextureCoordinate() const;
 
 private:
@@ -12241,10 +12577,20 @@ public:
     const ON_Xform& xformColors
   );
 
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   ON_SubDMeshFragment* m_next_fragment;
+
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   ON_SubDMeshFragment* m_prev_fragment;
 
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   unsigned short m_face_fragment_count; // Number of fragments that will be delivered for this face.
+
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   unsigned short m_face_fragment_index; // First fragment has index = 0. Last fragment has index = m_face_fragment_count-1.
 
   // The mesh fragment is a grid of quads.
@@ -12340,7 +12686,7 @@ public:
   bool UnmanagedArrays() const;
 
   // True if the memory for points, normals, textures, colors, and curvatures is interlaced.
-  bool InterlacedArrays() const;
+  // bool InterlacedArrays() const;
 
 private:
   friend class ON_SubDManagedMeshFragment;
@@ -12445,16 +12791,26 @@ private:
     /// </summary>
     EtcManagedArraysBit = 0x8000,
   };
+
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   mutable unsigned short m_vertex_count_etc; // count value and 3 et cetera status bits
+
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   mutable unsigned short m_vertex_capacity_etc; // capacity value and 3 et cetera status bits
 
   static void Internal_Set3dPointArrayToNan(double* a, size_t a_count, size_t a_stride);
 
 private:
   // corners for control net display in grid order (counter-clockwise quad order must swap [2] and[3])
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   double m_ctrlnetP[4][3];
 
   // Normal used for shading the control net display in grid order.
+  // No initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   double m_ctrlnetN[3];
 
 
@@ -12462,14 +12818,14 @@ public:
   /*
   Parameters:
     grid_corner_index - [in]
-      grid side N is between corner index N and corner index (N+1)%4.
+      0, 1, 2, or 3
   Returns:
-    Texture coordinate at that corner.
+    Texture coordinate at that corner, or ON_3dPoint::NanPoint if the fragment is empty.
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex.
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_3dPoint TextureCoordinateCorner(
     unsigned int grid_corner_index
@@ -12485,19 +12841,28 @@ private:
   //  m_ctrlnetT[1]
   //  m_ctrlnetT[2]
   //  m_ctrlnetT[3]
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   mutable double m_ctrlnetT[4][3]; 
 
   // Corner principal curvatures in grid order.
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   mutable ON_SurfaceCurvature m_ctrlnetK[4];
 
   // Corner vertex colors in grid order.
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   mutable ON_Color m_ctrlnetC[4];
 
 private:
   // When an ON_SubDFace is a quad, there is a single ON_SubDMeshFragment for the face
   // and ON_SubDMeshFragment.m_pack_rect are the corners of the quad face's pack rect in
   // ON_SubDMeshFragment gid order.
-  // When an ON_SubDFace is an N-gon with N !+ 4, there are N ON_SubDMeshFragments for the face
+  // When an ON_SubDFace is an N-gon with N != 4, there are N ON_SubDMeshFragments for the face
   // and ON_SubDMeshFragment.m_pack_rect are corners of a subrect of the face's pack rect
   // in ON_SubDMeshFragment gid order.
   // The m_pack_rect[] points are in grid order. If the parent ON_SubDFace pack rect is rotated,
@@ -12507,20 +12872,22 @@ private:
   //  m_pack_rect[1] "lower right"
   //  m_pack_rect[2] "upper left"
   //  m_pack_rect[3] "upper right"
+  // 
+  // Use = ON_SubDMeshFragment::Empty if you need an initialized instance.
   double m_pack_rect[4][2]; // NOT a mutable property
 
 public:
   /*
   Parameters:
     grid_corner_index - [in]
-      grid side N is between corner index N and corner index (N+1)%4.
+      0, 1, 2, or 3
   Returns:
-    Pack rect corner point.
+    Pack rect corner point, or ON_2dPoint::NanPoint if the fragment is empty.
   Remarks:
     For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 2 is the only
     corner that corresponds to a SubD vertex.
-    For partial fragments (IsFaceCornerFragment() = true), grid_side_index = 1 and grid_side_index = 2
-    correspond to half of original SuD edges.
+    For partial fragments (IsFaceCornerFragment() = true), grid_corner_index = 1 and grid_corner_index = 3
+    correspond to half of original SubD edges.
   */
   const ON_2dPoint PackRectCorner(
     unsigned int grid_corner_index
@@ -12665,6 +13032,9 @@ public:
   // The stride m_P_stride and memory m_P references is managed by some other class or function.
   // Never modify m_P_stride, m_P, or the values in m_P.
   // Use m_grid functions to get point indices and quad face indices.
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   double* m_P; // surface points
   size_t m_P_stride; // stride between points for m_P[] as an array of 8 byte doubles (so 0 or >= 3)
   const double* PointArray(ON_SubDComponentLocation subd_appearance)const;
@@ -12759,6 +13129,9 @@ public:
   // Never modify m_N_stride, m_N, or the values in m_N.
   // Use m_grid functions to get normal indices and quad face indices.
   // Note well: m_N_stride can be 0 when the normal is constant (control net face normal for example).
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   double* m_N; // surface normals
   size_t m_N_stride; // stride between normals for m_N[] as an array of 8 byte doubles (so 0 or >= 3)
   const double* NormalArray(ON_SubDComponentLocation subd_appearance)const;
@@ -12785,6 +13158,9 @@ public:
   // Never modify m_T_stride, m_T.
   // Use m_grid functions to get texture indices and quad face indices.
   // Note well: m_T_stride can be 0 when the texture coordinate is constant (one color per face for example)
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   mutable double* m_T;
   mutable size_t m_T_stride; // stride between texture points for m_T[] as an array of 8 byte doubles (so 0 or >= 3)
 
@@ -12931,6 +13307,9 @@ private:
   //  
   //  If m_K[] is interlaced, the number of bytes between successive elements of m_K[] must be a multiple of 
   //  sizeof(ON_SurfaceCurvature)  because m_K_stride is a ON_SurfaceCurvature element stride.
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   mutable ON_SurfaceCurvature* m_K;
   mutable size_t m_K_stride; // stride for m_K[] as an array of 16 byte ON_SurfaceCurvature elements (so 0 or >= 1).
 
@@ -13040,14 +13419,17 @@ public:
     comb_count_params - [in]
       How many combs to get in both directions (+1 if get_first_comb is false).
     get_first_comb - [in]
-      Wheter to skip combs at u = 0 and v = 0. The parameters at which to
+      Whether to skip combs at u = 0 and v = 0. The parameters at which to
       get the combs are the same when:
         - get_first_comb is true and comb_count is n
         - get_first_comb is false and comb_count is n
-    getKu, getKv - [in]
+    get_Ku, get_Kv - [in]
       Should the curvature be computed along u-isos, v-isos, or both.
+    get_marked_edges_only - [in]
+      If true, only combs that touch a marked edge are computed.
+      If false, all combs are computed.
     P, Kuv - [out]
-      Arrays of size (getKu + getKv) * sample_count * comb_count_arrays where
+      Arrays of size (get_Ku + get_Kv) * sample_count * comb_count_arrays where
       Points and Curvatures along u-isos or along v-isos are stored.
       Sample (i, j) in u direction, on u-dir comb j at sample i is stored
       at index i + (j - get_first_comb ? 0 : 1) * sample_count.
@@ -13064,9 +13446,20 @@ public:
   unsigned GetNormalCurvatures(
     const unsigned sample_count,
     const unsigned comb_count_params,
-    const bool get_first_comb, 
-    const bool getKu,
-    const bool getKv, 
+    const bool get_first_comb,
+    const bool get_Ku,
+    const bool get_Kv,
+    ON_SimpleArray<ON_3dPoint>* P,
+    ON_SimpleArray<ON_3dVector>* Kuv
+  ) const;
+
+  unsigned GetNormalCurvatures(
+    const unsigned sample_count,
+    const unsigned comb_count_params,
+    const bool get_first_comb,
+    const bool get_Ku,
+    const bool get_Kv,
+    const bool get_marked_edges_only,
     ON_SimpleArray<ON_3dPoint>* P,
     ON_SimpleArray<ON_3dVector>* Kuv
   ) const;
@@ -13089,6 +13482,9 @@ private:
   //   a multiple of 2 to keep the doubles 8 bytes aligned. 
   //   When m_C is not interlaced, m_C_stride is typically 1. If this is confusing,
   //   please learn more about alignment and interlacing before working on this code.
+
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   mutable ON_Color* m_C;
   mutable size_t m_C_stride; // stride for m_C[] as an array of 4 byte ON_Color elements (so 0 or >= 1).
 
@@ -13220,11 +13616,15 @@ public:
   // from m_grid functions.
   
   // Information to resolve m_P[], m_N[], and m_T[] into a grid of NxN quads.
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   ON_SubDMeshFragmentGrid m_grid;
 
   const ON_SubDMeshFragmentGrid& Grid(ON_SubDComponentLocation subd_appearance) const;
 
   // 3d bounding box of grid vertex points.
+  // No default initialization for performance reasons.
+  // Use = ON_SubDMeshFragmentGrid::Empty if you need an initialized instance.
   ON_BoundingBox m_surface_bbox;
 public:
   /*
@@ -13288,7 +13688,7 @@ private:
 /// <summary>
 /// ON_SubDMesh is used to store a high density traditional quad mesh
 /// of a SubD surface or a mesh of a SubD control net. 
-/// In general, is is better to use an ON_SubDMeshFragmentIterator(subd)
+/// In general, is better to use an ON_SubDMeshFragmentIterator(subd)
 /// that iterates the ON_MeshFragments cached on the ON_SubD. 
 /// </summary>
 class ON_CLASS ON_SubDMesh
@@ -13350,7 +13750,7 @@ public:
     mesh_density - [in]
       Larger numbers return denser meshes.
       MinimumMeshDensity() <= mesh_density <= MaximumMeshDensity()
-    destination_mesh - [in]
+    absolute_mesh_density - [in]
       If destination_mesh is not nullptr, then the returned mesh
       will be store here. Otherwise the returned mesh will be 
       allocated with a call to new ON_Mesh().
@@ -13360,7 +13760,7 @@ public:
   */
   static ON_Mesh* ToMesh(
     class ON_SubDMeshFragmentIterator& frit,
-    unsigned int mesh_density,
+    unsigned int absolute_mesh_density,
     ON_Mesh* destination_mesh
   );
 
@@ -13376,8 +13776,6 @@ public:
   // rvalue assignment operator
   ON_SubDMesh& operator=( ON_SubDMesh&& );
 #endif
-
-  ON_SubDMesh Copy() const;
 
   ON_SubDMesh& CopyFrom(
     const ON_SubDMesh& src
@@ -14117,12 +14515,6 @@ public:
   */
   bool HasNonmanifoldVertexTopology() const;
 
-  /*
-  Returns:
-    Number of edges.
-  */
-  unsigned EdgeCount() const;
-
 public:
   // Number of null edges
   unsigned short m_null_edge_count = 0;
@@ -14618,7 +15010,7 @@ public:
   /// The bEndCheck parameter controls what type of sharpness query
   /// is performed.
   /// Note that the vertex subdivision point is affected by attached
-  /// sharp edges when IsSharp(true) is is true (ON_Vertex::VertexSharpness() &gt; 0). 
+  /// sharp edges when IsSharp(true) is true (ON_Vertex::VertexSharpness() &gt; 0). 
   /// The vertex limit surface point is affected by edge sharpenss 
   /// when IsSharp(false) is true.
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
@@ -14639,9 +15031,9 @@ public:
   /// See ON_SubDEdge::IsSharp() for more information about sharp edges.
   /// </summary>
   /// <returns>
-  /// If the vertex is smooth and and two or more attached edges have positive end sharpness
+  /// If the vertex is smooth and two or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
-  /// If the vertex is a dart or crease and and one or more attached edges have positive end sharpness
+  /// If the vertex is a dart or crease and one or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
   /// Otherwise 0.0 is returned.
   /// </returns>
@@ -14715,9 +15107,9 @@ public:
   /// in place of the ordinary subdivision point.
   /// </param>
   /// <returns>
-  /// If the vertex is smooth and and two or more attached edges have positive end sharpness
+  /// If the vertex is smooth and two or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
-  /// If the vertex is a dart or crease and and one or more attached edges have positive end sharpness
+  /// If the vertex is a dart or crease and one or more attached edges have positive end sharpness
   /// at this vertex, then the maximum edge end sharpness at this vertex is returned.
   /// Otherwise 0.0 is returned.
   ///< / returns>
@@ -15958,8 +16350,8 @@ public:
   /// Sharp edges are a blend between smooth edges and crease edges. 
   /// The limit surface has a continuous normal along a sharp edge.
   /// A sharp edge has a smooth tag, 
-  /// has sharpness &gt; 0 at at least one end, 
-  /// and has sharpness &lt; ON_SubDEdgeSharpness::MaximumValue at at least one end.
+  /// has sharpness &gt; 0 at least one end, 
+  /// and has sharpness &lt; ON_SubDEdgeSharpness::MaximumValue at least one end.
   /// Sharpness has no meaning for edges with crease tags.
   /// Both sharpness values are zero for an ordinary smooth edge.
   /// Edge sharpness steadily decreases during subdivision and becomes zero after at most ON_SubDEdgeSharpness::MaximumValue subdivisions.
@@ -19994,6 +20386,7 @@ class ON_CLASS ON_SubDComponentRefList
 {
 public:
   ON_SubDComponentRefList() = default;
+  ON_SubDComponentRefList(size_t size);
   ~ON_SubDComponentRefList();
   ON_SubDComponentRefList(const ON_SubDComponentRefList& src);
   ON_SubDComponentRefList& operator=(const ON_SubDComponentRefList& src);
@@ -20062,6 +20455,17 @@ public:
   */
   int Clean();
 
+  /*
+  Description:
+    Sort by ON_SubDComponentRef::Compare2() and remove duplicates and empty elements.
+  Parameters:
+    sorted_index - [out]
+      If not empty, this array is filled with the indices that sort the original list.
+  Returns:
+    Length of clean list.
+  */
+  int Clean(ON_SimpleArray<unsigned int>* sorted_index);
+
 
   /*
   Returns:
@@ -20124,6 +20528,8 @@ public:
     Number of components.
   */
   int ComponentCount() const;
+
+  const ON_SimpleArray< class ON_SubDComponentRef* > List() const;
 
 private:
 #pragma ON_PRAGMA_WARNING_PUSH
@@ -20194,7 +20600,7 @@ public:
       A positive value increases vertex bias in some situations; otherwise vertex_depth_bias is ignored.
       When pick_type is ON_PickType::PointPick and either
       an edge and a vertex of that edge or a face and a vertex of that face are being compared,
-      then then vertex_depth_bias is added to the vertex hit depth before comparing depths.
+      then vertex_depth_bias is added to the vertex hit depth before comparing depths.
       When the pick is happening in a perspective view, it is important to choose a vertex_depth_bias
       appropriate for the depth in the view frustum.
 
@@ -20202,7 +20608,7 @@ public:
       When in doubt pass 0.0.
       A positive value increases edge bias in some situations; otherwise vertex_depth_bias is ignored.
       When pick_type is ON_PickType::PointPick and a face and an edge of that face are being compared,
-      then then edge_depth_bias is added to the edge hit depth before comparing depths.
+      then edge_depth_bias is added to the edge hit depth before comparing depths.
       When the pick is happening in a perspective view, it is important to choose an edge_depth_bias
       appropriate for the depth in the view frustum.
 
@@ -20224,7 +20630,7 @@ public:
   // m_component_ptr will be face, edge or vertex
   ON_SubDComponentPtr m_component_ptr = ON_SubDComponentPtr::Null;
 
-  //// If the point is on a a face that does not have the ordinary number of 
+  //// If the point is on a face that does not have the ordinary number of 
   //// edges for the subdivision type, then m_face_corner_index identifies the
   //// subfragment corner.
   //unsigned int m_face_corner_index = ON_UNSET_UINT_INDEX;
@@ -20340,7 +20746,7 @@ public:
   // edges E[1], ..., E[N-1] are smooth with sharpness = 0,  
   // and all faces F[i] are quads.
   //
-  // If If "C" is a boundary vertex (m_vertex_tag is crease or corner), the conditions
+  // If "C" is a boundary vertex (m_vertex_tag is crease or corner), the conditions
   // listed above are satisfied except 
   // E[0] and E[N-1] are crease edges, 
   // E[1], ..., E[N-2] are smooth edges with sharpness = 0, 
@@ -20357,7 +20763,7 @@ public:
 
   // m_S = R x R subdivision matrix
   // If (vertexR[0], ..., vertexR[R-1]) is a list of standard vertex ring points,
-  // then then the location of the subdivided ring points
+  // then the location of the subdivided ring points
   // (vertexR1[0], ..., vertexR1[R-1]) can be calculated from m_S.
   // vertexR1[i] = m_S[i][0]*vertexR[0] + ... + m_S[i][R-1]*vertexR[R-1]
   const double* const* m_S = nullptr;
@@ -21151,7 +21557,7 @@ public:
     with no self intersections, then true is returned. Otherwise false
     is returned.
   Remarks:
-    This test usesthe MarkBits() values on the edges and vertices and
+    This test uses the MarkBits() values on the edges and vertices and
     restores the values to the input state.
     Multiple threads may not simultaneously use any SubD tools on that rely
     on markbits on the same ON_SubD.
@@ -21790,14 +22196,6 @@ public:
 
   bool StatusCheckEnabled() const;
 
-  const ON_ComponentStatus StatusCheckPass() const;
-
-  const ON_ComponentStatus StatusCheckFail() const;
-
-  bool StatusCheck(
-    const ON_SubDEdge* edge
-  ) const;
-
   void Reverse();
 
   const ON_SubDEdgePtr FirstEdgePtr() const;
@@ -22320,5 +22718,19 @@ private:
   static const ON_SHA1_Hash Internal_VertexSHA1(const ON_Mesh* mesh);
 };
 #endif
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDComponentPtrTypesAndMasks invariants
+//
+// Packing a component pointer and three flag bits into one integer only works while the
+// three component classes are allocated on an 8 byte boundary, which is what leaves the
+// low three bits of every component address free. They contain doubles today, so this
+// holds; asserting it means a layout change that breaks the packing fails to build
+// instead of dereferencing corrupted pointers at run time.
+//
+static_assert(0 == (alignof(ON_SubDVertex) % 8), "ON_SubDVertex must be 8 byte aligned for ON_SubDComponentPtr packing.");
+static_assert(0 == (alignof(ON_SubDEdge) % 8), "ON_SubDEdge must be 8 byte aligned for ON_SubDComponentPtr packing.");
+static_assert(0 == (alignof(ON_SubDFace) % 8), "ON_SubDFace must be 8 byte aligned for ON_SubDComponentPtr packing.");
 
 #endif

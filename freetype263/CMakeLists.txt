@@ -51,6 +51,9 @@ set( SOURCES
 add_library( opennurbs_public_freetype STATIC
     ${SOURCES}
 )
+# Linked into the shared libOpenNURBS.so on Linux (and referenced for real
+# there since the Linux font provider), so the objects must be relocatable.
+set_target_properties(opennurbs_public_freetype PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     set( OPENNURBS_FREETYPE_DEFINES
         FT2_BUILD_LIBRARY

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -321,12 +321,6 @@ bool operator!=(
   const ON_2iSize& rhs
   );
 
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2iSize>;
-
-#endif
-
 /*
 Class ON_4iRect
   For those situations where a Windows SDK RECT or MFC CRect 
@@ -418,11 +412,6 @@ public:
   ON__INT32 right;
   ON__INT32 bottom;
 };
-
-#if defined(ON_DLL_TEMPLATE)
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4iRect>;
-#endif
-
 
 ON_DECL
 bool operator==(const ON_4iRect&, const ON_4iRect&);

@@ -1415,11 +1415,13 @@ int ON_Material::CompareColorAttributes( const ON_Material& a, const ON_Material
 
   if (a_pbr && b_pbr)
   {
-    int rc = a_pbr->BaseColor().Compare(a_pbr->BaseColor());
-    if (rc) return rc;
+    // 28th September 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-87107
+    // This was comparing a_pbr's base color with itself, so base color changes were never detected.
+    int rc = a_pbr->BaseColor().Compare(b_pbr->BaseColor());
+    if (0 != rc) return rc;
 
     rc = ((int)a_pbr->BRDF()) - ((int)b_pbr->BRDF());
-    if (rc) return rc;
+    if (0 != rc) return rc;
 
     rc = CompareDouble(a_pbr->Subsurface(), b_pbr->Subsurface());
     if (0 != rc) return rc;
@@ -4269,7 +4271,7 @@ bool CreateSubMesh(const ON_Mesh& mesh, const ON_2fPointArray& tc, const int nFi
   return true;
 }
 
-void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4]);
+void ClosestPtToMeshFace(const ON_Mesh* mesh, const int fi, const ON_3dPoint& ptIn, ON_3dPoint& POut, double(&tOut)[4], char* triangleOut);
 
 #if !defined(OPENNURBS_PLUS)
 bool MeshFaceTreeClosestPointTC(const ON_Mesh& mesh, const ON_RTree& tree, const ON_3dPoint& pt, ON_3dPoint& tcOut);
@@ -4317,6 +4319,8 @@ public:
 		if (nullptr != m_pSourceCPM)
 			delete m_pSourceCPM;
 		m_pSourceCPM = nullptr;
+		delete m_patchCache; // RH-94300
+		m_patchCache = nullptr;
 #if !defined(OPENNURBS_PLUS)
     delete m_pMeshFaceTree;
 #endif
@@ -4580,20 +4584,16 @@ public:
     }
     const ClosestPointData& ClosestPoint(int fi)
     {
-      if (m_closestMeshPts.capacity() < 30)
-      {
-        m_closestMeshPts.reserve(30);
-      }
-      for (int i = 0; i < m_closestMeshPts.size(); i++)
-      {
-        if (m_closestMeshPts[i].m_fi == fi)
-        {
-          return m_closestMeshPts[i];
-        }
-      }
-      m_closestMeshPts.emplace_back();
-      ClosestPointData& q = m_closestMeshPts.back();
-      ::ClosestPtToMeshFace(&m_mesh, fi, m_pt, q.m_P, q.m_t);
+      // RH-94300: Heavily overlapping seamless patches query the same source
+      // faces repeatedly. Cache the closest-point result per face in a hash map
+      // so repeat lookups are O(1) instead of a linear scan, and so the returned
+      // reference stays valid as new faces are added.
+      auto it = m_closestMeshPts.find(fi);
+      if (it != m_closestMeshPts.end())
+        return it->second;
+
+      ClosestPointData& q = m_closestMeshPts[fi];
+      ::ClosestPtToMeshFace(&m_mesh, fi, m_pt, q.m_P, q.m_t, nullptr);
       q.m_fi = fi;
       return q;
     }
@@ -4605,7 +4605,7 @@ public:
   private:
     const ON_3dPoint m_pt;
     const ON_Mesh& m_mesh;
-    std::vector<ClosestPointData> m_closestMeshPts;
+    std::unordered_map<int, ClosestPointData> m_closestMeshPts;
   };
 
   class TcSeamlessPatch
@@ -4615,6 +4615,7 @@ public:
       : m_mesh(mesh), m_tc(tc), m_seamTool(seamTool)
     {
       m_bEvaluated = false;
+      m_evalGen = 0;
     }
     virtual ~TcSeamlessPatch()
     {
@@ -4636,22 +4637,37 @@ public:
 
     bool Evaluate(SamplePoint& samplePt, ClosestPointData& qOut) const
     {
-      double smallestDist = DBL_MAX;
+      // RH-94300: This is an argmin over the patch faces, so compare squared
+      // distances and skip the per-face sqrt (ON_Length3d). The caller
+      // recomputes the actual distance once for the winning face.
+      const ON_3dPoint pt = samplePt.Point();
+      double smallestDistSq = DBL_MAX;
       for (int fi : m_fis)
       {
         const ClosestPointData& q = samplePt.ClosestPoint(fi);
-        const double dist = q.m_P.DistanceTo(samplePt.Point());
-        if (dist < smallestDist)
+        const double dx = q.m_P.x - pt.x, dy = q.m_P.y - pt.y, dz = q.m_P.z - pt.z;
+        const double distSq = dx * dx + dy * dy + dz * dz;
+        if (distSq < smallestDistSq)
         {
           qOut = q;
-          smallestDist = dist;
+          smallestDistSq = distSq;
         }
       }
-      return smallestDist < DBL_MAX;
+      return smallestDistSq < DBL_MAX;
     }
 
-    bool Evaluate(const int count, SamplePoint* pPts, double& maxDistInOut, int tcCount, ON_3dPoint* pTcsOut) const
+    bool Evaluate(const int count, SamplePoint* pPts, double& maxDistInOut, int tcCount, ON_3dPoint* pTcsOut, ON__UINT64 evalGen) const
     {
+      // RH-94300: The patch topology is reused across target faces, but the
+      // cached closest-point results below are only valid for a single set of
+      // sample points (one MatchFaceTC call). Discard them when the caller
+      // advances the evaluation generation.
+      if (m_evalGen != evalGen)
+      {
+        m_bEvaluated = false;
+        m_evalGen = evalGen;
+      }
+
       if (!m_bEvaluated)
       {
         m_maxDist = 0.0;
@@ -4776,15 +4792,23 @@ public:
     mutable bool m_bEvaluated;
     mutable ClosestPointData m_q[5];
     mutable double m_maxDist;
+    mutable ON__UINT64 m_evalGen; // RH-94300: generation the cached results above belong to
   };
 
   class TcSeamlessPatchCache
   {
   public:
     TcSeamlessPatchCache(const ON_Mesh& mesh, const ON_2fPointArray& tc, const SeamTool& seamTool, int steps)
-      : m_mesh(mesh), m_tc(tc), m_seamTool(seamTool), m_steps(steps)
+      : m_mesh(mesh), m_tc(tc), m_seamTool(seamTool), m_steps(steps), m_evalGen(1)
     {
     }
+
+    // RH-94300: Patch topology (the result of TcSeamlessPatch::Create) depends
+    // only on the source mapping mesh and is reused across all target faces.
+    // Sample-point-dependent evaluation results are invalidated by advancing
+    // the generation at the start of each MatchFaceTC call.
+    ON__UINT64 EvaluationGeneration() const { return m_evalGen; }
+    void NewEvaluation() { m_evalGen++; }
     virtual ~TcSeamlessPatchCache()
     {
       for (auto& pit : m_patches)
@@ -4814,6 +4838,7 @@ public:
     const ON_2fPointArray& m_tc;
     const SeamTool& m_seamTool;
     const int m_steps;
+    ON__UINT64 m_evalGen;
     std::unordered_map<int, TcSeamlessPatch*> m_patches;
   };
 
@@ -4850,7 +4875,14 @@ public:
         SamplePoint(amendedPts[4], m_mesh)
       };
 
-      TcSeamlessPatchCache patchCache(m_mesh, m_tc, m_seamTool, 5);
+      // RH-94300: Reuse one patch cache for the lifetime of the mapper (i.e. for
+      // every target face of this render mesh) instead of rebuilding the seamless
+      // patches for each face. The topology is invariant; only the per-sample-point
+      // evaluation is refreshed, which NewEvaluation() forces.
+      if (nullptr == m_patchCache)
+        m_patchCache = new TcSeamlessPatchCache(m_mesh, m_tc, m_seamTool, 5);
+      TcSeamlessPatchCache& patchCache = *m_patchCache;
+      patchCache.NewEvaluation();
 
       for (double mappingTol = initialMappingTol; mappingTol <= 20.0; mappingTol = mappingTol * 10.0)
       {
@@ -4973,7 +5005,7 @@ public:
       for (int i = 0; i < commonFis.Count(); i++)
       {
         const TcSeamlessPatch& sp = patchCache.Get(commonFis[i]);
-        if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut))
+        if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut, patchCache.EvaluationGeneration()))
         {
           bSuccess = true;
         }
@@ -4992,7 +5024,7 @@ public:
         patchMaxDistBb.Expand(ON_3dVector(maxDist, maxDist, maxDist));
         if (patchMaxDistBb.Includes(samplePointBbox))
         {
-          if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut))
+          if (sp.Evaluate(count, pSamplePts, maxDist, tcCount, pTcsOut, patchCache.EvaluationGeneration()))
           {
             bSuccess = true;
           }
@@ -5018,6 +5050,11 @@ protected:
 	ON_Mesh m_sourceMesh;
 	CMeshClosestPointMapper* m_pSourceCPM;
 	SeamTool m_seamTool;
+
+	// RH-94300: Seamless patch topology depends only on the source mapping mesh,
+	// so it is cached for the lifetime of the mapper and reused across every
+	// target face rather than rebuilt per face. Lazily created on first use.
+	mutable TcSeamlessPatchCache* m_patchCache = nullptr;
 
 	// Mapping evaluation statistics
 	mutable double m_totalMappingTol;
@@ -5589,6 +5626,13 @@ bool ON_TextureMapping::HasMatchingTextureCoordinates(
   return rc;
 }
 
+// NormalizedParameterAt() can return ON_UNSET_VALUE (~ -1.23e308) when the
+// interval or parameter is not valid. The Release global optimizer (/GL + /LTCG)
+// inlines it and constant-folds the resulting (float) conversion, which overflows
+// float and emits C4756 (treated as error). Same workaround as opennurbs_mesh.cpp
+// and opennurbs_beam.cpp.
+#pragma warning( push )
+#pragma warning( disable : 4756 )
 static
 bool GetSPTCHelper(
   const ON_Mesh& mesh,
@@ -5718,6 +5762,7 @@ bool GetSPTCHelper(
 
   return true;
 }
+#pragma warning( pop )
 
 #if !defined(OPENNURBS_PLUS)
 class ON__MTCBDATA
@@ -5978,8 +6023,46 @@ bool ON_TextureMapping::GetTextureCoordinates(
 				const ON_Mesh * pMesh = CustomMappingMeshPrimitive();
 				if (nullptr != pMesh)
 				{
-					CMeshClosestPointMapper meshMapper(*pMesh, pMesh->m_T, mesh.GetRenderMeshInfo(), matP);
-					rc = ProjectTextureCoordinates(meshMapper, mesh, temp_tcs, &matP.m_xform[0][0], &matN.m_xform[0][0]);
+					// RH-94300: The common "complete unwrap" case (the UV editor's standard
+					// pattern) stores a mapping mesh that is a positional copy of the render
+					// mesh carrying custom texture coordinates. When the two meshes coincide
+					// 1:1 after the mapping transform, the closest-point projection is an
+					// identity and the texture coordinates can be copied directly, skipping
+					// the expensive seamless-patch search. (Jussi's RenderMeshInfo fast path
+					// does not engage for the combined render meshes seen here -- RH-96526.)
+					bool bIdentityCopy = false;
+					const int vcount = mesh.VertexCount();
+					if (vcount > 0 && pMesh->VertexCount() == vcount && pMesh->m_T.Count() == pMesh->VertexCount())
+					{
+						const ON_BoundingBox bbox = pMesh->BoundingBox();
+						const double diag = bbox.Diagonal().Length();
+						const double tol = (diag > ON_ZERO_TOLERANCE ? diag : 1.0) * 1.0e-5;
+						const double tol2 = tol * tol;
+						bIdentityCopy = true;
+						for (int vi = 0; vi < vcount; vi++)
+						{
+							const ON_3dPoint p = matP * mesh.Vertex(vi);
+							const ON_3dPoint q = pMesh->Vertex(vi);
+							const double dx = p.x - q.x, dy = p.y - q.y, dz = p.z - q.z;
+							if (dx * dx + dy * dy + dz * dz > tol2)
+							{
+								bIdentityCopy = false;
+								break;
+							}
+						}
+						if (bIdentityCopy)
+						{
+							temp_tcs.SetCount(0);
+							temp_tcs.Append(pMesh->m_T.Count(), pMesh->m_T.Array());
+							rc = true;
+						}
+					}
+
+					if (!bIdentityCopy)
+					{
+						CMeshClosestPointMapper meshMapper(*pMesh, pMesh->m_T, mesh.GetRenderMeshInfo(), matP);
+						rc = ProjectTextureCoordinates(meshMapper, mesh, temp_tcs, &matP.m_xform[0][0], &matN.m_xform[0][0]);
+					}
 				}
 			}
 

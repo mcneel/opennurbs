@@ -21,13 +21,266 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
+class ON_LinetypeShapePrivate
+{
+public:
+  ON_LinetypeShapePrivate() = default;
+  ON_LinetypeShapePrivate& operator=(const ON_LinetypeShapePrivate& other);
+
+  double m_offset = 0;
+  std::unique_ptr<ON_Geometry> m_geometry;
+};
+
+ON_LinetypeShapePrivate& ON_LinetypeShapePrivate::operator=(const ON_LinetypeShapePrivate& other)
+{
+  if (this != &other)
+  {
+    m_offset = other.m_offset;
+    m_geometry.reset();
+    const ON_Geometry* otherGeometry = other.m_geometry.get();
+    if (otherGeometry)
+    {
+      m_geometry.reset(otherGeometry->Duplicate());
+    }
+  }
+  return *this;
+}
+
+ON_LinetypeShape::ON_LinetypeShape()
+{
+  m_private = new ON_LinetypeShapePrivate();
+}
+
+ON_LinetypeShape::ON_LinetypeShape(double offset, const ON_Geometry& geometry)
+{
+  m_private = new ON_LinetypeShapePrivate();
+  m_private->m_offset = offset;
+  m_private->m_geometry.reset(geometry.Duplicate());
+}
+
+ON_LinetypeShape::ON_LinetypeShape(const ON_LinetypeShape& other)
+{
+  m_private = new ON_LinetypeShapePrivate();
+  m_private->m_offset = other.m_private->m_offset;
+  m_private->m_geometry.reset(other.m_private->m_geometry->Duplicate());
+}
+
+ON_LinetypeShape& ON_LinetypeShape::operator=(const ON_LinetypeShape& other)
+{
+  if (this != &other)
+  {
+    (*m_private) = (*other.m_private);
+  }
+  return *this;
+}
+
+
+ON_LinetypeShape::~ON_LinetypeShape()
+{
+  delete m_private;
+}
+
+enum ON_LinetypeShapeTypeCodes : unsigned char
+{
+  Geometry = 1,
+  Offset = 2,
+
+  LastLinetypeShapeTypeCode = 2
+};
+
+
+bool ON_LinetypeShape::Write(ON_BinaryArchive& file) const
+{
+  bool rc = false;
+  const int minor_version = 0;
+  if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version))
+    return false;
+  for (;;)
+  {
+    // Only write non-default values in a similar fashion as ON_3dmObjectAttributes
+
+    const ON_Geometry* geometry = m_private->m_geometry.get();
+    if (geometry)
+    {
+      const unsigned char itemType = ON_LinetypeShapeTypeCodes::Geometry; // 1
+      if (!file.WriteChar(itemType))
+        break;
+      if (!file.WriteObject(*geometry))
+        break;
+    }
+    if (m_private->m_offset != 0.0)
+    {
+      const unsigned char itemType = ON_LinetypeShapeTypeCodes::Offset; // 2
+      if (!file.WriteChar(itemType))
+        break;
+      if (!file.WriteDouble(m_private->m_offset))
+        break;
+    }
+
+    // 0 indicates end of new linetype shape attributes
+    const unsigned char attributes_end = 0;
+    if (!file.WriteChar(attributes_end))
+      break;
+
+    rc = true;
+    break;
+  }
+
+  if (!file.EndWrite3dmChunk())
+    rc = false;
+  return rc;
+}
+
+bool ON_LinetypeShape::Read(ON_BinaryArchive& file)
+{
+  ON_LinetypeShape empty;
+  *this = empty;
+
+  int major_version = 0;
+  int minor_version = 0;
+  if (!file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK, &major_version, &minor_version))
+    return false;
+
+  bool rc = false;
+  if (1 == major_version)
+  {
+    for (;;)
+    {
+      unsigned char item_id = 0;
+      if (!file.ReadChar(&item_id))
+        break;
+
+      if (ON_LinetypeShapeTypeCodes::Geometry == item_id)
+      {
+        ON_Object* obj = nullptr;
+        if (!file.ReadObject(&obj))
+          break;
+        ON_Geometry* geometry = ON_Geometry::Cast(obj);
+        m_private->m_geometry.reset(geometry);
+
+        if (!file.ReadChar(&item_id))
+          break;
+      }
+
+      if (ON_LinetypeShapeTypeCodes::Offset == item_id)
+      {
+        if (!file.ReadDouble(&m_private->m_offset))
+          break;
+
+        if (!file.ReadChar(&item_id))
+          break;
+      }
+
+      if (item_id > ON_LinetypeShapeTypeCodes::LastLinetypeShapeTypeCode)
+      {
+        // we are reading file written with code newer
+        // than this code (minor_version > 1)
+        item_id = 0;
+      }
+
+      rc = true;
+      break;
+    }
+  }
+
+  if (!file.EndRead3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+const ON_Geometry* ON_LinetypeShape::Geometry() const
+{
+  return m_private->m_geometry.get();
+}
+double ON_LinetypeShape::LocalOffset() const
+{
+  return m_private->m_offset;
+}
+
+
 class ON_LinetypePrivate
 {
 public:
+  ON_LinetypePrivate() = default;
+  ON_LinetypePrivate(const ON_LinetypePrivate& other);
+  ON_LinetypePrivate& operator=(const ON_LinetypePrivate& other);
+  ~ON_LinetypePrivate();
+
   ON_SimpleArray<ON_LinetypeSegment> m_segments;
   ON_SimpleArray<ON_2dPoint> m_taper_points;
+
+  double m_shape_distance = 0;
+  double m_shape_gap = 0;
+  ON_2dVector m_shape_offset = ON_2dVector(0, 0);
+  ON_SimpleArray<ON_LinetypeShape*> m_shapes;
+
   bool m_always_model_distances = false;
 };
+
+ON_LinetypePrivate::ON_LinetypePrivate(const ON_LinetypePrivate& other)
+{
+  m_segments = other.m_segments;
+  m_taper_points = other.m_taper_points;
+  m_always_model_distances = other.m_always_model_distances;
+
+  m_shape_distance = other.m_shape_distance;
+  m_shape_gap = other.m_shape_gap;
+  m_shape_offset = other.m_shape_offset;
+  const int count = other.m_shapes.Count();
+  for (int i = 0; i < count; i++)
+  {
+    const ON_LinetypeShape* shape = other.m_shapes[i];
+    if (nullptr == shape)
+    {
+      m_shapes.Append(nullptr);
+      continue;
+    }
+    ON_LinetypeShape* shapeCopy = new ON_LinetypeShape(*shape);
+    m_shapes.Append(shapeCopy);
+  }
+}
+
+ON_LinetypePrivate& ON_LinetypePrivate::operator=(const ON_LinetypePrivate& other)
+{
+  if (this != &other)
+  {
+    m_segments = other.m_segments;
+    m_taper_points = other.m_taper_points;
+    m_shape_distance = other.m_shape_distance;
+    m_shape_gap = other.m_shape_gap;
+    m_shape_offset = other.m_shape_offset;
+    for (int i = 0; i < m_shapes.Count(); i++)
+    {
+      ON_LinetypeShape* shape = m_shapes[i];
+      delete shape;
+    }
+    m_shapes.Empty();
+    for (int i = 0; i < other.m_shapes.Count(); i++)
+    {
+      const ON_LinetypeShape* shape = other.m_shapes[i];
+      if (nullptr == shape)
+      {
+        m_shapes.Append(nullptr);
+        continue;
+      }
+      ON_LinetypeShape* copyShape = new ON_LinetypeShape(*shape);
+      m_shapes.Append(copyShape);
+    }
+    m_always_model_distances = other.m_always_model_distances;
+  }
+  return *this;
+}
+
+ON_LinetypePrivate::~ON_LinetypePrivate()
+{
+  const int count = m_shapes.Count();
+  for (int i = 0; i < count; i++)
+  {
+    ON_LinetypeShape* shape = m_shapes[i];
+    delete shape;
+  }
+}
 
 bool ON_IsHairlinePrintWidth(double width_mm)
 {
@@ -316,8 +569,10 @@ enum ON_LinetypeTypeCodes : unsigned char
   Taper = 5,
   //minor version = 3
   AlwaysModelDistance = 6,
+  LinetypeShapes = 7,
+  LinetypeShapesLocalOffset = 8,
 
-  LastLinetypeTypeCode = 6
+  LastLinetypeTypeCode = 8
 };
 
 bool ON_Linetype::Write( ON_BinaryArchive& file) const
@@ -357,7 +612,9 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
     // minor_version = 2: add width, width units, and taper
     // 13 Feb 2024 S. Baer (RH-79551)
     // minor_version = 3: add AlwaysModelDistance
-    const int minor_version = 3;
+    // 6 Aug 2025 S. Baer
+    // minor_version = 4: linetype shapes
+    const int minor_version = 4;
     if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 2, minor_version))
       return false;
     for (;;)
@@ -426,6 +683,75 @@ bool ON_Linetype::Write( ON_BinaryArchive& file) const
           break;
 
         if (!file.WriteBool(AlwaysModelDistances()))
+          break;
+      }
+
+      if (m_private && m_private->m_shapes.Count() > 0)
+      {
+        // make sure all of the shapes are there
+        int shapeCount = 0;
+        for (int i = 0; i < m_private->m_shapes.Count(); i++)
+        {
+          const ON_LinetypeShape* shape = m_private->m_shapes[i];
+          const ON_Geometry* geometry = shape ? shape->Geometry() : nullptr;
+          if (geometry)
+            shapeCount++;
+        }
+
+        if (shapeCount > 0)
+        {
+          const unsigned char itemType = ON_LinetypeTypeCodes::LinetypeShapes; // 7
+          if (!file.WriteChar(itemType))
+            break;
+
+          // placing everything in s chunk in case we want to pull the linetype
+          // shapes out of the WIP
+          if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, 0))
+            break;
+
+          if (!file.WriteDouble(m_private->m_shape_distance))
+            break;
+
+          // When shapes were initially added, the gap value was implemented as an
+          // interval. In order to not break 3dm File I/O, just keep writing the
+          // gap as an interval
+          ON_Interval span(0, m_private->m_shape_gap);
+          if (!file.WriteInterval(span))
+            break;
+
+          if (!file.WriteInt(shapeCount))
+            break;
+
+          bool writeFail = false;
+          for (int i = 0; i < m_private->m_shapes.Count(); i++)
+          {
+            const ON_LinetypeShape* shape = m_private->m_shapes[i];
+            const ON_Geometry* geometry = shape ? shape->Geometry() : nullptr;
+            if (shape && geometry)
+            {
+              if (!shape->Write(file))
+              {
+                writeFail = true;
+                break;
+              }
+            }
+          }
+
+          if (writeFail)
+            break;
+
+          if (!file.EndWrite3dmChunk())
+            break;
+        }
+      }
+
+      if (m_private && m_private->m_shape_offset != ON_2dVector::ZeroVector)
+      {
+        const unsigned char itemType = ON_LinetypeTypeCodes::LinetypeShapesLocalOffset; // 8
+        if (!file.WriteChar(itemType))
+          break;
+
+        if (!file.WriteVector(m_private->m_shape_offset))
           break;
       }
 
@@ -596,6 +922,76 @@ bool ON_Linetype::Read( ON_BinaryArchive& file)
         if (3 == minor_version && item_id != 0)
         {
           ON_ERROR("Bug in ON_Linetype::Read for chunk version 2.3");
+        }
+      }
+
+      if (minor_version >= 4)
+      {
+        if (ON_LinetypeTypeCodes::LinetypeShapes == item_id)
+        {
+          if (nullptr == m_private)
+            m_private = new ON_LinetypePrivate();
+
+          // placing everything in s chunk in case we want to pull the linetype
+          // shapes out of the WIP
+          int shapeMajorVersion = 0;
+          int shapeMinorVersion = 0l;
+          if (!file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK, &shapeMajorVersion, &shapeMinorVersion))
+            break;
+
+          if (1 == shapeMajorVersion)
+          {
+            if (!file.ReadDouble(&m_private->m_shape_distance))
+              break;
+
+            // When shapes were initially added, the gap value was implemented as an
+            // interval. In order to not break 3dm File I/O, just keep reading the
+            // interval and interpret it as a single gap value
+            ON_Interval span(0, 0);
+            if (!file.ReadInterval(span))
+              break;
+            m_private->m_shape_gap = span.Length();
+
+            int shapeCount = 0;
+            if (!file.ReadInt(&shapeCount))
+              break;
+
+            bool readFail = false;
+            for (int i = 0; i < shapeCount; i++)
+            {
+              ON_LinetypeShape* shape = new ON_LinetypeShape();
+              if (shape->Read(file))
+              {
+                m_private->m_shapes.Append(shape);
+              }
+              else
+              {
+                delete shape;
+                readFail = true;
+                break;
+              }
+            }
+
+            if (readFail)
+              break;
+          }
+
+          if (!file.EndRead3dmChunk(true))
+            break;
+
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (ON_LinetypeTypeCodes::LinetypeShapesLocalOffset == item_id)
+        {
+          ON_2dVector v(0, 0);
+          if (!file.ReadVector(v))
+            break;
+          SetShapeLocalOffset(v);
+
+          if (!file.ReadChar(&item_id))
+            break;
         }
       }
 
@@ -829,3 +1225,131 @@ void ON_Linetype::SetAlwaysModelDistances(bool on)
 {
   m_private->m_always_model_distances = on;
 }
+
+int ON_Linetype::LinetypeShapeCount() const
+{
+  return m_private->m_shapes.Count();
+}
+void ON_Linetype::SetShapeSpacing(double interval)
+{
+  m_private->m_shape_distance = interval;
+}
+double ON_Linetype::ShapeSpacing() const
+{
+  return m_private->m_shape_distance;
+}
+void ON_Linetype::SetShapeGap(double gap)
+{
+  if (gap < 0)
+    gap = 0;
+  m_private->m_shape_gap = gap;
+}
+
+double ON_Linetype::ShapeGap() const
+{
+  return m_private->m_shape_gap;
+}
+void ON_Linetype::SetShapeLocalOffset(const ON_2dVector& offset)
+{
+  m_private->m_shape_offset = offset;
+}
+ON_2dVector ON_Linetype::ShapeLocalOffset() const
+{
+  return m_private->m_shape_offset;
+}
+
+bool ON_Linetype::AddShape(const ON_Curve& shapeCurve, double offset)
+{
+  m_private->m_shapes.Append(new ON_LinetypeShape(offset, shapeCurve));
+  return true;
+}
+bool ON_Linetype::AddShape(const wchar_t* rtfText, const ON_DimStyle& dimStyle, const ON_Plane& plane, double offset)
+{
+  // Create a local dimstyle that is composed of all overrides. This allows
+  // the text to be stored in the linetype without dependence on dimension
+  // styles in a document
+  ON_DimStyle ds;
+  ds.SetParentId(ON_DimStyle::Default.Id());
+  ds.SetFont(dimStyle.Font());
+  ds.SetTextHeight(dimStyle.TextHeight());
+  ds.SetTextHorizontalAlignment(dimStyle.TextHorizontalAlignment());
+  ds.SetTextMask(dimStyle.TextMask());
+  ds.SetTextGap(dimStyle.TextGap());
+  ds.SetTextOrientation(dimStyle.TextOrientation());
+  ds.SetTextRotation(dimStyle.TextRotation());
+  ds.SetTextUnderlined(dimStyle.TextUnderlined());
+  ds.SetTextVerticalAlignment(dimStyle.TextVerticalAlignment());
+  ds.SetDrawForward(dimStyle.DrawForward());
+  ds.SetDrawTextMask(dimStyle.DrawTextMask());
+  ds.SetLineSpaceScale(dimStyle.LineSpaceScale());
+  ds.SetMaskBorder(dimStyle.MaskBorder());
+  ds.SetMaskColor(dimStyle.MaskColor());
+  ds.SetMaskFillType(dimStyle.MaskFillType());
+  ds.SetMaskFrameType(dimStyle.MaskFrameType());
+  ds.SetUseKerning(dimStyle.UseKerning());
+  ds.SetUnitSystem(dimStyle.UnitSystem());
+  ds.SetDimScale(dimStyle.ScaleValue());
+  ON_Text text;
+  if (!text.Create(rtfText, &ds, plane))
+    return false;
+  text.SetTextHorizontalAlignment(&ON_DimStyle::Default, ds.TextHorizontalAlignment());
+  text.SetTextVerticalAlignment(&ON_DimStyle::Default, ds.TextVerticalAlignment());
+  m_private->m_shapes.Append(new ON_LinetypeShape(offset, text));
+  return true;
+}
+
+void ON_Linetype::RemoveAllShapes()
+{
+  for (int i = 0; i < m_private->m_shapes.Count(); i++)
+  {
+    ON_LinetypeShape* shape = m_private->m_shapes[i];
+    delete shape;
+    m_private->m_shapes[i] = nullptr;
+  }
+  m_private->m_shapes.Empty();
+}
+
+int ON_Linetype::GetLinetypeShapes(ON_SimpleArray<const ON_LinetypeShape*>& shapes) const
+{
+  const int count = m_private->m_shapes.Count();
+  for (int i = 0; i < count; i++)
+  {
+    const ON_LinetypeShape* shape = m_private->m_shapes[i];
+    shapes.Append(shape);
+  }
+  return count;
+}
+
+ON_BoundingBox ON_Linetype::ShapeBounds() const
+{
+  ON_BoundingBox rc = ON_BoundingBox::UnsetBoundingBox;
+  ON_SimpleArray<const ON_LinetypeShape*> shapes;
+  GetLinetypeShapes(shapes);
+  for (int i = 0; i < shapes.Count(); i++)
+  {
+    const ON_LinetypeShape* shape = shapes[i];
+    const ON_Geometry* geometry = shape ? shape->Geometry() : nullptr;
+    if (nullptr == geometry)
+      continue;
+    double offset = shape->LocalOffset();
+
+    ON_BoundingBox bbox = ON_BoundingBox::UnsetBoundingBox;
+    const ON_Text* text = ON_Text::Cast(geometry);
+    if (nullptr != text)
+    {
+      const ON_DimStyle& dimstyle = text->DimensionStyle(ON_DimStyle::Default);
+      text->GetAnnotationBoundingBox(nullptr, &dimstyle, 1, bbox.m_min, bbox.m_max, true);
+    }
+
+    // Curve shapes, or a text shape whose outlines could not be generated, fall back to the
+    // geometry's own bounding box.
+    if (!bbox.IsValid())
+      bbox = geometry->TightBoundingBox();
+
+    bbox.m_min.x += offset;
+    bbox.m_max.x += offset;
+    rc.Union(bbox);
+  }
+  return rc;
+}
+

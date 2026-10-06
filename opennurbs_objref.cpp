@@ -139,7 +139,7 @@ bool ON_COMPONENT_INDEX::IsSubDComponentIndex() const
   case ON_COMPONENT_INDEX::subd_vertex:
   case ON_COMPONENT_INDEX::subd_edge:
   case ON_COMPONENT_INDEX::subd_face:
-    if ( -1 != m_index && 0 != m_index )
+    if ( -1 != m_index && 0 != m_index )  // 2025-09-19, PEC, Why not m_index > 0 ??
     {
       rc = true;
     }
@@ -1333,6 +1333,23 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
           return false;
         }
       }
+    }
+
+    if (!rc && m_component_index.IsHatchLoopComponentIndex() && nullptr != ON_Curve::Cast(m_geometry))
+    {
+      if (nullptr == m_parent_geometry)
+        m_parent_geometry = m_geometry;
+      ON_Geometry* proxy_geo = m_geometry->Duplicate();
+      if (nullptr == proxy_geo)
+        return false;
+      if (!proxy_geo->Transform(iref.m_xform))
+      {
+        delete proxy_geo;
+        return false;
+      }
+      SetProxy(nullptr, proxy_geo, true);
+      m_geometry = proxy_geo;
+      rc = true;
     }
   }
 

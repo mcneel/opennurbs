@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -80,9 +80,16 @@ public:
   ON_NurbsCurve m_boundary;
 
   // Update frustum to match bounding box and detail scale
+  //ON_DEPRECATED_MSG("Since v9.0")
   bool UpdateFrustum(
     ON::LengthUnitSystem model_units,
     ON::LengthUnitSystem paper_units
+  );
+
+  // Update frustum to match bounding box and detail scale
+  bool UpdateFrustum(
+    const ON_UnitSystem& model_units,
+    const ON_UnitSystem& paper_units
   );
 };
 

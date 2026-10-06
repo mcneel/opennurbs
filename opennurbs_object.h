@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -583,6 +583,18 @@ public:
   virtual
   void Dump( ON_TextLog& ) const;
 
+  /// <summary>
+  /// Go through the linked list of ON_UserData attached to this and
+  /// call the virtual Dump(text_log) function on each instance.
+  /// </summary>
+  /// <param name="description">
+  /// General context description to print before each instance.
+  /// </param>
+  /// <param name="text_log">
+  /// Destination text log.
+  /// </param>
+  void DumpUserData(const wchar_t* description, ON_TextLog& text_log) const;
+
   /*
   Returns:
     An estimate of the amount of memory the class uses in bytes.
@@ -662,7 +674,15 @@ public:
   virtual
   ON::object_type ObjectType() const;
 
+  /*
+  Description:
+    Get a string description of the object type.
 
+  Returns: 
+    ON_wString value of ObjectType().
+  */
+  //virtual
+  ON_wString ObjectTypeStr() const;
 
   /*
   Description:

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -65,13 +65,10 @@ public:
   /// <returns>True if this color is not equal to ON_Color::Unset.</returns>
   bool IsSet() const;
 
-  /// <returns>True if this color is  equal to ON_Color::Unset.</returns>
+  /// <returns>True if this color is equal to ON_Color::Unset.</returns>
   bool IsUnset() const;
 
-  /*
-  Returns:
-    True if alpha is 0.
-  */
+  /// <returns>True if A is equal to 255</returns>
   bool IsTransparent() const;
 
   /*
@@ -459,11 +456,6 @@ public:
   double m_position = 0;
 };
 
-#if defined(ON_DLL_TEMPLATE)
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_ColorStop>;
-#endif
-
-
 class ON_CLASS ON_4fColor
 {
 public:
@@ -521,10 +513,5 @@ public:
 private:
   float m_color[4];
 };
-
-#if defined(ON_DLL_TEMPLATE)
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4fColor>;
-#endif
-
 
 #endif

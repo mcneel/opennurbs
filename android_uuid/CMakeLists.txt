@@ -1,11 +1,6 @@
-cmake_minimum_required (VERSION 3.4)
+cmake_minimum_required (VERSION 3.16)
+
 project( android_uuid C)
-
-
-set( INCLUDE_DIRS
-.
-)
-
 
 set( SOURCES
     copy.c
@@ -17,18 +12,11 @@ set( SOURCES
     unparse.c
     uuid_time.c
 )
-set(CMAKE_POSITION_INDEPENDENT_CODE ON) # -fPIC
 
-add_library( android_uuid STATIC
-${SOURCES}
-)
+add_library( android_uuid STATIC ${SOURCES})
 
-#target_compile_definitions(android_uuid PRIVATE Z_PREFIX MY_ZCALLOC)
+set_target_properties(android_uuid PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories( android_uuid
-   PUBLIC
-.
-)
+target_include_directories(android_uuid PUBLIC .)
 
 install( TARGETS android_uuid DESTINATION "lib")
-install( FILES DESTINATION "include/android_uuid")

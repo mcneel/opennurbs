@@ -464,6 +464,7 @@ ON_PostEffects::CImpl::~CImpl()
 
 ON_XMLNode& ON_PostEffects::CImpl::PostEffectsNode(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
   ON_XMLNode* post_effects_node = Node().CreateNodeAtPath(XMLPathPeps());
   if (nullptr != post_effects_node)
     return *post_effects_node;

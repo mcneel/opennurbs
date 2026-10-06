@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -821,7 +821,7 @@ public:
     fp - [in]
       FILE pointer returned by ON_FileStream::Open().
     file_size - [out]
-      If file_size is not null, the the size of the file
+      If file_size is not null, the size of the file
       in bytes returned here
     file_metadata_last_modified_time - [out]
       If file_metadata_last_modified_time is not null, then the time the 
@@ -1605,6 +1605,10 @@ private:
   ON_FileReference::Status m_full_path_status = ON_FileReference::Status::Unknown;
 
 private:
+  // Matthew 2026: The implementation of this function has been very wrong since ~2015 and had
+  // some undefined behavior allowing a new compiler to optimize it very agressively in release mode
+  // and crash. I fixed the undefined behavior, but it still doesn't do what it says on the tin.
+  // If you see this in 2036, please write a working version.
   ON_FileReference::FindFilePreference Internal_FindFile(
     const wchar_t* base_path,
     bool bBasePathIncludesFileName,

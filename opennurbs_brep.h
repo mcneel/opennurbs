@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -166,7 +166,7 @@ Description:
   Brep edge information is stored in ON_BrepEdge classes.
   ON_Brep.m_E[] is an array of all the edges in the brep.
 
-  An ON_BrepEdge is derived from ON_CurveProxy so the the
+  An ON_BrepEdge is derived from ON_CurveProxy so the
   edge can supply easy to use evaluation tools via 
   the ON_Curve virtual member functions.
 
@@ -251,6 +251,24 @@ public:
     Number of trims attached to this edge.
   */
   int TrimCount() const;
+
+  /*
+    Puts the face indices that this edge bounds.
+    returns the number of indices added to the array.
+  */
+  int AdjacentFaceIndices(ON_SimpleArray<int>& faceIndices) const;
+  
+  /*
+    Puts the faces that this edge bounds in the faces array.
+    returns the number of faces added to the array.
+  */
+  int AdjacentFaces(ON_SimpleArray<const ON_BrepFace*>& faces) const;
+
+  /*
+  Puts the faces that this edge bounds in the faces array.
+  returns the number of faces added to the array.
+  */
+  int AdjacentFaces(ON_SimpleArray<ON_BrepFace*>& faces);
 
   /*
   Parameters:
@@ -352,7 +370,7 @@ public:
   // The first occurrence of m_edge_index in m_V[m_vi[0]].m_ei[]
   // is for the closed edge starting the vertex.  The second
   // occurrence of m_edge_index in m_V[m_vi[0]].m_ei[]
-  // is for the closed edge edge ending at the vertex.
+  // is for the closed edge ending at the vertex.
   // C.f. ON_Brep::Next/PrevEdge().
   int m_vi[2];
 
@@ -395,7 +413,7 @@ Description:
   Brep trim information is stored in ON_BrepTrim classes.
   ON_Brep.m_T[] is an array of all the trim in the brep.
 
-  An ON_BrepTrim is derived from ON_CurveProxy so the the
+  An ON_BrepTrim is derived from ON_CurveProxy so the
   trim can supply easy to use evaluation tools via 
   the ON_Curve virtual member functions.
 
@@ -1006,6 +1024,43 @@ public:
     Outer boundary loop for this face.
   */
   ON_BrepLoop* OuterLoop() const;
+
+  /*
+    Puts the trims on each of the face's loops in the array.
+    Returns the number of trims added to the array.
+  */
+  int AdjacentTrims(ON_SimpleArray<const ON_BrepTrim*>&) const;
+
+
+  /*
+  Puts the trims on each of the face's loops in the array.
+  Returns the number of trims added to the array.
+  */
+  int AdjacentTrims(ON_SimpleArray<ON_BrepTrim*>&);
+
+  /*
+    Puts the trim indices on each of the face's loops in the array.
+    Returns the number of trim indicess added to the array.
+  */
+  int AdjacentTrimIndices(ON_SimpleArray<int>&) const;
+
+  /*
+    Puts the edges on the face boundaries in the array.
+    Returns the number of trims added to the array.
+  */
+  int AdjacentEdges(ON_SimpleArray<const ON_BrepEdge*>&) const;
+
+  /*
+  Puts the edges on the face boundaries in the array.
+  Returns the number of trims added to the array.
+  */
+  int AdjacentEdges(ON_SimpleArray<ON_BrepEdge*>&);
+
+  /*
+    Puts the edges on the face boundaries in the array.
+    Returns the number of trims added to the array.
+  */
+  int AdjacentEdgeIndices(ON_SimpleArray<int>&) const;
 
   /*
   Parameters:
@@ -2136,13 +2191,13 @@ public:
     );
 
   ON_BrepEdge& NewEdge(
-                  int = -1              // 3d curve index
+                  int c3i = -1              // 3d curve index
                   );
   ON_BrepEdge& NewEdge( 
-                  ON_BrepVertex&, // start vertex
-                  ON_BrepVertex&, // end vertex
-                  int = -1,       // 3d curve index
-                  const ON_Interval* = nullptr, // sub_domain
+                  ON_BrepVertex& v0, // start vertex
+                  ON_BrepVertex& v1, // end vertex
+                  int c3i = -1,       // 3d curve index
+                  const ON_Interval* edomain = nullptr, // sub_domain
                   double edge_tolerance = ON_UNSET_VALUE
                   );
 
@@ -2358,7 +2413,7 @@ public:
         surface must be an ON_PlaneSurface.
     loop_type - [in] type of loop to add.  If loop_type is
         ON_BrepLoop::unknown, then the loop direction is tested
-        and the the new loops type will be set to 
+        and the new loops type will be set to 
         ON_BrepLoop::outer or ON_BrepLoop::inner.  If the loop_type
         is ON_BrepLoop::outer, then the direction of the new loop
         is tested and flipped if it is clockwise. If the loop_type
@@ -2778,7 +2833,7 @@ public:
     Set the loop parameter space bounding box (loop.m_pbox).
   Parameters:
     loop - [in]
-    bLazy - [in] if true and loop trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if loop ends up with a valid bounding box.
@@ -2793,7 +2848,7 @@ public:
     for every loop and trim in the face 
   Parameters:
     face - [in]
-    bLazy - [in] if true and trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if all the face's loop and trim parameter space bounding 
@@ -2807,7 +2862,7 @@ public:
     Set the loop and trim parameter space bounding boxes
     for every loop and trim in the brep.
   Parameters:
-    bLazy - [in] if true and trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if all the loop and trim parameter space bounding boxes
@@ -3070,6 +3125,7 @@ public:
          int // index of loop  // along the edge's of the underlying surface's
          ) const;              // parameter space.
 
+
   /////////////////////////////////////////////////////////////////
   // Modification Interface
 
@@ -3230,7 +3286,7 @@ public:
   /*
   Description:
     Set  m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-    and m_trim_user.i values values to distinguish connected components.
+    and m_trim_user.i values to distinguish connected components.
   Parameters:
   Returns:
     number of connected components
@@ -3319,7 +3375,7 @@ public:
   //   Single face brep.
   // Remarks:
   //   The m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-  //   and m_trim_user.i values of the returned brep are are set to the 
+  //   and m_trim_user.i values of the returned brep are set to the 
   //   indices of the objects they duplicate.
   // See Also:
   //   ON_Brep::DeleteFace, ON_Brep::ExtractFace
@@ -3329,7 +3385,7 @@ public:
     ) const;
 
   // Description:
-  //   Duplicate a a subset of a brep
+  //   Duplicate a subset of a brep
   // Parameters:
   //   face_count - [in] length of face_index[] array
   //   face_index - [in] array of face indices
@@ -3338,7 +3394,7 @@ public:
   //   A brep made by duplicating the faces listed in the face_index[] array.
   // Remarks:
   //   The m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-  //   and m_trim_user.i values of the returned brep are are set to the 
+  //   and m_trim_user.i values of the returned brep are set to the 
   //   indices of the objects they duplicate.
   // See Also:
   //   ON_Brep::DuplicateFace
@@ -3505,6 +3561,33 @@ public:
     ON_Brep::CullUnusedSurfaces
   */
   bool ShrinkSurface( ON_BrepFace& face, int DisableSide=0 );
+
+  /*
+  Description:
+    Sometimes the ON_Surface used by a face extends far
+    beyond the face's outer boundary.  CanShrinkSurface determines if portions
+    of the surface that extend beyond the face's outer boundary loop can be removed
+  Parameters:
+    face        - [in] face to test and whose surface should be shrunk.
+    outer       - [out] outer loop intervals
+    srf         - [out] surface intervals
+    DisableSide - [in] This is a bit field.  A set bit indicates not to shrink
+                the surface on a given side.  The default of 0 enables shrinking
+                on all four sides.
+      @table
+      value       meaning
+      0x0001     Don't shrink on the west side of domain.
+      0x0002     Don't shrink on the south side of domain.
+      0x0004     Don't shrink on the east side of domain.
+      0x0008     Don't shrink on the north side of domain.
+  Returns:
+    @untitled table
+    true        successful
+    false       failure
+  See Also:
+    ON_Brep::ShrinkSurfaces
+  */
+  bool CanShrinkSurface(const ON_BrepFace& face, ON_Interval outer[2], ON_Interval srf[2], int DisableSide = 0) const;
 
   /*
   Description:
@@ -3916,6 +3999,9 @@ public:
     to call ON_Brep::Compact() to remove unused edge,
     trim, and vertex information from the brep's m_E[], 
     m_V[], m_T[], m_C2[], and m_C3[] arrays.
+    Also, you need to call ON_Brep::SetTolerancesBoxesAndFlags(true,true)
+    to redo the vertex tolerances. These get set to ON_UNSET_VALUE
+    after CollapseEdge.
   */
   bool CollapseEdge(
     int edge_index,
@@ -4072,7 +4158,7 @@ public:
 
   // topology
   // (all topology is deleted by ~ON_Brep().  Objects can be unreferenced.
-  // Use Compact() to to remove unreferenced geometry.
+  // Use Compact() to remove unreferenced geometry.
   ON_BrepVertexArray  m_V;   // vertices
   ON_BrepEdgeArray    m_E;   // edges
   ON_BrepTrimArray    m_T;   // trims
@@ -4116,7 +4202,7 @@ public:
 
 private:
   // In calculations where multiple threads are using a brep and calling functions
-  // that may modify content, the calling code can use use ON_SleepLockGuard guard(Mutex)
+  // that may modify content, the calling code can use ON_SleepLockGuard guard(Mutex)
   // or similar techniques to make the calculations thread safe.
   // Because Mutex is a public resource, it must be used with great care to
   // prevent lock contention.
@@ -4822,6 +4908,9 @@ bool ON_BrepRemoveSlits(ON_BrepFace& F);
 //Merges all possible edges
 ON_DECL
 void ON_BrepMergeAllEdges(ON_Brep& B);
+
+ON_DECL
+void ON_BrepMergeAllEdges(ON_Brep& B, double angle_tolerance_radians);
 
 /*
 Description:
