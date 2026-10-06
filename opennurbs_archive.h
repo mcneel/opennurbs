@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -638,7 +638,7 @@ public:
       0 or the component's unique runtime serial number (ON_ModelComponent::RuntimeSerialNumber()).
     component_id - [in]
     component_name_hash - [in]
-      If the the component type requires a unique name and the name
+      If the component type requires a unique name and the name
       is not valid or in use, the component will not be added.
   Returns:
     If an item is added to this manifest, then the identification
@@ -668,7 +668,7 @@ public:
     component_id - [in]
       If the id is nil or in use, a new id will be assigned.
     component_name_hash - [in]
-      If the the component type requires a unique name and the name
+      If the component type requires a unique name and the name
       is not valid or in use, the component will not be added.
     original_name - [in/out]
       If a new name needs to be assigned, the input value will be used
@@ -1635,7 +1635,6 @@ private:
   class ON_ManifestMapImpl* m_impl = nullptr;
 };
 
-
 enum class ON_3dmArchiveTableType : unsigned int
 {
   // The values of the table_type enums must increase in the order 
@@ -1643,11 +1642,10 @@ enum class ON_3dmArchiveTableType : unsigned int
   // and the bitwise or of distinct values must be zero because
   // bitfield filters are used in some reading operations.
 
-  Unset                     = 0,
+  Unset = 0,
 
   // First section in any 3dm archive.
   start_section             = 0x00000001U,
-
   properties_table          = 0x00000002U,
   settings_table            = 0x00000004U,
   bitmap_table              = 0x00000008U,
@@ -1661,15 +1659,21 @@ enum class ON_3dmArchiveTableType : unsigned int
   dimension_style_table     = 0x00000800U,
   light_table               = 0x00001000U,
   hatchpattern_table        = 0x00002000U,
-  instance_definition_table = 0x00004000U,
-  object_table              = 0x00008000U, 
-  historyrecord_table       = 0x00010000U,
-  user_table                = 0x00020000U,
-
+  section_style_table       = 0x00004000U, // (May 2025, V9)
+  markup_table              = 0x00008000U, // (Jan 2026, V9)
+  pageview_group_table      = 0x00010000U, // (Jan 2026, V9)
+  instance_definition_table = 0x00020000U,
+  object_table              = 0x00040000U,
+  historyrecord_table       = 0x00080000U,
+#if defined(OPENNURBS_TAG_WIP)
+  // TODO...
+#endif // OPENNURBS_TAG_WIP
+  // This must always be the last table
+  // Changed from 0x00020000U to 0x10000000U when section_style_table was added
+  user_table                = 0x10000000U,
   // Last section in any 3dm archive.
   end_mark                  = 0x40000000U
 };
-
 
 /*
 Description:
@@ -1817,7 +1821,7 @@ public:
   
   /*
   Returns:
-    True if the the target binary archive is set.
+    True if the target binary archive is set.
   */
   bool BinaryArchiveIsSet() const;
   
@@ -3163,8 +3167,14 @@ public:
       nullptr or a UTF-8 encoded string with application name, et cetera.
       This information is primarily used when debugging files
       that contain problems.  McNeel and Associates stores
-      application name, application version, compile date, 
+      application name, application version, compile date,
       and the OS in use when file was written.
+  Remarks:
+    A line naming the openNURBS build doing the writing is appended to
+    sStartSectionComment. Any such line already at the end of
+    sStartSectionComment is removed first, so a caller that reads a file and
+    writes it back out - passing the comment Read3dmStartSection returned - gets
+    one line naming the current build rather than one more line each time.
   */
   bool Write3dmStartSection( 
     int version,
@@ -3771,6 +3781,125 @@ public:
           );
   bool EndRead3dmHistoryRecordTable();
 
+
+  ///////////////////////////////////////////////////////////////////
+  // Step 16.1: REQUIRED - Write/Read section style table (it can be empty) (May 2025, V9)
+  //
+  bool BeginWrite3dmSectionStyleTable();
+  bool Write3dmSectionStyleComponent(
+    const class ON_ModelComponentReference& model_component_reference
+  );
+  bool Write3dmSectionStyleComponent(
+    const class ON_ModelComponent* model_component
+  );
+  bool Write3dmSectionStyle(
+    const class ON_SectionStyle&
+  );
+  bool EndWrite3dmSectionStyleTable();
+
+  bool BeginRead3dmSectionStyleTable();
+
+  /*
+  Returns:
+           0 at end of object table
+           1 if object is read
+          -1 if file is corrupt
+  */
+  int Read3dmSectionStyle(
+    class ON_SectionStyle*&
+  );
+  bool EndRead3dmSectionStyleTable();
+
+
+  ///////////////////////////////////////////////////////////////////
+  // Step 16.2: REQUIRED - Write/Read markup table (it can be empty) (Jan 2026, V9)
+  //
+  bool BeginWrite3dmMarkupTable();
+  bool Write3dmMarkupComponent(
+    const class ON_ModelComponentReference& model_component_reference
+  );
+  bool Write3dmMarkupComponent(
+    const class ON_ModelComponent* model_component
+  );
+  bool Write3dmMarkup(
+    const class ON_Markup&
+  );
+  bool EndWrite3dmMarkupTable();
+
+  bool BeginRead3dmMarkupTable();
+
+  /*
+  Returns:
+           0 at end of object table
+           1 if object is read
+          -1 if file is corrupt
+  */
+  int Read3dmMarkup(
+    class ON_Markup*&
+  );
+  bool EndRead3dmMarkupTable();
+
+
+  ///////////////////////////////////////////////////////////////////
+  // Step 16.3: REQUIRED - Write/Read pageview group table (it can be empty) (Jan 2026, V9)
+  //
+  bool BeginWrite3dmPageViewGroupTable();
+  bool Write3dmPageViewGroupComponent(
+    const class ON_ModelComponentReference& model_component_reference
+  );
+  bool Write3dmPageViewGroupComponent(
+    const class ON_ModelComponent* model_component
+  );
+  bool Write3dmPageViewGroup(
+    const class ON_PageViewGroup&
+  );
+  bool EndWrite3dmPageViewGroupTable();
+
+  bool BeginRead3dmPageViewGroupTable();
+
+  /*
+  Returns:
+           0 at end of object table
+           1 if object is read
+          -1 if file is corrupt
+  */
+  int Read3dmPageViewGroup(
+    class ON_PageViewGroup*&
+  );
+  bool EndRead3dmPageViewGroupTable();
+
+
+#if defined(OPENNURBS_TAG_WIP)
+  ///////////////////////////////////////////////////////////////////
+  // Step 16.4: REQUIRED - Write/Read tag table (it can be empty) (Dec 2025, WIP)
+  //
+  bool BeginWrite3dmTagTable();
+  bool Write3dmTagComponent(
+    const class ON_ModelComponentReference& model_component_reference
+  );
+  bool Write3dmTagComponent(
+    const class ON_ModelComponent* model_component
+  );
+  bool Write3dmTag(
+    const class ON_Tag&
+  );
+  bool EndWrite3dmTagTable();
+
+  bool BeginRead3dmTagTable();
+
+  /*
+  Returns:
+           0 at end of object table
+           1 if object is read
+          -1 if file is corrupt
+  */
+  int Read3dmTag(
+    class ON_Tag*&
+  );
+  bool EndRead3dmTagTable();
+#endif // OPENNURBS_TAG_WIP
+
+
   ///////////////////////////////////////////////////////////////////
   // Step 17: OPTIONAL - Write/Read 0 or more user tables
   //
@@ -3788,7 +3917,7 @@ public:
       goo_3dm_version and goo_opennurbs_version must also be
       set.  In practice, you should use Write3dmAnonymousUserTableRecord()
       to handle writing "goo" and use this function only when
-      the plug-in in present.
+      the plug-in present.
     goo_3dm_version - [in]
       If bSavingGoo is false, this parameter must be zero and
       ON_BinaryArchive::Archive3dmVersion() will be used.
@@ -3802,7 +3931,7 @@ public:
       of the opennurbs the plug-in code used to write the 
       user table.
   Returns:
-    True if the the user information can be written.
+    True if the user information can be written.
     False if user information should not be written.
   */
   bool BeginWrite3dmUserTable(
@@ -4352,11 +4481,9 @@ public:
     0 if something went wrong, otherwise the typecode
     of the chunk that was just studied.
   */
-  unsigned int 
-  Dump3dmChunk(
-        ON_TextLog& text_log, 
-        int recursion_depth = 0
-        );
+  unsigned int Dump3dmChunk(ON_TextLog& text_log, int recursion_depth = 0);
+
+  unsigned int Dump3dmChunk(ON_TextLog& text_log, int recursion_depth, int recursion_limit);
 
   enum class eStorageDeviceError : unsigned int
   {
@@ -4568,7 +4695,7 @@ private:
   // is zero.
   //
   // Read3dmProperties() sets this to the version of OpenNURBS that was
-  // used to write file file.  If the file was created using a version
+  // used to write file.  If the file was created using a version
   // of OpenNURBS before 200012210, this number will be zero.
   //
   // Write3dmProperties() stores the value returned by ON::Version() in
@@ -5334,7 +5461,7 @@ private:
   // m_archive_dim_style_table_status values:
   // READING:
   // 0 = not started
-  //   1 = BeginWrite3dmDimStyle() has been called, 
+  //   1 = BeginRead3dmDimStyle() has been called, 
   //       m_archive_text_style_table[] is valid, 
   //       and Read3dmDimStyle() can be called.
   //   2 = All entries of m_archive_text_style_table[] have been read by Read3dmDimStyle().

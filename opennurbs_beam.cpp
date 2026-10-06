@@ -1717,8 +1717,11 @@ bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox
   bool rc = false;
   if ( m_path.IsValid() && m_profile )
   {
+    ON_Curve* bottom = Profile3d(0, 0.0);
+    ON_Curve* top = Profile3d(0, 1.0);
+
     ON_BoundingBox bbox;
-    if ( m_profile->GetTightBoundingBox(bbox) && GetBoundingBoxHelper(*this,bbox,xform) )
+    if (bottom && bottom->GetTightBoundingBox(bbox, false, xform) && top && top->GetTightBoundingBox(bbox, true, xform))
     {
       if ( bGrowBox )
         tight_bbox.Union(bbox);
@@ -1726,6 +1729,9 @@ bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox
         tight_bbox = bbox;
       rc = true;
     }
+
+    delete bottom;
+    delete top;
   }
   return rc;
 }
@@ -4953,3 +4959,249 @@ void ON_Extrusion::DestroyMesh( ON::mesh_type mt )
   m_mesh_cache.ClearMesh(mt);
 }
 
+#pragma region ON_Surface::IsExtrusion
+
+static ON_Curve* ON__ProjectToPlane(
+  const ON_Curve* curve,
+  const ON_Plane& plane,
+  double shortSegmentTolerance
+)
+{
+  if (curve == nullptr || !curve->IsValid())
+    return nullptr;
+
+  if (shortSegmentTolerance < ON_ZERO_TOLERANCE)
+    shortSegmentTolerance = ON_ZERO_TOLERANCE;
+
+  ON_Xform xform;
+  xform.PlanarProjection(plane);
+  int is_similarity = xform.IsSimilarity();
+
+  ON_Curve* pCurve = nullptr;
+  if (0 == is_similarity) // not a similarity
+    pCurve = curve->NurbsCurve();
+  else
+    pCurve = curve->DuplicateCurve();
+
+  if (nullptr != pCurve)
+  {
+    bool rc = pCurve->Transform(xform);
+
+    if (!rc || !pCurve->IsValid())
+    {
+      delete pCurve;
+      pCurve = nullptr;
+    }
+  }
+
+  return pCurve;
+}
+
+static bool ON__CreateExtrusion(
+  ON_Extrusion* extrusion,
+  const ON_Curve* outer,
+  const ON_SimpleArray<const ON_Curve*>& inner,
+  ON_3dVector axis,
+  bool solid,
+  double tolerance = ON_ZERO_TOLERANCE
+)
+{
+  if (outer == nullptr || !outer->IsValid())
+    return false;
+
+  if (!ON_IsValid(tolerance) || tolerance <= 0.0)
+    tolerance = ON_ZERO_TOLERANCE;
+
+  double t0, t1;
+  if (!outer->GetDomain(&t0, &t1))
+    return false;
+
+  ON_3dPoint origin = outer->PointAtStart();
+  ON_3dVector up_vector = outer->TangentAt(t0);
+  ON_Plane plane;
+  {
+    if (outer->IsLinear(tolerance))
+    {
+      plane = ON_Plane(origin, up_vector, ON_3dVector::CrossProduct(axis, up_vector));
+      if (!plane.IsValid())
+        return false;
+    }
+    else if (!outer->IsPlanar(&plane, tolerance))
+      return false;
+  }
+
+  double dot = ON_3dVector::DotProduct(plane.Normal(), axis);
+  if (std::abs(dot) < 0.1) return false;
+
+  ON_Extrusion ext;
+  if (!ext.SetPathAndUp(origin, origin + axis, up_vector))
+    return false;
+
+  ON_Plane profile_plane;
+  if (!ext.GetPathPlane(0.0, profile_plane))
+    return false;
+
+  ON_Xform inverse = ON_Xform::RotationTransformation(profile_plane, ON_Plane::World_xy);
+
+  std::unique_ptr<ON_Curve> _outer(ON__ProjectToPlane(outer, profile_plane, tolerance));
+  if (!_outer) return false;
+  if (!_outer->Transform(inverse)) return false;
+  if (!_outer->IsValid()) return false;
+  if (!ext.SetOuterProfile(_outer.release(), solid)) return false;
+
+  ON_3dVector normal = dot < 0.0 ? -plane.Normal() : plane.Normal();
+
+  ON_Xform inverse0;
+  if (!ext.GetProfileTransformation(0.0, inverse0)) return false;
+  inverse0.Invert();
+  if (!ext.SetMiterPlaneNormal(inverse0 * normal, 0)) return false;
+
+  ON_Xform inverse1;
+  if (!ext.GetProfileTransformation(1.0, inverse1)) return false;
+  inverse1.Invert();
+  if (!ext.SetMiterPlaneNormal(inverse1 * normal, 1)) return false;
+
+  for (int i = 0; i < inner.Count(); ++i)
+  {
+    std::unique_ptr<ON_Curve> _inner(ON__ProjectToPlane(inner[i], profile_plane, tolerance));
+    if (!_inner) return false;
+    if (!_inner->Transform(inverse0)) return false;
+    if (!_inner->IsValid()) return false;
+    if (!ext.AddInnerProfile(_inner.release())) return false;
+  }
+
+  *extrusion = ext;
+  return true;
+}
+
+static bool ON__ProjectAlong(ON_Xform& xform, const ON_Plane& plane, const ON_3dVector direction)
+{
+  if (!plane.IsValid() || !direction.IsValid())
+    return false;
+
+  if (plane.zaxis.IsPerpendicularTo(direction, ON_DEFAULT_ANGLE_TOLERANCE / 100.0))
+    return false;
+
+  if (plane.zaxis.IsParallelTo(direction, ON_DEFAULT_ANGLE_TOLERANCE / 100.0) != 0)
+  {
+    xform.PlanarProjection(plane);
+    return true;
+  }
+
+  ON_Plane plane0 = plane;
+  ON_Plane plane1(plane.Origin(), direction);
+
+  ON_Line axis;
+  if (!ON_Intersect(plane0, plane1, axis))
+    return false;
+
+  ON_Plane plane2 = plane0;
+  plane2.xaxis = axis.Direction(); plane2.xaxis.Unitize();
+  plane2.yaxis = ON_CrossProduct(plane2.xaxis, plane2.zaxis);
+  plane2.zaxis = ON_CrossProduct(plane2.yaxis, plane2.xaxis);
+
+  double angle0 = ON_3dVector::Angle(plane0.zaxis, direction);
+  double angle1 = std::sin(0.5 * ON_PI - angle0);
+
+  if (std::abs(angle1) < 1.0e-64)
+    return false;
+
+  ON_Xform projection; projection.PlanarProjection(plane1);
+  ON_Xform rotation; rotation.Rotation(plane1.zaxis, plane0.zaxis, plane0.origin);
+  ON_Xform scaling = ON_Xform::ScaleTransformation(plane2, 1.0, 1.0 / angle1, 1.0);
+
+  xform = scaling * rotation * projection;
+  return true;
+}
+
+bool ON_Surface::IsExtrusion(ON_Extrusion* extrusion, double tolerance) const
+{
+  if (!ON_IsValid(tolerance) || tolerance <= 0.0)
+    tolerance = ON_ZERO_TOLERANCE;
+
+  if (ObjectType() == ON::object_type::extrusion_object)
+  {
+    if (extrusion) *extrusion = *static_cast<const ON_Extrusion*>(this);
+    return true;
+  }
+
+  if (const ON_BrepFace* brep_face = ON_BrepFace::Cast(this))
+  {
+    if (!brep_face->Brep()->FaceIsSurface(brep_face->m_face_index))
+      return false;
+  }
+
+  ON_NurbsSurface nurbs_surface;
+  if (!GetNurbForm(nurbs_surface)) return false;
+
+  for (int row_direction = 0; row_direction < 2; ++row_direction)
+  {
+    int column_direction = row_direction == 0 ? 1 : 0;
+    if (IsClosed(row_direction)) continue;
+
+    double t0, t1;
+    if (!nurbs_surface.GetDomain(row_direction, &t0, &t1)) continue;
+
+    std::unique_ptr<ON_Curve> iso0(nurbs_surface.IsoCurve(column_direction, t0));
+    std::unique_ptr<ON_Curve> iso1(nurbs_surface.IsoCurve(column_direction, t1));
+
+    ON_Plane plane0, plane1;
+    if (!iso0 || !iso0->IsPlanar(&plane0, tolerance) || !iso1 || !iso1->IsPlanar(&plane1, tolerance))
+      continue;
+    if (plane0.Normal().IsParallelTo(plane1.Normal(), ON_DEFAULT_ANGLE_TOLERANCE / 100.0) != 1) 
+      continue;
+
+    ON_3dVector axis = iso1->PointAtStart() - iso0->PointAtStart();
+    ON_Xform projection;
+    if (!ON__ProjectAlong(projection, plane0, axis))
+      continue;
+
+    int row_count = nurbs_surface.CVCount(row_direction);
+    int column_count = nurbs_surface.CVCount(column_direction);
+    bool degenerate = row_count > 1 && column_count > 1;
+
+    for (int c = 0; c < column_count && degenerate; ++c)
+    {
+      ON_4dPoint control_point_c = row_direction == 0 ? nurbs_surface.ControlPoint(0, c) : nurbs_surface.ControlPoint(c, 0);
+      ON_3dPoint point_c(control_point_c.x / control_point_c.w, control_point_c.y / control_point_c.w, control_point_c.z / control_point_c.w);
+
+      for (int r = 1; r < row_count; ++r)
+      {
+        ON_4dPoint control_point_r = row_direction == 0 ? nurbs_surface.ControlPoint(r, c) : nurbs_surface.ControlPoint(c, r);
+        ON_3dPoint point_r(control_point_r.x / control_point_r.w, control_point_r.y / control_point_r.w, control_point_r.z / control_point_r.w);
+        ON_3dPoint projected_point_r = projection * point_r;
+
+        if
+        (
+          projected_point_r.DistanceToSquared(point_c) > ON_SQRT_EPSILON || 
+          std::abs(control_point_r.w - control_point_c.w) > ON_ZERO_TOLERANCE
+        )
+        {
+          degenerate = false;
+          break;
+        }
+      }
+    }
+
+    if (degenerate)
+    {
+      ON_Extrusion ext;
+      ON_SimpleArray<const ON_Curve*> empty;
+      if (!ON__CreateExtrusion(&ext, iso0.get(), empty, axis, false, tolerance)) return false;
+      if (extrusion)
+      {
+        if (row_direction == 1)
+          ext.Transpose();
+
+        *extrusion = std::move(ext);
+      }
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+#pragma endregion

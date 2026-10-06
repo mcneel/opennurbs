@@ -1,5 +1,4 @@
 #include "opennurbs.h"
-#include "opennurbs.h"
 #include "opennurbs_testclass.h"
 #include "opennurbs_subd_data.h"
 
@@ -18,6 +17,14 @@
 #pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4073 )
 #pragma init_seg(lib)
 #pragma ON_PRAGMA_WARNING_POP
+#endif
+
+#ifdef OPENNURBS_PLUS
+// The expected memory layout of every shipped class, checked at compile time.
+// It lives here, rather than in a source file of its own, so that it is
+// compiled by every project that builds opennurbs without any of them needing
+// to list a new file. See opennurbs_plus_class_layout.h.
+#include "opennurbs_plus_class_layout_table.h"
 #endif
 
 const ON_ErrorEvent ON_ErrorEvent::Unset;
@@ -305,6 +312,26 @@ bool ON_DBL::IsValid(double x)
   return x > ON_UNSET_VALUE && x < ON_UNSET_POSITIVE_VALUE;
 }
 
+bool ON_DBL::IsFinitePositive(double x)
+{
+  return x > 0.0 && x < ON_UNSET_POSITIVE_VALUE;
+}
+
+bool ON_DBL::IsFiniteNegative(double x)
+{
+  return x > ON_UNSET_VALUE && x < 0.0;
+}
+
+bool ON_DBL::IsFinitePositiveOrZero(double x)
+{
+  return x >= 0.0 && x < ON_UNSET_POSITIVE_VALUE;
+}
+
+bool ON_DBL::IsFiniteNegativeOrZero(double x)
+{
+  return x > ON_UNSET_VALUE && x <= 0.0;
+}
+
 bool ON_DBL::IsNan(double x)
 {
   return (x == x) ? false : true;
@@ -520,6 +547,9 @@ const ON_UUID ON_StandardDisplayModeId::AmbientOcclusion =
 const ON_UUID ON_StandardDisplayModeId::Raytraced = 
 { 0x69e0c7a5, 0x1c6a, 0x46c8, { 0xb9, 0x8b, 0x87, 0x79, 0x68, 0x6c, 0xd1, 0x81 } };
 
+// {881F20DD-A78E-4930-A7C3-690E5E6B0927}
+const ON_UUID ON_StandardDisplayModeId::Architecture =
+{ 0x881f20dd, 0xa78e, 0x4930, { 0xa7, 0xc3, 0x69, 0xe, 0x5e, 0x6b, 0x9, 0x27 } };
 
 const ON_UUID ON_nil_uuid = { 0,0,0,{ 0,0,0,0,0,0,0,0 } };
 const ON_UUID ON_max_uuid = { 0xFFFFFFFF,0xFFFF,0xFFFF,{ 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF } };
@@ -751,6 +781,31 @@ const ON_Xform ON_Xform::ZeroTransformation = Internal_ON_Xform_Init(0.0, true);
 const ON_Xform ON_Xform::Zero4x4 = Internal_ON_Xform_Init(0.0, false);
 const ON_Xform ON_Xform::Unset = Internal_ON_Xform_Init(ON_UNSET_VALUE, false);
 const ON_Xform ON_Xform::Nan = Internal_ON_Xform_Init(ON_DBL_QNAN, false);
+
+static ON_Xform2d Internal_ON_Xform2d_Init(double x, bool bDiagonal)
+{
+  // The ON_Xform2d default constructor sets every coefficient to zero.
+  ON_Xform2d xform;
+  if (bDiagonal)
+  {
+    xform.m_xform[0][0] = x;
+    xform.m_xform[1][1] = x;
+  }
+  else
+  {
+    double* p = &xform.m_xform[0][0];
+    double* p1 = p + 6;
+    while (p < p1)
+      *p++ = x;
+  }
+  return xform;
+}
+
+const ON_Xform2d ON_Xform2d::IdentityTransformation = Internal_ON_Xform2d_Init(1.0, true);
+const ON_Xform2d ON_Xform2d::ZeroTransformation = Internal_ON_Xform2d_Init(0.0, true);
+
+const ON_Xform2d ON_Xform2d::Unset = Internal_ON_Xform2d_Init(ON_UNSET_VALUE, false);
+const ON_Xform2d ON_Xform2d::Nan = Internal_ON_Xform2d_Init(ON_DBL_QNAN, false);
 
 const double ON_SurfaceCurvature::InfinteRadius = 1e300;
 const ON_SurfaceCurvature ON_SurfaceCurvature::Nan = ON_SurfaceCurvature::CreateFromPrincipalCurvatures(ON_DBL_QNAN, ON_DBL_QNAN);
@@ -1283,6 +1338,9 @@ const ON_3dmUnitsAndTolerances ON_3dmUnitsAndTolerances::Millimeters;
 const ON_Circle ON_Circle::UnitCircle;
 const ON_Arc ON_Arc::UnitCircle;
 
+const ON_Circle ON_Circle::UnsetCircle(ON_Plane::UnsetPlane, ON_UNSET_VALUE);
+const ON_Arc ON_Arc::UnsetArc(ON_Circle::UnsetCircle, ON_UNSET_VALUE);
+
 const ON_3dmRenderSettings ON_3dmRenderSettings::Default;
 
 const ON_3dmSettings ON_3dmSettings::Default;
@@ -1340,6 +1398,12 @@ const ON_2iBoundingBox ON_2iBoundingBox::Unset(ON_2iPoint::Unset, ON_2iPoint::Un
 
 const ON_2iSize ON_2iSize::Zero(0, 0);
 const ON_2iSize ON_2iSize::Unset(ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX);
+
+const ON_2fSize ON_2fSize::Zero(0, 0);
+const ON_2fSize ON_2fSize::Unset(ON_UNSET_FLOAT, ON_UNSET_FLOAT);
+
+const ON_4fRect ON_4fRect::Zero(0.0f, 0.0f, 0.0f, 0.0f);
+const ON_4fRect ON_4fRect::Unset(ON_UNSET_FLOAT, ON_UNSET_FLOAT, ON_UNSET_FLOAT, ON_UNSET_FLOAT);
 
 const ON_4iRect ON_4iRect::Zero(0, 0, 0, 0);
 const ON_4iRect ON_4iRect::Unset(ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX, ON_UNSET_INT_INDEX);
@@ -1599,6 +1663,12 @@ static const ON_ModelComponentTypeIterator Internal_ON_ModelComponentIterator_In
     ON_ModelComponent::Type::DimStyle,
     ON_ModelComponent::Type::RenderLight,
     ON_ModelComponent::Type::HatchPattern,
+    ON_ModelComponent::Type::SectionStyle,
+    ON_ModelComponent::Type::Markup,
+    ON_ModelComponent::Type::PageViewGroup,
+#if defined(OPENNURBS_TAG_WIP)
+    ON_ModelComponent::Type::Tag,
+#endif // OPENNURBS_TAG_WIP
     ON_ModelComponent::Type::InstanceDefinition,
     ON_ModelComponent::Type::ModelGeometry,
     ON_ModelComponent::Type::HistoryRecord,
@@ -1618,6 +1688,12 @@ static const ON_ModelComponentTypeIterator Internal_ON_ModelComponentIterator_In
     ON_ModelComponent::Type::DimStyle,
     //ON_ModelComponent::Type::RenderLight,
     ON_ModelComponent::Type::HatchPattern,
+    ON_ModelComponent::Type::SectionStyle,
+    ON_ModelComponent::Type::Markup,
+    ON_ModelComponent::Type::PageViewGroup,
+#if defined(OPENNURBS_TAG_WIP)
+    ON_ModelComponent::Type::Tag,
+#endif // OPENNURBS_TAG_WIP
     ON_ModelComponent::Type::InstanceDefinition,
     //ON_ModelComponent::Type::ModelGeometry,
     //ON_ModelComponent::Type::HistoryRecord,
@@ -1760,8 +1836,13 @@ const ON_SurfaceDraftAngleColorMapping ON_SurfaceDraftAngleColorMapping::Unset;
 const ON_LinetypeSegment ON_LinetypeSegment::Unset;
 const ON_LinetypeSegment ON_LinetypeSegment::OneMillimeterLine(1.0, ON_LinetypeSegment::eSegType::stLine);
 
-
 const ON_Group ON_Group::Unset;
+
+const ON_PageViewGroup ON_PageViewGroup::Unset;
+
+#if defined(OPENNURBS_TAG_WIP)
+const ON_Tag ON_Tag::Unset;
+#endif // OPENNURBS_TAG_WIP
 
 const ON_Linetype ON_Linetype::Unset;
 
@@ -2378,6 +2459,15 @@ static void Internal_DimStyleModelUnitsEngraveInit(ON_DimStyle& ds)
   ds.SetUnitSystem                       (ON::LengthUnitSystem::Inches);
 }
 
+static void Internal_DimStyleModelUnitsGeometricToleranceInit(ON_DimStyle& ds)
+{
+  Internal_DimStyleDefaultInit(ds);
+  ds.SetAlternateDimensionLengthDisplay(ON_DimStyle::LengthDisplay::Millmeters);
+  ds.SetToleranceHeightScale(1.0);
+  ds.SetTextVerticalAlignment(ON::TextVerticalAlignment::Bottom);
+  ds.SetDimScale(10.0);
+  ds.SetUnitSystem(ON::LengthUnitSystem::Inches);
+}
 
 static ON_DimStyle Internal_DimStyleDefault()
 {
@@ -2533,24 +2623,36 @@ static ON_DimStyle Internal_DimStyleModelUnitsEngrave()
   return dimstyle;
 }
 
+static ON_DimStyle Internal_DimStyleModelUnitsGeometricTolerance()
+{
+  const ON_UUID id =
+  { 0x2b832777, 0x1527, 0x466f, { 0x96, 0x87, 0x31, 0x50, 0xc, 0x54, 0xb8, 0x6b } };
+
+  ON_DimStyle dimstyle;
+  Internal_DimStyleInit(L"Model Units Tolerance", -13, id, dimstyle);
+  Internal_DimStyleModelUnitsGeometricToleranceInit(dimstyle);
+  const ON_Font* font = ON_Font::DefaultGeometricToleranceFont();
+  if (nullptr != font)
+    dimstyle.SetFont(*font);
+  dimstyle.SetLineSpaceScale(0.93);
+  Internal_SystemDimStyleFinalize(dimstyle);
+  return dimstyle;
+}
+
 const ON_DimStyle ON_DimStyle::Unset;
-
 const ON_DimStyle ON_DimStyle::Default(Internal_DimStyleDefault());
-
 const ON_DimStyle ON_DimStyle::DefaultInchDecimal(Internal_DimStyleInchDecimal());
 const ON_DimStyle ON_DimStyle::DefaultInchFractional(Internal_DimStyleInchFractional());
 const ON_DimStyle ON_DimStyle::DefaultFootInchArchitecture(Internal_DimStyleFootInchArchitectural());
-
 const ON_DimStyle ON_DimStyle::DefaultMillimeterSmall(Internal_DimStyleMillimeterSmall());
 const ON_DimStyle ON_DimStyle::DefaultMillimeterLarge(Internal_DimStyleMillimeterLarge());
 const ON_DimStyle ON_DimStyle::DefaultMillimeterArchitecture(Internal_DimStyleMillimeterArchitectural());
-
 const ON_DimStyle ON_DimStyle::DefaultFeetDecimal(Internal_DimStyleFeetDecimal());
 const ON_DimStyle ON_DimStyle::DefaultModelUnitsDecimal(Internal_DimStyleModelUnitsDecimal());
-
 const ON_DimStyle ON_DimStyle::DefaultFeetEngrave(Internal_DimStyleFeetEngrave());
 const ON_DimStyle ON_DimStyle::DefaultMillimeterEngrave(Internal_DimStyleMillimeterEngrave());
 const ON_DimStyle ON_DimStyle::DefaultModelUnitsEngrave(Internal_DimStyleModelUnitsEngrave());
+const ON_DimStyle ON_DimStyle::DefaultModelUnitsGeometricTolerance(Internal_DimStyleModelUnitsGeometricTolerance());
 
 const ON_StackedText ON_StackedText::Empty;
 const ON_TextRun ON_TextRun::Empty;
@@ -2565,9 +2667,9 @@ const ON_DimRadial ON_DimRadial::Empty;
 const ON_DimOrdinate ON_DimOrdinate::Empty;
 const ON_Centermark ON_Centermark::Empty;
 
-const ON_HatchLine ON_HatchLine::Unset(ON_UNSET_VALUE);           // angle = unset
-const ON_HatchLine ON_HatchLine::SolidHorizontal(0.0); // angle = 0
-const ON_HatchLine ON_HatchLine::SolidVertical(ON_PI / 2);   // angle = pi/2
+const ON_HatchLine ON_HatchLine::Unset(ON_UNSET_VALUE);    // angle = unset
+const ON_HatchLine ON_HatchLine::SolidHorizontal(0.0);     // angle = 0
+const ON_HatchLine ON_HatchLine::SolidVertical(ON_PI / 2); // angle = pi/2
 
 static ON_HatchPattern Internal_SolidHatchPatternInit()
 {
@@ -2840,13 +2942,16 @@ void ON_SubD::SetAutomaticMeshToSubD(
 
 const ON_SubDVertexEdgeProperties ON_SubDVertexEdgeProperties::Zero;
 
-const ON_SubDVertexPtr ON_SubDVertexPtr::Null = { 0 };
-const ON_SubDEdgePtr ON_SubDEdgePtr::Null = { 0 };
-const ON_SubDFacePtr ON_SubDFacePtr::Null = { 0 };
-const ON_SubDComponentPtr ON_SubDComponentPtr::Null = { 0 };
-const ON_SubDComponentPtr ON_SubDComponentPtr::NullVertex = { 2 };
-const ON_SubDComponentPtr ON_SubDComponentPtr::NullEdge = { 4 };
-const ON_SubDComponentPtr ON_SubDComponentPtr::NullFace = { 6 };
+// ON_SubDVertexPtr::Null, ON_SubDEdgePtr::Null and ON_SubDFacePtr::Null are all zero:
+// the C++ type already says which kind of component is being referenced, so these never
+// set the type bits. Only ON_SubDComponentPtr, which is type erased, sets them.
+const ON_SubDVertexPtr    ON_SubDVertexPtr::Null          { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::UnsetType };
+const ON_SubDEdgePtr      ON_SubDEdgePtr::Null            { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::UnsetType };
+const ON_SubDFacePtr      ON_SubDFacePtr::Null            { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::UnsetType };
+const ON_SubDComponentPtr ON_SubDComponentPtr::Null       { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::UnsetType };
+const ON_SubDComponentPtr ON_SubDComponentPtr::NullVertex { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::VertexType };
+const ON_SubDComponentPtr ON_SubDComponentPtr::NullEdge   { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::EdgeType };
+const ON_SubDComponentPtr ON_SubDComponentPtr::NullFace   { (ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::FaceType };
 
 const ON_SubDComponentId ON_SubDComponentId::Unset(ON_SubDComponentPtr::Null);
 
@@ -3123,7 +3228,12 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
       &ON_TextureMapping::SurfaceParameterTextureMapping,
       &ON_HatchPattern::Unset,
       &ON_Group::Unset,
-      &ON_HistoryRecord::Empty
+      &ON_HistoryRecord::Empty,
+      &ON_SectionStyle::Unset,
+#if defined(OPENNURBS_TAG_WIP)
+      &ON_Tag::Unset,
+#endif // OPENNURBS_TAG_WIP
+      &ON_Markup::Unset
     };
 
     const ON_ModelComponent* list_localized_name[] =
@@ -3156,6 +3266,7 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
       &ON_DimStyle::DefaultFeetEngrave,
       &ON_DimStyle::DefaultMillimeterEngrave,
       &ON_DimStyle::DefaultModelUnitsEngrave,
+      &ON_DimStyle::DefaultModelUnitsGeometricTolerance,
  
       &ON_HatchPattern::Solid,
       &ON_HatchPattern::Hatch1,
@@ -3165,7 +3276,10 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
       &ON_HatchPattern::Grid,
       &ON_HatchPattern::Grid60,
       &ON_HatchPattern::Plus,
-      &ON_HatchPattern::Squares
+      &ON_HatchPattern::Squares,
+
+      &ON_SectionStyle::Default,
+      &ON_Markup::Default
     };
 
     const size_t list_count = sizeof(list) / sizeof(list[0]);
@@ -3191,4 +3305,25 @@ unsigned int ON_ModelComponent::Internal_SystemComponentHelper()
   return rc;
 }
 
+static ON_SectionStyle Internal_SectionStyleDefault()
+{
+  const ON_UUID id = { 0x14558a93, 0x7085, 0x475c, { 0xaf, 0x36, 0x89, 0x12, 0x80, 0xba, 0x89, 0xdc } };
+  ON_SectionStyle section_style;
+  Internal_SystemModelComponentInit(id, -1, L"Default", section_style);
+  return section_style;
+}
+
 const ON_SectionStyle ON_SectionStyle::Unset;
+const ON_SectionStyle ON_SectionStyle::Default = Internal_SectionStyleDefault();
+
+
+static ON_Markup Internal_MarkupDefault()
+{
+  const ON_UUID id = { 0x86A8205D, 0xA96F, 0x4A8C, { 0x92, 0xDA, 0x77, 0x9F, 0x2B, 0xE5, 0xB3, 0x60 } };
+  ON_Markup markup;
+  Internal_SystemModelComponentInit(id, -1, L"Default", markup);
+  return markup;
+}
+
+const ON_Markup ON_Markup::Unset;
+const ON_Markup ON_Markup::Default = Internal_MarkupDefault();

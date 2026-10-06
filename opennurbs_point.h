@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -31,10 +31,43 @@ class ON_4dPoint;
 class ON_2dVector;
 class ON_3dVector;
 
-class ON_2fVector;
-class ON_3fVector;
-
 class ON_Interval;
+
+class ON_PlaneEquation;
+class ON_SurfaceCurvature;
+class ON_2dSize;
+class ON_4dRect;
+
+#if defined(ON_DLL_TEMPLATE)
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_PlaneEquation>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dPoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dPoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4dPoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dVector>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dVector>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2fPoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3fPoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4fPoint>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2fVector>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3fVector>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Color>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SurfaceCurvature>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Interval>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dex>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dex>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_COMPONENT_INDEX>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dSize>;
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4dRect>;
+
+#endif
 
 ////////////////////////////////////////////////////////////////
 //
@@ -104,7 +137,7 @@ public:
     ) const; 
 
   /// <summary>
-  /// Convert a a pair of normalized parameter values to 
+  /// Convert a pair of normalized parameter values to 
   /// a pair of interval values.
   /// This interval can be increasing, decreasing, or a singleton.
   /// </summary>
@@ -199,7 +232,7 @@ public:
   /// <param name="t">Input parameter</param>
   /// <returns>
   /// The input parameter in the target interval.
-  /// Returns input paramter unchanged if both intervals are identical.
+  /// Returns input parameter unchanged if both intervals are identical.
   /// Returns ON_DBL_QNAN if either interval is not valid.
   /// </returns>
   double TransformParameterTo(const ON_Interval& target, double t) const;
@@ -1330,6 +1363,9 @@ ON_2dVector operator*(float, const ON_2dVector&);
 ON_DECL
 ON_2dVector operator*(double, const ON_2dVector&);
 
+ON_DECL
+ON_2dVector operator*(double, const ON_2fVector&);
+
 ///////////////////////////////////////////////////////////////
 //
 // ON_2dVector utilities
@@ -2196,13 +2232,6 @@ public:
 ON_DECL
 const ON_PlaneEquation operator*(const ON_Xform&, const ON_PlaneEquation&);
 
-
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_PlaneEquation>;
-
-#endif
-
 ON_DECL
 ON_3dVector operator*(int, const ON_3dVector&);
 
@@ -2211,6 +2240,9 @@ ON_3dVector operator*(float, const ON_3dVector&);
 
 ON_DECL
 ON_3dVector operator*(double, const ON_3dVector&);
+
+ON_DECL
+ON_3dVector operator*(double, const ON_3fVector&);
 
 ///////////////////////////////////////////////////////////////
 //
@@ -2466,6 +2498,8 @@ public:
 public:
   double k1, k2; // principal curvatures
 
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+
 public:
 
   /// <returns>True if k1 and k2 are both valid finite values.</returns>
@@ -2529,7 +2563,7 @@ public:
   /// </summary>
   /// <param name="kappa_style">
   /// Specifies which type curvature (Gaussian, mean, ...) value to calculate from the principal curvatures.
-  /// The Gausian curvature can be positive or negative. The other curvatures are are &gt;= 0.
+  /// The Gausian curvature can be positive or negative. The other curvatures are &gt;= 0.
   /// In particular, ON::curvature_style::mean_curvature return fabs(this->MeanCurvature()).
   /// </param>
   /// <returns>
@@ -2579,7 +2613,7 @@ bool operator!=(
 /// <summary>
 /// ON_SurfaceValues stores surface evaluation values (point, normal, curvatures, derivatives) in a single class
 /// </summary>
-class ON_WIP_CLASS ON_SurfaceValues
+class ON_CLASS ON_SurfaceValues
 {
 public:
 
@@ -2871,37 +2905,11 @@ private:
   // of at least m_derivatives_stride*Internal_DerivativeVectorCapacity() doubles, where N = Internal_DerivativeCapacity();
   double* m_derivatives = nullptr;
 
-  ON_3dPoint m_P;
-  ON_3dPoint m_N;
+  ON_3dPoint m_P = ON_3dPoint::NanPoint;
+  ON_3dVector m_N = ON_3dVector::NanVector;
   // ON_3dVector m_K[2]; // principal vector curvatures
-  ON_SurfaceCurvature m_kappa; // principal scalar curvatures
+  ON_SurfaceCurvature m_kappa = ON_SurfaceCurvature::Nan; // principal scalar curvatures
 };
-
-
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dPoint>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dPoint>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4dPoint>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dVector>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dVector>;
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2fPoint>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3fPoint>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4fPoint>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2fVector>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3fVector>;
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Color>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_SurfaceCurvature>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Interval>;
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dex>;
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dex>;
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_COMPONENT_INDEX>;
-
-#endif
 
 /////////////////////////////////////////////////////////////////
 //
@@ -3879,12 +3887,6 @@ bool operator!=(
   const ON_2dSize& rhs
   );
 
-#if defined(ON_DLL_TEMPLATE)
-
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dSize>;
-
-#endif
-
 /*
 Class ON_4iRect
   For those situations where a Windows SDK RECT or MFC CRect 
@@ -3969,11 +3971,6 @@ public:
   double right;
   double bottom;
 };
-
-#if defined(ON_DLL_TEMPLATE)
-ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_4dRect>;
-#endif
-
 
 ON_DECL
 bool operator==(const ON_4dRect&, const ON_4dRect&);
@@ -4388,6 +4385,59 @@ Parameters
 Returns a point in dom.  
 */
 ON_2dPoint ON_DECL ON_LiftInverse(ON_2dPoint P, ON_Interval dom[2], bool closed[2]);
+
+// These functions are used to accumulate the contents of arrays of points and vectors into an ON_SHA1 hash.
+// They are used by ON_Brep::ContentHash().
+// They are declared here (rather than opennurbs_sha1.h) for easier ordering of the includes in opennurbs.h
+void ON_SHA1_Accumulate2fPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2fPoint>& a
+);
+
+void ON_SHA1_Accumulate3fPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3fPoint>& a
+);
+
+void ON_SHA1_Accumulate4fPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_4fPoint>& a
+);
+
+void ON_SHA1_Accumulate2fVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2fVector>& a
+);
+
+void ON_SHA1_Accumulate3fVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3fVector>& a
+);
+
+void ON_SHA1_Accumulate2dPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2dPoint>& a
+);
+
+void ON_SHA1_Accumulate3dPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3dPoint>& a
+);
+
+void ON_SHA1_Accumulate4dPointArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_4dPoint>& a
+);
+
+void ON_SHA1_Accumulate2dVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_2dVector>& a
+);
+
+void ON_SHA1_Accumulate3dVectorArray(
+  class ON_SHA1& sha1,
+  const class ON_SimpleArray<ON_3dVector>& a
+);
 
 #endif
 

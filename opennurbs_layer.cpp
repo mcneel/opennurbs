@@ -21,27 +21,36 @@
 #error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
 #endif
 
-class ON_LayerPrivate
+class ON_LayerPrivate final
 {
 public:
+  ON_LayerPrivate(const ON_LayerPrivate& other);
   ON_LayerPrivate() = default;
   ~ON_LayerPrivate() = default;
 
   bool operator==(const ON_LayerPrivate&) const;
   bool operator!=(const ON_LayerPrivate&) const;
 
-  std::shared_ptr<ON_SectionStyle> m_custom_section_style;
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
+  std::unique_ptr<ON_SectionStyle> m_custom_section_style;
   int m_section_style_index = -1;
-#endif
   bool m_visible_in_new_details = true;
 
   // Layer description or notes
   ON_wString m_description;
+
+  ON_Layer::Style m_layer_style = ON_Layer::Style::Unset;
 };
 
 static const ON_LayerPrivate DefaultLayerPrivate;
 
+ON_LayerPrivate::ON_LayerPrivate(const ON_LayerPrivate& other)
+{
+  m_custom_section_style = other.m_custom_section_style ? std::make_unique<ON_SectionStyle>(*other.m_custom_section_style) : nullptr;
+  m_section_style_index = other.m_section_style_index;
+  m_visible_in_new_details = other.m_visible_in_new_details;
+  m_description = other.m_description;
+  m_layer_style = other.m_layer_style;
+}
 
 bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
 {
@@ -62,15 +71,16 @@ bool ON_LayerPrivate::operator==(const ON_LayerPrivate& other) const
     }
   }
 
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
   if (m_section_style_index != other.m_section_style_index)
     return false;
-#endif
 
   if (m_visible_in_new_details != other.m_visible_in_new_details)
     return false;
 
   if (m_description != other.m_description)
+    return false;
+
+  if (m_layer_style != other.m_layer_style)
     return false;
 
   return true;
@@ -196,10 +206,7 @@ ON_Layer::ON_Layer( const ON_Layer& src)
   , m_extension_bits(src.m_extension_bits)
 {
   if (src.m_private)
-  {
-    m_private = new ON_LayerPrivate();
-    *m_private = *src.m_private;
-  }
+    m_private = new ON_LayerPrivate(*src.m_private);
 }
 
 ON_Layer& ON_Layer::operator=(const ON_Layer& src)
@@ -218,14 +225,11 @@ ON_Layer& ON_Layer::operator=(const ON_Layer& src)
     m_bExpanded = src.m_bExpanded;
     m_extension_bits = src.m_extension_bits;
 
-    if (m_private)
-      delete m_private;
+    delete m_private;
     m_private = nullptr;
+
     if (src.m_private)
-    {
-      m_private = new ON_LayerPrivate();
-      *m_private = *src.m_private;
-    }
+      m_private = new ON_LayerPrivate(*src.m_private);
   }
   return *this;
 }
@@ -272,6 +276,10 @@ void ON_Layer::Dump( ON_TextLog& dump ) const
   dump.Print("display color rgb = "); dump.PrintRGB(m_color); dump.Print("\n");
   dump.Print("plot color rgb = "); dump.PrintRGB(m_plot_color); dump.Print("\n");
   dump.Print("default material index = %d\n",m_material_index);
+
+  ON_wString desc = Description();
+  if (desc.IsEmpty())
+    dump.Print("description = %ls\n", desc.Array());
 
   //{
   //  bool clipAll = true;
@@ -336,7 +344,13 @@ enum ON_LayerTypeCodes : unsigned char
   // 7 Jan 2025 D. Fugier
   // layer description
   LayerDescription = 37,
-  LastLayerTypeCode = 37
+  // 30 Apr 2025 D. Fugier
+  // layer style
+  LayerStyle = 38,
+  // 18 Jun 2025 D. Fugier
+  // section style table index
+  SectionStyleIndex = 39,
+  LastLayerTypeCode = 39
 };
 
 bool ON_Layer::Write(
@@ -611,6 +625,28 @@ bool ON_Layer::Write(
       rc = file.WriteChar(c);
       if (!rc) break;
       rc = file.WriteString(Description());
+      if (!rc) break;
+    }
+
+    // 30 Apr 2025 D. Fugier
+    // layer style
+    if (LayerStyle() != DefaultLayerPrivate.m_layer_style)
+    {
+      c = ON_LayerTypeCodes::LayerStyle; // 38
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteChar((unsigned char)LayerStyle());
+      if (!rc) break;
+    }
+
+    // 18 Jun 2025 D. Fugier
+    // section style table index
+    if (SectionStyleIndex() != DefaultLayerPrivate.m_section_style_index)
+    {
+      c = ON_LayerTypeCodes::SectionStyleIndex; // 39
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteInt(SectionStyleIndex());
       if (!rc) break;
     }
 
@@ -939,10 +975,34 @@ bool ON_Layer::Read(
                       {
                         ON_wString str;
                         rc = file.ReadString(str);
-                        if (!rc)
-                          break;
+                        if (!rc) break;
                         if (str.Length() > 0)
                           SetDescription(static_cast<const wchar_t*>(str));
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      // 20 Apr 2025 D. Fugier
+                      // layer description
+                      if (ON_LayerTypeCodes::LayerStyle == itemid) // 38
+                      {
+                        unsigned char layer_style = 0; // ON_Layer::Style::Unset
+                        rc = file.ReadChar(&layer_style);
+                        if (!rc) break;
+                        SetLayerStyle(ON_Layer::LayerStyleFromUnsigned(layer_style));
+                        rc = file.ReadChar(&itemid);
+                        if (!rc || 0 == itemid) break;
+                      }
+
+                      // 18 Jun 2025 D. Fugier
+                      // section style table index
+                      if (ON_LayerTypeCodes::SectionStyleIndex == itemid) // 39
+                      {
+                        int section_style_index = -1;
+                        rc = file.ReadInt(&section_style_index);
+                        if (!rc) break;
+                        if (section_style_index > -1)
+                          SetSectionStyleIndex(section_style_index);
                         rc = file.ReadChar(&itemid);
                         if (!rc || 0 == itemid) break;
                       }
@@ -2513,7 +2573,6 @@ void ON_Layer::UnsetPersistentLocking()
   m_extension_bits &= and_mask;
 }
 
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
 int ON_Layer::SectionStyleIndex() const
 {
   return m_private ? m_private->m_section_style_index : DefaultLayerPrivate.m_section_style_index;
@@ -2531,7 +2590,6 @@ void ON_Layer::SetSectionStyleIndex(int index)
 
   m_private->m_section_style_index = index;
 }
-#endif
 
 void ON_Layer::SetCustomSectionStyle(const ON_SectionStyle& sectionStyle)
 {
@@ -2591,4 +2649,28 @@ void ON_Layer::SetDescription(const wchar_t* description)
     m_private->m_description = str;
     IncrementContentVersionNumber();
   }
+}
+
+ON_Layer::Style ON_Layer::LayerStyleFromUnsigned(unsigned int layer_style_as_unsigned)
+{
+  switch (layer_style_as_unsigned)
+  {
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Layer::Style::Unset);
+    ON_ENUM_FROM_UNSIGNED_CASE(ON_Layer::Style::Markup);
+  }
+  ON_ERROR("Invalid layer_style_as_unsigned value.");
+  return ON_Layer::Style::Unset;
+}
+
+ON_Layer::Style ON_Layer::LayerStyle() const
+{
+  return m_private ? m_private->m_layer_style : ON_Layer::Style::Unset;
+}
+
+void ON_Layer::SetLayerStyle(ON_Layer::Style layer_style)
+{
+  if (nullptr == m_private)
+    m_private = new ON_LayerPrivate();
+  m_private->m_layer_style = layer_style;
+  IncrementContentVersionNumber();
 }

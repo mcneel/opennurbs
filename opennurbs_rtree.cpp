@@ -678,6 +678,378 @@ bool ON_RTree::CreateMeshFaceTree( const ON_Mesh* mesh )
   return (0 != m_root);
 }
 
+// 16 Jun 2026 (RH-88674): packed bulk build for the mesh face R-tree.
+//
+// CreateMeshFaceTree() above inserts faces one at a time (Insert -> InsertRect):
+// each face is a root-to-leaf descent plus possible node splits, so building the
+// tree for an ~11.7M-face mesh takes ~12s (dominated by ON_RTree::InsertRect).
+// CreateMeshFaceTreePacked() builds the same kind of tree bottom-up: sort the
+// faces by Morton (Z-order) code for spatial locality, pack up to
+// ON_RTree_MAX_NODE_COUNT items per node, and build parent levels until one root
+// remains. Query correctness only requires each node rectangle to contain its
+// children's rectangles, which holds by construction (every cover is the union
+// of its branch rectangles), so the packed tree returns identical query results.
+
+// Accumulate a point into a running [m_min,m_max]; the first point seeds it.
+static void ON_RTreeAccumPoint(const ON_3dPoint& V, double fmin[3], double fmax[3], bool& bStarted)
+{
+  if (bStarted)
+  {
+    if (V.x < fmin[0]) fmin[0] = V.x; else if (V.x > fmax[0]) fmax[0] = V.x;
+    if (V.y < fmin[1]) fmin[1] = V.y; else if (V.y > fmax[1]) fmax[1] = V.y;
+    if (V.z < fmin[2]) fmin[2] = V.z; else if (V.z > fmax[2]) fmax[2] = V.z;
+  }
+  else
+  {
+    fmin[0] = fmax[0] = V.x;
+    fmin[1] = fmax[1] = V.y;
+    fmin[2] = fmax[2] = V.z;
+    bStarted = true;
+  }
+}
+
+// Face bounding box identical to the one CreateMeshFaceTree() computes: the
+// union of the single- and double-precision vertices that are present.
+static void ON_GetMeshFaceRTreeRect(const int* fvi, const ON_3fPoint* meshfV, const ON_3dPoint* meshdV, ON_RTreeBBox& rect)
+{
+  bool bStarted = false;
+  const int nv = (fvi[2] != fvi[3]) ? 4 : 3;
+  for (int k = 0; k < nv; k++)
+  {
+    if (meshfV) ON_RTreeAccumPoint(ON_3dPoint(meshfV[fvi[k]]), rect.m_min, rect.m_max, bStarted);
+    if (meshdV) ON_RTreeAccumPoint(meshdV[fvi[k]], rect.m_min, rect.m_max, bStarted);
+  }
+}
+
+// Spread the low 21 bits of v so each occupies every third bit (for 3D Morton).
+static ON__UINT64 ON_RTreeSpread21(ON__UINT64 v)
+{
+  v &= 0x1fffffULL;
+  v = (v | (v << 32)) & 0x1f00000000ffffULL;
+  v = (v | (v << 16)) & 0x1f0000ff0000ffULL;
+  v = (v | (v <<  8)) & 0x100f00f00f00f00fULL;
+  v = (v | (v <<  4)) & 0x10c30c30c30c30c3ULL;
+  v = (v | (v <<  2)) & 0x1249249249249249ULL;
+  return v;
+}
+
+struct ON_RTreePackItem
+{
+  ON_RTreeBBox rect;
+  ON__INT_PTR id;
+  ON__UINT64 key;
+};
+
+// Number of items to place in the next packed node so that no node (other than a
+// single-element root) is left with fewer than ON_RTree_MIN_NODE_COUNT branches.
+static int ON_RTreePackTake(int remaining)
+{
+  int take = (remaining < ON_RTree_MAX_NODE_COUNT) ? remaining : ON_RTree_MAX_NODE_COUNT;
+  if (remaining - take == 1)
+    take--; // never leave a remainder of 1 (would make a node with a single branch)
+  return take;
+}
+
+// Steps 2-4 of the packed build, shared by CreateMeshFaceTreePacked() and
+// CreateMeshVertexTreePacked(): Morton keys from the quantized rectangle centers
+// (gmin/gmax bound all rectangles), an LSD radix sort of (key, index) pairs, and
+// the bottom-up node packing. Returns the root node built from `pool`, or nullptr
+// on allocation failure (the caller then clears the tree).
+static ON_RTreeNode* ON_RTreePackBuildTree(ON_RTreeMemPool& pool, ON_SimpleArray<ON_RTreePackItem>& items,
+  const double gmin[3], const double gmax[3])
+{
+  const unsigned int fcount = items.UnsignedCount();
+  ON_RTreePackItem* item = items.Array();
+
+  // 2. Morton (Z-order) key from each item's quantized center (21 bits/axis).
+  double scale[3];
+  for (int a = 0; a < 3; a++)
+  {
+    const double d = gmax[a] - gmin[a];
+    scale[a] = (d > 0.0) ? (2097151.0 / d) : 0.0; // 2^21 - 1
+  }
+  for (unsigned int fi = 0; fi < fcount; fi++)
+  {
+    ON__UINT64 q[3];
+    for (int a = 0; a < 3; a++)
+    {
+      const double c = 0.5 * (item[fi].rect.m_min[a] + item[fi].rect.m_max[a]);
+      double t = (c - gmin[a]) * scale[a];
+      if (t < 0.0) t = 0.0; else if (t > 2097151.0) t = 2097151.0;
+      q[a] = (ON__UINT64)t;
+    }
+    item[fi].key = ON_RTreeSpread21(q[0]) | (ON_RTreeSpread21(q[1]) << 1) | (ON_RTreeSpread21(q[2]) << 2);
+  }
+
+  // 3. Sort items by Morton key with an LSD radix sort on (key, index) pairs:
+  //    O(n), portable, and it never moves the 64-byte items during the sort.
+  //    Morton keys occupy the low 63 bits (21 bits/axis), so all 8 byte passes
+  //    are needed. The result `order[i].m_index` gives the original item index at
+  //    sorted position i.
+  ON_SimpleArray<ON_SortKeyIndex> kiA(fcount), kiB(fcount);
+  kiA.SetCount(fcount);
+  kiB.SetCount(fcount);
+  for (unsigned int i = 0; i < fcount; i++)
+  {
+    kiA[i].m_key = item[i].key;
+    kiA[i].m_index = i;
+  }
+
+  const ON_SortKeyIndex* order = ON_RadixSortKeyIndex(kiA.Array(), kiB.Array(), fcount, 8);
+
+  if (nullptr == order)
+    return nullptr;
+
+  item = items.Array();
+
+  // 4. Bottom-up pack: leaf nodes first, then parent levels until one root.
+  ON_SimpleArray<ON_RTreeNode*> nodes((int)(fcount / 4 + 1));
+  ON_SimpleArray<ON_RTreeBBox> covers((int)(fcount / 4 + 1));
+
+  for (unsigned int i = 0; i < fcount; )
+  {
+    const int take = ON_RTreePackTake((int)(fcount - i));
+    ON_RTreeNode* node = pool.AllocNode();
+    if (nullptr == node) return nullptr;
+    node->m_level = 0;
+    node->m_count = take;
+    const ON_RTreePackItem& it0 = item[order[i].m_index];
+    ON_RTreeBBox cover = it0.rect;
+    node->m_branch[0].m_rect = it0.rect;
+    node->m_branch[0].m_id = it0.id;
+    for (int c = 1; c < take; c++)
+    {
+      const ON_RTreePackItem& itc = item[order[i + c].m_index];
+      node->m_branch[c].m_rect = itc.rect;
+      node->m_branch[c].m_id = itc.id;
+      cover = CombineRectHelper(&cover, &itc.rect);
+    }
+    nodes.Append(node);
+    covers.Append(cover);
+    i += (unsigned int)take;
+  }
+
+  int level = 1;
+  while (nodes.Count() > 1)
+  {
+    const int m = nodes.Count();
+    ON_SimpleArray<ON_RTreeNode*> pnodes(m / 4 + 1);
+    ON_SimpleArray<ON_RTreeBBox> pcovers(m / 4 + 1);
+    ON_RTreeNode** child = nodes.Array();
+    ON_RTreeBBox* childRect = covers.Array();
+    for (int j = 0; j < m; )
+    {
+      const int take = ON_RTreePackTake(m - j);
+      ON_RTreeNode* node = pool.AllocNode();
+      if (nullptr == node) return nullptr;
+      node->m_level = level;
+      node->m_count = take;
+      ON_RTreeBBox cover = childRect[j];
+      node->m_branch[0].m_rect = childRect[j];
+      node->m_branch[0].m_child = child[j];
+      for (int c = 1; c < take; c++)
+      {
+        node->m_branch[c].m_rect = childRect[j + c];
+        node->m_branch[c].m_child = child[j + c];
+        cover = CombineRectHelper(&cover, &childRect[j + c]);
+      }
+      pnodes.Append(node);
+      pcovers.Append(cover);
+      j += take;
+    }
+    nodes = pnodes;
+    covers = pcovers;
+    level++;
+  }
+
+  return nodes.Count() > 0 ? nodes[0] : nullptr;
+}
+
+bool ON_RTree::CreateMeshFaceTreePacked(const ON_Mesh* mesh)
+{
+  RemoveAll();
+
+  if (nullptr == mesh)
+    return false;
+
+  const unsigned int fcount = mesh->m_F.UnsignedCount();
+  if (fcount == 0)
+    return false;
+
+  const ON_MeshFace* meshF = mesh->m_F.Array();
+  if (nullptr == meshF)
+    return false;
+
+  const ON_3fPoint* meshfV = mesh->m_V.Array();
+  const ON_3dPoint* meshdV = mesh->HasDoublePrecisionVertices() ? mesh->DoublePrecisionVertices().Array() : nullptr;
+  if (nullptr == meshfV && nullptr == meshdV)
+    return false;
+
+  // 1. Per-face bounding rectangles + the overall bounding box.
+  ON_SimpleArray<ON_RTreePackItem> items(fcount);
+  items.SetCount(fcount);
+  ON_RTreePackItem* item = items.Array();
+
+  double gmin[3] = { ON_DBL_MAX, ON_DBL_MAX, ON_DBL_MAX };
+  double gmax[3] = { -ON_DBL_MAX, -ON_DBL_MAX, -ON_DBL_MAX };
+  for (unsigned int fi = 0; fi < fcount; fi++)
+  {
+    ON_GetMeshFaceRTreeRect(meshF[fi].vi, meshfV, meshdV, item[fi].rect);
+    item[fi].id = (ON__INT_PTR)fi;
+    for (int a = 0; a < 3; a++)
+    {
+      if (item[fi].rect.m_min[a] < gmin[a]) gmin[a] = item[fi].rect.m_min[a];
+      if (item[fi].rect.m_max[a] > gmax[a]) gmax[a] = item[fi].rect.m_max[a];
+    }
+  }
+
+  m_root = ON_RTreePackBuildTree(m_mem_pool, items, gmin, gmax);
+  if (nullptr == m_root)
+  {
+    RemoveAll();
+    return false;
+  }
+  return true;
+}
+
+bool ON_RTree::CreateMeshVertexTreePacked(const ON_Mesh* mesh)
+{
+  RemoveAll();
+
+  if (nullptr == mesh)
+    return false;
+
+  // Same vertex source rule as ON_RTree point consumers: double precision
+  // vertices when the mesh has them, single precision vertices otherwise.
+  const ON_3dPoint* meshdV = mesh->HasDoublePrecisionVertices() ? mesh->DoublePrecisionVertices().Array() : nullptr;
+  const ON_3fPoint* meshfV = mesh->m_V.Array();
+
+  const unsigned int vcount = (nullptr != meshdV)
+    ? mesh->DoublePrecisionVertices().UnsignedCount()
+    : mesh->m_V.UnsignedCount();
+  if (vcount == 0 || (nullptr == meshdV && nullptr == meshfV))
+    return false;
+
+  // 1. Degenerate per-vertex rectangles + the overall bounding box.
+  ON_SimpleArray<ON_RTreePackItem> items(vcount);
+  items.SetCount((int)vcount);
+  ON_RTreePackItem* item = items.Array();
+
+  double gmin[3] = { ON_DBL_MAX, ON_DBL_MAX, ON_DBL_MAX };
+  double gmax[3] = { -ON_DBL_MAX, -ON_DBL_MAX, -ON_DBL_MAX };
+  for (unsigned int vi = 0; vi < vcount; vi++)
+  {
+    const ON_3dPoint V = (nullptr != meshdV) ? meshdV[vi] : ON_3dPoint(meshfV[vi]);
+    item[vi].rect.m_min[0] = item[vi].rect.m_max[0] = V.x;
+    item[vi].rect.m_min[1] = item[vi].rect.m_max[1] = V.y;
+    item[vi].rect.m_min[2] = item[vi].rect.m_max[2] = V.z;
+    item[vi].id = (ON__INT_PTR)vi;
+    for (int a = 0; a < 3; a++)
+    {
+      if (V[a] < gmin[a]) gmin[a] = V[a];
+      if (V[a] > gmax[a]) gmax[a] = V[a];
+    }
+  }
+
+  m_root = ON_RTreePackBuildTree(m_mem_pool, items, gmin, gmax);
+  if (nullptr == m_root)
+  {
+    RemoveAll();
+    return false;
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// In-place affine transform of an R-tree (RH-88674).
+//
+// When the geometry an R-tree indexes is moved by a rigid/affine transform, the
+// tree's topology (which element is near which) is unchanged - only the
+// coordinates move. So instead of rebuilding the tree we transform every node
+// rectangle in place: O(number of nodes), allocation-free.
+//
+// A transformed axis-aligned box is, in general, not axis-aligned, so we store
+// the axis-aligned bounding box of the transformed box. With center c and
+// half-widths h, and an affine transform (linear part L, translation t), that
+// AABB is exactly: center' = L*c + t, half' = |L|*h, where |L| is the entrywise
+// absolute value of L. (Exact for translation/axis-aligned scale, tight and
+// conservative for rotation.)
+//
+// Crucially this preserves the R-tree invariant. If child box C is inside parent
+// box P, then L(C) is inside L(P) (affine maps preserve containment), and the
+// AABB operation is monotone (A subset B => AABB(A) subset AABB(B)), so the
+// transformed child rectangle stays inside the transformed parent rectangle.
+// Queries therefore remain correct; under rotation a query may return a few
+// extra candidates (looser boxes), which callers reject with their exact test.
+// ---------------------------------------------------------------------------
+
+// Affine transform precomputed for fast rectangle transformation: m and t are
+// the linear part and translation; a = |m| transforms a box's half-widths.
+struct ON_RTreeAffine
+{
+  double m[3][3];
+  double t[3];
+  double a[3][3];
+};
+
+// Replace one rectangle with the AABB of its transformed box.
+static void ON_RTreeTransformRect(ON_RTreeBBox& rect, const ON_RTreeAffine& x)
+{
+  const double c0 = 0.5 * (rect.m_min[0] + rect.m_max[0]);
+  const double c1 = 0.5 * (rect.m_min[1] + rect.m_max[1]);
+  const double c2 = 0.5 * (rect.m_min[2] + rect.m_max[2]);
+  const double h0 = 0.5 * (rect.m_max[0] - rect.m_min[0]);
+  const double h1 = 0.5 * (rect.m_max[1] - rect.m_min[1]);
+  const double h2 = 0.5 * (rect.m_max[2] - rect.m_min[2]);
+  for (int i = 0; i < 3; i++)
+  {
+    const double nc = x.m[i][0] * c0 + x.m[i][1] * c1 + x.m[i][2] * c2 + x.t[i];
+    const double nh = x.a[i][0] * h0 + x.a[i][1] * h1 + x.a[i][2] * h2;
+    rect.m_min[i] = nc - nh;
+    rect.m_max[i] = nc + nh;
+  }
+}
+
+// Transform every branch rectangle of this node and, recursively, its children.
+// Tree height is O(log n) (~10 levels for tens of millions of leaves), so the
+// recursion depth is small.
+static void ON_RTreeTransformNodeRec(ON_RTreeNode* node, const ON_RTreeAffine& x)
+{
+  const bool internal = node->IsInternalNode();
+  for (int i = 0; i < node->m_count; i++)
+  {
+    ON_RTreeTransformRect(node->m_branch[i].m_rect, x);
+    if (internal)
+      ON_RTreeTransformNodeRec(node->m_branch[i].m_child, x);
+  }
+}
+
+bool ON_RTree::Transform(const ON_Xform& xform)
+{
+  if (nullptr == m_root)
+    return true; // empty tree: nothing to transform
+
+  // Only affine transforms (bottom row [0 0 0 1]) keep an axis-aligned-box tree
+  // valid via a per-rectangle update. Reject anything with perspective.
+  if (0.0 != xform.m_xform[3][0] || 0.0 != xform.m_xform[3][1] ||
+      0.0 != xform.m_xform[3][2] || 1.0 != xform.m_xform[3][3])
+    return false;
+
+  ON_RTreeAffine x;
+  for (int i = 0; i < 3; i++)
+  {
+    x.t[i] = xform.m_xform[i][3];
+    for (int j = 0; j < 3; j++)
+    {
+      x.m[i][j] = xform.m_xform[i][j];
+      x.a[i][j] = fabs(xform.m_xform[i][j]);
+    }
+  }
+
+  ON_RTreeTransformNodeRec(m_root, x);
+  return true;
+}
+
 
 bool ON_SubDRTree::CreateSubDEmptyRTree(
   const ON_SubD& subd

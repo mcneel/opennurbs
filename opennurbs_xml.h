@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -166,7 +166,8 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
 
     #define ON_RDK_DECAL_MAP_TO_INSIDE_ON           L"map-to-inside-on"
     #define ON_RDK_DECAL_TRANSPARENCY               L"transparency"
-    #define ON_RDK_DECAL_TEXTURE_INSTANCE           L"texture-instance"
+    #define ON_RDK_DECAL_TEXTURE_INSTANCE           L"texture-instance" // Deprecated
+    #define ON_RDK_DECAL_ASSET_INSTANCE             L"texture-instance" // Can't change because of old documents.
     #define ON_RDK_DECAL_HEIGHT                     L"height"
     #define ON_RDK_DECAL_ORIGIN                     L"origin"
     #define ON_RDK_DECAL_RADIUS                     L"radius"
@@ -182,7 +183,7 @@ typedef bool (*ON_XMLRecurseChildrenCallback)(class ON_XMLNode*, void*);
     #define ON_RDK_DECAL_MIN_V                      L"min-v"
     #define ON_RDK_DECAL_MAX_U                      L"max-u"
     #define ON_RDK_DECAL_MAX_V                      L"max-v"
-    #define ON_RDK_DECAL_IS_TEMPORARY               L"is-temporary"
+    #define ON_RDK_DECAL_IS_TEMPORARY               L"is-temporary" // Deprecated; do not use.
     #define ON_RDK_DECAL_IS_VISIBLE                 L"is-visible"
     #define ON_RDK_DECAL_INSTANCE_ID                L"instance-id"
 
@@ -599,7 +600,7 @@ public: // Serialization.
   static constexpr ON__UINT32 ReadError = 0xFFFFFFFF; // Indicates ReadFromStream() failure.
   virtual ON__UINT32 ReadFromStream(const wchar_t* buf, bool warnings_as_errors=false, bool validate_tags=true);
 
-  virtual void* LastReadBufferPointer(void) const;
+  ON_DEPRECATED_MSG("This was always unsafe - and slow.  Deprecated and will be removed.") virtual void* LastReadBufferPointer(void) const;
 
   // This function is called on the top-most node during the reading process.
   virtual void OnNodeReadFromStream(const ON_XMLNode* node) const;
@@ -940,6 +941,7 @@ private:
 private:
   ON_XMLRootNode _root;
   const ValueSets _vs;
+  // For non-Rhino models (from IO plugins) the value is set to INT_MAX
   const int _major_version;
   void* _reserved;
 };

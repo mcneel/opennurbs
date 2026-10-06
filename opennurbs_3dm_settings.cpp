@@ -27,59 +27,9 @@
 // ON_3dmUnitsAndTolerances
 //
 
-static double ON_Internal_UnitSystemCtorMetersPerUnit(
-  ON::LengthUnitSystem length_unit_system
-)
-{
-  double meters_per_unit;
-  switch (length_unit_system)
-  {
-  case ON::LengthUnitSystem::None:
-    meters_per_unit = 1.0;
-    break;
-  case ON::LengthUnitSystem::Angstroms:
-  case ON::LengthUnitSystem::Nanometers:
-  case ON::LengthUnitSystem::Microns:
-  case ON::LengthUnitSystem::Millimeters:
-  case ON::LengthUnitSystem::Centimeters:
-  case ON::LengthUnitSystem::Decimeters:
-  case ON::LengthUnitSystem::Meters:
-  case ON::LengthUnitSystem::Dekameters:
-  case ON::LengthUnitSystem::Hectometers:
-  case ON::LengthUnitSystem::Kilometers:
-  case ON::LengthUnitSystem::Megameters:
-  case ON::LengthUnitSystem::Gigameters:
-  case ON::LengthUnitSystem::Microinches:
-  case ON::LengthUnitSystem::Mils:
-  case ON::LengthUnitSystem::Inches:
-  case ON::LengthUnitSystem::Feet:
-  case ON::LengthUnitSystem::Yards:
-  case ON::LengthUnitSystem::Miles:
-  case ON::LengthUnitSystem::PrinterPoints:
-  case ON::LengthUnitSystem::PrinterPicas:
-  case ON::LengthUnitSystem::NauticalMiles:
-  case ON::LengthUnitSystem::AstronomicalUnits:
-  case ON::LengthUnitSystem::LightYears:
-  case ON::LengthUnitSystem::Parsecs:
-    meters_per_unit = ON::UnitScale(length_unit_system, ON::LengthUnitSystem::Meters);
-    break;
-  case ON::LengthUnitSystem::CustomUnits:
-    meters_per_unit = 1.0;
-    break;
-  case ON::LengthUnitSystem::Unset:
-    meters_per_unit = ON_DBL_QNAN;
-    break;
-  default:
-    meters_per_unit = ON_DBL_QNAN;
-    break;
-  }
-  return meters_per_unit;
-}
-
-
 ON_UnitSystem::ON_UnitSystem(ON::LengthUnitSystem length_unit_system)
 : m_unit_system(ON::LengthUnitSystemFromUnsigned(static_cast<unsigned int>(length_unit_system)))
-, m_meters_per_custom_unit(ON_Internal_UnitSystemCtorMetersPerUnit(m_unit_system))
+, m_meters_per_custom_unit(ON::MetersPerLengthUnit(m_unit_system))
 {}
 
 ON_UnitSystem& ON_UnitSystem::operator=(
@@ -121,6 +71,22 @@ bool ON_UnitSystem::operator!=(const ON_UnitSystem& other) const
   }
 
   return false;
+}
+
+bool ON_UnitSystem::operator==(ON::LengthUnitSystem other) const
+{
+  if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
+    return false;
+
+  return m_unit_system == other;
+}
+
+bool ON_UnitSystem::operator!=(ON::LengthUnitSystem other) const
+{
+  if (ON::LengthUnitSystem::CustomUnits == m_unit_system)
+    return true;
+
+  return m_unit_system != other;
 }
 
 bool ON_UnitSystem::IsValid() const
@@ -720,14 +686,13 @@ bool ON_3dmUnitsAndTolerances::IsValid() const
 {
   for (;;)
   {
-    // April 17, 2023 - Tim
-    // Changed upper limit to 8 so we can use the display precision
-    // stuff found in the annotation code for V8
-    // Fixes https://mcneel.myjetbrains.com/youtrack/issue/RH-74242
-    if (!(m_distance_display_precision >= 0 && m_distance_display_precision <= 8))
+    if (!m_unit_system.IsValid())
       break;
 
-    if (!((int)m_distance_display_mode >= 0 && (int)m_distance_display_mode <= 3))
+    if (!(m_distance_display_precision >= 0 && m_distance_display_precision <= 20))
+      break;
+
+    if (!((int)m_distance_display_mode >= 0 && (int)m_distance_display_mode < 3))
       break;
 
     if (!TolerancesAreValid())
@@ -3155,6 +3120,8 @@ bool ON_StandardDisplayModeId::IsStandardDisplayModeId(
     return true;
   if ( ON_StandardDisplayModeId::Raytraced == id)
     return true;
+  if ( ON_StandardDisplayModeId::Architecture == id)
+    return true;
 
   return false;
 }
@@ -3213,6 +3180,163 @@ ON_UUID ON_StandardDisplayModeId::FromV3DisplayMode(
   return id;
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// ON_3dmViewPrivate
+//
+
+class /*NEVER EXPORT THIS CLASS DEFINITION*/ ON_3dmViewPrivate
+{
+public:
+  ON_3dmViewPrivate() = default;
+  ~ON_3dmViewPrivate() = default;
+
+public:
+  // pageview group interface
+
+  // Returns number of pageview groups the pageview belongs to.
+  int PageViewGroupCount() const;
+
+  // Returns PageViewGroupCount() and puts a list of zero based pageview group indices into the array.
+  int PageViewGroupList(ON_SimpleArray<int>& group_list) const;
+
+  // Returns true if pageview is in pageview group with the specified index.
+  bool IsInPageViewGroup(int group_index) const;
+
+  // Adds view to the pageview group with specified index by appending index to pageview group list.
+  // If the view is already in pageview group, nothing is changed.
+  void AddToPageViewGroup(int group_index);
+
+  // Removes pageview from the pageview group with specified index.
+  // If the pageview is not in the pageview group, nothing is changed.
+  void RemoveFromPageViewGroup(int group_index);
+
+  // Removes pageview from all pageview groups.
+  void RemoveFromAllPageViewGroups();
+
+  // Returns the sort index of the pageview within the pageview group with the
+  // specified index, or ON_UNSET_INT_INDEX if the pageview is not in the group
+  // or has no explicit sort index.
+  int PageViewGroupSortIndex(int group_index) const;
+
+  // Sets the sort index of the pageview within the pageview group with the
+  // specified index. If the pageview is not yet in the group, it is added.
+  void SetPageViewGroupSortIndex(int group_index, int sort_index);
+
+  // description
+  ON_wString Description() const;
+  void SetDescription(const wchar_t* description);
+
+public:
+  // Array of (pageview group index, sort index) pairs.
+  //   .i = zero based pageview group index
+  //   .j = sort index within that group, or ON_UNSET_INT_INDEX when unsorted
+  //        (falls back to page-number order)
+  ON_SimpleArray<ON_2dex> m_pageview_group;
+  // Description of pageview
+  ON_wString m_description;
+};
+
+static const ON_3dmViewPrivate Default3dmViewPrivate;
+
+int ON_3dmViewPrivate::PageViewGroupCount() const
+{
+  return m_pageview_group.Count();
+}
+
+int ON_3dmViewPrivate::PageViewGroupList(ON_SimpleArray<int>& list) const
+{
+  const int count = m_pageview_group.Count();
+  list.SetCount(0);
+  list.Reserve(count);
+  for (int i = 0; i < count; i++)
+    list.Append(m_pageview_group[i].i);
+  return list.Count();
+}
+
+bool ON_3dmViewPrivate::IsInPageViewGroup(int group_index) const
+{
+  bool rc = false;
+  const int count = m_pageview_group.Count();
+  for (int i = 0; i < count; i++)
+  {
+    if (m_pageview_group[i].i == group_index)
+    {
+      rc = true;
+      break;
+    }
+  }
+  return rc;
+}
+
+void ON_3dmViewPrivate::AddToPageViewGroup(int group_index)
+{
+  if (group_index >= 0)
+  {
+    if (!IsInPageViewGroup(group_index))
+      m_pageview_group.Append(ON_2dex(group_index, ON_UNSET_INT_INDEX));
+  }
+}
+
+void ON_3dmViewPrivate::RemoveFromPageViewGroup(int group_index)
+{
+  const int count = m_pageview_group.Count();
+  for (int i = 0; i < count; i++)
+  {
+    if (m_pageview_group[i].i == group_index)
+    {
+      m_pageview_group.Remove(i);
+      break;
+    }
+  }
+}
+
+void ON_3dmViewPrivate::RemoveFromAllPageViewGroups()
+{
+  m_pageview_group.Destroy();
+}
+
+int ON_3dmViewPrivate::PageViewGroupSortIndex(int group_index) const
+{
+  const int count = m_pageview_group.Count();
+  for (int i = 0; i < count; i++)
+  {
+    if (m_pageview_group[i].i == group_index)
+      return m_pageview_group[i].j;
+  }
+  return ON_UNSET_INT_INDEX;
+}
+
+void ON_3dmViewPrivate::SetPageViewGroupSortIndex(int group_index, int sort_index)
+{
+  if (group_index < 0)
+    return;
+
+  const int count = m_pageview_group.Count();
+  for (int i = 0; i < count; i++)
+  {
+    if (m_pageview_group[i].i == group_index)
+    {
+      m_pageview_group[i].j = sort_index;
+      return;
+    }
+  }
+  m_pageview_group.Append(ON_2dex(group_index, sort_index));
+}
+
+// description
+ON_wString ON_3dmViewPrivate::Description() const
+{
+  return m_description;
+}
+
+void ON_3dmViewPrivate::SetDescription(const wchar_t* description)
+{
+  m_description = description;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 // ON_3dmView
@@ -3224,7 +3348,64 @@ ON_3dmView::ON_3dmView()
 
 ON_3dmView::~ON_3dmView()
 {
+  Internal_Destroy();
 }
+
+void ON_3dmView::Internal_Destroy()
+{
+  if (m_private)
+  {
+    delete m_private;
+    m_private = nullptr;
+  }
+}
+
+void ON_3dmView::Internal_Copy(const ON_3dmView& src)
+{
+  Internal_Destroy();
+
+  m_vp = src.m_vp;
+  m_clipping_planes = src.m_clipping_planes;
+  m_bLockedProjection = src.m_bLockedProjection;
+  m_section_behavior = src.m_section_behavior;
+  m_name = src.m_name;
+  m_display_mode_id = src.m_display_mode_id;
+  m_position = src.m_position;
+  m_view_type = src.m_view_type;
+  m_page_settings = src.m_page_settings;
+  m_named_view_id = src.m_named_view_id;
+  m_cplane = src.m_cplane;
+  m_bShowConstructionGrid = src.m_bShowConstructionGrid;
+  m_bShowConstructionAxes = src.m_bShowConstructionAxes;
+  m_bShowWorldAxes = src.m_bShowWorldAxes;
+  m_bShowConstructionZAxis = src.m_bShowConstructionZAxis;
+  m_trace_image = src.m_trace_image;
+  m_wallpaper_image = src.m_wallpaper_image;
+  m_dFocalBlurDistance = src.m_dFocalBlurDistance;
+  m_dFocalBlurAperture = src.m_dFocalBlurAperture;
+  m_dFocalBlurJitter = src.m_dFocalBlurJitter;
+  m_uFocalBlurSampleCount = src.m_uFocalBlurSampleCount;
+  m_FocalBlurMode = src.m_FocalBlurMode;
+  m_sizeRendering = src.m_sizeRendering;
+  if (src.m_private)
+  {
+    m_private = new ON_3dmViewPrivate();
+    *m_private = *src.m_private;
+  }
+}
+
+ON_3dmView::ON_3dmView(const ON_3dmView& src)
+{
+  Internal_Copy(src);
+}
+
+ON_3dmView& ON_3dmView::operator=(const ON_3dmView& src)
+{
+  if (this != &src)
+    Internal_Copy(src);
+  return *this;
+}
+
 
 void ON_3dmView::Dump( ON_TextLog& dump ) const
 {
@@ -3323,16 +3504,27 @@ void ON_3dmView::Dump( ON_TextLog& dump ) const
 void ON_3dmView::Default()
 {
   m_name.Destroy();
+  Internal_Destroy();
 
   m_vp = ON_Viewport::DefaultTopViewYUp;
 
   m_cplane.Default();
+  m_clipping_planes.Destroy();
+  m_bLockedProjection = false;
+  m_section_behavior = ON::ViewSectionBehavior::ClipAndSection;
+  m_name.Destroy();
   m_display_mode_id = ON_nil_uuid;
   m_view_type = ON::model_view_type;
   m_position.Default();
-  if ( m_vp.Projection() == ON::parallel_view ) {
-    m_cplane.m_plane.CreateFromFrame( m_cplane.m_plane.origin, m_vp.CameraX(), m_vp.CameraY() );
+  if (m_vp.Projection() == ON::parallel_view) {
+    m_cplane.m_plane.CreateFromFrame(m_cplane.m_plane.origin, m_vp.CameraX(), m_vp.CameraY());
   }
+  m_view_type = ON::model_view_type;
+  m_page_settings.Default();
+  m_named_view_id = ON_nil_uuid;
+  m_cplane.Default();
+  if (m_vp.Projection() == ON::parallel_view)
+    m_cplane.m_plane.CreateFromFrame(m_cplane.m_plane.origin, m_vp.CameraX(), m_vp.CameraY());
   m_bShowConstructionGrid = true;
   m_bShowConstructionAxes = true;
   m_bShowWorldAxes = true;
@@ -3360,11 +3552,11 @@ ON::ViewSectionBehavior ON_3dmView::SectionBehavior() const
 {
   return m_section_behavior;
 }
+
 void ON_3dmView::SetSectionBehavior(ON::ViewSectionBehavior behavior)
 {
   m_section_behavior = behavior;
 }
-
 
 ON_3dPoint ON_3dmView::TargetPoint() const
 {
@@ -3657,9 +3849,9 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_ATTRIBUTES, 0 );
     if (rc)
     {
-      rc = file.Write3dmChunkVersion( 1, 9 ); // (there are no 1.0 fields)
+      rc = file.Write3dmChunkVersion(1, 12); // (there are no 1.0 fields)
 
-      while(rc)
+      while (rc)
       {
         // 1.1 fields (there are no 1.0 fields)
         rc = file.WriteInt( m_view_type );
@@ -3729,6 +3921,30 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
 
         // 10 July 2022 - S. Baer version 1.9 fields
         rc = file.WriteChar((unsigned char)SectionBehavior());
+        if (!rc) break;
+
+        // 13-Jan-2026 Dale Fugier - verson 1.10 fields
+        // Note: ON_3dmView is written before the pageview group table.
+        // So use ON_BinaryArchive::WriteArray instead of
+        // ON_BinaryArchive::Write3dmReferencedComponentIndex.
+        ON_SimpleArray<int> group_list;
+        PageViewGroupList(group_list);
+        rc = file.WriteArray(group_list);
+        if (!rc) break;
+
+        ON_wString description = Description();
+        rc = file.WriteString(description);
+        if (!rc) break;
+
+        // 15-Jul-2026 Dale Fugier - version 1.12 fields
+        // Per-group sort indices, written as an array parallel to the 1.10
+        // group index array above (same order). This gives each group its own
+        // layout sort order, independent of the document view-table order.
+        // A sort index of ON_UNSET_INT_INDEX means "unsorted" (use page-number order).
+        ON_SimpleArray<int> group_sort_indices(group_list.Count());
+        for (int i = 0; i < group_list.Count(); i++)
+          group_sort_indices.Append(PageViewGroupSortIndex(group_list[i]));
+        rc = file.WriteArray(group_sort_indices);
         if (!rc) break;
 
         break;
@@ -3928,6 +4144,44 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
                         if (!rc) break;
                         SetSectionBehavior(ON::ViewSectionBehaviorFromUnsigned(c));
                       }
+
+                      // 13-Jan-2026 Dale Fugier, version 1.10 fields
+                      if (minor_version >= 10)
+                      {
+                        // Note: ON_3dmView is read before the pageview group table.
+                        // So use ON_BinaryArchive::ReadArray instead of 
+                        // ON_BinaryArchive::Read3dmReferencedComponentIndexArray.
+                        ON_SimpleArray<int> group_list;
+                        rc = file.ReadArray(group_list);
+                        if (!rc) break;
+                        AddToPageViewGroup(group_list);
+
+                        if (minor_version >= 11)
+                        {
+                          ON_wString description;
+                          rc = file.ReadString(description);
+                          if (!rc) break;
+                          if (description.Length() > 0)
+                            SetDescription(description.Array());
+                        }
+
+                        // 15-Jul-2026 Dale Fugier, version 1.12 fields
+                        // Per-group sort indices, parallel to group_list above.
+                        if (minor_version >= 12)
+                        {
+                          ON_SimpleArray<int> group_sort_indices;
+                          rc = file.ReadArray(group_sort_indices);
+                          if (!rc) break;
+                          // Rebuild the memberships as (group index, sort index) pairs.
+                          ON_SimpleArray<ON_2dex> groups(group_list.Count());
+                          for (int gi = 0; gi < group_list.Count(); gi++)
+                          {
+                            const int sort_index = (gi < group_sort_indices.Count()) ? group_sort_indices[gi] : ON_UNSET_INT_INDEX;
+                            groups.Append(ON_2dex(group_list[gi], sort_index));
+                          }
+                          SetPageViewGroups(groups);
+                        }
+                      }
                     }
                   }
                 }
@@ -4015,6 +4269,93 @@ void ON_3dmView::SetRenderingSize(const ON_2iSize& size)
 {
   m_sizeRendering = size;
 }
+
+int ON_3dmView::PageViewGroupCount() const
+{
+  return (m_private) ? m_private->PageViewGroupCount() : 0;
+}
+
+int ON_3dmView::PageViewGroupList(ON_SimpleArray<int>& group_list) const
+{
+  return (m_private) ? m_private->PageViewGroupList(group_list) : 0;
+}
+
+bool ON_3dmView::IsInPageViewGroup(int group_index) const
+{
+  return (m_private) ? m_private->IsInPageViewGroup(group_index) : false;
+}
+
+void ON_3dmView::AddToPageViewGroup(int group_index)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmViewPrivate();
+  m_private->AddToPageViewGroup(group_index);
+}
+
+void ON_3dmView::AddToPageViewGroup(const ON_SimpleArray<int>& group_list)
+{
+  if (group_list.Count() > 0)
+  {
+    if (nullptr == m_private)
+      m_private = new ON_3dmViewPrivate();
+    for (int i = 0; i < group_list.Count(); i++)
+      m_private->AddToPageViewGroup(group_list[i]);
+  }
+}
+
+void ON_3dmView::RemoveFromPageViewGroup(int group_index)
+{
+  if (m_private)
+    m_private->RemoveFromPageViewGroup(group_index);
+}
+
+void ON_3dmView::RemoveFromAllPageViewGroups()
+{
+  if (m_private)
+    m_private->RemoveFromAllPageViewGroups();
+}
+
+int ON_3dmView::PageViewGroupSortIndex(int group_index) const
+{
+  // ON_UNSET_INT_INDEX == "unsorted" (no explicit sort order); also returned when
+  // the view belongs to no groups.
+  return (m_private) ? m_private->PageViewGroupSortIndex(group_index) : ON_UNSET_INT_INDEX;
+}
+
+void ON_3dmView::SetPageViewGroupSortIndex(int group_index, int sort_index)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmViewPrivate();
+  m_private->SetPageViewGroupSortIndex(group_index, sort_index);
+}
+
+const ON_SimpleArray<ON_2dex>& ON_3dmView::PageViewGroups() const
+{
+  if (m_private)
+    return m_private->m_pageview_group;
+  static const ON_SimpleArray<ON_2dex> empty;
+  return empty;
+}
+
+void ON_3dmView::SetPageViewGroups(const ON_SimpleArray<ON_2dex>& groups)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmViewPrivate();
+  m_private->m_pageview_group = groups;
+}
+
+ON_wString ON_3dmView::Description() const
+{
+  return m_private ? m_private->Description() : ON_wString::EmptyString;
+}
+
+void ON_3dmView::SetDescription(const wchar_t* description)
+{
+  if (nullptr == m_private)
+    m_private = new ON_3dmViewPrivate();
+   m_private->SetDescription(description);
+}
+
 
 int ON_EarthAnchorPoint::CompareEarthLocation(const ON_EarthAnchorPoint* a, const ON_EarthAnchorPoint* b)
 {
@@ -5100,6 +5441,26 @@ ON_MeshParameters::MESH_STYLE ON_3dmSettings::RenderMeshStyle(
     );
 }
 
+bool ON_3dmIOSettings::SaveTextures(void) const
+{
+  return m_bSaveTextureBitmapsInFile;
+}
+
+void ON_3dmIOSettings::SetSaveTextures(bool bSaveTextures)
+{
+  m_bSaveTextureBitmapsInFile = bSaveTextures;
+}
+
+bool ON_3dmIOSettings::UseCompression(void) const
+{
+  return m_bUseCompression;
+}
+
+void ON_3dmIOSettings::SetUseCompression(bool bUseCompression)
+{
+  m_bUseCompression = bUseCompression;
+}
+
 
 bool ON_3dmIOSettings::Read(ON_BinaryArchive& file)
 {
@@ -5119,6 +5480,14 @@ bool ON_3dmIOSettings::Read(ON_BinaryArchive& file)
     rc = file.ReadBool(&m_bSaveTextureBitmapsInFile);
     if(!rc) break;
 
+    if (minor_version < 1)
+    {
+      // before 1.1 we were saving a value of "false" into all files but never using it.
+      // it is more appropriate that those files default to true, since we've actually be saving textures
+      // into the file by default for ages.
+      m_bSaveTextureBitmapsInFile = true;
+    }
+
     rc = file.ReadInt(&m_idef_link_update);
     if(!rc) break;
 
@@ -5126,6 +5495,17 @@ bool ON_3dmIOSettings::Read(ON_BinaryArchive& file)
     {
       // 7 February 2011 - old 0 value is no longer an option.
       m_idef_link_update = 1;
+    }
+
+    if (minor_version >= 1)
+    {
+      rc = file.ReadBool(&m_bUseCompression);
+      if (!rc) break;
+
+      // 6th of May 2026 Lars, RH-91382 - We decided to remove the embed linked blocks feature which was planned for 9.x.
+      bool bEmbedLinkedBlocksTemporary = false;
+      rc = file.ReadBool(&bEmbedLinkedBlocksTemporary);
+      if (!rc) break;
     }
 
     break;
@@ -5139,7 +5519,7 @@ bool ON_3dmIOSettings::Read(ON_BinaryArchive& file)
 
 bool ON_3dmIOSettings::Write(ON_BinaryArchive& file) const
 {
-  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1);
   if (!rc)
     return false;
   for(;;)
@@ -5155,6 +5535,12 @@ bool ON_3dmIOSettings::Write(ON_BinaryArchive& file) const
     }
     rc = file.WriteInt(i);
     if(!rc) break;
+
+    rc = file.WriteBool(m_bUseCompression);
+    if (!rc) break;
+
+    rc = file.WriteBool(false);
+    if (!rc) break;
 
     break;
   }

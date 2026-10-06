@@ -10,6 +10,9 @@
 
 #include "opennurbs_polyedgecurve.h"
 
+#include <set>
+#include <unordered_map>
+
 ON_OBJECT_IMPLEMENT(ON_PolyEdgeSegment,ON_CurveProxy,"42F47A87-5B1B-4e31-AB87-4639D78325D6");
 
 ON_PolyEdgeSegment::ON_PolyEdgeSegment()
@@ -44,9 +47,7 @@ bool ON_PolyEdgeSegment::Create(
                 )
 {
   Init();
-  if ( !trim )
-    return false;
-  if ( trim->m_ei >= 0 )
+  if ( !trim || trim->m_ei < 0 )
     return false;
   const ON_Brep* brep = trim->Brep();
   if ( !brep )
@@ -112,6 +113,13 @@ bool ON_PolyEdgeSegment::Create(
   const ON_BrepEdge* edge = ON_BrepEdge::Cast(curve);
   if ( edge )
   {
+    // naked edge, create from trim. this sets more info, including Face
+    if (edge->TrimCount() == 1) 
+    {
+      ON_BrepTrim* trim = edge->Trim(0);
+      return Create(trim, object_id);
+    }
+
     const ON_Brep* brep = edge->Brep();
     if ( !brep )
       return false;
@@ -525,6 +533,179 @@ bool ON_PolyEdgeCurve::Create( const ON_Curve* curve, const ON_UUID& object_id )
   return rc;
 }
 
+
+
+ON_PolyEdgeCurve* ON_PolyEdgeCurve::ShallowDuplicatePolyEdge() const
+{
+  int cnt = Count();
+  ON_SimpleArray<double> t(cnt + 1);
+  ON_PolyEdgeCurve* dup_crv = new ON_PolyEdgeCurve();
+
+  t.Append(Domain()[0]);
+
+  for (int i = 0; i < cnt; i++)
+  {
+    const ON_PolyEdgeSegment *seg = SegmentCurve(i);
+    if (seg)
+    {
+      t.Append(SegmentDomain(i)[1]);
+      ON_PolyEdgeSegment* segDup = new ON_PolyEdgeSegment;
+      *segDup = *seg; // this will not copy the proxy curves.
+      dup_crv->Append(segDup);
+    }
+  }
+
+  if (cnt > 0 && cnt + 1 == t.Count())
+  {
+    dup_crv->SetParameterization(t.Array());
+  }
+
+  //dup_crv->m_ev_srf_tan_mode = m_ev_srf_tan_mode;
+  //dup_crv->m_is_closed_helper = m_is_closed_helper;
+
+  return dup_crv;
+
+}
+
+
+ON_PolyEdgeCurve* ON_PolyEdgeCurve::DeepCopy(
+  ON_SimpleArray<const ON_Geometry*>& referenced, 
+  const ON_Xform* xform, bool reverse) const
+{
+  const int cnt = Count();
+  ON_SimpleArray<double> t(cnt + 1);
+  ON_PolyEdgeCurve* dup_crv = new ON_PolyEdgeCurve;
+  t.Append(Domain()[0]);
+  // duplicate and transform BReps, these are guaranted not null
+
+  std::set<const ON_Brep*> breps; std::set<const ON_Curve*> proxies; 
+
+  // keys in these maps are guaranteed not to be null
+  // values can be null though
+  std::unordered_map<const ON_PolyEdgeSegment*, const ON_Brep*> segmentBrepMap;
+  std::unordered_map<const ON_PolyEdgeSegment*, const ON_Curve*> segmentProxyCurveMap;
+
+  for (int i = 0; i < cnt; ++i)
+  {
+    const ON_PolyEdgeSegment* seg = SegmentCurve(i);
+    if (!seg) continue;
+
+    const ON_Brep* brep = seg->Brep();
+    if (brep) breps.insert(brep);
+    segmentBrepMap.emplace(seg, brep);
+    const ON_Curve* proxy{nullptr};
+    if (!brep)
+      proxy = seg->ProxyCurve();
+    if (proxy)
+      proxies.insert(proxy);
+    segmentProxyCurveMap.emplace(seg, proxy);
+  }
+
+  // duplicate BReps, keys and values are guaranteed not null
+  std::unordered_map<const ON_Brep*, ON_Brep*> brepDupMap;
+  for (const ON_Brep* brep : breps)
+  {
+    ON_Brep* dup = brep->Duplicate();
+    if (xform) dup->Transform(*xform);
+    if (dup)
+      brepDupMap.emplace(brep, dup);
+  }
+
+  // duplicate proxy curves, keys and values are guaranteed not null
+  std::unordered_map<const ON_Curve*, ON_Curve*> proxyDupMap;
+  for (const ON_Curve* proxy : proxies)
+  {
+    ON_Curve* dup = proxy->DuplicateCurve();
+    if (xform) dup->Transform(*xform);
+    if (dup)
+      proxyDupMap.emplace(proxy, dup);    
+  }
+
+  for (int i = 0; i < cnt; ++i)
+  {
+    const ON_PolyEdgeSegment* seg = SegmentCurve(i);
+    if (!seg) continue;
+    t.Append(SegmentDomain(i)[1]);    
+
+    ON_PolyEdgeSegment* segDup = new ON_PolyEdgeSegment;
+
+    const ON_Brep* brep = segmentBrepMap[seg];
+    if (brep)
+    {
+      ON_Brep* dupBrep = brepDupMap[brep];
+
+      // re-create from seg and brep
+      if (seg->BrepTrim())
+      {
+        ON_COMPONENT_INDEX trimCI = seg->BrepTrim()->ComponentIndex();
+        const ON_BrepTrim* dupTrim = ON_BrepTrim::Cast(dupBrep->BrepComponent(trimCI));
+        segDup->Create(dupTrim, ON_nil_uuid);
+      }
+      else if (seg->BrepEdge())
+      {
+        ON_COMPONENT_INDEX edgeCI = seg->BrepEdge()->ComponentIndex();
+        const ON_BrepEdge* dupEdge = ON_BrepEdge::Cast(dupBrep->BrepComponent(edgeCI));
+        segDup->Create(dupEdge, ON_nil_uuid);
+      }
+
+      // if either but not both: reverse the curve
+      if (seg->ProxyCurveIsReversed() ^ segDup->ProxyCurveIsReversed())
+        segDup->Reverse();
+
+      if (segDup->ProxyCurveDomain() != seg->ProxyCurveDomain())
+        segDup->Trim(seg->ProxyCurveDomain());
+
+      dup_crv->Append(segDup);
+      continue;
+    }
+
+    const ON_Curve* proxy = segmentProxyCurveMap[seg];
+    if (proxy)
+    {
+      // re-create from seg and proxy curve
+      ON_Curve* proxyDup = proxyDupMap[proxy];
+      segDup->Create(proxyDup, ON_nil_uuid);
+
+      // if either but not both: reverse the curve
+      if (seg->ProxyCurveIsReversed() ^ segDup->ProxyCurveIsReversed())
+        segDup->Reverse();
+
+      if (segDup->ProxyCurveDomain() != seg->ProxyCurveDomain())
+        segDup->Trim(seg->ProxyCurveDomain());
+
+      dup_crv->Append(segDup);
+      continue;
+    }
+
+    // should'nt get here
+    delete segDup;
+    ON_ERROR("CRhinoPolyEdge::DeepCopy - something went wrong.");
+  }
+
+
+  if (cnt > 0 && cnt + 1 == t.Count())
+  {
+    dup_crv->SetParameterization(t.Array());
+  }
+
+  for (auto it = brepDupMap.begin(); it != brepDupMap.end(); ++it)
+  {
+    referenced.AppendNew() = it->second;
+  }
+
+  for (auto it = proxyDupMap.begin(); it != proxyDupMap.end(); ++it)
+  {
+    referenced.AppendNew() = it->second;
+  }
+
+  if (reverse)
+    dup_crv->Reverse();
+
+  return dup_crv;
+}
+
+
+
 int ON_PolyEdgeCurve::SegmentCount() const
 {
   return ON_PolyCurve::Count();
@@ -532,11 +713,10 @@ int ON_PolyEdgeCurve::SegmentCount() const
 
 ON_PolyEdgeSegment* ON_PolyEdgeCurve::SegmentCurve(
   int segment_index
-  ) const
+) const
 {
   return ON_PolyEdgeSegment::Cast(ON_PolyCurve::SegmentCurve(segment_index));
 }
-
 
 ON_PolyEdgeSegment* ON_PolyEdgeCurve::operator[](int segment_index) const
 {
@@ -634,37 +814,37 @@ bool ON_PolyEdgeCurve::Insert(
 
 const ON_BrepEdge* ON_PolyEdgeCurve::EdgeAt(double t) const
 {
-  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
+  const ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
   return seg ? seg->BrepEdge() : 0;
 }
 
 const ON_BrepTrim* ON_PolyEdgeCurve::TrimAt(double t) const
 {
-  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
+  const  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
   return seg ? seg->BrepTrim() : 0;
 }
 
 const ON_Brep*     ON_PolyEdgeCurve::BrepAt(double t) const
 {
-  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
+  const ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
   return seg ? seg->Brep() : 0;
 }
 
 const ON_BrepFace* ON_PolyEdgeCurve::FaceAt(double t) const
 {
-  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
+  const ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
   return seg ? seg->BrepFace() : 0;
 }
 
 const ON_Surface*  ON_PolyEdgeCurve::SurfaceAt(double t) const
 {
-  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
+  const ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
   return seg ? seg->Surface() : 0;
 }
 
 ON_Surface::ISO ON_PolyEdgeCurve::IsoType( double t) const
 {
-  ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
+  const ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
   return seg ? seg->IsoType() : ON_Surface::not_iso;
 }
 
@@ -673,7 +853,7 @@ double ON_PolyEdgeCurve::EdgeParameter(double t) const
 {
   double edge_t = ON_UNSET_VALUE;
   int segment_index = SegmentIndex(t);
-  ON_PolyEdgeSegment* seg = SegmentCurve( segment_index );
+  const ON_PolyEdgeSegment* seg = SegmentCurve( segment_index );
   if ( seg )
   {
     ON_Interval pdom = SegmentDomain(segment_index);
@@ -695,7 +875,7 @@ bool ON_PolyEdgeCurve::ContainsAnyEdges() const
   int i, count = SegmentCount();
   for( i = 0; i < count; i++)
   {
-    ON_PolyEdgeSegment* segment = SegmentCurve(i);
+    const ON_PolyEdgeSegment* segment = SegmentCurve(i);
     if( 0 != segment && nullptr != segment->BrepEdge())
     {
       return true;
@@ -710,7 +890,7 @@ bool ON_PolyEdgeCurve::ContainsAllEdges() const
   int i, count = SegmentCount();
   for( i = 0; i < count; i++)
   {
-    ON_PolyEdgeSegment* segment = SegmentCurve(i);
+    const ON_PolyEdgeSegment* segment = SegmentCurve(i);
     if( nullptr == segment || nullptr == segment->BrepEdge())
     {
       return false;
@@ -727,7 +907,7 @@ int ON_PolyEdgeCurve::FindEdge( const ON_BrepEdge* edge) const
     int i, count = SegmentCount();
     for( i = 0; i < count; i++)
     {
-      ON_PolyEdgeSegment* segment = SegmentCurve(i);
+      const ON_PolyEdgeSegment* segment = SegmentCurve(i);
       if ( 0 != segment && edge == segment->BrepEdge() )
       {
         rc = i;
@@ -746,7 +926,7 @@ int ON_PolyEdgeCurve::FindTrim( const ON_BrepTrim* trim) const
     int i, count = SegmentCount();
     for( i = 0; i < count; i++)
     {
-      ON_PolyEdgeSegment* segment = SegmentCurve(i);
+      const ON_PolyEdgeSegment* segment = SegmentCurve(i);
       if ( 0 != segment && trim == segment->BrepTrim() )
       {
         rc = i;
@@ -765,7 +945,7 @@ int ON_PolyEdgeCurve::FindCurve( const ON_Curve* curve) const
     int i, count = SegmentCount();
     for( i = 0; i < count; i++)
     {
-      ON_PolyEdgeSegment* segment = SegmentCurve(i);
+      const ON_PolyEdgeSegment* segment = SegmentCurve(i);
       if (    0 != segment 
            && (curve == segment || curve == segment->ProxyCurve() || curve == segment->BrepEdge()) )
       {

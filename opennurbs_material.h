@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -432,7 +432,7 @@ public:
               -1 is returned, otherwise, the search begins
               at m_textures[i0+1].
   Example:
-    Iterate through all the the bitmap textures on
+    Iterate through all the bitmap textures on
     a material.
 
           ON_Material& mat = ...;

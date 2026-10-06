@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -213,6 +213,22 @@ public:
 
   /////////////////////////////////////////////////////////
   //
+  // emitter radius (point and spot lights only)
+  //
+  // Physical radius of the emitting sphere, stored in the m_width union
+  // (class size unchanged). Ignored for other light types; linear light
+  // radius is derived from Width().
+  //
+  void SetRadius( double );
+  double Radius() const;
+
+  // Per-axis scale a transform applies to a point/spot emitter radius: the cube
+  // root of |determinant| (the transform's volume scale). Shared by Transform()
+  // and the gumball preview.
+  static double RadiusScaleFactor( const ON_Xform& );
+
+  /////////////////////////////////////////////////////////
+  //
   // shadow parameters (ignored for non-spot lights)
   //
   // shadow intensity 0.0 = does not cast any shadows
@@ -220,7 +236,19 @@ public:
   //
   void SetShadowIntensity(double);
   double ShadowIntensity() const;
-                                 
+
+  /////////////////////////////////////////////////////////
+  //
+  // legacy shadow-intensity migration (RH-96952)
+  //
+  // Bake R8's SI-as-emitter-size into geometry (point/spot Radius, directional
+  // angle, rect/linear enlarged emitter). SI itself is preserved (it drives the
+  // Rendered-display shadow). One-shot (m_bShadowIntensityFixed); reader-invoked,
+  // not Read(). Rect/linear scale multiplicatively, so an R8 round-trip that
+  // strips the flag re-scales them.
+  //
+  void MigrateLegacyShadowIntensity();
+
 
   /////////////////////////////////////////////////////////
   //
@@ -243,6 +271,9 @@ public:
   ON_wString    m_light_name;
 
   bool                 m_bOn;   // true if light is on
+  bool                 m_bShadowIntensityFixed; // true once legacy shadow-intensity
+                                // emitter-size behavior is baked in on file read
+                                // (RH-96952). Occupies former padding, size unchanged.
   ON::light_style      m_style; // style of light
 
   ON_Color m_ambient;
@@ -253,9 +284,15 @@ public:
   ON_3dPoint  m_location;  // ignored for "directional" and "ambient" lights
   ON_3dVector m_length;    // only for linear and rectangular lights
                            // ends of linear lights are m_location and m_location+m_length
-  ON_3dVector m_width;     // only for rectangular lights
+  union {
+    ON_3dVector m_width;   // linear and rectangular lights
                            // corners of rectangular lights are m_location, m_location+m_length,
                            // m_location+m_width, m_location+m_width+m_length
+                           // linear light emitter radius is m_width.Length()*0.5
+    double      m_radius;  // point/spot emitter radius (aliases m_width.x); see
+                           // Radius()/SetRadius(). Trivial union keeps class size
+                           // and member offsets unchanged.
+  };
 
   double      m_intensity; // Linear dimming/brightening factor: 0.0 = off, 1.0 = 100%.
                            // Values < 0.0 and values > 1.0 are permitted but are

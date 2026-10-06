@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -98,6 +98,15 @@ public:
   bool Transform(const ON_Xform& xform) override;
 
   bool GetTextGripPoints(
+    ON_2dPoint& base,
+    ON_2dPoint& width,
+    const ON_DimStyle* dimstyle,
+    double textscale) const;
+
+  // Same as above, but the DrawForward text-flip is evaluated against vp's
+  // camera instead of world axes.
+  bool GetTextGripPoints(
+    const ON_Viewport* vp,
     ON_2dPoint& base,
     ON_2dPoint& width,
     const ON_DimStyle* dimstyle,

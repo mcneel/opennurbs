@@ -675,7 +675,7 @@ bool ON_UuidIsNil(
         )
 {
   const ON__INT32* p = (const ON__INT32*)&uuid;
-  return ( p[0] || p[1] || p[2] || p[3] ) ? false : true;
+  return (p[0] || p[1] || p[2] || p[3]) ? false : true;
 }
 
 
@@ -684,7 +684,7 @@ bool ON_UuidIsNotNil(
         )
 {
   const ON__INT32* p = (const ON__INT32*)&uuid;
-  return ( p[0] || p[1] || p[2] || p[3] ) ? true : false;
+  return (p[0] || p[1] || p[2] || p[3]) ? true : false;
 }
 
 

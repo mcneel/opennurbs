@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -120,19 +120,23 @@ private:
 public:
   enum class RunType : unsigned char
   {
-    kNone        = 0,
-    kText        = 1,
-    kNewline     = 2,
-    kSoftreturn  = 3,
-    kParagraph   = 4,
-    kColumn      = 5,
-    kField       = 6,
-    kFieldValue  = 7,
-    kFontdef     = 8,
-    kHeader      = 9,
-    kFonttbl     = 10,
-    kColortbl    = 11,
-    kTab         = 12,
+    kNone              = 0,
+    kText              = 1,
+    kNewline           = 2,
+    kSoftreturn        = 3,
+    kParagraph         = 4,
+    kColumn            = 5,
+    kField             = 6,
+    kFieldValue        = 7,
+    kFontdef           = 8,
+    kHeader            = 9,
+    kFonttbl           = 10,
+    kColortbl          = 11,
+    kTab               = 12,
+    kListBegin         = 13,
+    kListEnd           = 14,
+    kListItemBegin     = 15,
+    kListItemEnd       = 16
   };
 
   static ON_TextRun::RunType RunTypeFromUnsigned(
@@ -193,6 +197,11 @@ public:
   void SetStacked(Stacked stacked);
   void SetStackedOff();
 
+  bool IsSuperscript() const;
+  void SetSuperscript();
+  bool IsSubscript() const;
+  void SetSubscript();
+
   // Set or get the WCS model unit height of the text
   // not including any annotation scaling
   double TextHeight() const;
@@ -220,10 +229,41 @@ public:
   
   double LineSpaceScale() const;
   void SetLineSpaceScale(double scale);
-  
+
+  // Per-run multiplier that survives ON_TextContent::Internal_SetRunTextHeight.
+  // Used so symmetric tolerance text can render at the dim style's
+  // ToleranceHeightScale (the "Text height scale:" tolerance setting) while
+  // sharing the same baseline as the rest of the dim text. Default 1.0.
+  double HeightScaleFactor() const;
+  void SetHeightScaleFactor(double factor);
+
+  bool IsListDepthRelevant() const;
+  int ListDepth() const;
+  void SetListDepth(int list_depth);
+
+  bool IsListOrdered() const;
+  void SetIsListOrdered(bool ordered);
+
+  int ListItemNumber() const;
+  void SetListItemNumber(int itemNumber);
+
+  // For kListItemBegin runs, builds the bullet/number prefix string that is
+  // rendered ahead of the item text (e.g. L"1.", L"10.", L"a.", L"ii.", L"•").
+  // buf must be non-null with buf_count >= 32. Writes an empty string and
+  // returns false if this run is not a kListItemBegin.
+  bool GetListItemPrefixString(wchar_t* buf, size_t buf_count) const;
+
+  // For kListItemBegin runs, returns the rendered width of the prefix in
+  // model units, computed from the run's font and TextHeight. Returns 0.0
+  // if the run is not a kListItemBegin, has no font, or has no usable font
+  // metrics. MeasureTextRunArray uses this so the prefix does not overlap
+  // the item text when wider than the default 1.6*TextHeight clearance
+  // (monospaced fonts, multi-digit ordered list items, etc.).
+  double MeasureListItemPrefixWidth() const;
+
   // This returns the scale of m_height / HeightOfI.
   // It doesn't take into account anything about annotation scaling
-  // This is the scale for converting ON_TextRun bounding boxes and 
+  // This is the scale for converting ON_TextRun bounding boxes and
   // offsets to basic model units
   double HeightScale(const ON_Font* font) const;
 
@@ -259,6 +299,8 @@ public:
   const wchar_t* TextString() const;
 
   const ON__UINT32* UnicodeString() const;
+
+  bool TextStringContains(const wchar_t* sub_str) const;
 
   bool GetGlyphContours(
     const ON_Font* text_font,
@@ -440,6 +482,8 @@ public:
       False: Caller must explicitly handle unmanaged runs.
   */
   void SetTextHeight(double height);
+  void SetApplyKerning(bool applyKerning);
+  void SetLineSpaceScale(double scale);
 
 private:
   void Internal_Destroy();

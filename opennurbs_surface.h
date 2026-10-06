@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -35,6 +35,7 @@ class ON_MeshParameters;
 class ON_PolyCurve;
 class ON_CurveProxy;
 class ON_Surface;
+class ON_Extrusion;
 
 
 /* Return codes to be used in operations that attempt to fit to a tolerance.  
@@ -376,6 +377,22 @@ public:
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
+  /*
+  Description:
+    Determine if the surface is an extrusion.
+  Parameters:
+    extrusion - [out] if not nullptr and true is returned,
+      then the extrusion definition is returned.
+    tolerance - [in]
+      tolerance to use when checking
+  Returns:
+    True if the surface is an extrusion.
+  */
+  bool IsExtrusion(
+        ON_Extrusion* extrusion = nullptr,
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
+
   virtual 
   bool IsClosed(   // true if surface is closed in direction
         int        // dir  0 = "s", 1 = "t"
@@ -390,6 +407,10 @@ public:
   bool IsSingular( // true if surface side is collapsed to a point
         int        // side of parameter space to test
                    // 0 = south, 1 = east, 2 = north, 3 = west
+        ) const;
+
+  
+  bool HasSingularEdge ( // true if one or more surface sides is collapsed to a point
         ) const;
 
   /*
@@ -911,7 +932,7 @@ public:
   Parameters:
     surface - [in]
       If surface is not null, then it is used to set the surface properties.
-      If surface is null, then all surface properties are set to to zero.
+      If surface is null, then all surface properties are set to zero.
   Remarks:
     Does not modify the value of m_tag.
   */

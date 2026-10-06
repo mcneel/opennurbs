@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -105,6 +105,33 @@ public:
   bool ArrowIsFlipped(int i) const;
   void FlipArrow(int i, bool flip) const;
 
+  /*
+  Description:
+    Tests whether SuppressDimLine1 / SuppressDimLine2 hides an arrowhead along
+    with the half of the dimension line it hides. Does not consider
+    SuppressArrow1 / SuppressArrow2, so it is safe to call from the drawing
+    paths that have never honored those.
+  Parameters:
+    which_end - [in] 0 for the first arrow, anything else for the second.
+    style - [in] the dimension style the dimension is being drawn with.
+  Returns:
+    True when the arrowhead should not be drawn.
+  */
+  bool ArrowIsHiddenByDimLineSuppression(int which_end, const ON_DimStyle* style) const;
+
+  /*
+  Description:
+    Tests whether an arrowhead should be drawn. Covers both SuppressArrow1 /
+    SuppressArrow2 and the SuppressDimLine1 / SuppressDimLine2 dimension line
+    suppression.
+  Parameters:
+    which_end - [in] 0 for the first arrow, anything else for the second.
+    style - [in] the dimension style the dimension is being drawn with.
+  Returns:
+    True when the arrowhead should not be drawn.
+  */
+  bool ArrowIsSuppressed(int which_end, const ON_DimStyle* style) const;
+
   // If the dimension is a paper space object and the geometry being dimensioned is in 
   // model space, in a detail viewport, DetailMeasured() will have the UUID of the detail
   // that the dimension references.  Otherwise DetailMeasured() will be ON_nil_uuid.
@@ -130,18 +157,37 @@ public:
   virtual bool GetTextRect(ON_3dPoint text_rect[4]) const;
 
   // Remakes dimension text geometry object and sets it on the dimension
+  bool UpdateDimensionText(
+    const ON_UnitSystem& units_in,
+    const ON_DimStyle* dimstyle
+  ) const;
+
+  //ON_DEPRECATED_MSG("Since v9.0")
   virtual bool UpdateDimensionText(
     ON::LengthUnitSystem units_in,
     const ON_DimStyle* dimstyle
   ) const;
 
   // Makes text geometry for a dimension
+  ON_TextContent* RebuildDimensionText(
+    const ON_UnitSystem& units_in,
+    const ON_DimStyle* dimstyle,
+    bool expandanglebrackets  // replace <> with the formatted distance
+  ) const;
+
+  //ON_DEPRECATED_MSG("Since v9.0")
   ON_TextContent*  RebuildDimensionText(
     ON::LengthUnitSystem units_in,
     const ON_DimStyle* dimstyle,
     bool expandanglebrackets  // replace <> with the formatted distance
   ) const;
 
+  bool GetDistanceDisplayText(
+    const ON_UnitSystem& units_in,
+    const ON_DimStyle* dimstyle,
+    ON_wString& displaytext) const;
+
+  //ON_DEPRECATED_MSG("Since v9.0")
   virtual bool GetDistanceDisplayText(
     ON::LengthUnitSystem units_in,
     const ON_DimStyle* dimstyle,
@@ -723,10 +769,23 @@ public:
     bool from_the_back,
     ON_Xform& arrow_xform_out) const;
 
+  // Knowing the arrowhead type lets this skip the chord adjustment for arrowheads
+  // that are centered on the arrow point, like ticks. The overload above assumes a
+  // trailing arrowhead.
+  void GetArrowXform(
+    int which_end,
+    double arrowlength,
+    bool arrowflipped,
+    bool from_the_back,
+    ON_Arrowhead::arrow_type arrowtype,
+    ON_Xform& arrow_xform_out) const;
+
+  //ON_DEPRECATED_MSG("Since v9.0")
   bool UpdateDimensionText(
     ON::LengthUnitSystem units_in,
     const ON_DimStyle* dimstyle) const override;
 
+  //ON_DEPRECATED_MSG("Since v9.0")
   bool GetDistanceDisplayText(
     ON::LengthUnitSystem units_in,
     const ON_DimStyle* dimstyle,

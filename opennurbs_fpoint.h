@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -24,6 +24,10 @@ class ON_Xform;
 class ON_2fPoint;
 class ON_3fPoint;
 class ON_4fPoint;
+
+class ON_2dPoint;
+class ON_3dPoint;
+class ON_4dPoint;
 
 class ON_2fVector;
 class ON_3fVector;
@@ -814,9 +818,6 @@ ON_2fVector operator*(int, const ON_2fVector&);
 ON_DECL
 ON_2fVector operator*(float, const ON_2fVector&);
 
-ON_DECL
-ON_2dVector operator*(double, const ON_2fVector&);
-
 ///////////////////////////////////////////////////////////////
 //
 // ON_2fVector utilities
@@ -1087,9 +1088,6 @@ ON_3fVector operator*(int, const ON_3fVector&);
 ON_DECL
 ON_3fVector operator*(float, const ON_3fVector&);
 
-ON_DECL
-ON_3dVector operator*(double, const ON_3fVector&);
-
 ///////////////////////////////////////////////////////////////
 //
 // ON_3fVector utilities
@@ -1156,5 +1154,116 @@ ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
     const ON_3fVector&, // Y
     const ON_3fVector&  // Z 
     );
+
+
+class ON_CLASS ON_2fSize
+{
+public:
+  ON_2fSize() = default;
+
+  ~ON_2fSize() = default;
+  ON_2fSize(const ON_2fSize& ) = default;
+  ON_2fSize& operator=(const ON_2fSize& ) = default;
+
+  ON_2fSize(float cx, float cy);
+
+public:
+  static const ON_2fSize Zero;  // (0,0)
+  static const ON_2fSize Unset; // (ON_UNSET_FLOAT,ON_UNSET_FLOAT)
+  
+public:
+  /*
+  Returns:
+    true if both cx and cy are 0.
+  */
+  bool IsZero() const;
+
+  /*
+  Returns:
+    true if neither cx nor cy are ON_UNSET_FLOAT
+  */
+  bool IsSet() const;
+  
+public:
+  float cx = 0;
+  float cy = 0;
+};
+
+
+/*
+Class ON_4fRect
+  Float precision version of ON_4dRect.
+*/
+class ON_CLASS ON_4fRect
+{
+public:
+  ON_4fRect() = default;
+  ~ON_4fRect() = default;
+  ON_4fRect(const ON_4fRect& ) = default;
+  ON_4fRect& operator=(const ON_4fRect& ) = default;
+
+  ON_4fRect( float left, float top, float right, float bottom );
+  ON_4fRect(const ON_2fPoint topLeft, const ON_2fPoint& bottomRight);
+  ON_4fRect(const ON_2fPoint& point, const ON_2fSize& size);
+
+public:
+  static const ON_4fRect Zero;  // (0.0f,0.0f,0.0f,0.0f)
+  static const ON_4fRect Unset; // (ON_UNSET_FLOAT,ON_UNSET_FLOAT,ON_UNSET_FLOAT,ON_UNSET_FLOAT)
+
+public:
+  /*
+  Returns:
+    true if all of left, top, right, and bottom are set to 0.
+  */
+  bool IsZero() const;
+
+  void SetZero();
+
+  /*
+  Returns:
+    true if none of left, top, right, or bottom is set to ON_UNSET_FLOAT
+  */
+  bool IsSet() const;
+
+  float Width(void) const;
+  float Height(void) const;
+
+  const ON_2fSize Size(void) const;
+
+  const ON_2fPoint CenterPoint(void) const;
+  const ON_2fPoint TopLeft(void) const;
+  const ON_2fPoint BottomRight(void) const;
+
+  bool  IntersectRect(const ON_4fRect* r1, const ON_4fRect* r2);
+  bool  IntersectRect(const ON_4fRect& r1, const ON_4fRect& r2);
+
+  bool IsRectEmpty(void) const;
+  bool IsRectNull(void) const;
+  void SetRectEmpty(void) { *this = Zero; }
+  void SetRect(float l, float t, float r, float b);
+
+  bool PtInRect(const ON_2fPoint& pt) const;
+
+  void OffsetRect(float, float);
+  void OffsetRect(const ON_2fVector&);
+  void InflateRect(float, float);
+  void InflateRect(float, float, float, float);
+  void DeflateRect(float, float);
+  bool SubtractRect(const ON_4fRect* rect1, const ON_4fRect* rect2);
+
+  void NormalizeRect();
+
+public:
+  float left = 0;
+  float top = 0;
+  float right = 0;
+  float bottom = 0;
+};
+
+ON_DECL
+bool operator==(const ON_4fRect&, const ON_4fRect&);
+
+ON_DECL
+bool operator!=(const ON_4fRect&, const ON_4fRect&);
 
 #endif

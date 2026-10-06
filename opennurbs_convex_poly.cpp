@@ -1307,9 +1307,11 @@ int ON_MinimumBoundingRectangle(const ON_SimpleArray<ON_2dPoint>& Pnt, ON_Rectan
         max1 = std::max<double>(max1, dot);
       }
 
-      // keep rectangle with smallest area
+      // compare areas that are smaller with ON_ZERO_TOLERANCE relative slack
+      // this makes the selection of the minimum rectangle resistant against
+      // rounding errors which may differ between platforms
       double area = max1 * (max0 - min0);
-      if (area < minRect.area)
+      if (area < minRect.area * (1.0 - ON_ZERO_TOLERANCE))
       {
         minRect.area = area;
         minRect.p.origin = origin + ((min0 + max0) / 2) * U0 + (max1 / 2) * U1;

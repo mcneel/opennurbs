@@ -32,6 +32,18 @@ ON_UserData::ON_UserData()
               m_userdata_next(0)
 {}
 
+ON_UserData::ON_UserData(
+  ON_UUID userdata_uuid,
+  ON_UUID application_uuid,
+  unsigned int userdata_copycount
+  )         : m_userdata_uuid(userdata_uuid),
+              m_application_uuid(application_uuid),
+              m_userdata_copycount(userdata_copycount),
+              m_userdata_xform(ON_Xform::IdentityTransformation),
+              m_userdata_owner(0),
+              m_userdata_next(0)
+{}
+
 ON_UserData::ON_UserData(const ON_UserData& src) 
             : ON_Object(src),
               m_userdata_uuid(src.m_userdata_uuid), 
@@ -930,7 +942,14 @@ int ON_UserStringList::SetUserStrings( int count, const ON_UserString* us, bool 
           m_e[i] = us[0];
         added_count++;
       }
-      break;
+      // The key is already present, so we are done.
+      return added_count;
+    }
+    // The key is not present in m_e[], so add it if it is valid.
+    if ( !us[0].m_string_value.IsEmpty() )
+    {
+      m_e.Append(us[0]);
+      added_count++;
     }
     return added_count;
   }
@@ -1058,6 +1077,25 @@ ON_UserStringList* ON_UserStringList::FromObject(
          : 0;
 }
 
+// https://mcneel.myjetbrains.com/youtrack/issue/RH-78333
+// Removing the last user string leaves an empty ON_UserStringList user data
+// container attached to the object. That empty container still serializes
+// (~286 bytes/object), so code that tags many objects with a temporary user
+// string and later removes it inflates the file. Detach and
+// delete the container once it holds no strings. Mirrors the brand-new-empty
+// cleanup already done inline by ON_Object::SetUserString.
+// Returns true if the (empty) container was detached and deleted.
+static bool Internal_TryDeleteEmptyUserStringList(ON_Object* object, ON_UserStringList* us)
+{
+  if (nullptr != object && nullptr != us && 0 == us->m_e.Count())
+  {
+    object->DetachUserData(us);
+    delete us;
+    return true;
+  }
+  return false;
+}
+
 bool ON_Object::SetUserString( const wchar_t* key, const wchar_t* string_value )
 {
   ON_UserStringList* us = ON_UserStringList::FromObject(this);
@@ -1083,12 +1121,16 @@ bool ON_Object::SetUserString( const wchar_t* key, const wchar_t* string_value )
     {
       if ( b && 2 == us->m_userdata_copycount )
       {
-        // user data is brand new - roll back the 
-        // m_userdata_copycount++ that happens in 
+        // user data is brand new - roll back the
+        // m_userdata_copycount++ that happens in
         // SetUserString().
         us->m_userdata_copycount = 1;
       }
       b = true;
+
+      // If removing the last string emptied the list, drop the container so it
+      // does not persist needlessly (us may be deleted here - do not use after).
+      Internal_TryDeleteEmptyUserStringList(this, us);
     }
     else if ( b )
     {
@@ -1133,7 +1175,15 @@ int ON_Object::SetUserStrings( int count, const ON_UserString* user_strings, boo
     }
   }
 
-  return us ? us->SetUserStrings(count,user_strings,bReplace ) : 0;
+  if ( nullptr == us )
+    return 0;
+
+  const int rc = us->SetUserStrings(count,user_strings,bReplace );
+
+  // https://mcneel.myjetbrains.com/youtrack/issue/RH-78333
+  Internal_TryDeleteEmptyUserStringList(this, us);
+
+  return rc;
 }
 
 

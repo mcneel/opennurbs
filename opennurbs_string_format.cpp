@@ -944,9 +944,9 @@ int ON_VARGS_FUNC_CDECL ON_wString::FormatIntoBuffer(
   return rc;
 }
 
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined (ON_COMPILER_GNU)
 
-static const wchar_t* ConvertToCLangFormat(
+static const wchar_t* ConvertToWideCharStringFormat(
   const wchar_t* format,
   ON_wStringBuffer& clang_format_buffer
   )
@@ -966,7 +966,6 @@ static const wchar_t* ConvertToCLangFormat(
       {
         // convert %s to %ls
         format_capacity++;
-        s++;
       }
       else if (c >= '1' && c <= '9')
       {
@@ -1011,7 +1010,6 @@ static const wchar_t* ConvertToCLangFormat(
       {
         // convert %s to %ls
         *ls++ = 'l';
-        *ls++ = *s++;
       }
       else if (c >= '1' && c <= '9')
       {
@@ -1039,6 +1037,50 @@ static const wchar_t* ConvertToCLangFormat(
 #endif
 
 
+#if defined(ON_COMPILER_CLANG) || defined (ON_COMPILER_GNU)
+
+#if defined(ON_RUNTIME_APPLE)
+
+// Apple's wide character printf functions convert wchar_t values to multibyte
+// characters using the LC_CTYPE locale. A program that never calls setlocale()
+// runs in the "C" locale, where that conversion fails for every code point
+// above 127. The result is that vswprintf() returns -1 whenever the format
+// string or a %ls parameter contains a non-ASCII character. (glibc does not
+// have this limitation, which is why Linux builds are unaffected.)
+//
+// Formatting with an explicit UTF-8 LC_CTYPE fixes this. The locale is derived
+// from the "C" base locale, so LC_NUMERIC is still "C" and a period is used for
+// the decimal point in formatted printing. This is what the ON_Locale::Ordinal
+// NumericLocalePtr() calls below were originally trying to accomplish.
+static locale_t Internal_AppleWideFormatLocale()
+{
+  // Thread safe initialization. The locale is intentionally never freed
+  // because it is used for the lifetime of the process.
+  static locale_t apple_wide_format_locale = newlocale(LC_CTYPE_MASK, "UTF-8", (locale_t)0);
+  return apple_wide_format_locale;
+}
+
+#endif
+
+// Wrapper around vswprintf() that formats non-ASCII wchar_t values correctly on
+// every platform opennurbs supports.
+static int Internal_VsWPrintf(
+  wchar_t* buffer,
+  size_t buffer_capacity,
+  const wchar_t* format,
+  va_list args
+  )
+{
+#if defined(ON_RUNTIME_APPLE)
+  const locale_t apple_wide_format_locale = Internal_AppleWideFormatLocale();
+  if (nullptr != apple_wide_format_locale)
+    return vswprintf_l(buffer, buffer_capacity, apple_wide_format_locale, format, args);
+#endif
+  return vswprintf(buffer, buffer_capacity, format, args);
+}
+
+#endif
+
 int ON_wString::FormatVargsIntoBuffer(
   wchar_t* buffer,
   size_t buffer_capacity,
@@ -1053,36 +1095,23 @@ int ON_wString::FormatVargsIntoBuffer(
   if ( nullptr == format || 0 == format[0] )
     return 0;
   
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined (ON_COMPILER_GNU)
   // CLang requires %ls to properly format a const wchar_t* parameter
   wchar_t clang_format_stack_buffer[128];
   ON_wStringBuffer clang_format_buffer(clang_format_stack_buffer, sizeof(clang_format_stack_buffer) / sizeof(clang_format_stack_buffer[0]));
-  format = ConvertToCLangFormat(
+  format = ConvertToWideCharStringFormat(
     format,
     clang_format_buffer
-    );
+  );
 
   va_list args_copy;
   va_copy (args_copy, args);
-  // Cannot use Apple's vswprintf_l() because it's buggy. 
-  // This means we cannot be certain that a period will be used for a decimal point in formatted printing.
-  // For details, see comments below in ON_wString::FormatVargsOutputCount().
-  //int len = vswprintf_l(buffer, buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
-  int len = vswprintf(buffer, buffer_capacity, format, args_copy);
-  va_end(args_copy);
-  
-#else
-
-#if defined(ON_COMPILER_GNU)
-  va_list args_copy;
-  va_copy (args_copy, args);
-  int len = vswprintf(buffer, buffer_capacity, format, args_copy);
+  int len = Internal_VsWPrintf(buffer, buffer_capacity, format, args_copy);
   va_end(args_copy);
 #else
   // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
   // will be use for the decimal point in formatted printing.
   int len = _vswprintf_p_l(buffer, buffer_capacity, format, ON_Locale::Ordinal.NumericLocalePtr(), args);
-#endif
 #endif
   if (((size_t)len) >= buffer_capacity)
     len = -1;
@@ -1123,7 +1152,7 @@ int ON_wString::FormatVargsOutputCount(
   if ( nullptr == format || 0 == format[0] )
     return 0;
 
-#if defined(ON_COMPILER_CLANG)
+#if defined(ON_COMPILER_CLANG) || defined (ON_COMPILER_GNU)
   // Unlike _vscwprintf_p_l(), CLang's vswprintf() does not tell you how many characters would have 
   // been written if there was space enough in the buffer. 
   // It reports an error when there is not enough space.  
@@ -1132,10 +1161,10 @@ int ON_wString::FormatVargsOutputCount(
   // CLang requires %ls to properly format a const wchar_t* parameter
   wchar_t clang_format_stack_buffer[128];
   ON_wStringBuffer clang_format_buffer(clang_format_stack_buffer, sizeof(clang_format_stack_buffer) / sizeof(clang_format_stack_buffer[0]));
-  format = ConvertToCLangFormat(
+  format = ConvertToWideCharStringFormat(
     format,
     clang_format_buffer
-    );
+  );
 
   // Attempting to directly get the count fails in OS X 10.4 June 2015 (always returns fmt_size = -1)
   //
@@ -1200,39 +1229,7 @@ int ON_wString::FormatVargsOutputCount(
     ////       // Apple   Results: Acount1 = 4, Acount2 = 4, Bcount1 = 4, Bcount2 = -1
     ////    }
     ////      
-    //const int formatted_string_count = vswprintf_l(buffer.m_buffer, buffer.m_buffer_capacity, ON_Locale::Ordinal.NumericLocalePtr(), format, args_copy);
-    const int formatted_string_count = vswprintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
-    va_end(args_copy);
-    if (formatted_string_count >= 0)
-    {
-      // formatted_string_count = number of wchar_t elements not including null terminator
-      return formatted_string_count;
-    }
-    if ( buffer_capacity >= 1024*16*16*16 )
-      break;
-    buffer_capacity *= 16;
-    if (false == buffer.GrowBuffer(buffer_capacity))
-      break;
-    if (nullptr == buffer.m_buffer)
-      break;
-    if (buffer_capacity < buffer.m_buffer_capacity)
-      break;
-  }
-  return -1;
-#else
-#if defined(ON_COMPILER_GNU)
-  // 31 May 2019 S. Baer (RH-52038)
-  // TODO: The following code needs to be tested. This was added by request from a user that needed
-  // a GCC compile. This is obviously a cut and paste of the above clang code
-  wchar_t stack_buffer[1024];
-  ON_wStringBuffer buffer(stack_buffer, sizeof(stack_buffer) / sizeof(stack_buffer[0]));
-  size_t buffer_capacity = buffer.m_buffer_capacity;
-  for(;;)
-  {
-    va_list args_copy;
-    va_copy(args_copy, args);
-
-    const int formatted_string_count = vswprintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
+    const int formatted_string_count = Internal_VsWPrintf(buffer.m_buffer, buffer.m_buffer_capacity, format, args_copy);
     va_end(args_copy);
     if (formatted_string_count >= 0)
     {
@@ -1254,6 +1251,5 @@ int ON_wString::FormatVargsOutputCount(
   // Using ON_Locale::Ordinal.NumericLocalePtr() insures that a period 
   // will be use for the decimal point in formatted printing.
   return _vscwprintf_p_l(format, ON_Locale::Ordinal.NumericLocalePtr(), args);
-#endif
 #endif
 }

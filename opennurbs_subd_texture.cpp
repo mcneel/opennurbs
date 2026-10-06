@@ -780,6 +780,29 @@ bool ON_SubD::SetFragmentTextureCoordinates(
     const unsigned P_count = fragment->PointCount();
     if (P_count < 4)
       continue;
+
+    // The ON_SubDComponentLocation::ControlNet (flat) appearance is rendered from the
+    // fragment's control net quad and reads its texture coordinates from m_ctrlnetT[],
+    // not from m_T[]. Only Internal_SetFragmentTextureCoordinatesWithoutMapping() sets
+    // m_ctrlnetT[], so the flat display kept stale packed coordinates while the smooth
+    // appearance used the mapping. Evaluate the mapping at the control net quad corners.
+    ON_3dPoint ctrlnet_points[4];
+    ON_3dVector ctrlnet_normal;
+    if (fragment->GetControlNetQuad(true, ctrlnet_points, ctrlnet_normal))
+    {
+      ON_3dPoint ctrlnet_corners[4];
+      for (unsigned i = 0; i < 4; ++i)
+      {
+        const bool cn_ok = bApplySubDXform ?
+          mapping.Evaluate(ctrlnet_points[i], ctrlnet_normal, &tc, P_xform, N_xform) :
+          mapping.Evaluate(ctrlnet_points[i], ctrlnet_normal, &tc);
+        ctrlnet_corners[i] = cn_ok ? tc : ON_3dPoint::NanPoint;
+      }
+      // Both the quad points above and m_ctrlnetT[] are in grid order. Pass false so m_T[]
+      // is not derived from these corners - it is evaluated per grid vertex below.
+      fragment->SetTextureCoordinateCornersForExperts(true, ctrlnet_corners, false);
+    }
+
     const double* P = fragment->m_P;
     const size_t P_stride = fragment->m_P_stride;
     unsigned T_count = fragment->TextureCoordinateCount();

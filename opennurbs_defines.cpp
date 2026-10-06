@@ -753,6 +753,55 @@ bool ON::IsUnitedStatesPrinterLengthUnit(
   return rc;
 }
 
+double ON::MetersPerLengthUnit(
+  ON::LengthUnitSystem length_unit_system
+)
+{
+  double meters_per_unit;
+  switch (length_unit_system)
+  {
+  case ON::LengthUnitSystem::None:
+    meters_per_unit = 1.0;
+    break;
+  case ON::LengthUnitSystem::Angstroms:
+  case ON::LengthUnitSystem::Nanometers:
+  case ON::LengthUnitSystem::Microns:
+  case ON::LengthUnitSystem::Millimeters:
+  case ON::LengthUnitSystem::Centimeters:
+  case ON::LengthUnitSystem::Decimeters:
+  case ON::LengthUnitSystem::Meters:
+  case ON::LengthUnitSystem::Dekameters:
+  case ON::LengthUnitSystem::Hectometers:
+  case ON::LengthUnitSystem::Kilometers:
+  case ON::LengthUnitSystem::Megameters:
+  case ON::LengthUnitSystem::Gigameters:
+  case ON::LengthUnitSystem::Microinches:
+  case ON::LengthUnitSystem::Mils:
+  case ON::LengthUnitSystem::Inches:
+  case ON::LengthUnitSystem::Feet:
+  case ON::LengthUnitSystem::Yards:
+  case ON::LengthUnitSystem::Miles:
+  case ON::LengthUnitSystem::PrinterPoints:
+  case ON::LengthUnitSystem::PrinterPicas:
+  case ON::LengthUnitSystem::NauticalMiles:
+  case ON::LengthUnitSystem::AstronomicalUnits:
+  case ON::LengthUnitSystem::LightYears:
+  case ON::LengthUnitSystem::Parsecs:
+    meters_per_unit = ON::UnitScale(length_unit_system, ON::LengthUnitSystem::Meters);
+    break;
+  case ON::LengthUnitSystem::CustomUnits:
+    meters_per_unit = 1.0;
+    break;
+  case ON::LengthUnitSystem::Unset:
+    meters_per_unit = ON_DBL_QNAN;
+    break;
+  default:
+    meters_per_unit = ON_DBL_QNAN;
+    break;
+  }
+  return meters_per_unit;
+}
+
 ON::LengthUnitSystem ON::LengthUnitSystemFromUnsigned(unsigned int length_unit_system_as_unsigned)
 {
   switch (length_unit_system_as_unsigned)
@@ -1079,7 +1128,7 @@ double ON::UnitScale(
     const double meters_per_custom_unit = us_to.MetersPerUnit(ON_DBL_QNAN);
     if ( meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE )
     {
-      scale *= meters_per_custom_unit;
+      scale /= meters_per_custom_unit;
       us1 = ON::LengthUnitSystem::Meters;
     }
   }
@@ -1125,7 +1174,7 @@ double ON::UnitScale(
     const double meters_per_custom_unit = us_from.MetersPerUnit(ON_DBL_QNAN);
     if ( meters_per_custom_unit > 0.0 && meters_per_custom_unit < ON_UNSET_POSITIVE_VALUE )
     {
-      scale /= meters_per_custom_unit;
+      scale *= meters_per_custom_unit;
       us0 = ON::LengthUnitSystem::Meters;
     }
   }
@@ -1168,7 +1217,7 @@ double ON::UnitScale(
         && meters_per_unit_from < ON_UNSET_POSITIVE_VALUE
         )
   {
-    scale /= meters_per_unit_from;
+    scale *= meters_per_unit_from;
     us_from = ON::LengthUnitSystem::Meters;
   }
 
@@ -1177,7 +1226,7 @@ double ON::UnitScale(
     && meters_per_unit_to < ON_UNSET_POSITIVE_VALUE 
     )
   {
-    scale *= meters_per_unit_to;
+    scale /= meters_per_unit_to;
     us_to = ON::LengthUnitSystem::Meters;
   }
 
@@ -1310,10 +1359,10 @@ double ON::UnitScale(
     case ON::LengthUnitSystem::Megameters:     scale = 1.0e-6;  break;
     case ON::LengthUnitSystem::Gigameters:     scale = 1.0e-9;  break;
 
-    case ON::LengthUnitSystem::NauticalMiles:  scale = 1.0/1852.0; break;
-    case ON::LengthUnitSystem::AstronomicalUnits:   scale = 1.0/1.4959787e+11; break;
-    case ON::LengthUnitSystem::LightYears:     scale = 1.0/9.4607304725808e+15; break;
-    case ON::LengthUnitSystem::Parsecs:        scale = 1.0/3.08567758e+16; break;
+    case ON::LengthUnitSystem::NauticalMiles:     scale = 1.0   /              1852.0; break;
+    case ON::LengthUnitSystem::AstronomicalUnits: scale = 1.0   /      149597870700.0; break;
+    case ON::LengthUnitSystem::LightYears:        scale = 1.0   /  9460730472580800.0; break;
+    case ON::LengthUnitSystem::Parsecs:           scale = ON_PI / 96939420213600000.0; break;
 
     default:
       if ( IsEnglishUnit(u1) )
@@ -1332,8 +1381,8 @@ double ON::UnitScale(
 
   case ON::LengthUnitSystem::Kilometers:
     scale = IsEnglishUnit(u1)
-          ? UnitScale( ON::LengthUnitSystem::Inches, u1 )/0.0000254
-          : UnitScale( ON::LengthUnitSystem::Meters, u1 )*1000.0;
+      ? UnitScale( ON::LengthUnitSystem::Inches, u1 )/0.0000254
+      : UnitScale( ON::LengthUnitSystem::Meters, u1 )*1000.0;
     break;
 
   case ON::LengthUnitSystem::Megameters:
@@ -1435,11 +1484,11 @@ double ON::UnitScale(
     break;
 
   case ON::LengthUnitSystem::AstronomicalUnits:
-    // 1.4959787e+11  http://en.wikipedia.org/wiki/Astronomical_unit
-    // 1.495979e+11   http://units.nist.gov/Pubs/SP811/appenB9.htm  
+    // 1.495978707e+11  http://en.wikipedia.org/wiki/Astronomical_unit
+    // 1.495979e+11     http://units.nist.gov/Pubs/SP811/appenB9.htm  
     //    An astronomical unit (au) is the mean distance from the 
     //    center of the earth to the center of the sun.
-    scale = UnitScale( ON::LengthUnitSystem::Meters, u1 )*1.4959787e+11;
+    scale = UnitScale(ON::LengthUnitSystem::Meters, u1) * 149597870700.0;
     break;
 
   case ON::LengthUnitSystem::LightYears:
@@ -1449,13 +1498,13 @@ double ON::UnitScale(
     //    The speed of light is exactly 299792458 meters/second.
     //    A Julian year is exactly 365.25 * 86400 seconds and is 
     //    approximately the time it takes for one earth orbit.
-    scale = UnitScale( ON::LengthUnitSystem::Meters, u1 )*9.4607304725808e+15;
+    scale = UnitScale( ON::LengthUnitSystem::Meters, u1 ) * 9460730472580800.0;
     break;
 
   case ON::LengthUnitSystem::Parsecs:
-    // 3.08567758e+16  // http://en.wikipedia.org/wiki/Parsec
-    // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm  
-    scale = UnitScale( ON::LengthUnitSystem::Meters, u1 )*3.08567758e+16;
+    // 3.085677581491367e+16  // http://en.wikipedia.org/wiki/Parsec
+    // 3.085678e+16            // http://units.nist.gov/Pubs/SP811/appenB9.htm  
+    scale = UnitScale( ON::LengthUnitSystem::Meters, u1 ) * (96939420213600000.0 / ON_PI);
     break;
 
   case ON::LengthUnitSystem::CustomUnits:
@@ -1641,6 +1690,7 @@ ON::sort_algorithm ON::SortAlgorithm(int i)
   switch (i) {
   case (int)ON::sort_algorithm::heap_sort: sa = ON::sort_algorithm::heap_sort; break;
   case (int)ON::sort_algorithm::quick_sort: sa = ON::sort_algorithm::quick_sort; break;
+  case (int)ON::sort_algorithm::parallel_sort: sa = ON::sort_algorithm::parallel_sort; break;
   default: sa = ON::sort_algorithm::quick_sort; break;
   }
   return sa;
@@ -1843,6 +1893,18 @@ ON::object_material_source ON::ObjectMaterialSource(int i)
   return ms;
 }
 
+ON::item_color_source ON::ItemColorSource(int i)
+{
+  switch (i)
+  {
+  case (int)item_color_source::color_from_layer:  return item_color_source::color_from_layer;
+  case (int)item_color_source::color_from_object: return item_color_source::color_from_object;
+  case (int)item_color_source::color_from_parent: return item_color_source::color_from_parent;
+  case (int)item_color_source::color_custom:      return item_color_source::color_custom;
+  }
+  return item_color_source::color_from_layer;
+}
+
 ON::light_style ON::LightStyle(int i)
 {
   // convert integer to light_style enum
@@ -2033,6 +2095,9 @@ ON::object_decoration ON::ObjectDecoration(int i)
   case start_arrowhead:      d = start_arrowhead; break;
   case end_arrowhead:        d = end_arrowhead;   break;
   case both_arrowhead:       d = both_arrowhead;  break;
+  case end_arrowhead_base_at_end: d = end_arrowhead_base_at_end; break;
+  case start_arrowhead_base_at_end: d = start_arrowhead_base_at_end; break;
+  case both_arrowhead_base_at_end: d = both_arrowhead_base_at_end; break;
   default:                   d = no_object_decoration; break;
   }
   return d;
@@ -2291,6 +2356,10 @@ ON_INTERNAL_OBSOLETE::V5_horizontal_alignment ON_INTERNAL_OBSOLETE::V5Horizontal
   case ON::TextHorizontalAlignment::Auto:
     halign = ON_INTERNAL_OBSOLETE::V5_horizontal_alignment::Left;
     break;
+  case ON::TextHorizontalAlignment::Justify:
+    // V5 had no Justify; degrade to Left so older readers see a sensible value.
+    halign = ON_INTERNAL_OBSOLETE::V5_horizontal_alignment::Left;
+    break;
   }
 
   return halign;
@@ -2414,22 +2483,22 @@ bool ON_2udex::operator!=(const ON_2udex& src) const
 
 bool ON_2udex::operator<(const ON_2udex& src) const
 {
-  return i < src.i || ((j == src.j) && j < src.j);
+  return i < src.i || ((i == src.i) && j < src.j);
 }
 
 bool ON_2udex::operator<=(const ON_2udex& src) const
 {
-  return i < src.i || ((j == src.j) && j <= src.j);
+  return i < src.i || ((i == src.i) && j <= src.j);
 }
 
 bool ON_2udex::operator>=(const ON_2udex& src) const
 {
-  return i > src.i || ((j == src.j) && j >= src.j);
+  return i > src.i || ((i == src.i) && j >= src.j);
 }
 
 bool ON_2udex::operator>(const ON_2udex& src) const
 {
-  return i > src.i || ((j == src.j) && j > src.j);
+  return i > src.i || ((i == src.i) && j > src.j);
 }
 
 bool ON_4dex::operator==(const ON_4dex& src) const

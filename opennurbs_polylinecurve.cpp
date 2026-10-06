@@ -264,6 +264,12 @@ ON_Interval ON_PolylineCurve::Domain() const
   ON_Interval d;
   //bool rc = false;
   const int count = PointCount();
+
+  // 14 May 2026 S. Baer
+  // check m_t size before attempting to access it
+  if (m_t.Count() < count)
+    return ON_Interval::EmptyInterval;
+
   if ( count >= 2 && m_t[0] < m_t[count-1] ) {
     d.Set(m_t[0],m_t[count-1]);
   }
@@ -478,9 +484,7 @@ ON_PolylineCurve::IsLinear( // true if curve locus is a line segment
     nurbs_curve.m_cv = const_cast<double*>(&m_pline[0].x);
     nurbs_curve.m_cv_stride = (int)(&m_pline[1].x - nurbs_curve.m_cv); // the int converts 64 bit size_t
     nurbs_curve.m_knot = const_cast<double*>(m_t.Array());
-    // using ptr to make sure we go through vtable
-    const ON_Curve* ptr = &nurbs_curve;
-    rc = ptr->IsLinear(tolerance);
+    rc = nurbs_curve.IsLinear(tolerance);
     nurbs_curve.m_cv = 0;
     nurbs_curve.m_knot = 0;
   }
@@ -545,9 +549,7 @@ ON_PolylineCurve::IsPlanar(
       nurbs_curve.m_cv = const_cast<double*>(&m_pline[0].x);
       nurbs_curve.m_cv_stride = (int)(&m_pline[1].x - nurbs_curve.m_cv); // the (int) converts 64 bit size_t
       nurbs_curve.m_knot = const_cast<double*>(m_t.Array());
-      // using ptr to make sure we go through vtable
-      const ON_Curve* ptr = &nurbs_curve;
-      rc = ptr->IsPlanar(plane,tolerance);
+      rc = nurbs_curve.IsPlanar(plane,tolerance);
       nurbs_curve.m_cv = 0;
       nurbs_curve.m_knot = 0;
     }
@@ -897,7 +899,7 @@ ON_PolylineCurve::Evaluate( // returns false if unable to evaluate
 {
   bool rc = false;
   const int count = PointCount();
-  if ( count >= 2 ) 
+  if ( count >= 2 && m_t.Count() >= count) 
   {
     int segment_index = ON_NurbsSpanIndex(2,count,m_t,t,side,(hint)?*hint:0);
 
@@ -1320,7 +1322,7 @@ int ON_PolylineCurve::GetNurbForm(
 {
   int rc = 0;
   const int count = PointCount();
-  if ( count < 2 )
+  if ( count < 2 || m_t.Count() < count )
     nurb.Destroy();
   else  if ( nurb.Create( Dimension(), false, 2, count) ) {
     int i;

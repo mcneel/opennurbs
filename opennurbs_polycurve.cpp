@@ -917,9 +917,28 @@ ON_PolyCurve::IsArc( // true if curve locus in an arc or circle
       ) const
 {
   bool rc = false;
-  if ( 1 == m_segment.Count() && 0 != m_segment[0] )
+  int count = Count();
+  if (count == 1 && m_segment[0])
   {
-    rc = m_segment[0]->IsArc( plane, arc, tolerance )?true:false;
+    return m_segment[0]->IsArc(plane, arc, tolerance);
+  }
+  else if (count > 1)
+  {
+    rc = true;
+    for (int i = 0; rc && i < count; i++) {
+      if (!m_segment[i])
+      {
+        rc = false;
+      }
+      else
+      {
+        rc = m_segment[i]->IsArc(plane, nullptr, tolerance);
+      }
+    }
+    if (rc)
+    {
+      rc = ON_Curve::IsArc(plane, arc, tolerance);
+    }
   }
   return rc;
 }

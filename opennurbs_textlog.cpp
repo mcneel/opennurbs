@@ -1237,7 +1237,30 @@ void ON_TextHash::SetOutputTextLog(
   ON_TextLog* output_text_log
 )
 {
-  m_output_text_log = output_text_log;
+  if (nullptr == output_text_log)
+  {
+    m_output_text_log = nullptr;
+  }
+  else if (this == output_text_log)
+  {
+    // protect a confused user from an infinite recursion crash.
+    m_output_text_log = nullptr;
+    ON_ERROR("The output_text_log parameter must be an ordinary text log.");
+  }
+  else if (output_text_log->IsTextHash())
+  {
+    // protect a confused user from nested hashing.
+    m_output_text_log = nullptr;
+    ON_ERROR("The output_text_log parameter must be an ordinary text log.");
+  }
+  else if (output_text_log->IsNull())
+  {
+    m_output_text_log = nullptr;
+  }
+  else
+  {
+    m_output_text_log = output_text_log;
+  }
 }
 
 ON_TextLog* ON_TextHash::OutputTextLog() const
@@ -1264,6 +1287,8 @@ void ON_TextHash::AppendText(const char* s)
   {
     // no id remapping - just accumulate
     m_sha1.AccumulateString(s, -1, m_string_map_ordinal_type);
+    if (nullptr != m_output_text_log)
+      m_output_text_log->AppendText(s);
     return;
   }
 

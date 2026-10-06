@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -106,25 +106,15 @@ public:
   void Dump( ON_TextLog& ) const override; // for debugging
 
   /*
-    Description:
-      Write to file
+    Description: Write to file
   */
-  bool Write(
-         ON_BinaryArchive&  // serialize definition to binary archive
-       ) const override;
+  bool Write(ON_BinaryArchive& archive) const override;
 
   /*
-    Description:
-      Read from file
+    Description: Read from file
   */
-  bool Read(
-         ON_BinaryArchive&  // restore definition from binary archive
-       ) override;
+  bool Read(ON_BinaryArchive& archive) override;
 
-
-  //////////////////////////////////////////////////////////////////////
-  //
-  // Interface
 
   bool PatternIsSet() const;
   bool ClearPattern();
@@ -300,6 +290,20 @@ public:
       or printed
   */
   void SetAlwaysModelDistances(bool on);
+
+  int LinetypeShapeCount() const;
+  void SetShapeSpacing(double spacing);
+  double ShapeSpacing() const;
+  void SetShapeGap(double gap);
+  double ShapeGap() const;
+  void SetShapeLocalOffset(const ON_2dVector& offset);
+  ON_2dVector ShapeLocalOffset() const;
+  bool AddShape(const ON_Curve& shapeCurve, double offset);
+  bool AddShape(const wchar_t* rtfText, const ON_DimStyle& dimStyle, const ON_Plane& plane, double offset);
+  void RemoveAllShapes();
+  int GetLinetypeShapes(ON_SimpleArray<const class ON_LinetypeShape*>& shapes) const;
+  ON_BoundingBox ShapeBounds() const;
+
 private:
   mutable class ON_LinetypePrivate* m_private = nullptr;
   unsigned char m_is_set_bits = 0;
@@ -315,6 +319,31 @@ private:
     pattern_bit = 1
   };
 };
+
+class ON_CLASS ON_LinetypeShape
+{
+public:
+  ON_LinetypeShape();
+  ON_LinetypeShape(double offset, const ON_Geometry& geometry);
+  ON_LinetypeShape(const ON_LinetypeShape& other);
+  ON_LinetypeShape& operator=(const ON_LinetypeShape& other);
+  virtual ~ON_LinetypeShape();
+
+  bool Write(ON_BinaryArchive& archive) const;
+  bool Read(ON_BinaryArchive& archive);
+
+  const ON_Geometry* Geometry() const;
+  double LocalOffset() const;
+
+private:
+  mutable class ON_LinetypeShapePrivate* m_private = nullptr;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_LinetypeShape*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_LinetypeShape*>;
+#endif
+
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Linetype*>;

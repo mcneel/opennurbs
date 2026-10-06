@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -376,6 +376,28 @@ opennurbs_system_compiler detects the compiler and platform.
 #define ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE ON_PRAGMA_WARNING_POP
 #endif
 
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L) || __cplusplus >= 201402L
+#define ON_HAS_CXX14
+#else
+#undef ON_HAS_CXX14
 #endif
 
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L
+#define ON_HAS_CXX17
+#else
+#undef ON_HAS_CXX17
+#endif
 
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L
+#define ON_HAS_CXX20
+#else
+#undef ON_HAS_CXX20
+#endif
+
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || __cplusplus >= 202302L
+#define ON_HAS_CXX23
+#else
+#undef ON_HAS_CXX23
+#endif
+
+#endif

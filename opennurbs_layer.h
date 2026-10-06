@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -427,7 +427,7 @@ public:
 
   /*
   Description:
-    Controls layer visibility in  in model viewports.
+    Controls layer visibility in model viewports.
   Parameters:
     bVisible - [in] true to make layer visible,
                     false to make layer invisible
@@ -794,10 +794,8 @@ public:
   // this intersection can result in curves as well as hatches for the
   // closed curves generated
 
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
   int SectionStyleIndex() const;
   void SetSectionStyleIndex(int index);
-#endif
   
   /*
   Description:
@@ -845,6 +843,33 @@ public:
     description - [in] the short description, can be nullptr.
   */
   void SetDescription(const wchar_t* description);
+
+  /*
+  Description:
+    Styles of layers.
+  */
+  enum class Style : unsigned char
+  {
+    // Unset, or normal, layer.
+    Unset = 0,
+    // Markup layer.
+    Markup = 1,
+  };
+  static ON_Layer::Style LayerStyleFromUnsigned(unsigned int layer_style_as_unsigned);
+
+  /*
+  Description:
+    Gets the layer style.
+  */
+  ON_Layer::Style LayerStyle() const;
+
+  /*
+  Description:
+    Sets the layer style.
+  Parameters:
+    layer_style - [in] the layer style.
+  */
+  void SetLayerStyle(ON_Layer::Style layer_style);
 
 private:
   // The following information may not be accurate and is subject

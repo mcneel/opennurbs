@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -46,6 +46,15 @@ public:
 
   /*
   Description:
+  Create a one segment ON_PolyEdgeCurve curve that uses a 
+  single edge.
+  */
+  bool Create(
+    const ON_BrepTrim* trim
+  ) { return Create(trim, ON_nil_uuid); }
+
+  /*
+  Description:
     Create a one segment ON_PolyEdgeCurve curve that uses a 
     single curve.
   */
@@ -54,11 +63,32 @@ public:
            const ON_UUID& object_id
            );
 
+  /*
+  Description:
+  Create a one segment ON_PolyEdgeCurve curve that uses a 
+  single curve.
+  */
+  bool Create(
+    const ON_Curve* curve
+  ) { return Create(curve, ON_nil_uuid); }
+
+
+  // this will duplicate the polyedge structure but - and this is important -
+  // will reference the same "real" curves and brep edges.
+  ON_PolyEdgeCurve* ShallowDuplicatePolyEdge() const;
+
+  // Make a truly deep copy. This will duplicate and if xform is not null 
+  // transform all curves and underlying BReps. The result will lose 
+  // all associations with existing rhino objects. Any duplicated geometry that
+  // needs to be freed by the caller of this function is returned in the 'referenced' array
+  ON_PolyEdgeCurve* DeepCopy(ON_SimpleArray<const ON_Geometry*>& referenced, 
+    const ON_Xform* xform = nullptr, bool reverse = false) const;
+
   int SegmentCount() const;
 
   ON_PolyEdgeSegment* SegmentCurve(
     int segment_index
-    ) const;
+  ) const;
 
   ON_PolyEdgeSegment* operator[](int) const;
 
@@ -180,6 +210,25 @@ public:
 
   /*
   Description:
+    Creates a polyedge segment that uses the entire edge
+    and has the same domain as the edge.
+  Parameters:
+    trim - [in] 
+  Returns:
+    true if successful (edge was valid and trim_index was valid)
+  Remarks:
+    Use ON_Curve::SetDomain, ON_Curve::Trim, ON_Curve::Reverse,
+    etc., to tweak the domain, support, direction etc.
+  */
+  bool Create( 
+          const ON_BrepTrim* trim
+          )
+  {
+    return Create(trim, ON_nil_uuid);
+  }
+
+  /*
+  Description:
     Creates a polyedge segment that uses the entire curve
     and has the same domain as the curve.
   Parameters:
@@ -192,6 +241,24 @@ public:
           const ON_Curve* curve,
           const ON_UUID& object_id
           );
+
+  /*
+  Description:
+  Creates a polyedge segment that uses the entire curve
+  and has the same domain as the curve.
+  Parameters:
+  curve - [in] 
+  Remarks:
+  Use ON_Curve::SetDomain, ON_Curve::Trim, ON_Curve::Reverse,
+  etc., to tweak the domain, support, direction etc.
+  */
+  bool Create( 
+    const ON_Curve* curve
+  )
+  {
+    return Create(curve, ON_nil_uuid);
+  }
+
 
   const ON_BrepEdge* BrepEdge() const;
   const ON_BrepTrim* BrepTrim() const;
@@ -292,15 +359,15 @@ private:
   int m_edge_hint;
 
   // surface evaluation cache
-  int m_evsrf_hint[2];
-  double m_evsrf_uv[2];
-  ON_3dPoint m_evsrf_pt;
-  ON_3dVector m_evsrf_du;
-  ON_3dVector m_evsrf_dv;
-  ON_3dVector m_evsrf_duu;
-  ON_3dVector m_evsrf_duv;
-  ON_3dVector m_evsrf_dvv;
-  ON_3dVector m_evsrf_tan;
+  mutable int m_evsrf_hint[2];
+  mutable double m_evsrf_uv[2];
+  mutable ON_3dPoint m_evsrf_pt;
+  mutable ON_3dVector m_evsrf_du;
+  mutable ON_3dVector m_evsrf_dv;
+  mutable ON_3dVector m_evsrf_duu;
+  mutable ON_3dVector m_evsrf_duv;
+  mutable ON_3dVector m_evsrf_dvv;
+  mutable ON_3dVector m_evsrf_tan;
 
   void Init();
 };

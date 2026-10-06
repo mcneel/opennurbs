@@ -89,6 +89,7 @@ static const wchar_t* tagColorBackground     = L"cb";
 static const wchar_t* tagStackFraction       = L"stackheight"; // not rtf - scale factor for text height in stacked text
 static const wchar_t* tagStackText           = L"stack";  // not rtf - begin stacked fraction
 static const wchar_t* tagStackEnd            = L"stnone"; // not rtf - end stacked fraction
+static const wchar_t* tagHeightScale         = L"htscale"; // not rtf - per-run text-height multiplier in thousandths (e.g. "600" = 0.6). Used by FormatTolerance Symmetrical so tolerance text obeys ToleranceHeightScale.
 static const wchar_t* tagField               = L"field";
 
 static const wchar_t* tagUniCpCount          = L"uc";     // #bytes used following \uN for codepage code of equivalenet char
@@ -117,6 +118,10 @@ static const wchar_t* tagrdblquote           = L"rdblquote";     // right double
 static const wchar_t* tagbullet              = L"bullet";        // bullet
 static const wchar_t* tagendash              = L"endash";        // endash
 static const wchar_t* tagemdash              = L"emdash";        // emdash
+static const wchar_t* tagListBegin           = L"listbegin";
+static const wchar_t* tagListEnd             = L"listend";
+static const wchar_t* tagListItemBegin       = L"listitembegin";
+static const wchar_t* tagListItemEnd         = L"listitemend";
 
 
 #pragma region TextIterator
@@ -874,9 +879,10 @@ ON_TextRunBuilder::ON_TextRunBuilder(
     italic,
     underlined,
     strikethrough);
-  
+
   m_current_run.SetApplyKerning(dimstyle->UseKerning());
   m_current_run.SetLineSpaceScale(dimstyle->LineSpaceScale());
+  m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
 }
 
 void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
@@ -895,6 +901,7 @@ void ON_TextRunBuilder::InitBuilder(const ON_Font* default_font)
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
   m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+  m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
   // Array for accumulating text codepoints
   m_current_codepoints.Empty();
 }
@@ -912,6 +919,7 @@ void ON_TextRunBuilder::AppendCurrentRun()
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
     m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
     m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+    m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
   }
 }
 
@@ -926,6 +934,7 @@ bool ON_TextRunBuilder::AppendCodePoint(ON__UINT32 codept)
       m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
     m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
     m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+    m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
 
     if (ON_TextRun::Stacked::kTop == stacked || ON_TextRun::Stacked::kBottom == stacked)
     {
@@ -1097,6 +1106,15 @@ void ON_TextRunBuilder::FinishCurrentRun()
 #endif // 0
       AppendCurrentRun();
   }
+  else if (
+    m_current_run.Type() == ON_TextRun::RunType::kListBegin ||
+    m_current_run.Type() == ON_TextRun::RunType::kListEnd ||
+    m_current_run.Type() == ON_TextRun::RunType::kListItemBegin ||
+    m_current_run.Type() == ON_TextRun::RunType::kListItemEnd
+    )
+  {
+    AppendCurrentRun();
+  }
 }
 
 static bool IsValidFontName(const ON_wString&  name)
@@ -1178,6 +1196,7 @@ void ON_TextRunBuilder::FinishFontDef()
         m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
       m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
       m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+      m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
     }
     SetReadingFontDefinition(false);
   }
@@ -1202,6 +1221,7 @@ void ON_TextRunBuilder::GroupBegin()  // {
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
   m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+  m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
 }
 
 
@@ -1226,6 +1246,7 @@ void ON_TextRunBuilder::GroupEnd()   // '}'
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
   m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+  m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
 
   if (m_level <= m_font_table_level)
     m_font_table_level = 10000;
@@ -1246,6 +1267,7 @@ void ON_TextRunBuilder::RunBegin()  // like { with no pushing properties
   m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
   m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+  m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
 }
 
 
@@ -1258,11 +1280,12 @@ void ON_TextRunBuilder::RunEnd()   // like '}' with no popping properties
     m_current_codepoints.Empty();
   }
   FinishCurrentRun();
-  
+
   m_current_run.Init(this->CurrentFont(), m_current_props.Height(), m_current_props.StackScale(), m_current_props.Color(),
     m_current_props.IsBold(), m_current_props.IsItalic(), m_current_props.IsUnderlined(), m_current_props.IsStrikethrough());
   m_current_run.SetApplyKerning(m_current_props.IsKerningEnabled());
   m_current_run.SetLineSpaceScale(m_current_props.LineSpaceScale());
+  m_current_run.SetHeightScaleFactor(m_current_props.HeightScaleFactor());
 
   if (m_level <= m_font_table_level)
     m_font_table_level = 10000;
@@ -1509,6 +1532,25 @@ void ON_TextRunBuilder::Tab()
   //for(int i = 0; i < 8; i++) AppendCodePoint((ON__UINT32)' ');
   //m_in_run = true;
   m_current_run.SetType(ON_TextRun::RunType::kTab);
+}
+
+void ON_TextRunBuilder::ListBegin(bool isOrdered)
+{
+  m_current_run.SetType(ON_TextRun::RunType::kListBegin);
+  m_current_run.SetIsListOrdered(isOrdered);
+}
+void ON_TextRunBuilder::ListEnd()
+{
+  m_current_run.SetType(ON_TextRun::RunType::kListEnd);
+}
+void ON_TextRunBuilder::ListItemBegin(int depth)
+{
+  m_current_run.SetType(ON_TextRun::RunType::kListItemBegin);
+  m_current_run.SetListDepth(depth);
+}
+void ON_TextRunBuilder::ListItemEnd()
+{
+  m_current_run.SetType(ON_TextRun::RunType::kListItemEnd);
 }
 
 void ON_TextRunBuilder::Bold(const wchar_t* value)
@@ -2129,6 +2171,23 @@ void ON_RtfStringBuilder::Tab()
   //m_in_run = true;
 }
 
+//void ON_RtfStringBuilder::ListBegin()
+//{
+//  m_current_run.AddControl(L"\\listbegin");
+//}
+//void ON_RtfStringBuilder::ListEnd()
+//{
+//  m_current_run.AddControl(L"\\listend");
+//}
+//void ON_RtfStringBuilder::ListItemBegin()
+//{
+//  m_current_run.AddControl(L"\\listitembegin");
+//}
+//void ON_RtfStringBuilder::ListItemEnd()
+//{
+//  m_current_run.AddControl(L"\\listitemend");
+//}
+
 void ON_RtfStringBuilder::Bold(const wchar_t* value)
 {
   if (!SkipBold())
@@ -2621,7 +2680,55 @@ else if (0 == tagname.CompareOrdinal(tagSection, bOrdinalIgnoreCase))
 m_builder.Section();
 else if (0 == tagname.CompareOrdinal(tagTabulator, bOrdinalIgnoreCase))
 m_builder.Tab();
-
+else if (0 == tagname.CompareOrdinal(tagListBegin, bOrdinalIgnoreCase))
+{
+  int isOrdered = 0;
+  ON_wString::ToNumber(value, 0, &isOrdered);
+  try {
+    ON_TextRunBuilder& rtfsb = dynamic_cast<ON_TextRunBuilder&>(m_builder);
+    rtfsb.ListBegin(isOrdered == 1 ? true : false);
+  }
+  catch (std::bad_cast bc)
+  {
+    // there has to be a better way to do this
+  }
+}
+else if (0 == tagname.CompareOrdinal(tagListEnd, bOrdinalIgnoreCase))
+{
+  try {
+    ON_TextRunBuilder& rtfsb = dynamic_cast<ON_TextRunBuilder&>(m_builder);
+    rtfsb.ListEnd();
+  }
+  catch (std::bad_cast bc)
+  {
+    // there has to be a better way to do this
+  }
+}
+else if (0 == tagname.CompareOrdinal(tagListItemBegin, bOrdinalIgnoreCase))
+{
+  //ON_wString ws(tagListItemBegin);
+  int depth = 1;
+  ON_wString::ToNumber(value, 1, &depth);
+  try {
+    ON_TextRunBuilder& rtfsb = dynamic_cast<ON_TextRunBuilder&>(m_builder);
+    rtfsb.ListItemBegin(depth);
+  }
+  catch (std::bad_cast bc)
+  {
+    // there has to be a better way to do this
+  }
+}
+else if (0 == tagname.CompareOrdinal(tagListItemEnd, bOrdinalIgnoreCase))
+{
+  try {
+    ON_TextRunBuilder& rtfsb = dynamic_cast<ON_TextRunBuilder&>(m_builder);
+    rtfsb.ListItemEnd();
+  }
+  catch (std::bad_cast bc)
+  {
+    // there has to be a better way to do this
+  }
+}
 else if (0 == tagname.CompareOrdinal(tagBold, bOrdinalIgnoreCase))
 m_builder.Bold(value);
 else if (0 == tagname.CompareOrdinal(tagItalic, bOrdinalIgnoreCase))
@@ -2664,6 +2771,14 @@ else if (0 == tagname.CompareOrdinal(tagStackText, bOrdinalIgnoreCase))
 m_builder.StackFraction(value);
 else if (0 == tagname.CompareOrdinal(tagStackEnd, bOrdinalIgnoreCase))
 m_builder.StackEnd();
+else if (0 == tagname.CompareOrdinal(tagHeightScale, bOrdinalIgnoreCase) && 0 != value && 0 != value[0])
+{
+  int scale_thousandths = 1000;
+  ON_wString::ToNumber(value, scale_thousandths, &scale_thousandths);
+  const double factor = (double)scale_thousandths / 1000.0;
+  if (factor > 0.0 && factor <= 10.0)
+    m_builder.m_current_props.SetHeightScaleFactor(factor);
+}
 
 else if (0 == ON_wString::CompareOrdinal(name, tagField, bOrdinalIgnoreCase))
 m_builder.TextField(value);
@@ -2685,7 +2800,7 @@ else if (0 == ON_wString::CompareOrdinal(name, tagldblquote, bOrdinalIgnoreCase)
 m_builder.LDblQuote();
 else if (0 == ON_wString::CompareOrdinal(name, tagrdblquote, bOrdinalIgnoreCase))
 m_builder.RDblQuote();
-else if (0 == ON_wString::CompareOrdinal(name, tagbullet, bOrdinalIgnoreCase))
+else if (0 == ON_wString::CompareOrdinal(name, tagbullet /*L"listitem"*/, bOrdinalIgnoreCase))
 m_builder.Bullet();
 else if (0 == ON_wString::CompareOrdinal(name, tagendash, bOrdinalIgnoreCase))
 m_builder.EnDash();
@@ -2810,7 +2925,7 @@ bool ON_RtfParser::Parse()
   {
     if (m_suspend_to_close <= 0 && m_ti.AtBackslashTic())
     {
-      // parse the entire contiguous MBCS string up to <OTHER>
+      // parse the entire contiguous MBCS (Multi Byte Character String) up to <OTHER>
       // \`XX\`XX...\`XX<OTHER>
       // <OTHER> != \`, XX = hex digit 0 to FF.
       // This string is a Windows MBCS string with code page identified by
@@ -2866,7 +2981,8 @@ bool ON_RtfParser::Parse()
           case ON_UnicodeCodePoint::ON_ParagraphSeparator:
           //case ON_UnicodeCodePoint::ON_Space:
             FlushCurText(m_builder.m_current_codepoints);
-            //ProcessTag(L"par", nullptr, false);
+            m_builder.RunEnd();
+            ProcessTag(L"par", nullptr, false);
             m_builder.RunBegin();
             break;
 
@@ -2977,6 +3093,182 @@ bool ON_RtfParser::Parse()
 
   FlushCurText(m_builder.m_current_codepoints);
   m_builder.GroupEnd();
+
+  return rc;
+}
+
+// At least for now, before text is parsed as RTF,
+// strings like [[xxx|xxx]] are replaced with custom RTF tags
+// to represent stacked fractions.
+// After "[[", the characters up to "|" are the top of the fraction
+// and after "|" up to "]]" are the bottom of the fraction
+// "[[123/456]]" becomes "{\\stack47 123/456}"
+static bool SubstituteStackTags(const wchar_t* text_string, ON_wString& text, int length, int start, int& end, int depth)
+{
+  int i = start;
+  bool stacking = false; // flag to defeat recursive stacking until CreateStackedText() and MeasureTextRun() can handle it (if ever).
+  wchar_t stack_delimiter = L'/';
+
+  bool in_field = false;
+  while (i < length && text_string[i])
+  {
+    if (!stacking && !in_field && text_string[i] == L'%' && text_string[i + 1] == L'<')  // start of a field
+    {
+      text.Append(text_string + start, i - start);  // string up to here
+      text += L"{\\field %<";  // start field
+      i += 2;  // skip "%<"
+      in_field = true;
+      start = i;
+      continue;
+    }
+    else if (in_field && text_string[i] == L'>' && text_string[i + 1] == L'%') // field end
+    {
+      text.Append(text_string + start, i - start);
+      text += L">%}";
+      i += 2;
+      start = i;
+      in_field = false;
+      continue;
+    }
+    else if (!in_field)
+    {
+      if (!stacking && text_string[i] == L'[' && text_string[i + 1] == L'[')  // stack start
+      {
+        if (i < length - 2 && text_string[i + 2] == L'[')
+          i++;
+        else
+        {
+          text.Append(text_string + start, i - start);  // string up to here
+          text += L"{\\stack";  // start stack
+          i += 2;  // skip "[["
+          if (L'/' == text_string[i] || L'|' == text_string[i])
+          {
+            stack_delimiter = text_string[i];
+            i++;
+          }
+          wchar_t code[8] = { 0 };
+
+#if defined (ON_RUNTIME_WIN)
+          wsprintf(code, L"%d", (int)stack_delimiter);
+#endif
+#if defined (ON_RUNTIME_APPLE)
+          swprintf(code, sizeof(code), L"%d", (int)stack_delimiter);
+#endif
+          text += code;
+          text += L" ";
+
+          stacking = true;
+          // Recursive stacking
+          // SubstituteStackTags(text_string, text, length, i, end, depth + 1);  // read stack section
+          //i = end;
+          start = i;
+          continue;
+        }
+      }
+      else if (stack_delimiter == text_string[i])  // stack separator
+      {
+        text.Append(text_string + start, i - start); // text for current top
+        text += stack_delimiter;
+        i++;
+        start = i;
+        continue;
+      }
+      else if (stacking && text_string[i] == L']' && text_string[i + 1] == L']') // stack end
+      {
+        text.Append(text_string + start, i - start);  // text from bottom
+        text += L"}";
+        i += 2;
+        start = i;
+        stacking = false;
+        continue;
+      }
+      else
+        i++;
+    }
+    else
+      i++;
+  }
+  text.Append(text_string + start, i - start);  // remaining text
+  end = length;
+  return true;
+}
+
+bool ON_RtfParser::ParseToRuns(
+  const wchar_t* rtf_string,
+  const ON_DimStyle* dimstyle,
+  ON_TextRunArray& out_runs,
+  ON_SHA1_Hash& out_text_position_hash,
+  const ON_Font*& out_default_font)
+{
+  const ON_wString rtf_w_string(rtf_string);
+  if (rtf_w_string.IsEmpty())
+    return false;
+
+  dimstyle = &ON_DimStyle::DimStyleOrDefault(dimstyle);
+
+  out_text_position_hash
+    = (nullptr != dimstyle)
+    ? dimstyle->TextPositionPropertiesHash()
+    : ON_TextContent::Empty.DimStyleTextPositionPropertiesHash();
+
+  // Call SubstituteStackTags() to change strings like  ABC [[1/2]] DEF
+  // to ABC {\stack47 1/2} DEF -- encodes stacked fractions into a
+  // custom rtf tag; 47 is the ascii code of the delimiter '/'.
+  ON_wString text_string;
+  int end = 0;
+  int length = (int)rtf_w_string.Length();
+  if (!SubstituteStackTags(rtf_w_string.Array(), text_string, length, 0, end, 0))
+    text_string = rtf_w_string;
+
+  out_runs = ON_TextRunArray::EmptyArray;
+
+  ON_TextIterator iter(text_string);
+  // ON_TextRunBuilder holds an ON_TextContent& member (m_text) that it
+  // never actually reads. The reference exists for backwards SDK
+  // layout compatibility -- we cannot remove it without breaking ABI.
+  // Passing the static ON_TextContent::Empty here lets ParseToRuns be
+  // a pure helper that does not require an owning ON_TextContent.
+  ON_TextRunBuilder builder(
+    const_cast<ON_TextContent&>(ON_TextContent::Empty),
+    out_runs, dimstyle, dimstyle->TextHeight(), ON_UNSET_COLOR);
+  ON_RtfParser parser(iter, builder);
+  bool rc = parser.Parse();
+
+  // Post-process: propagate ordered flag and compute item numbers for
+  // list items. RTF stores IsListOrdered only on the ListBegin tag;
+  // after parsing, ListItemBegin runs lack this flag and have no item
+  // numbers, so the viewport would render every list as unordered
+  // bullets. Walk the runs and fix them up.
+  if (rc)
+  {
+    bool list_ordered = false;
+    int list_item_counter = 0;
+    for (int i = 0; i < out_runs.Count(); i++)
+    {
+      ON_TextRun* run = out_runs[i];
+      if (nullptr == run)
+        continue;
+      if (run->Type() == ON_TextRun::RunType::kListBegin)
+      {
+        list_ordered = run->IsListOrdered();
+        list_item_counter = 0;
+      }
+      else if (run->Type() == ON_TextRun::RunType::kListEnd)
+      {
+        list_ordered = false;
+        list_item_counter = 0;
+      }
+      else if (run->Type() == ON_TextRun::RunType::kListItemBegin)
+      {
+        list_item_counter++;
+        run->SetIsListOrdered(list_ordered);
+        run->SetListItemNumber(list_item_counter);
+      }
+    }
+  }
+
+  if (rc)
+    out_default_font = &dimstyle->ParentDimStyleFont();
 
   return rc;
 }
@@ -3121,7 +3413,7 @@ bool RtfComposer::Compose(
   ON_wString& rtf,
   bool bForceRtf)
 {
-  if (0 == text)
+  if (nullptr == text)
     return false;
 
   if (!RtfComposer::RecomposeRTF())
@@ -3134,7 +3426,19 @@ bool RtfComposer::Compose(
   if (nullptr == runs)
     return false;
 
-  const ON_Font& style_font = text->DefaultFont();
+  return RtfComposer::ComposeFromRuns(*runs, text->DefaultFont(), rtf, bForceRtf);
+}
+
+bool RtfComposer::ComposeFromRuns(
+  ON_TextRunArray& runs_ref,
+  const ON_Font& style_font,
+  ON_wString& rtf,
+  bool bForceRtf)
+{
+  // Name kept as 'runs' (pointer) below so the body reads identically
+  // to the legacy Compose() body this was lifted from.
+  ON_TextRunArray* runs = &runs_ref;
+
   const ON_wString style_fontname = style_font.RichTextFontName();
   if (style_fontname.IsEmpty())
     return false;
@@ -3247,6 +3551,15 @@ bool RtfComposer::Compose(
               chg_facename = run_font_key != stylefont_key;
           }
         }
+      }
+      else if (
+        ON_TextRun::RunType::kListBegin == run->Type() ||
+        ON_TextRun::RunType::kListItemBegin == run->Type() ||
+        ON_TextRun::RunType::kListEnd == run->Type() ||
+        ON_TextRun::RunType::kListItemEnd == run->Type()
+        )
+      {
+        runholders.AppendNew() = run;
       }
     }
   } // end of getting runinfo
@@ -3379,7 +3692,28 @@ bool RtfComposer::Compose(
     }
     else if (ON_TextRun::RunType::kTab == run->Type())
     {
-      run_strings += make_rtf ? L"\\tab" : L"\\t";
+      run_strings += make_rtf ? L"\\tab " : L"\t";
+    }
+    else if (ON_TextRun::RunType::kListBegin == run->Type())
+    {
+      ON_wString lbstr;
+      lbstr.Format(L"{\\listbegin%d ", run->IsListOrdered() ? 1 : 0);
+      run_strings += lbstr;
+    }
+    else if (ON_TextRun::RunType::kListEnd == run->Type())
+    {
+      run_strings += L"\\listend}";
+    }
+    else if (ON_TextRun::RunType::kListItemBegin == run->Type())
+    {
+      //run_strings += L"\\listitembegin \\bullet ";
+      ON_wString libstr;
+      libstr.Format(L"{\\listitembegin%d ", run->ListDepth());
+      run_strings += libstr;
+    }
+    else if (ON_TextRun::RunType::kListItemEnd == run->Type())
+    {
+      run_strings += L"\\listitemend}";
     }
     else if (ON_TextRun::RunType::kNewline == run->Type() || ON_TextRun::RunType::kParagraph == run->Type())
     {
@@ -3613,10 +3947,33 @@ const ON_wString RtfComposer::ComposeAppleRTF(
         run_strings += L"\\ul";
         addspace = true;
       }
+
+      bool true_bool = true;
+      // subscript and superscript are buggy or not supported in legacy controls so use a custom markup
+      // the 'Compose' method on the other hand does add the \\sub and \\super rtf tags
+      // because that's the method called when saving/writing the file.
+      if (run->IsStacked() == ON_TextRun::Stacked::kBottom)
+      {
+        //run_strings += L"\\sub";
+        run_strings += L"[[_";
+        run_strings += run->m_stacked_text->m_separator;
+        GetRunText(run->m_stacked_text->m_bottom_run, run_strings, true_bool);
+        run_strings += L"]]";
+        addspace = false;
+      }
+      if (run->IsStacked() == ON_TextRun::Stacked::kTop)
+      {
+        //run_strings += L"\\super";
+        run_strings += L"[[";
+        GetRunText(run->m_stacked_text->m_top_run, run_strings, true_bool);
+        run_strings += run->m_stacked_text->m_separator;
+        run_strings += L"_]]";
+        addspace = false;
+      }
+      
       if (addspace)
         run_strings += L" ";
 
-      bool true_bool = true;
       if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
       {
         run_strings += L"[[";

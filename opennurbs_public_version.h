@@ -6,18 +6,18 @@
 
 // To update version numbers, edit ..\build\build_dates.msbuild
 #define RMA_VERSION_MAJOR 9
-#define RMA_VERSION_MINOR 0
+#define RMA_VERSION_MINOR 1
 
 ////////////////////////////////////////////////////////////////
 //
 // These are set automatically by the build system as the
 // first step in each build.
 //
-#define RMA_VERSION_YEAR   2025
-#define RMA_VERSION_MONTH  4
-#define RMA_VERSION_DATE   2
-#define RMA_VERSION_HOUR   9
-#define RMA_VERSION_MINUTE 11
+#define RMA_VERSION_YEAR   2026
+#define RMA_VERSION_MONTH  10
+#define RMA_VERSION_DATE   6
+#define RMA_VERSION_HOUR   3
+#define RMA_VERSION_MINUTE 13
 
 ////////////////////////////////////////////////////////////////
 //
@@ -35,20 +35,20 @@
 //     3 = build system release build
 #define RMA_VERSION_BRANCH 0
 
-#define VERSION_WITH_COMMAS  9,0,25092,9110
-#define VERSION_WITH_PERIODS 9.0.25092.09110
-#define COPYRIGHT "Copyright (C) 1993-2025, Robert McNeel & Associates. All Rights Reserved."
+#define VERSION_WITH_COMMAS  9,1,26279,3130
+#define VERSION_WITH_PERIODS 9.1.26279.03130
+#define COPYRIGHT "Copyright (C) 1993-2026, Robert McNeel & Associates. All Rights Reserved."
 #define SPECIAL_BUILD_DESCRIPTION "Public OpenNURBS C++ 3dm file IO library."
 
 #define RMA_VERSION_NUMBER_MAJOR_STRING   "9"
 #define RMA_VERSION_NUMBER_MAJOR_WSTRING L"9"
 #define RMA_PREVIOUS_VERSION_NUMBER_MAJOR_WSTRING L"8"
 
-#define RMA_VERSION_NUMBER_SR_STRING   "SR0"
-#define RMA_VERSION_NUMBER_SR_WSTRING L"SR0"
+#define RMA_VERSION_NUMBER_SR_STRING   "SR1"
+#define RMA_VERSION_NUMBER_SR_WSTRING L"SR1"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "9.0.25092.09110"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"9.0.25092.09110"
+#define RMA_VERSION_WITH_PERIODS_STRING   "9.1.26279.03130"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"9.1.26279.03130"
 
 
 
@@ -71,7 +71,7 @@
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || defined(WINDOWS) || defined(_WINDOWS_) || defined(__WINDOWS__)
 #if !defined(VS_FF_PRERELEASE)
 // At this time, verrsrc.h does not have protection against multiple includes.
-// Testing for VS_FF_PRERELEASE seems to prevent double incudes and the
+// Testing for VS_FF_PRERELEASE seems to prevent double includes and the
 // redef errors it generates.
 #include "verrsrc.h"
 #endif

@@ -1,6 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="15.0">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|ARM64">
       <Configuration>Debug</Configuration>
       <Platform>ARM64</Platform>
@@ -9,9 +13,9 @@
       <Configuration>Debug</Configuration>
       <Platform>ARM64EC</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|ARM64">
       <Configuration>Release</Configuration>
@@ -21,18 +25,6 @@
       <Configuration>Release</Configuration>
       <Platform>ARM64EC</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{23288C65-E3EB-4D09-A648-22E1636EB40F}</ProjectGuid>
@@ -41,55 +33,42 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -97,14 +76,6 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
-    <Import Project="opennurbs_msbuild.Cpp.props" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
-    <Import Project="opennurbs_msbuild.Cpp.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
@@ -132,19 +103,6 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>ON_COMPILING_OPENNURBS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <PrecompiledHeaderFile>opennurbs.h</PrecompiledHeaderFile>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -155,6 +113,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OpenMPSupport>true</OpenMPSupport>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -170,6 +130,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OpenMPSupport>true</OpenMPSupport>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,26 +147,11 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OpenMPSupport>true</OpenMPSupport>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>ON_COMPILING_OPENNURBS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <SDLCheck>true</SDLCheck>
-      <PrecompiledHeaderFile>opennurbs.h</PrecompiledHeaderFile>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -217,6 +164,8 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>opennurbs.h</PrecompiledHeaderFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/bigobj /Zo %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -234,6 +183,8 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>opennurbs.h</PrecompiledHeaderFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/bigobj /Zo %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -251,6 +202,8 @@
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>opennurbs.h</PrecompiledHeaderFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/bigobj /Zo %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -339,6 +292,7 @@
     <ClInclude Include="opennurbs_lock.h" />
     <ClInclude Include="opennurbs_lookup.h" />
     <ClInclude Include="opennurbs_mapchan.h" />
+    <ClInclude Include="opennurbs_markup.h" />
     <ClInclude Include="opennurbs_material.h" />
     <ClInclude Include="opennurbs_math.h" />
     <ClInclude Include="opennurbs_matrix.h" />
@@ -351,10 +305,12 @@
     <ClInclude Include="opennurbs_nurbscurve.h" />
     <ClInclude Include="opennurbs_nurbssurface.h" />
     <ClInclude Include="opennurbs_object.h" />
+    <ClInclude Include="opennurbs_parallel_sort.h" />
     <ClInclude Include="opennurbs_object_history.h" />
     <ClInclude Include="opennurbs_objref.h" />
     <ClInclude Include="opennurbs_offsetsurface.h" />
     <ClInclude Include="opennurbs_optimize.h" />
+    <ClInclude Include="opennurbs_pageview_group.h" />
     <ClInclude Include="opennurbs_parse.h" />
     <ClInclude Include="opennurbs_photogrammetry.h" />
     <ClInclude Include="opennurbs_plane.h" />
@@ -373,6 +329,7 @@
     <ClInclude Include="opennurbs_progress_reporter.h" />
     <ClInclude Include="opennurbs_qsort_template.h" />
     <ClInclude Include="opennurbs_quaternion.h" />
+    <ClInclude Include="opennurbs_quickhull3d.h" />
     <ClInclude Include="opennurbs_rand.h" />
     <ClInclude Include="opennurbs_render_channels.h" />
     <ClInclude Include="opennurbs_render_content.h" />
@@ -398,6 +355,7 @@
     <ClInclude Include="opennurbs_system.h" />
     <ClInclude Include="opennurbs_system_compiler.h" />
     <ClInclude Include="opennurbs_system_runtime.h" />
+    <ClInclude Include="opennurbs_tag.h" />
     <ClInclude Include="opennurbs_terminator.h" />
     <ClInclude Include="opennurbs_testclass.h" />
     <ClInclude Include="opennurbs_text.h" />
@@ -421,6 +379,7 @@
     <ClInclude Include="opennurbs_windows_targetver.h" />
     <ClInclude Include="opennurbs_win_dwrite.h" />
     <ClInclude Include="opennurbs_wip.h" />
+    <ClInclude Include="opennurbs_worksession.h" />
     <ClInclude Include="opennurbs_workspace.h" />
     <ClInclude Include="opennurbs_xform.h" />
     <ClInclude Include="opennurbs_xml.h" />
@@ -506,6 +465,7 @@
     <ClCompile Include="opennurbs_locale.cpp" />
     <ClCompile Include="opennurbs_lock.cpp" />
     <ClCompile Include="opennurbs_lookup.cpp" />
+    <ClCompile Include="opennurbs_markup.cpp" />
     <ClCompile Include="opennurbs_material.cpp" />
     <ClCompile Include="opennurbs_math.cpp" />
     <ClCompile Include="opennurbs_matrix.cpp" />
@@ -527,6 +487,7 @@
     <ClCompile Include="opennurbs_objref.cpp" />
     <ClCompile Include="opennurbs_offsetsurface.cpp" />
     <ClCompile Include="opennurbs_optimize.cpp" />
+    <ClCompile Include="opennurbs_pageview_group.cpp" />
     <ClCompile Include="opennurbs_parse_angle.cpp" />
     <ClCompile Include="opennurbs_parse_length.cpp" />
     <ClCompile Include="opennurbs_parse_number.cpp" />
@@ -551,6 +512,7 @@
     <ClCompile Include="opennurbs_progress_reporter.cpp" />
     <ClCompile Include="opennurbs_public_memory.cpp" />
     <ClCompile Include="opennurbs_quaternion.cpp" />
+    <ClCompile Include="opennurbs_quickhull3d.cpp" />
     <ClCompile Include="opennurbs_rand.cpp" />
     <ClCompile Include="opennurbs_render_channels.cpp" />
     <ClCompile Include="opennurbs_render_content.cpp" />
@@ -593,6 +555,7 @@
     <ClCompile Include="opennurbs_surface.cpp" />
     <ClCompile Include="opennurbs_surfaceproxy.cpp" />
     <ClCompile Include="opennurbs_symmetry.cpp" />
+    <ClCompile Include="opennurbs_tag.cpp" />
     <ClCompile Include="opennurbs_terminator.cpp" />
     <ClCompile Include="opennurbs_testclass.cpp" />
     <ClCompile Include="opennurbs_text.cpp" />
@@ -615,6 +578,7 @@
     <ClCompile Include="opennurbs_version_number.cpp" />
     <ClCompile Include="opennurbs_viewport.cpp" />
     <ClCompile Include="opennurbs_win_dwrite.cpp" />
+    <ClCompile Include="opennurbs_worksession.cpp" />
     <ClCompile Include="opennurbs_workspace.cpp" />
     <ClCompile Include="opennurbs_wstring.cpp" />
     <ClCompile Include="opennurbs_xform.cpp" />

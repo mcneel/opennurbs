@@ -29,6 +29,7 @@ public:
   int m_hatch_index = ON_UNSET_INT_INDEX; // ON_HatchPattern::Unset.Index();
   double m_hatch_scale = 1.0;
   double m_hatch_rotation = 0.0;
+  double m_hatch_plot_weight_mm = -10.0;
   ON_Color m_background_fill_color = ON_Color::UnsetColor;
   ON_Color m_background_fill_print_color = ON_Color::UnsetColor;
   ON_Color m_boundary_color = ON_Color::UnsetColor;
@@ -37,7 +38,9 @@ public:
   ON_Color m_hatch_print_color = ON_Color::UnsetColor;
   bool m_boundary_visible = true;
   double m_boundary_width_scale = 3.0;
+  double m_boundary_plot_weight_mm = -10.0;
   std::shared_ptr<ON_Linetype> m_custom_linetype;
+  int m_linetype_index = ON_UNSET_INT_INDEX;
   bool operator==(const ON_SectionStylePrivate& other) const;
 };
 
@@ -62,7 +65,9 @@ bool ON_SectionStylePrivate::operator==(const ON_SectionStylePrivate& other) con
   return m_background_fill_mode == other.m_background_fill_mode &&
     m_fill_rule == other.m_fill_rule &&
     m_hatch_index == other.m_hatch_index &&
+    m_hatch_scale == other.m_hatch_scale && // 2026-09-17, Rajaa Issa, RH-98721
     m_hatch_rotation == other.m_hatch_rotation &&
+    m_hatch_plot_weight_mm == other.m_hatch_plot_weight_mm &&
     m_background_fill_color == other.m_background_fill_color &&
     m_background_fill_print_color == other.m_background_fill_print_color &&
     m_boundary_color == other.m_boundary_color &&
@@ -70,7 +75,9 @@ bool ON_SectionStylePrivate::operator==(const ON_SectionStylePrivate& other) con
     m_hatch_color == other.m_hatch_color &&
     m_hatch_print_color == other.m_hatch_print_color &&
     m_boundary_visible == other.m_boundary_visible &&
-    m_boundary_width_scale == other.m_boundary_width_scale;
+    m_boundary_width_scale == other.m_boundary_width_scale &&
+    m_boundary_plot_weight_mm == other.m_boundary_plot_weight_mm &&
+    m_linetype_index == other.m_linetype_index;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -111,6 +118,7 @@ ON_SectionStyle& ON_SectionStyle::operator=(const ON_SectionStyle& other)
   }
   return *this;
 }
+
 bool ON_SectionStyle::IsValid( ON_TextLog* text_log ) const
 {
   if (false == ON_ModelComponent::IsValid(text_log))
@@ -133,6 +141,43 @@ bool ON_SectionStyle::IsValid( ON_TextLog* text_log ) const
 
   return true;
 }
+
+const ON_SectionStyle* ON_SectionStyle::FromModelComponentRef(
+  const class ON_ModelComponentReference& model_component_reference,
+  const ON_SectionStyle* none_return_value
+)
+{
+  const ON_SectionStyle* p = ON_SectionStyle::Cast(model_component_reference.ModelComponent());
+  return (nullptr != p) ? p : none_return_value;
+}
+
+bool ON_SectionStyle::UpdateReferencedComponents(
+  const class ON_ComponentManifest& source_manifest,
+  const class ON_ComponentManifest& destination_manifest,
+  const class ON_ManifestMap& manifest_map
+)
+{
+  bool rc = true;
+  // Update hatch pattern index
+  int hatch_index = HatchIndex();
+  if (hatch_index >= 0)
+  {
+    int destination_hatch_index = -1;
+    if (manifest_map.GetAndValidateDestinationIndex(ON_ModelComponent::Type::HatchPattern, hatch_index, destination_manifest, &destination_hatch_index))
+    {
+      hatch_index = destination_hatch_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update hatch pattern reference.");
+      rc = false;
+      hatch_index = DefaultSectionStylePrivate.m_hatch_index;
+    }
+    SetHatchIndex(hatch_index);
+  }
+  return rc;
+}
+
 
 // 12 Aug 2021 S. Baer
 // When adding new fields written to 3dm files, always add information to this
@@ -174,6 +219,7 @@ void ON_SectionStyle::Dump( ON_TextLog& dump ) const
   dump.Print("Hatch index = %d\n", HatchIndex());
   dump.Print("Hatch scale = %g\n", HatchScale());
   dump.Print("Hatch rotation = %g\n", HatchRotation());
+  dump.Print("Hatch plot weight = %g\n", HatchPatternPlotWeightMillimeters());
 
   dump.Print("Boundary color");
   dump.PrintColor(BoundaryColor(false));
@@ -210,15 +256,17 @@ enum ON_SectionStyleTypeCodes : unsigned char
   HatchRotation = 9,
   HatchColor = 10,
   BoundaryLinetype = 11,
-
-  LastSectionStyleTypeCode = 11
+  BoundaryWeightMillimeters = 12,
+  LinetypeIndex = 13,
+  HatchWeightMillimeters = 14,
+  LastSectionStyleTypeCode = 14
 };
 
 bool ON_SectionStyle::Write( ON_BinaryArchive& file) const
 {
   bool rc = false;
   {
-    const int minor_version = 1;
+    const int minor_version = 3;
     if (!file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK, 1, minor_version))
       return false;
     for (;;)
@@ -324,6 +372,37 @@ bool ON_SectionStyle::Write( ON_BinaryArchive& file) const
         if (!file.WriteChar(itemType))
           break;
         if (!customLinetype->Write(file))
+          break;
+      }
+
+      double boundaryWeight = BoundaryPlotWeightMillimeters();
+      if (fabs(boundaryWeight-DefaultSectionStylePrivate.m_boundary_plot_weight_mm) > ON_EPSILON)
+      {
+        const unsigned char itemType = ON_SectionStyleTypeCodes::BoundaryWeightMillimeters; // 12
+        if (!file.WriteChar(itemType))
+          break;
+        if (!file.WriteDouble(boundaryWeight))
+          break;
+      }
+
+      int linetypeIndex = BoundaryLinetypeIndex();
+      if (linetypeIndex != DefaultSectionStylePrivate.m_linetype_index)
+      {
+        const unsigned char itemType = ON_SectionStyleTypeCodes::LinetypeIndex; // 13
+        if (!file.WriteChar(itemType))
+          break;
+        if (!file.WriteInt(linetypeIndex))
+          break;
+      }
+
+      // chunk version 1.3 fields
+      double hatchWeight = HatchPatternPlotWeightMillimeters();
+      if (fabs(hatchWeight - DefaultSectionStylePrivate.m_hatch_plot_weight_mm) > ON_EPSILON)
+      {
+        const unsigned char itemType = ON_SectionStyleTypeCodes::HatchWeightMillimeters; // 14
+        if (!file.WriteChar(itemType))
+          break;
+        if (!file.WriteDouble(hatchWeight))
           break;
       }
 
@@ -486,6 +565,42 @@ bool ON_SectionStyle::Read( ON_BinaryArchive& file)
           break;
       }
 
+      if (minor_version > 1)
+      {
+        if (ON_SectionStyleTypeCodes::BoundaryWeightMillimeters == item_id) // 12
+        {
+          double weight = 0;
+          if (!file.ReadDouble(&weight))
+            break;
+          SetBoundaryPlotWeightMillimeters(weight);
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+
+        if (ON_SectionStyleTypeCodes::LinetypeIndex == item_id) // 13
+        {
+          int index = 0;
+          if (!file.ReadInt(&index))
+            break;
+          SetBoundaryLinetypeIndex(index);
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+      }
+
+      if (minor_version > 2)
+      {
+        if (ON_SectionStyleTypeCodes::HatchWeightMillimeters == item_id) // 14
+        {
+          double weight = 0;
+          if (!file.ReadDouble(&weight))
+            break;
+          SetHatchPatternPlotWeightMillimeters(weight);
+          if (!file.ReadChar(&item_id))
+            break;
+        }
+      }
+
       if (item_id > ON_SectionStyleTypeCodes::LastSectionStyleTypeCode)
       {
         // we are reading file written with code newer
@@ -646,6 +761,24 @@ void ON_SectionStyle::SetHatchRotation(double rotation)
   m_private->m_hatch_rotation = rotation;
 }
 
+double ON_SectionStyle::HatchPatternPlotWeightMillimeters() const
+{
+  if (m_private)
+    return m_private->m_hatch_plot_weight_mm;
+  return DefaultSectionStylePrivate.m_hatch_plot_weight_mm;
+}
+void ON_SectionStyle::SetHatchPatternPlotWeightMillimeters(double weight)
+{
+  if (weight < -1.1)
+    weight = DefaultSectionStylePrivate.m_hatch_plot_weight_mm;
+  if (weight == HatchPatternPlotWeightMillimeters())
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_SectionStylePrivate();
+  m_private->m_hatch_plot_weight_mm = weight;
+}
+
 ON_Color ON_SectionStyle::HatchColor(bool print) const
 {
   if (m_private)
@@ -676,10 +809,49 @@ void ON_SectionStyle::SetBoundaryLinetype(const ON_Linetype& linetype)
   if (nullptr == m_private)
     m_private = new ON_SectionStylePrivate();
 
+  m_private->m_linetype_index = ON_UNSET_INT_INDEX;
   m_private->m_custom_linetype.reset(new ON_Linetype(linetype));
 }
+
+void ON_SectionStyle::SetBoundaryLinetypeIndex(int index)
+{
+  if (BoundaryLinetypeIndex() == index)
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_SectionStylePrivate();
+
+  m_private->m_custom_linetype.reset();
+  m_private->m_linetype_index = index;
+}
+
+int ON_SectionStyle::BoundaryLinetypeIndex() const
+{
+  if (m_private)
+    return m_private->m_linetype_index;
+  return DefaultSectionStylePrivate.m_linetype_index;
+}
+
 void ON_SectionStyle::RemoveBoundaryLinetype()
 {
   if (m_private)
     m_private->m_custom_linetype.reset();
+}
+
+double ON_SectionStyle::BoundaryPlotWeightMillimeters() const
+{
+  if (m_private)
+    return m_private->m_boundary_plot_weight_mm;
+  return DefaultSectionStylePrivate.m_boundary_plot_weight_mm;
+}
+void ON_SectionStyle::SetBoundaryPlotWeightMillimeters(double weight)
+{
+  if (weight < -1.1)
+    weight = DefaultSectionStylePrivate.m_boundary_plot_weight_mm;
+  if (weight == BoundaryPlotWeightMillimeters())
+    return;
+
+  if (nullptr == m_private)
+    m_private = new ON_SectionStylePrivate();
+  m_private->m_boundary_plot_weight_mm = weight;
 }

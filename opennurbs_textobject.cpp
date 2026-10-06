@@ -214,8 +214,35 @@ bool ON_Text::GetAnnotationBoundingBox(
   );
 
   // There is no other geometry on ON_Text
-
   return Internal_GetBBox_End(bbox, hash, boxmin, boxmax, bGrow);
+}
+
+// ON_Geometry override
+bool ON_Text::GetTightBoundingBox(
+  ON_BoundingBox& tight_bbox,
+  bool bGrowBox,
+  const ON_Xform* xform
+) const
+{
+  // For an identity xform the cached world axis-aligned
+  // box is already tight, so defer to the base implementation
+  if (nullptr == xform || xform->IsIdentity())
+    return ON_Geometry::GetTightBoundingBox(tight_bbox, bGrowBox, xform);
+
+  ON_3dPoint corners[8];
+  if (GetTextGlyphBoxCorners(nullptr, &ON_DimStyle::Default, 1.0, corners))
+  {
+    if (bGrowBox && !tight_bbox.IsValid())
+      bGrowBox = false;
+    if (!bGrowBox)
+      tight_bbox.Destroy();
+
+    return ON_GetPointListBoundingBox(
+      3, 0, 8, 3, (const double*)corners,
+      tight_bbox, bGrowBox ? true : false, xform) ? true : false;
+  }
+
+  return ON_Geometry::GetTightBoundingBox(tight_bbox, bGrowBox, xform);
 }
 
 bool ON_Text::Transform(const ON_Xform& xform, const ON_DimStyle* parent_dimstyle)
@@ -332,13 +359,67 @@ bool ON_Text::GetTextXform(
   if (nullptr == text)
     return false;
 
-  if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
+  // Synchronize text content alignment with dimstyle alignment
+  ON::TextHorizontalAlignment halign = dimstyle->TextHorizontalAlignment();
+  ON::TextVerticalAlignment valign = dimstyle->TextVerticalAlignment();
+  ON::TextHorizontalAlignment current_halign;
+  ON::TextVerticalAlignment current_valign;
+  text->GetAlignment(current_halign, current_valign);
+  if (halign != current_halign || valign != current_valign)
   {
-    ON_wString rtfstr = text->RtfText();
-    ON_Plane objectplane = Plane();
-    const_cast<ON_TextContent*>(text)->Create(
-      rtfstr, ON::AnnotationType::Text, dimstyle, 
-      text->TextIsWrapped(), text->FormattingRectangleWidth(), text->TextRotationRadians());
+    const_cast<ON_TextContent*>(text)->SetAlignment(halign, valign);
+  }
+
+  if (DimStyleTextPositionPropertiesHash().IsEmptyContentHash())
+  {
+    // ON_TextContent::Read made these runs with ON_DimStyle::Default, so a run that
+    // names no font of its own has the default font, and patching in place (below)
+    // would keep it. Remake the runs from the archived text with this dimstyle.
+    // Annotations added to a Rhino document were already remade there. RH-98673
+    const_cast<ON_TextContent*>(text)->RebuildRuns(ON::AnnotationType::Text, dimstyle);
+  }
+  else if (DimStyleTextPositionPropertiesHash() != dimstyle->TextPositionPropertiesHash())
+  {
+    // The important thing about the original code is that the hash is set somewhere in
+    // the implementation so Create needs to be called for it to happen.
+    // Adding a method to set the hash directly avoids re creating the text with all it's
+    // side effects, i.e., specifically it avoids composing/recomposing the rtf text.
+
+    // original -------------------------
+    //ON_wString rtfstr = text->RtfText();
+    //ON_Plane objectplane = Plane();
+    //const_cast<ON_TextContent*>(text)->Create(
+    //  rtfstr, ON::AnnotationType::Text, dimstyle,
+    //  text->TextIsWrapped(), text->FormattingRectangleWidth(), text->TextRotationRadians());
+    // original -------------------------
+    ON_SHA1_Hash hash = dimstyle->TextPositionPropertiesHash();
+    const_cast<ON_TextContent*>(text)->SetDimStyleTextPositionPropertiesHash(hash);
+
+    // Update the text runs' properties to match the dimstyle.
+    // The original Create() call did this via Internal_SetRunTextHeight().
+    double text_height = dimstyle->TextHeight();
+    bool use_kerning = dimstyle->UseKerning();
+    double line_space_scale = dimstyle->LineSpaceScale();
+    ON_TextRunArray* runs = const_cast<ON_TextContent*>(text)->TextRuns(true);
+    if (nullptr != runs)
+    {
+      if (text_height > 0.0)
+        runs->SetTextHeight(text_height);
+      runs->SetApplyKerning(use_kerning);
+      runs->SetLineSpaceScale(line_space_scale);
+
+      ON_TextContent::MeasureTextContent(const_cast<ON_TextContent*>(text), true, false);
+    }
+
+    if (text->TextIsWrapped())
+      const_cast<ON_TextContent*>(text)->Internal_DeleteWrappedRuns();
+  }
+
+  if (text->TextIsWrapped() && !text->HasWrappedRuns())
+  {
+    double w = text->FormattingRectangleWidth();
+    if (w > 0.0 && w < 1.0e300)
+      const_cast<ON_TextContent*>(text)->WrapText(w);
   }
 
   text_xform_out = ON_Xform::IdentityTransformation;

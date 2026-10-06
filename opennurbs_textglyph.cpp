@@ -1657,6 +1657,6 @@ bool ON_TextContent::GetGlyphContours(
     }
   }
 
-  return false;
+  return text_contours.Count() > 0;
 }
 

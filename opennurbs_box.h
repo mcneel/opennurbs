@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -57,7 +57,7 @@ public:
          ON_3dPoint test_point
          ) const;
 
-  // rotate sphere about its origin
+  // rotate box about its origin
   bool Rotate(
         double sin_angle,               // sin(angle)
         double cos_angle,               // cos(angle)
@@ -69,7 +69,7 @@ public:
         const ON_3dVector& axis_of_rotation // axis of rotation
         );
 
-  // rotate sphere about a point and axis
+  // rotate box about a point and axis
   bool Rotate(
         double sin_angle,               // sin(angle)
         double cos_angle,               // cos(angle)

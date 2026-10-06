@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -19,6 +19,7 @@
 
 #if !defined(OPENNURBS_SYSTEM_INC_)
 #define OPENNURBS_SYSTEM_INC_
+
 
 
 
@@ -185,14 +186,14 @@ typedef ON__UINT32  ON__UINT_PTR;
 #error Update OpenNURBS to work with new pointer size.
 #endif
 
-ON_STATIC_ASSERT(sizeof(ON__INT8)     == 1);
-ON_STATIC_ASSERT(sizeof(ON__UINT8)    == 1);
-ON_STATIC_ASSERT(sizeof(ON__INT16)    == 2);
-ON_STATIC_ASSERT(sizeof(ON__UINT16)   == 2);
-ON_STATIC_ASSERT(sizeof(ON__INT32)    == 4);
-ON_STATIC_ASSERT(sizeof(ON__UINT32)   == 4);
-ON_STATIC_ASSERT(sizeof(ON__INT64)    == 8);
-ON_STATIC_ASSERT(sizeof(ON__UINT64)   == 8);
+ON_STATIC_ASSERT_MSG(sizeof(ON__INT8)     == 1, "Incorrect sizeof ON__INT8");
+ON_STATIC_ASSERT_MSG(sizeof(ON__UINT8)    == 1, "Incorrect sizeof ON__UINT8");
+ON_STATIC_ASSERT_MSG(sizeof(ON__INT16)    == 2, "Incorrect sizeof ON__INT16");
+ON_STATIC_ASSERT_MSG(sizeof(ON__UINT16)   == 2, "Incorrect sizeof ON__UINT16");
+ON_STATIC_ASSERT_MSG(sizeof(ON__INT32)    == 4, "Incorrect sizeof ON__INT32");
+ON_STATIC_ASSERT_MSG(sizeof(ON__UINT32)   == 4, "Incorrect sizeof ON__UINT32");
+ON_STATIC_ASSERT_MSG(sizeof(ON__INT64)    == 8, "Incorrect sizeof ON__INT64");
+ON_STATIC_ASSERT_MSG(sizeof(ON__UINT64)   == 8, "Incorrect sizeof ON__UINT64");
 
 ON_STATIC_ASSERT_MSG(sizeof(ON__INT_PTR)  == sizeof(void*), "ON_INT_PTR must be an integer type with sizeof(ON_INT_PTR) = sizeof(void*)");
 ON_STATIC_ASSERT_MSG(sizeof(ON__UINT_PTR) == sizeof(void*), "ON_UINT_PTR must be an integer type with sizeof(ON_UINT_PTR) = sizeof(void*)");
@@ -611,13 +612,16 @@ typedef ON__UINT32 wchar_t;
 // Windows uses the Direct Write SDK for font and glyph calculations.
 // MacOS and iOS use the Apple Core Text SDK for font and glyph calculations.
 
-#if defined(ON_RUNTIME_ANDROID)
-// May work reasonably for Android versions < 8-ish as of Sep 2018.
-// Test carefully if working right is important.
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+// Android and Linux (RhinoCore, the headless Rhino behind Rhino.Inside and
+// Rhino.Compute) have no platform font engine, so the vendored FreeType is
+// the font engine. Android finds font files with the NDK font matcher; Linux
+// scans the installed font files (ON_ManagedFonts::Internal_GetLinuxInstalledFonts).
+// Android: may work reasonably for versions < 8-ish as of Sep 2018. Test carefully.
 #define OPENNURBS_FREETYPE_SUPPORT
 #else
 
-// not Windows, Apple, or Android
+// not Windows, Apple, Android, or Linux
 
 // To disable freetype support, comment out the following define.
 // To enable freetype support, define OPENNURBS_FREETYPE_SUPPORT
@@ -626,7 +630,7 @@ typedef ON__UINT32 wchar_t;
 // Whenever possible use native OS tools for font and glyph support.
 // Things like names, outlines, metrics, UNICODE mapping will generally
 // work better align with user's experiences on that platform.
-// Freetype is basically a platform neutral font file file reading toolkit
+// Freetype is basically a platform neutral font file reading toolkit
 // and has all the limitations that arise from that approach to complex
 // information modern OSs manage in complicated ways.
 

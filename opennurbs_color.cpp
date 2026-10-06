@@ -34,7 +34,7 @@ bool ON_Color::IsUnset() const
 
 bool ON_Color::IsTransparent() const
 {
-  return this->Alpha() <= 0;
+  return Alpha() == 255;
 }
 
 const ON_Color ON_Color::RandomColor()

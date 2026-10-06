@@ -13,6 +13,8 @@
 
 #include "opennurbs.h"
 
+#include <filesystem>
+
 #if !defined(ON_COMPILING_OPENNURBS)
 // This check is included in all opennurbs source .c and .cpp files to insure
 // ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
@@ -1057,7 +1059,7 @@ bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit signed integers
 		ON__INT64* p 
 		)
 {
-  return ReadInt64(1,p);
+  return ReadInt64( count, p );
 }
 
 bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit unsigned integers
@@ -1065,21 +1067,21 @@ bool ON_BinaryArchive::ReadBigInt( // Read an array of 64 bit unsigned integers
 		ON__UINT64* p
 		)
 {
-  return ReadInt64(1,(ON__INT64*)p);
+  return ReadInt64( count, (ON__INT64*)p );
 }
 
 bool ON_BinaryArchive::ReadBigInt( // Read a single 64 bit signed integer
 		ON__INT64* p
 		)
 {
-  return ReadInt64(1,p);
+  return ReadInt64( 1, p );
 }
 
 bool ON_BinaryArchive::ReadBigInt( // Read a single 64 bit unsigned integer
 		ON__UINT64* p
 		)
 {
-  return ReadInt64(1,(ON__INT64*)p);
+  return ReadInt64( 1, (ON__INT64*)p );
 }
 
 
@@ -6596,65 +6598,46 @@ bool ON_BinaryArchive::EndRead3dmChunk(bool bSupressPartiallyReadChunkWarning)
     {
       // partially read chunk - happens when chunks are skipped or old code
       // reads a new minor version of a chunk whnich has added information.
-      if ( file_offset != c->m_start_offset ) 
+      if ( file_offset != c->m_start_offset)
       {
-        if ( m_3dm_version != 1 || (m_error_message_mask&0x02) == 0 ) 
+        for (;;)
         {
-          // when reading v1 files, there are some situations where
-          // it is reasonable to attempt to read 4 bytes at the end
-          // of a file.  The above test prevents making a call
-          // to ON_WARNING() in these situations.
-
-          unsigned int file_year = 0;
-          unsigned int file_month = 0;
-          unsigned int file_date = 0;
-          unsigned int file_major_version = 0;
-          const bool bHaveFileDate = ON_VersionNumberParse(
-            m_3dm_opennurbs_version,
-            &file_major_version,
-            0,
-            &file_year,
-            &file_month,
-            &file_date,
-            0
-            );
-
-          const unsigned int file_ymd
-            = bHaveFileDate
-            ? ((file_year * 100 + file_month) * 100 + file_date)
-            : 0;
-
-          unsigned int app_year = 0;
-          unsigned int app_month = 0;
-          unsigned int app_date = 0;
-          unsigned int app_major_version = 0;
-          const bool bHaveAppDate = ON_VersionNumberParse(
-            ON::Version(),
-            &app_major_version,
-            0,
-            &app_year,
-            &app_month,
-            &app_date,
-            0
-            );
-
-          const unsigned int app_ymd
-            = bHaveAppDate
-            ? ((app_year * 100 + app_month) * 100 + app_date)
-            : 0;
-
-          if (file_major_version <= app_major_version 
-            && file_ymd <= app_ymd
-            )
+          if (bSupressPartiallyReadChunkWarning)
           {
-            // We are reading a file written by this version or an
-            // earlier version of opennurbs.  
-            // There should not be any partially read chunks.
-            if (!bSupressPartiallyReadChunkWarning)
-            {
-              ON_WARNING("ON_BinaryArchive::EndRead3dmChunk: partially read chunk - skipping bytes at end of current chunk.");
-            }
+            // The calling code expects there to be a partially read chunk.
+            break;
           }
+
+          // The calling code had no reason to supress warnings about this chunk
+          // being partially read.
+          const bool bIsV1EndOfFile = this->Archive3dmVersion() == 1 && 0 != (m_error_message_mask & 0x02);
+          if (bIsV1EndOfFile)
+          {
+            // when reading v1 files, there are some situations where
+            // it is reasonable to attempt to read 4 bytes at the end
+            // of a file. The above test prevents making a call
+            // to ON_WARNING() in these situations.
+            break;
+          }
+
+          // m_3dm_opennurbs_version = version of opennurbs that wrote this 3dm file.
+          // ON::Version() = this version of opennurbs.
+          if (ON_VersionNumberCompare(m_3dm_opennurbs_version, ON::Version(), 2) <= 0)
+          {
+            // We are reading a file that was written by this version or an earlier version of opennurbs.  
+            // This chunk should have been completely read.
+            // Typically, this is a bug that can be fixed after carefully studying why it occured.
+            // Either there is a bug in the reading or writing of the chunk or new informaton was
+            // added at the end of a chunk and the opennurbs major version or YYMMDD was not
+            // correctly set.
+            // In rare cases, somebody did something more seriously wrong and likely harder to figure out.
+            // 
+            // In any case, issue a warning and continue reading. This is not a fatal problem but
+            // it indicates information is being lost.
+            ON_WARNING("ON_BinaryArchive::EndRead3dmChunk: partially read chunk - skipping bytes at end of current chunk.");
+          }
+
+          break;
         }
       }
 
@@ -7710,6 +7693,64 @@ void ON_BinaryArchive::IntentionallyWriteCorrupt3dmStartSectionForExpertTesting(
   }
 }
 
+// The tail of the line Write3dmStartSection appends to every file it writes. Older files carry
+// it without the "Runtime:" prefix that was added later, so match on this part alone.
+#define ON_START_SECTION_PROVENANCE "3DM I/O processor: OpenNURBS toolkit version"
+
+/*
+Description:
+  Returns the caller's start section comment with any lines openNURBS itself appended on a
+  previous write removed from the end of it.
+Remarks:
+  RH-98395. Write3dmStartSection appends a line naming the build that wrote the file, and
+  Read3dmStartSection hands the whole comment block back to the caller - openNURBS's line
+  included. A caller that reads a file and writes it out again, which is what ONX_Model does,
+  therefore passed the previous line back in and got a second one appended after it. The block
+  grew by a line on every rewrite and nothing ever removed one.
+
+  Only trailing lines are considered, and only ones carrying the marker openNURBS writes, so
+  whatever the caller actually supplied is left alone however many lines it runs to.
+*/
+static ON_String Internal_WithoutOpenNurbsProvenance(const char* sStartSectionComment)
+{
+  ON_String comment(nullptr == sStartSectionComment ? "" : sStartSectionComment);
+
+  const int length = comment.Length();
+
+  int keep = length; // What survives; only moves when a line is actually dropped.
+  int end = length;  // End of the line being looked at.
+
+  for (;;)
+  {
+    while (end > 0 && ('\n' == comment[end-1] || '\r' == comment[end-1]))
+      end--;
+
+    if (end <= 0)
+    {
+      keep = 0; // The comment is nothing but lines we wrote.
+      break;
+    }
+
+    int start = end;
+    while (start > 0 && '\n' != comment[start-1])
+      start--;
+
+    // Find() searches to the end of the string, so require the hit to fall inside this line -
+    // past 'end' lie the lines already dropped, which of course all match.
+    const int found = comment.Find(ON_START_SECTION_PROVENANCE, start);
+    if (found < 0 || found >= end)
+      break; // The caller wrote this line. Stop here and keep it.
+
+    keep = start;
+    end = start;
+  }
+
+  if (keep < length)
+    comment.SetLength(keep);
+
+  return comment;
+}
+
 bool ON_BinaryArchive::Write3dmStartSection(int version, const char* sStartSectionComment)
 {
   if (!Begin3dmTable(ON::archive_mode::write3dm,ON_3dmArchiveTableType::start_section))
@@ -7782,12 +7823,14 @@ bool ON_BinaryArchive::Write3dmStartSection(int version, const char* sStartSecti
   if (!BeginWrite3dmBigChunk( TCODE_COMMENTBLOCK, 0 ))
     return false;
 
+  const ON_String comment = Internal_WithoutOpenNurbsProvenance(sStartSectionComment);
+
   bool rc = false;
   for (;;)
   {
-    if (sStartSectionComment && sStartSectionComment[0] )
+    if (comment.Length() > 0)
     {
-      if (!WriteByte( strlen(sStartSectionComment), sStartSectionComment) )
+      if (!WriteByte( comment.Length(), static_cast<const char*>(comment)) )
         break;
     }
     // write information that helps determine what code wrote the 3dm file
@@ -7797,7 +7840,7 @@ bool ON_BinaryArchive::Write3dmStartSection(int version, const char* sStartSecti
     int s_len 
       = ON_String::FormatIntoBuffer(
         s,s_capacity,
-        " Runtime: %s 3DM I/O processor: OpenNURBS toolkit version %u (compiled on " __DATE__ ")\n",
+        " Runtime: %s " ON_START_SECTION_PROVENANCE " %u (compiled on " __DATE__ ")\n",
         static_cast<const char*>(runtime),
         ON::Version()
         );
@@ -8742,6 +8785,25 @@ bool ON_BinaryArchive::ArchiveContains3dmTable(
   case ON_3dmArchiveTableType::hatchpattern_table:
     rc = (archive_3dm_version >= 4 && opennurbs_library_version >= 200405030);
     break;
+  case ON_3dmArchiveTableType::section_style_table:
+    // Section style tables were added May 28, 2025 (2449510828) 
+    rc = (archive_3dm_version >= 90 && opennurbs_library_version >= 2449510828); // (May 2025, V9)
+    break;
+  case ON_3dmArchiveTableType::markup_table:
+    // Markup tables were added Jan 5, 2026 (2449511724)
+    rc = (archive_3dm_version >= 90 && opennurbs_library_version >= 2449511724); // (Jan 2026, V9)
+    break;
+  case ON_3dmArchiveTableType::pageview_group_table:
+    // Markup tables were added Jan 12, 2026 (2449511752)
+    rc = (archive_3dm_version >= 90 && opennurbs_library_version >= 2449511752); // (Jan 2026, V9)
+    break;
+#if defined(OPENNURBS_TAG_WIP)
+  case ON_3dmArchiveTableType::tag_table:
+    // Tag tables were added Dec 10, 2025 (2449511612)
+    // TODO: update these values (below) when implemented
+    rc = (archive_3dm_version >= 90 && opennurbs_library_version >= 2449511612); // (Dec 2025, WIP)
+    break;
+#endif // OPENNURBS_TAG_WIP
   case ON_3dmArchiveTableType::instance_definition_table:
     rc = (archive_3dm_version >= 3 && opennurbs_library_version >= 200205110);
     break;
@@ -8778,11 +8840,13 @@ bool ON_BinaryArchive::ArchiveContains3dmTable(
   if ( 0 == opennurbs_library_version && m_3dm_version <= 3)
     opennurbs_library_version = 200012210;
   
-  return ON_BinaryArchive::ArchiveContains3dmTable(
+  const bool bHasTable = ON_BinaryArchive::ArchiveContains3dmTable(
     table,
     m_3dm_version,
     opennurbs_library_version
     );
+
+  return bHasTable;
 }
 
 ON_3dmArchiveTableType ON_BinaryArchive::TableTypeFromTypecode( unsigned int typecode )
@@ -8832,8 +8896,22 @@ ON_3dmArchiveTableType ON_BinaryArchive::TableTypeFromTypecode( unsigned int typ
   case TCODE_HATCHPATTERN_TABLE:
     tt = ON_3dmArchiveTableType::hatchpattern_table; 
     break;
+  case TCODE_SECTION_STYLE_TABLE:
+    tt = ON_3dmArchiveTableType::section_style_table; // (May 2025, V9)
+    break;
+  case TCODE_MARKUP_TABLE:
+    tt = ON_3dmArchiveTableType::markup_table; // (Jan 2026, V9)
+    break;
+  case TCODE_PAGEVIEWGROUP_TABLE:
+    tt = ON_3dmArchiveTableType::pageview_group_table; // (Jan 2026, V9)
+    break;
+#if defined(OPENNURBS_TAG_WIP)
+  case TCODE_TAG_TABLE:
+    tt = ON_3dmArchiveTableType::tag_table; // (Dec 2025, WIP)
+    break;
+#endif // OPENNURBS_TAG_WIP
   case TCODE_INSTANCE_DEFINITION_TABLE:
-    tt = ON_3dmArchiveTableType::instance_definition_table; 
+    tt = ON_3dmArchiveTableType::instance_definition_table;
     break;
   case TCODE_HISTORYRECORD_TABLE:
     tt = ON_3dmArchiveTableType::historyrecord_table; 
@@ -9144,6 +9222,32 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
               class_uuid = ON_CLASS_ID(ON_HatchPattern);
               min_length_data = 30;
               break;
+
+            case TCODE_SECTION_STYLE_TABLE:
+              table_record_record = TCODE_SECTION_STYLE_RECORD;
+              class_uuid = ON_CLASS_ID(ON_SectionStyle);
+              min_length_data = 30;
+              break;
+
+            case TCODE_MARKUP_TABLE:
+              table_record_record = TCODE_MARKUP_RECORD;
+              class_uuid = ON_CLASS_ID(ON_Markup);
+              min_length_data = 30;
+              break;
+
+            case TCODE_PAGEVIEWGROUP_TABLE:
+              table_record_record = TCODE_PAGEVIEWGROUP_RECORD;
+              class_uuid = ON_CLASS_ID(ON_PageViewGroup);
+              min_length_data = 20;
+              break;
+
+#if defined(OPENNURBS_TAG_WIP)
+            case TCODE_TAG_TABLE:
+              table_record_record = TCODE_TAG_RECORD;
+              class_uuid = ON_CLASS_ID(ON_Tag);
+              min_length_data = 20;
+              break;
+#endif // OPENNURBS_TAG_WIP
 
             case TCODE_INSTANCE_DEFINITION_TABLE:
               table_record_record = TCODE_INSTANCE_DEFINITION_RECORD;
@@ -9906,6 +10010,9 @@ ON_ModelComponent::Type ON_BinaryArchive::TableComponentType(
     break;
   case ON_3dmArchiveTableType::hatchpattern_table:
     model_component_type = ON_ModelComponent::Type::HatchPattern;
+    break;
+  case ON_3dmArchiveTableType::section_style_table: // (May 2025, V9)
+    model_component_type = ON_ModelComponent::Type::SectionStyle;
     break;
   case ON_3dmArchiveTableType::instance_definition_table:
     model_component_type = ON_ModelComponent::Type::InstanceDefinition;
@@ -12136,11 +12243,547 @@ bool ON_BinaryArchive::EndRead3dmHistoryRecordTable()
   return EndRead3dmTable( TCODE_HISTORYRECORD_TABLE );
 }
 
+
 ///////////////////////////////////////////////////////////
+// (May 2025, V9)
+//
+
+bool ON_BinaryArchive::BeginWrite3dmSectionStyleTable()
+{
+  return BeginWrite3dmTable(TCODE_SECTION_STYLE_TABLE);
+}
+
+bool ON_BinaryArchive::Write3dmSectionStyleComponent(
+  const class ON_ModelComponentReference& model_component_reference
+)
+{
+  return Write3dmSectionStyleComponent(model_component_reference.ModelComponent());
+}
+
+bool ON_BinaryArchive::Write3dmSectionStyleComponent(
+  const class ON_ModelComponent* model_component
+)
+{
+  bool rc = false;
+  for (;;)
+  {
+    const ON_SectionStyle* section_style = ON_SectionStyle::Cast(model_component);
+    if (nullptr == section_style)
+    {
+      ON_ERROR("model_component parameter is not a section style component.");
+      break;
+    }
+    rc = Write3dmSectionStyle(*section_style);
+    break;
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::Write3dmSectionStyle(const ON_SectionStyle& section_style)
+{
+  if (false == ArchiveContains3dmTable(ON_3dmArchiveTableType::section_style_table))
+    return true;
+
+  if (false == Internal_Begin3dmTableRecord(ON_3dmArchiveTableType::section_style_table))
+    return false;
+
+  Internal_Increment3dmTableItemCount();
+
+  bool rc = false;
+
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+  if (!c || c->m_typecode != TCODE_SECTION_STYLE_TABLE)
+  {
+    ON_ERROR("ON_BinaryArchive::Write3dmSectionStyle() - active chunk typecode != TCODE_SECTION_STYLE_TABLE");
+  }
+  else
+  {
+    rc = BeginWrite3dmChunk(TCODE_SECTION_STYLE_RECORD, 0);
+    if (rc)
+    {
+      Internal_Write3dmUpdateManifest(section_style);
+      rc = WriteObject(section_style);
+      if (!EndWrite3dmChunk())
+        rc = false;
+    }
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::EndWrite3dmSectionStyleTable()
+{
+  return EndWrite3dmTable(TCODE_SECTION_STYLE_TABLE);
+}
+
+bool ON_BinaryArchive::BeginRead3dmSectionStyleTable()
+{
+  return BeginRead3dmTable(TCODE_SECTION_STYLE_TABLE);
+}
+
+int ON_BinaryArchive::Read3dmSectionStyle(ON_SectionStyle*& section_style)
+{
+  section_style = nullptr;
+  if (false == Read3dmTableRecord(ON_3dmArchiveTableType::section_style_table, (void**)&section_style))
+    return 0;
+
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int rc = -1;
+  if (BeginRead3dmBigChunk(&tcode, &big_value))
+  {
+    if (tcode == TCODE_SECTION_STYLE_RECORD)
+    {
+      Internal_Increment3dmTableItemCount();
+      ON_Object* p = 0;
+      if (ReadObject(&p))
+      {
+        section_style = ON_SectionStyle::Cast(p);
+        if (nullptr == section_style)
+        {
+          delete p;
+        }
+        else
+        {
+          rc = 1;
+          Internal_Read3dmUpdateManifest(*section_style);
+        }
+      }
+      if (nullptr == section_style)
+      {
+        ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt section style table");
+      }
+    }
+    else if (tcode == TCODE_ENDOFTABLE)
+    {
+      // end of section style table
+      rc = 0;
+    }
+    else
+    {
+      ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt section style table");
+    }
+    if (!EndRead3dmChunk())
+      rc = -1;
+  }
+
+  return rc;
+}
+
+bool ON_BinaryArchive::EndRead3dmSectionStyleTable()
+{
+  return EndRead3dmTable(TCODE_SECTION_STYLE_TABLE);
+}
+
+//
+// (May 2025, V9)
 ///////////////////////////////////////////////////////////
+
 ///////////////////////////////////////////////////////////
+// (Jan 2026, V9)
+//
+
+bool ON_BinaryArchive::BeginWrite3dmMarkupTable()
+{
+  return BeginWrite3dmTable(TCODE_MARKUP_TABLE);
+}
+
+bool ON_BinaryArchive::Write3dmMarkupComponent(
+  const class ON_ModelComponentReference& model_component_reference
+)
+{
+  return Write3dmMarkupComponent(model_component_reference.ModelComponent());
+}
+
+bool ON_BinaryArchive::Write3dmMarkupComponent(
+  const class ON_ModelComponent* model_component
+)
+{
+  bool rc = false;
+  for (;;)
+  {
+    const ON_Markup* markup = ON_Markup::Cast(model_component);
+    if (nullptr == markup)
+    {
+      ON_ERROR("model_component parameter is not a markup component.");
+      break;
+    }
+    rc = Write3dmMarkup(*markup);
+    break;
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::Write3dmMarkup(const ON_Markup& markup)
+{
+  if (false == ArchiveContains3dmTable(ON_3dmArchiveTableType::markup_table))
+    return true;
+
+  if (false == Internal_Begin3dmTableRecord(ON_3dmArchiveTableType::markup_table))
+    return false;
+
+  Internal_Increment3dmTableItemCount();
+
+  bool rc = false;
+
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+  if (!c || c->m_typecode != TCODE_MARKUP_TABLE)
+  {
+    ON_ERROR("ON_BinaryArchive::Write3dmSectionStyle() - active chunk typecode != TCODE_MARKUP_TABLE");
+  }
+  else
+  {
+    rc = BeginWrite3dmChunk(TCODE_MARKUP_RECORD, 0);
+    if (rc)
+    {
+      Internal_Write3dmUpdateManifest(markup);
+      rc = WriteObject(markup);
+      if (!EndWrite3dmChunk())
+        rc = false;
+    }
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::EndWrite3dmMarkupTable()
+{
+  return EndWrite3dmTable(TCODE_MARKUP_TABLE);
+}
+
+bool ON_BinaryArchive::BeginRead3dmMarkupTable()
+{
+  return BeginRead3dmTable(TCODE_MARKUP_TABLE);
+}
+
+int ON_BinaryArchive::Read3dmMarkup(ON_Markup*& markup)
+{
+  markup = nullptr;
+  if (false == Read3dmTableRecord(ON_3dmArchiveTableType::markup_table, (void**)&markup))
+    return 0;
+
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int rc = -1;
+  if (BeginRead3dmBigChunk(&tcode, &big_value))
+  {
+    if (tcode == TCODE_MARKUP_RECORD)
+    {
+      Internal_Increment3dmTableItemCount();
+      ON_Object* p = 0;
+      if (ReadObject(&p))
+      {
+        markup = ON_Markup::Cast(p);
+        if (nullptr == markup)
+        {
+          delete p;
+        }
+        else
+        {
+          rc = 1;
+          Internal_Read3dmUpdateManifest(*markup);
+        }
+      }
+      if (nullptr == markup)
+      {
+        ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt markup table");
+      }
+    }
+    else if (tcode == TCODE_ENDOFTABLE)
+    {
+      // end of markup table
+      rc = 0;
+    }
+    else
+    {
+      ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt markup table");
+    }
+    if (!EndRead3dmChunk())
+      rc = -1;
+  }
+
+  return rc;
+}
+
+bool ON_BinaryArchive::EndRead3dmMarkupTable()
+{
+  return EndRead3dmTable(TCODE_MARKUP_TABLE);
+}
+
+//
+// (Jan 2026, V9)
 ///////////////////////////////////////////////////////////
+
+
 ///////////////////////////////////////////////////////////
+// (Jan 2026, V9)
+//
+
+bool ON_BinaryArchive::BeginWrite3dmPageViewGroupTable()
+{
+  return BeginWrite3dmTable(TCODE_PAGEVIEWGROUP_TABLE);
+}
+
+bool ON_BinaryArchive::Write3dmPageViewGroupComponent(
+  const class ON_ModelComponentReference& model_component_reference
+)
+{
+  return Write3dmPageViewGroupComponent(model_component_reference.ModelComponent());
+}
+
+bool ON_BinaryArchive::Write3dmPageViewGroupComponent(
+  const class ON_ModelComponent* model_component
+)
+{
+  bool rc = false;
+  for (;;)
+  {
+    const ON_PageViewGroup* group = ON_PageViewGroup::Cast(model_component);
+    if (nullptr == group)
+    {
+      ON_ERROR("model_component parameter is not a pageview group component.");
+      break;
+    }
+    rc = Write3dmPageViewGroup(*group);
+    break;
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::Write3dmPageViewGroup(const ON_PageViewGroup& group)
+{
+  if (false == ArchiveContains3dmTable(ON_3dmArchiveTableType::pageview_group_table))
+    return true;
+
+  if (false == Internal_Begin3dmTableRecord(ON_3dmArchiveTableType::pageview_group_table))
+    return false;
+
+  Internal_Increment3dmTableItemCount();
+
+  bool rc = false;
+
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+  if (!c || c->m_typecode != TCODE_PAGEVIEWGROUP_TABLE)
+  {
+    ON_ERROR("ON_BinaryArchive::Write3dmSectionStyle() - active chunk typecode != TCODE_PAGEVIEWGROUP_TABLE");
+  }
+  else
+  {
+    rc = BeginWrite3dmChunk(TCODE_PAGEVIEWGROUP_RECORD, 0);
+    if (rc)
+    {
+      Internal_Write3dmUpdateManifest(group);
+      rc = WriteObject(group);
+      if (!EndWrite3dmChunk())
+        rc = false;
+    }
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::EndWrite3dmPageViewGroupTable()
+{
+  return EndWrite3dmTable(TCODE_PAGEVIEWGROUP_TABLE);
+}
+
+bool ON_BinaryArchive::BeginRead3dmPageViewGroupTable()
+{
+  return BeginRead3dmTable(TCODE_PAGEVIEWGROUP_TABLE);
+}
+
+int ON_BinaryArchive::Read3dmPageViewGroup(ON_PageViewGroup*& group)
+{
+  group = nullptr;
+  if (false == Read3dmTableRecord(ON_3dmArchiveTableType::pageview_group_table, (void**)&group))
+    return 0;
+
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int rc = -1;
+  if (BeginRead3dmBigChunk(&tcode, &big_value))
+  {
+    if (tcode == TCODE_PAGEVIEWGROUP_RECORD)
+    {
+      Internal_Increment3dmTableItemCount();
+      ON_Object* p = 0;
+      if (ReadObject(&p))
+      {
+        group = ON_PageViewGroup::Cast(p);
+        if (nullptr == group)
+        {
+          delete p;
+        }
+        else
+        {
+          rc = 1;
+          Internal_Read3dmUpdateManifest(*group);
+        }
+      }
+      if (nullptr == group)
+      {
+        ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt pageview group table");
+      }
+    }
+    else if (tcode == TCODE_ENDOFTABLE)
+    {
+      // end of tag table
+      rc = 0;
+    }
+    else
+    {
+      ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt pageview group table");
+    }
+    if (!EndRead3dmChunk())
+      rc = -1;
+  }
+
+  return rc;
+}
+
+bool ON_BinaryArchive::EndRead3dmPageViewGroupTable()
+{
+  return EndRead3dmTable(TCODE_PAGEVIEWGROUP_TABLE);
+}
+
+//
+// (Jan 2026, WIP)
+///////////////////////////////////////////////////////////
+
+
+#if defined(OPENNURBS_TAG_WIP)
+///////////////////////////////////////////////////////////
+// (Dec 2025, WIP)
+//
+
+bool ON_BinaryArchive::BeginWrite3dmTagTable()
+{
+  return BeginWrite3dmTable(TCODE_TAG_TABLE);
+}
+
+bool ON_BinaryArchive::Write3dmTagComponent(
+  const class ON_ModelComponentReference& model_component_reference
+)
+{
+  return Write3dmTagComponent(model_component_reference.ModelComponent());
+}
+
+bool ON_BinaryArchive::Write3dmTagComponent(
+  const class ON_ModelComponent* model_component
+)
+{
+  bool rc = false;
+  for (;;)
+  {
+    const ON_Tag* tag = ON_Tag::Cast(model_component);
+    if (nullptr == tag)
+    {
+      ON_ERROR("model_component parameter is not a tag component.");
+      break;
+    }
+    rc = Write3dmTag(*tag);
+    break;
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::Write3dmTag(const ON_Tag& tag)
+{
+  if (false == ArchiveContains3dmTable(ON_3dmArchiveTableType::tag_table))
+    return true;
+
+  if (false == Internal_Begin3dmTableRecord(ON_3dmArchiveTableType::tag_table))
+    return false;
+
+  Internal_Increment3dmTableItemCount();
+
+  bool rc = false;
+
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+  if (!c || c->m_typecode != TCODE_TAG_TABLE)
+  {
+    ON_ERROR("ON_BinaryArchive::Write3dmSectionStyle() - active chunk typecode != TCODE_TAG_TABLE");
+  }
+  else
+  {
+    rc = BeginWrite3dmChunk(TCODE_TAG_RECORD, 0);
+    if (rc)
+    {
+      Internal_Write3dmUpdateManifest(tag);
+      rc = WriteObject(tag);
+      if (!EndWrite3dmChunk())
+        rc = false;
+    }
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::EndWrite3dmTagTable()
+{
+  return EndWrite3dmTable(TCODE_TAG_TABLE);
+}
+
+bool ON_BinaryArchive::BeginRead3dmTagTable()
+{
+  return BeginRead3dmTable(TCODE_TAG_TABLE);
+}
+
+int ON_BinaryArchive::Read3dmTag(ON_Tag*& tag)
+{
+  tag = nullptr;
+  if (false == Read3dmTableRecord(ON_3dmArchiveTableType::tag_table, (void**)&tag))
+    return 0;
+
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int rc = -1;
+  if (BeginRead3dmBigChunk(&tcode, &big_value))
+  {
+    if (tcode == TCODE_TAG_RECORD)
+    {
+      Internal_Increment3dmTableItemCount();
+      ON_Object* p = 0;
+      if (ReadObject(&p))
+      {
+        tag = ON_Tag::Cast(p);
+        if (nullptr == tag)
+        {
+          delete p;
+        }
+        else
+        {
+          rc = 1;
+          Internal_Read3dmUpdateManifest(*tag);
+        }
+      }
+      if (nullptr == tag)
+      {
+        ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt tag table");
+      }
+    }
+    else if (tcode == TCODE_ENDOFTABLE)
+    {
+      // end of tag table
+      rc = 0;
+    }
+    else
+    {
+      ON_ERROR("ON_BinaryArchive::Read3dmSectionStyle() - corrupt tag table");
+    }
+    if (!EndRead3dmChunk())
+      rc = -1;
+  }
+
+  return rc;
+}
+
+bool ON_BinaryArchive::EndRead3dmTagTable()
+{
+  return EndRead3dmTable(TCODE_TAG_TABLE);
+}
+
+//
+// (Dec 2025, WIP)
+///////////////////////////////////////////////////////////
+#endif // OPENNURBS_TAG_WIP
+
 
 bool ON_BinaryArchive::BeginWrite3dmMaterialTable()
 {
@@ -16858,7 +17501,22 @@ ON_BinaryArchive::SetArchive3dmVersion(int v)
     m_3dm_version = v;
     rc = true;
   }
-  else 
+  else if ( 0 == v )
+  {
+    // 0 is the constructor default and means "no 3dm version set".  Setting it
+    // back to 0 is a legitimate reset, not an error: code that serializes an
+    // embedded ON object into a non-3dm archive raises the version around the
+    // ON_BinaryArchive::WriteObject/ReadObject call and then restores the prior
+    // (unset) value - see CRhWorkSessionLayerValues in the worksession reader.
+    // Assigning 0 is exactly what the invalid branch below already does, so the
+    // only thing to avoid is the spurious ON_ERROR, which in debug builds raised
+    // the "Rhino Error Detected" dialog once per layer read/write and aborted any
+    // running command file.  The check still flags genuinely invalid positive
+    // versions.  rc stays false, matching what this call returned before.
+    // RH-97996.
+    m_3dm_version = 0;
+  }
+  else
   {
     m_3dm_version = 0;
     ON_ERROR("ON_BinaryArchive::SetArchive3dmVersion - invalid version");
@@ -17547,6 +18205,16 @@ const char* ON_BinaryArchive::TypecodeName( unsigned int tcode )
   CASEtcode2string(TCODE_DICTIONARY_ID);
   CASEtcode2string(TCODE_DICTIONARY_ENTRY);
   CASEtcode2string(TCODE_DICTIONARY_END);
+  CASEtcode2string(TCODE_SECTION_STYLE_TABLE);
+  CASEtcode2string(TCODE_SECTION_STYLE_RECORD);
+  CASEtcode2string(TCODE_MARKUP_TABLE);
+  CASEtcode2string(TCODE_MARKUP_RECORD);
+  CASEtcode2string(TCODE_PAGEVIEWGROUP_TABLE);
+  CASEtcode2string(TCODE_PAGEVIEWGROUP_RECORD);
+#if defined(OPENNURBS_TAG_WIP)
+  CASEtcode2string(TCODE_TAG_TABLE);
+  CASEtcode2string(TCODE_TAG_RECORD);
+#endif // OPENNURBS_TAG_WIP
   default:
     // unknown typecode.
     s = 0; 
@@ -17857,10 +18525,19 @@ bool Dump3dmChunk_UserDataHeaderHelper( ON__UINT64 offset, ON_BinaryArchive& fil
   return rc;
 }
 
-
-unsigned int 
-ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
+unsigned int ON_BinaryArchive::Dump3dmChunk(ON_TextLog& dump, int recursion_depth)
 {
+  unsigned int rc = Dump3dmChunk(dump, recursion_depth, -1);
+  return rc;
+}
+
+unsigned int ON_BinaryArchive::Dump3dmChunk(ON_TextLog& dump, int recursion_depth, int recursion_limit)
+{
+  if (recursion_limit >= 0 && recursion_depth > recursion_limit)
+  {
+    return 0;
+  }
+
   //ON_BinaryArchive& file = *this;
   const char* typecode_name = 0;
   bool bShortChunk = false;
@@ -17910,6 +18587,12 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_FONT_TABLE:
       case TCODE_DIMSTYLE_TABLE:
       case TCODE_HATCHPATTERN_TABLE:
+      case TCODE_SECTION_STYLE_TABLE:
+      case TCODE_MARKUP_TABLE:
+      case TCODE_PAGEVIEWGROUP_TABLE:
+#if defined(OPENNURBS_TAG_WIP)
+      case TCODE_TAG_TABLE:
+#endif // OPENNURBS_TAG_WIP
       case TCODE_LINETYPE_TABLE:
       case TCODE_TEXTURE_MAPPING_TABLE:
       case TCODE_HISTORYRECORD_TABLE:
@@ -17921,7 +18604,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
           dump.PushIndent();
           unsigned int record_typecode = 0;
           for (;;) {
-            record_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+            record_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
             if ( !record_typecode ) {
               break;
             }
@@ -17946,7 +18629,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_BITMAP_RECORD:
         {
           dump.PushIndent();
-          unsigned int bitmap_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int bitmap_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( 0 == typecode )
             typecode = bitmap_chunk_typecode;
           dump.PopIndent();
@@ -17956,7 +18639,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_MATERIAL_RECORD:
         {
           dump.PushIndent();
-          unsigned int material_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int material_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( 0 == typecode )
             typecode = material_chunk_typecode;
           dump.PopIndent();
@@ -17966,7 +18649,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_LAYER_RECORD:
         {
           dump.PushIndent();
-          unsigned int material_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int material_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( 0 == typecode )
             typecode = material_chunk_typecode;
           dump.PopIndent();
@@ -17976,7 +18659,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_GROUP_RECORD:
         {
           dump.PushIndent();
-          unsigned int group_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int group_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( 0 == typecode )
             typecode = group_chunk_typecode;
           dump.PopIndent();
@@ -17986,7 +18669,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_FONT_RECORD:
         {
           dump.PushIndent();
-          unsigned int font_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int font_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( 0 == typecode )
             typecode = font_chunk_typecode;
           dump.PopIndent();
@@ -17996,7 +18679,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_DIMSTYLE_RECORD:
         {
           dump.PushIndent();
-          unsigned int dimstyle_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int dimstyle_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( 0 == typecode )
             typecode = dimstyle_chunk_typecode;
           dump.PopIndent();
@@ -18008,7 +18691,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
           dump.PushIndent();
           unsigned int light_chunk_typecode = 0;
           for (;;) {
-            light_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+            light_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
             if ( !light_chunk_typecode ) {
               break;
             }
@@ -18034,7 +18717,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_TEXTURE_MAPPING_RECORD:
         {
           dump.PushIndent();
-          unsigned int mapping_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int mapping_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( !typecode )
             typecode = mapping_chunk_typecode;
           dump.PopIndent();
@@ -18044,7 +18727,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_HISTORYRECORD_RECORD:
         {
           dump.PushIndent();
-          unsigned int history_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int history_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( !typecode )
             typecode = history_chunk_typecode;
           dump.PopIndent();
@@ -18054,17 +18737,59 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_HATCHPATTERN_RECORD:
         {
           dump.PushIndent();
-          unsigned int hatch_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int hatch_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
           if ( !typecode )
             typecode = hatch_chunk_typecode;
           dump.PopIndent();
         }
         break;
 
+      case TCODE_SECTION_STYLE_RECORD:
+      {
+        dump.PushIndent();
+        unsigned int section_style_chunk_typecode = Dump3dmChunk(dump, recursion_depth + 1, recursion_limit);
+        if (!typecode)
+          typecode = section_style_chunk_typecode;
+        dump.PopIndent();
+      }
+      break;
+
+      case TCODE_MARKUP_RECORD:
+      {
+        dump.PushIndent();
+        unsigned int markup_chunk_typecode = Dump3dmChunk(dump, recursion_depth + 1, recursion_limit);
+        if (!typecode)
+          typecode = markup_chunk_typecode;
+        dump.PopIndent();
+      }
+      break;
+
+      case TCODE_PAGEVIEWGROUP_RECORD:
+      {
+        dump.PushIndent();
+        unsigned int pageview_group_chunk_typecode = Dump3dmChunk(dump, recursion_depth + 1, recursion_limit);
+        if (!typecode)
+          typecode = pageview_group_chunk_typecode;
+        dump.PopIndent();
+      }
+      break;
+
+#if defined(OPENNURBS_TAG_WIP)
+      case TCODE_TAG_RECORD:
+      {
+        dump.PushIndent();
+        unsigned int tag_chunk_typecode = Dump3dmChunk(dump, recursion_depth + 1, recursion_limit);
+        if (!typecode)
+          typecode = tag_chunk_typecode;
+        dump.PopIndent();
+      }
+      break;
+#endif // OPENNURBS_TAG_WIP
+
       case TCODE_INSTANCE_DEFINITION_RECORD:
         {
           dump.PushIndent();
-          unsigned int idef_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+          unsigned int idef_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit);
           if ( 0 == typecode )
             typecode = idef_chunk_typecode;
           dump.PopIndent();
@@ -18076,7 +18801,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
           dump.PushIndent();
           unsigned int object_chunk_typecode = 0;
           for (;;) {
-            object_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1 );
+            object_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit);
             if ( !object_chunk_typecode ) {
               break;
             }
@@ -18141,7 +18866,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
           dump.PushIndent();
           unsigned int opennurbs_object_chunk_typecode = 0;
           for (;;) {
-            opennurbs_object_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1  );
+            opennurbs_object_chunk_typecode = Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
             if ( !opennurbs_object_chunk_typecode ) {
               break;
             }
@@ -18199,7 +18924,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
                      )
                   {
                     // a TCODE_ANONYMOUS_CHUNK contains user data goo
-                    int anon_typecode =  Dump3dmChunk( dump, recursion_depth+1 );
+                    int anon_typecode =  Dump3dmChunk( dump, recursion_depth+1, recursion_limit );
                     if ( TCODE_ANONYMOUS_CHUNK != anon_typecode )
                     {
                       Dump3dmChunk_ErrorReportHelper( offset0,"Userdata Expected a TCODE_ANONYMOUS_CHUNK chunk.",dump);

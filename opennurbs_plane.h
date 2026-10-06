@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -593,7 +593,7 @@ public:
   double Depth() const;
 
   // Negative depth values are currently not allowed. If a negative depth value
-  // is passed to this function, it will not the the internal depth value
+  // is passed to this function, it will not the internal depth value
   void SetDepth(double depth);
 
   // Default is false
@@ -651,7 +651,7 @@ public:
   double Depth() const;
 
   // Negative depth values are currently not allowed. If a negative depth value
-  // is passed to this function, it will not the the internal depth value
+  // is passed to this function, it will not the internal depth value
   void SetDepth(double depth);
 
   // Default is false

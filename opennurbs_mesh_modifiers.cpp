@@ -37,7 +37,10 @@ class ON_MeshModifier::CImpl : public ON_InternalXMLImpl
 {
 public:
   CImpl() { }
-  CImpl(const ON_XMLNode& n) { Node() = n; }
+  CImpl(const ON_XMLNode& n) 
+  { 
+    Node() = n; 
+  }
 };
 
 ON_MeshModifier::ON_MeshModifier()
@@ -61,6 +64,7 @@ ON_XMLNode* ON_MeshModifier::AddChildXML(ON_XMLRootNode& root) const
   ON_XMLNode* mm_node = root.AttachChildNode(new ON_XMLNode(L""));
   if (nullptr != mm_node)
   {
+    std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
     *mm_node = m_impl->Node();
   }
 
@@ -223,6 +227,7 @@ ON_Displacement::ON_Displacement(const ON_XMLNode& dsp_node)
   }
 
   // Copy the new displacement node to our node. It only contains displacement XML with no sub-item nodes.
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   m_impl->Node() = new_dsp_node;
 }
 
@@ -625,6 +630,7 @@ void ON_Displacement::SubItem::SetWhitePoint(double w)
 
 void ON_Displacement::SubItem::ToXML(ON_XMLNode& node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   node = m_impl->Node();
 }
 
@@ -669,6 +675,8 @@ ON_UUID ON_Displacement::Uuid(void) const
 
 int    ON_Displacement::Defaults::RefineStepCount(void)   { return 1; }
 int    ON_Displacement::Defaults::FairingAmount(void)     { return 4; }
+bool   ON_Displacement::Defaults::Fair(void)              { return false; }
+bool   ON_Displacement::Defaults::LimitFaces(void)        { return false; }
 int    ON_Displacement::Defaults::FaceLimit(void)         { return 10000; }
 int    ON_Displacement::Defaults::ChannelNumber(void)     { return 1; }
 int    ON_Displacement::Defaults::MeshMemoryLimit(void)   { return 512; }
@@ -1396,6 +1404,7 @@ ON_ShutLining::ON_ShutLining(const ON_XMLNode& sl_node)
   }
 
   // Copy the new shut-lining node to our node. It only contains shut-lining XML with no curve nodes.
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   m_impl->Node() = new_sl_node;
 }
 
@@ -1526,6 +1535,7 @@ ON_ShutLining::CurveIterator ON_ShutLining::GetCurveIterator(void) const
 
 ON_ShutLining::Curve& ON_ShutLining::AddCurve(void)
 {
+  std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
   ON_XMLNode* curve_node = m_impl->Node().AttachChildNode(new ON_XMLNode(ON_SHUTLINING_CURVE));
   Curve* curve = new Curve(*curve_node);
   m_impl_sl->m_curves.Append(curve);
@@ -1874,11 +1884,37 @@ ON_Displacement* ON_MeshModifiers::Displacement(bool allow_creation)
   return m_impl->m_displacement;
 }
 
+ON_Displacement& ON_MeshModifiers::Displacement(void)
+{
+  if ((nullptr == m_impl->m_displacement))
+    m_impl->m_displacement = new ON_Displacement;
+
+  return *m_impl->m_displacement;
+}
+
+const ON_Displacement* ON_MeshModifiers::Displacement(void) const
+{
+  return m_impl->m_displacement;
+}
+
 ON_EdgeSoftening* ON_MeshModifiers::EdgeSoftening(bool allow_creation)
 {
   if ((nullptr == m_impl->m_edge_softening) && allow_creation)
     m_impl->m_edge_softening = new ON_EdgeSoftening;
 
+  return m_impl->m_edge_softening;
+}
+
+ON_EdgeSoftening& ON_MeshModifiers::EdgeSoftening(void)
+{
+  if ((nullptr == m_impl->m_edge_softening))
+    m_impl->m_edge_softening = new ON_EdgeSoftening;
+
+  return *m_impl->m_edge_softening;
+}
+
+const ON_EdgeSoftening* ON_MeshModifiers::EdgeSoftening(void) const
+{
   return m_impl->m_edge_softening;
 }
 
@@ -1890,6 +1926,19 @@ ON_Thickening* ON_MeshModifiers::Thickening(bool allow_creation)
   return m_impl->m_thickening;
 }
 
+ON_Thickening& ON_MeshModifiers::Thickening(void)
+{
+  if ((nullptr == m_impl->m_thickening))
+    m_impl->m_thickening = new ON_Thickening;
+
+  return *m_impl->m_thickening;
+}
+
+const ON_Thickening* ON_MeshModifiers::Thickening(void) const
+{
+  return m_impl->m_thickening;
+}
+
 ON_CurvePiping* ON_MeshModifiers::CurvePiping(bool allow_creation)
 {
   if ((nullptr == m_impl->m_curve_piping) && allow_creation)
@@ -1898,11 +1947,37 @@ ON_CurvePiping* ON_MeshModifiers::CurvePiping(bool allow_creation)
   return m_impl->m_curve_piping;
 }
 
+ON_CurvePiping& ON_MeshModifiers::CurvePiping(void)
+{
+  if ((nullptr == m_impl->m_curve_piping))
+    m_impl->m_curve_piping = new ON_CurvePiping;
+
+  return *m_impl->m_curve_piping;
+}
+
+const ON_CurvePiping* ON_MeshModifiers::CurvePiping(void) const
+{
+  return m_impl->m_curve_piping;
+}
+
 ON_ShutLining* ON_MeshModifiers::ShutLining(bool allow_creation)
 {
   if ((nullptr == m_impl->m_shut_lining) && allow_creation)
     m_impl->m_shut_lining = new ON_ShutLining;
 
+  return m_impl->m_shut_lining;
+}
+
+ON_ShutLining& ON_MeshModifiers::ShutLining(void)
+{
+  if ((nullptr == m_impl->m_shut_lining))
+    m_impl->m_shut_lining = new ON_ShutLining;
+
+  return *m_impl->m_shut_lining;
+}
+
+const ON_ShutLining* ON_MeshModifiers::ShutLining(void) const
+{
   return m_impl->m_shut_lining;
 }
 

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2025 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -71,6 +71,14 @@ const ON_wString ON_ModelComponent::ComponentTypeToString(
     return ON_wString("EmbeddedFile");
   case ON_ModelComponent::Type::SectionStyle:
     return ON_wString("SectionStyle");
+  case ON_ModelComponent::Type::Markup:
+    return ON_wString("Markup");
+  case ON_ModelComponent::Type::PageViewGroup:
+    return ON_wString("PageViewGroup");
+#if defined(OPENNURBS_TAG_WIP)
+  case ON_ModelComponent::Type::Tag:
+    return ON_wString("Tag");
+#endif // OPENNURBS_TAG_WIP
   case ON_ModelComponent::Type::ObsoleteValue:
     return ON_wString("ObsoleteValue");
   case ON_ModelComponent::Type::Mixed:
@@ -335,6 +343,11 @@ ON_ModelComponent::Type ON_ModelComponent::ComponentTypeFromUnsigned(
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::EmbeddedFile);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::ObsoleteValue);
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::SectionStyle);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Markup);
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::PageViewGroup);
+#if defined(OPENNURBS_TAG_WIP)
+  ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Tag);
+#endif // OPENNURBS_TAG_WIP
   ON_ENUM_FROM_UNSIGNED_CASE(ON_ModelComponent::Type::Mixed);
   }
 
@@ -902,6 +915,23 @@ bool ON_ModelComponent::ClearModelSerialNumber()
 {
   const unsigned int bit = ON_ModelComponent::Attributes::ModelSerialNumberAttribute;
   return (bit == ClearModelComponentAttributes(bit));
+}
+
+bool ON_ModelComponent::SetWorksessionReferenceModelSerialNumber(
+  unsigned int reference_model_serial_number
+  )
+{
+  // 2 through 1000 are reserved. Rejecting them here means a caller that computes a serial
+  // number badly gets a false rather than a component in a model that does not exist.
+  if (reference_model_serial_number >= 2 && reference_model_serial_number <= 1000)
+    return false;
+
+  // Deliberately does not test m_locked_status - see the note in the header. Only the
+  // reference model serial number changes; the managing model and the linked instance
+  // definition are left as they were.
+  m_reference_model_serial_number = reference_model_serial_number;
+  m_set_status |= ON_ModelComponent::Attributes::ModelSerialNumberAttribute;
+  return true;
 }
 
 void ON_ModelComponent::LockModelSerialNumber()
@@ -1978,6 +2008,11 @@ bool ON_ModelComponent::IndexRequired(ON_ModelComponent::Type component_type)
   case ON_ModelComponent::Type::HatchPattern:
   case ON_ModelComponent::Type::InstanceDefinition:
   case ON_ModelComponent::Type::SectionStyle:
+  case ON_ModelComponent::Type::Markup:
+  case ON_ModelComponent::Type::PageViewGroup:
+#if defined(OPENNURBS_TAG_WIP)
+  case ON_ModelComponent::Type::Tag:
+#endif // OPENNURBS_TAG_WIP
     return true;
 
   case ON_ModelComponent::Type::ModelGeometry:
@@ -2015,6 +2050,11 @@ bool ON_ModelComponent::UniqueNameIncludesParent(ON_ModelComponent::Type compone
   case ON_ModelComponent::Type::ModelGeometry:
   case ON_ModelComponent::Type::HistoryRecord:
   case ON_ModelComponent::Type::SectionStyle:
+  case ON_ModelComponent::Type::Markup:
+  case ON_ModelComponent::Type::PageViewGroup:
+#if defined(OPENNURBS_TAG_WIP)
+  case ON_ModelComponent::Type::Tag:
+#endif // OPENNURBS_TAG_WIP
     return false;
 
   default:
@@ -2040,6 +2080,11 @@ bool ON_ModelComponent::UniqueNameRequired(ON_ModelComponent::Type component_typ
   case ON_ModelComponent::Type::InstanceDefinition:
   case ON_ModelComponent::Type::EmbeddedFile:
   case ON_ModelComponent::Type::SectionStyle:
+  case ON_ModelComponent::Type::Markup:
+  case ON_ModelComponent::Type::PageViewGroup:
+#if defined(OPENNURBS_TAG_WIP)
+  case ON_ModelComponent::Type::Tag:
+#endif // OPENNURBS_TAG_WIP
     return true;
 
   case ON_ModelComponent::Type::Image:

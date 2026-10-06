@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -19,6 +19,11 @@ class ON_CLASS ON_UserData : public ON_Object
   ON_OBJECT_DECLARE(ON_UserData);
 public:
   ON_UserData();
+  ON_UserData(
+    ON_UUID userdata_uuid,
+    ON_UUID application_uuid,
+    unsigned int userdata_copycount
+  );
 
   /// <summary>
   /// The copy constructor copies every ON_UserData member
@@ -381,7 +386,7 @@ public:
   // For files written with earlier versions of opennurbs, these
   // values are set from the archive containing the user data. 
   // The purpose of this version information is to have it accompany
-  // unknown user data so that if is is eventually read by the plug-in
+  // unknown user data so that if is eventually read by the plug-in
   // an ON_BinaryArchive with correct version information can be
   // passed to the plug-in's reading code.  In archives, these values
   // are stored in the TCODE_USER_TABLE_RECORD_HEADER chunk.

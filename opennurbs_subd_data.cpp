@@ -496,6 +496,12 @@ unsigned int ON_SubDLevel::EdgeFlags() const
   return m_aggregates.m_aggregate_edge_attributes;
 }
 
+bool ON_SubDLevel::HasSharpEdges() const
+{
+  const bool bHasSharpEdges = (0 != (ON_ComponentAttributes::EdgeAttributes::InteriorSharp & this->EdgeFlags()));
+  return bHasSharpEdges;
+}
+
 unsigned int ON_SubD::AggregateEdgeAttributes() const
 {
   return ActiveLevel().EdgeFlags();

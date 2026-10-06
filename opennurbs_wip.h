@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -16,7 +16,7 @@
 
 // Annotation table is being prototyped and on hold
 //#define OPENNURBS_ANNOTATION_TABLE_WIP
-#define OPENNURBS_SECTION_STYLE_TABLE_WIP
-
+// Tag table is being prototyped and on hold
+//#define OPENNURBS_TAG_WIP
 
 #endif

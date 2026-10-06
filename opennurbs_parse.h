@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -1856,11 +1856,11 @@ public:
 
   /*
   Description:
-    Set the preferred locale id for parsing unit names.  This local
+    Set the context locale id for parsing unit names.  This local
     id is used to resolve ambiguous unit names.
 
   Parameters:
-    prefered_locale_id - [in]
+    context_locale_id - [in]
       The Microsoft locale id that identifies the locale that should
       be used to resolve ambiguous parsing situations.  The default
       value is zero, which means ambiguous situations are not parsed.
@@ -1869,9 +1869,9 @@ public:
     When parsing angles, the string "Grad" is ambiguous. 
     In German "Grad" identifies arc degree angle units and in
     English "Grad" identifies gradian angle units. If angle parsing
-    encounters "Grad" and the preferred locale id is 1031 (de-de),
+    encounters "Grad" and the context locale id is 1031 (de-de),
     then parsing reports the angle value as arc degree units.
-    If angle parsing encounters "Grad" and the preferred locale id 
+    If angle parsing encounters "Grad" and the context locale id 
     is 1033 (en-us), then parsing reports the angle values as
     gradian units.
   */

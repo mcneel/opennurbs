@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -180,6 +180,31 @@ bool ON_VersionNumberParse(
   unsigned int* version_day_of_month,
   unsigned int* version_branch
   );
+
+
+/// <summary>
+/// Compare two opennurbs version numbers
+/// </summary>
+/// <param name="lhs_version_number">
+/// </param>
+/// <param name="rhs_version_number">
+/// </param>
+/// <param name="invalid_input_result">
+/// Value to return if one or both of lhs_version_number and rhs_version_number is not a valid
+/// version number.
+/// </param>
+/// <returns>
+/// invalid_input_result: One or both of the version numbers is not valid.
+/// -1: lhs_version_number is older than rhs_version_number.
+/// +1: lhs_version_number is newer than rhs_version_number.
+///  0: lhs_version_number and rhs_version_number identify the same version of opennurbs
+/// </returns>
+ON_DECL
+int ON_VersionNumberCompare(
+  unsigned int lhs_version_number,
+  unsigned int rhs_version_number,
+  int invalid_input_result
+);
 
 /*
 Description:

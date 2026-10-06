@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -311,9 +311,33 @@ public:
     ON_TextLog* error_log = nullptr
     );
 
-  bool Read( 
+  bool Read(
     const wchar_t* filename,
     ON_TextLog* error_log = nullptr
+    );
+
+  /*
+  Description:
+    Open the file, create an ON_BinaryArchive, and read only the
+    start section, properties, and settings (the first three
+    required steps of IncrementalReadBegin), then close the file.
+    Use this when you need the document settings without reading
+    the rest of the model.
+  Parameters:
+    filename - [in]
+      Name of the .3dm file to read.
+  Returns:
+    True if the start section, properties, and settings were read.
+  See Also:
+    ONX_Model::Read
+    ONX_Model::IncrementalReadBegin
+  */
+  bool ReadSettings(
+    const char* filename
+    );
+
+  bool ReadSettings(
+    const wchar_t* filename
     );
 
   /*
@@ -703,7 +727,7 @@ public:
   model_component - [in]
     A copy of model_component is added to this model.
     The index, id, and name of the copied component are
-    set the the model values (Manifest() "Manifest" index, name, and id).
+    set the model values (Manifest() "Manifest" index, name, and id).
   
   bResolveIdAndNameConflicts - [in]
     If bResolveIdAndNameConflicts is false, then model_component.Id() must be non-nil 
@@ -968,7 +992,7 @@ public:
       If true, attributes should be nullptr or point to an instance created by operator new and on the heap.
       It will be deleted when the this ONX_Model and the last ON_ModelComponentReference are destroyed.
       If false, the expert caller is carefully managing the instance and memory to insure
-      attributes is a valid instance while this ONX_Model and and ON_ModelComponentReference 
+      attributes is a valid instance while this ONX_Model and ON_ModelComponentReference 
       are active.
 
     attributes - [in]
@@ -1324,6 +1348,37 @@ public:
 
   /*
   Description:
+    Get a section style from its model index.
+  Parameters:
+    section_style_index - [in]
+  Returns:
+    An ON_ModelComponentReference to the section style.
+  Remarks:
+    Model index and Manifest() manifest item index are the same.
+  */
+  ON_ModelComponentReference SectionStyleFromIndex(
+    int section_style_index
+  ) const;
+  ON_ModelComponentReference SectionStyleFromId(
+    ON_UUID section_style_id
+  ) const;
+  ON_ModelComponentReference SectionStyleFromName(
+    const wchar_t* section_style_name
+  ) const;
+  ON_ModelComponentReference SectionStyleFromNameHash(
+    ON_NameHash section_style_name_hash
+  ) const;
+
+  /*
+  Returns:
+    A system section style that is the default for this model
+    and is used when a referenced section style is missing from
+    this model.
+  */
+  ON_ModelComponentReference DefaultSectionStyle() const;
+
+  /*
+  Description:
     Find a model geometry component from Id
   Parameters:
     model_geometry_component_id - [in]
@@ -1576,6 +1631,22 @@ public:
     then the have equal ContentHash() values.
   */
   ON_SHA1_Hash ContentHash() const;
+
+  /// <summary>
+  /// Get a SHA-1 has of the model's content and the text that was hashed.
+  /// </summary>
+  /// <param name="hashed_text">
+  /// The text that was hashed is returned here. Typically this is used when
+  /// a human wants to look at text diffences to determine why two models
+  /// that were supposed to be the same had different values of ContentHash().
+  /// </param>
+  /// <returns>
+  /// A SHA-1 hash of the model's content. If two models have identical content,
+  /// then the have equal ContentHash() values.
+  /// </returns>
+  ON_SHA1_Hash ContentHash(
+    ON_TextLog& hashed_text
+  ) const;
 
 private:
   void Internal_DumpSummary(
@@ -1994,6 +2065,42 @@ public:
     Call after test is completed.
   */
   bool DumpReadWriteReadModel(ON_TextLog& text_log) const;
+
+  /// <summary>
+  /// The read-write-read-compare test 
+  /// 1.) Reads the source model and calculates a SHA-1 hash of its contents.
+  /// 2.) Writes the source model to a temporary archive.
+  /// 3.) Reads the temporary archive and calculates a SHA-1 hash of its contents.
+  /// 4.) Compares the SHA-1 hashes from step 1 and step 3. 
+  /// If those hashes are equal, then the read-write-read-compare test passes. 
+  /// If those hashes are different, the test fails. 
+  /// When the test fails, use this function to save the information used to 
+  /// compute the hashes in human readable text files that can be compared 
+  /// using a text compare tool.
+  /// The differences between the text files will tell you what caused
+  /// the hashes to be different.
+  /// </summary>
+  /// <param name="source_model_hash_log_filename">
+  /// The name of the text file containing the hashed text description
+  /// of the source model is returned here.
+  /// </param>
+  /// <param name="source_model_hash">
+  /// The hash of the source model is returned here.
+  /// </param>
+  /// <param name="copy_model_hash_log_filename">
+  /// The name of the text file containing the hashed text description
+  /// of the read-write-read model is returned here.
+  /// </param>
+  /// <param name="copy_model_hash">
+  /// The hash of the read-write-read model is returned here.
+  /// </param>
+  /// <returns></returns>
+  bool DumpHashLogs(
+    ON_wString& source_model_hash_log_filename,
+    ON_SHA1_Hash& source_model_hash,
+    ON_wString& copy_model_hash_log_filename,
+    ON_SHA1_Hash& copy_model_hash
+  ) const;
 
 private:
   void Internal_BeginTest();

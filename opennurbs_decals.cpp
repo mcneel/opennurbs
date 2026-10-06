@@ -26,11 +26,6 @@
 
 static ON_4dPoint UNSET_4D_POINT = ON_4dPoint(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 
-ON_DECAL_CRC ON_DecalCRCFromNode(const ON_XMLNode& node)
-{
-	return ON_Decal::ComputeDecalCRC(0, node);
-}
-
 static ON_XMLNode* FindDecalNodeByCRC(const ON_XMLNode& decals_node, ON_DECAL_CRC decal_crc)
 {
   auto it = decals_node.GetChildIterator();
@@ -67,29 +62,51 @@ static double PrincipalValueAngleRad(double angleRad)
   return angleRad;
 }
 
+static double ScaleFactorForDirection(const ON_Xform& xform, const ON_3dVector& direction)
+{
+  const double original_length = direction.Length();
+  if (!(ON_IsValid(original_length) && original_length > ON_ZERO_TOLERANCE))
+    return ON_UNSET_VALUE;
+
+  ON_3dVector transformed_direction = direction;
+  transformed_direction.Transform(xform);
+
+  const double transformed_length = transformed_direction.Length();
+  if (!ON_IsValid(transformed_length))
+    return ON_UNSET_VALUE;
+
+  return transformed_length / original_length;
+}
+
 static void UpdateValuesForTransformation(
             const ON_Xform& xform, ON_Decal::Mappings mapping, double& radius, double& height,
             ON_3dPoint& ptOrigin, ON_3dVector& vecUp, ON_3dVector& vecAcross)
 {
+  const ON_3dVector original_up = vecUp;
+  const ON_3dVector original_across = vecAcross;
+
   ptOrigin.Transform(xform);
   vecUp.Transform(xform);
   vecAcross.Transform(xform);
 
-  ON_ASSERT(ON_Decal::Mappings::UV != mapping);
-
   if ((ON_Decal::Mappings::Cylindrical == mapping) || (ON_Decal::Mappings::Spherical == mapping))
   {
-    // If spherical we assume uniform scaling so as to preserve the spherical shape.
-    // If cylindrical we assume uniform scaling in x and y so as to preserve the cylindrical shape.
-    const double radius_scale = abs(xform[0][0]);
-    radius *= radius_scale;
-
+    // Measure scale in the decal's local frame instead of assuming it is aligned to world axes.
     if (ON_Decal::Mappings::Cylindrical == mapping)
     {
-      // Transform the height. The unit cylinder stands up with height along the z-axis.
-      ON_3dVector vecHeight = ON_3dVector::ZAxis;
-      vecHeight.Transform(xform);
-      height *= vecHeight.Length();
+      const double radius_scale = ScaleFactorForDirection(xform, original_across);
+      if (ON_IsValid(radius_scale))
+        radius *= radius_scale;
+
+      const double height_scale = ScaleFactorForDirection(xform, original_up);
+      if (ON_IsValid(height_scale))
+        height *= height_scale;
+    }
+    else
+    {
+      const double radius_scale = ScaleFactorForDirection(xform, original_across);
+      if (ON_IsValid(radius_scale))
+        radius *= radius_scale;
     }
 
     vecUp.Unitize();
@@ -116,8 +133,8 @@ public:
   CImpl(ON_DecalCollection* dc,       ON_XMLNode& node);
   CImpl(ON_DecalCollection* dc, const ON_XMLNode& node);
 
-  ON_UUID TextureInstanceId(void) const;
-  void SetTextureInstanceId(const ON_UUID& id);
+  ON_UUID AssetInstanceId(void) const;
+  void SetAssetInstanceId(const ON_UUID& id);
   Mappings Mapping(void) const;
   void SetMapping(Mappings v);
   Projections Projection(void) const;
@@ -172,7 +189,7 @@ public:
     double radius       = ON_UNSET_VALUE;
     double height       = ON_UNSET_VALUE;
     double transparency = ON_UNSET_VALUE;
-    ON_UUID texture_instance_id = ON_nil_uuid;
+    ON_UUID asset_instance_id = ON_nil_uuid;
     ON_3dPoint origin         = ON_3dPoint ::UnsetPoint;
     ON_3dVector vector_up     = ON_3dVector::UnsetVector;
     ON_3dVector vector_across = ON_3dVector::UnsetVector;
@@ -181,9 +198,9 @@ public:
     ON_4dPoint uv_bounds      = UNSET_4D_POINT;
     Mappings mapping = Mappings::None;
     Projections projection = Projections::None;
-    bool texture_instance_id_set = false;
+    bool asset_instance_id_set = false;
+    bool temporary = false;
     int visible = unset_bool;
-    int temporary = unset_bool;
     int map_to_inside = unset_bool;
   }
   _cache;
@@ -237,30 +254,34 @@ void ON_Decal::CImpl::SetParameter(const wchar_t* param_name, const ON_XMLVarian
   ON_InternalXMLImpl::SetParameter(L"", param_name, value);
 }
 
-ON_UUID ON_Decal::CImpl::TextureInstanceId(void) const
+ON_UUID ON_Decal::CImpl::AssetInstanceId(void) const
 {
-  if (!_cache.texture_instance_id_set)
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
+  if (!_cache.asset_instance_id_set)
   {
-    _cache.texture_instance_id = GetParameter(ON_RDK_DECAL_TEXTURE_INSTANCE, ON_nil_uuid).AsUuid();
-    _cache.texture_instance_id_set = true;
+    _cache.asset_instance_id = GetParameter(ON_RDK_DECAL_ASSET_INSTANCE, ON_nil_uuid).AsUuid();
+    _cache.asset_instance_id_set = true;
   }
 
-  return _cache.texture_instance_id;
+  return _cache.asset_instance_id;
 }
 
-void ON_Decal::CImpl::SetTextureInstanceId(const ON_UUID& id)
+void ON_Decal::CImpl::SetAssetInstanceId(const ON_UUID& id)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
-  if (!_cache.texture_instance_id_set || (_cache.texture_instance_id != id))
+  if (!_cache.asset_instance_id_set || (_cache.asset_instance_id != id))
   {
-    _cache.texture_instance_id = id;
-    _cache.texture_instance_id_set = true;
+    _cache.asset_instance_id = id;
+    _cache.asset_instance_id_set = true;
 
     if (!_cache_only)
     {
-      SetParameter(ON_RDK_DECAL_TEXTURE_INSTANCE, id);
+      SetParameter(ON_RDK_DECAL_ASSET_INSTANCE, id);
     }
 
     SetCollectionChanged();
@@ -269,6 +290,8 @@ void ON_Decal::CImpl::SetTextureInstanceId(const ON_UUID& id)
 
 ON_Decal::Mappings ON_Decal::CImpl::Mapping(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (Mappings::None == _cache.mapping)
   {
     const ON_wString s = GetParameter(ON_RDK_DECAL_MAPPING, ON_RDK_DECAL_MAPPING_UV).AsString();
@@ -280,6 +303,8 @@ ON_Decal::Mappings ON_Decal::CImpl::Mapping(void) const
 
 void ON_Decal::CImpl::SetMapping(Mappings m)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -309,6 +334,8 @@ void ON_Decal::CImpl::SetMapping(Mappings m)
 
 ON_Decal::Projections ON_Decal::CImpl::Projection(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (Projections::None == _cache.projection)
   {
     const ON_wString s = GetParameter(ON_RDK_DECAL_PROJECTION, ON_RDK_DECAL_PROJECTION_NONE).AsString();
@@ -324,6 +351,8 @@ ON_Decal::Projections ON_Decal::CImpl::Projection(void) const
 
 void ON_Decal::CImpl::SetProjection(Projections v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -352,6 +381,8 @@ void ON_Decal::CImpl::SetProjection(Projections v)
 
 bool ON_Decal::CImpl::MapToInside(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (unset_bool == _cache.map_to_inside)
   {
     _cache.map_to_inside = GetParameter(ON_RDK_DECAL_MAP_TO_INSIDE_ON, false).AsBool() ? 1 : 0;
@@ -362,6 +393,8 @@ bool ON_Decal::CImpl::MapToInside(void) const
 
 void ON_Decal::CImpl::SetMapToInside(bool b)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -381,6 +414,8 @@ void ON_Decal::CImpl::SetMapToInside(bool b)
 
 double ON_Decal::CImpl::Transparency(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_UNSET_VALUE == _cache.transparency)
   {
     _cache.transparency = GetParameter(ON_RDK_DECAL_TRANSPARENCY, 0.0).AsDouble();
@@ -391,6 +426,8 @@ double ON_Decal::CImpl::Transparency(void) const
 
 void ON_Decal::CImpl::SetTransparency(double v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -409,6 +446,8 @@ void ON_Decal::CImpl::SetTransparency(double v)
 
 ON_3dPoint ON_Decal::CImpl::Origin(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_3dPoint::UnsetPoint == _cache.origin)
   {
     _cache.origin = GetParameter(ON_RDK_DECAL_ORIGIN, ON_3dPoint::Origin).As3dPoint();
@@ -419,6 +458,8 @@ ON_3dPoint ON_Decal::CImpl::Origin(void) const
 
 void ON_Decal::CImpl::SetOrigin(const ON_3dPoint& pt)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -437,6 +478,8 @@ void ON_Decal::CImpl::SetOrigin(const ON_3dPoint& pt)
 
 ON_3dVector ON_Decal::CImpl::VectorUp(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_3dVector::UnsetVector == _cache.vector_up)
   {
      _cache.vector_up = GetParameter(ON_RDK_DECAL_VECTOR_UP, ON_3dPoint::Origin).As3dPoint();
@@ -447,6 +490,8 @@ ON_3dVector ON_Decal::CImpl::VectorUp(void) const
 
 void ON_Decal::CImpl::SetVectorUp(const ON_3dVector& v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -465,6 +510,8 @@ void ON_Decal::CImpl::SetVectorUp(const ON_3dVector& v)
 
 ON_3dVector ON_Decal::CImpl::VectorAcross(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_3dVector::UnsetVector == _cache.vector_across)
   {
      _cache.vector_across = GetParameter(ON_RDK_DECAL_VECTOR_ACROSS, ON_3dPoint::Origin).As3dPoint();
@@ -475,6 +522,8 @@ ON_3dVector ON_Decal::CImpl::VectorAcross(void) const
 
 void ON_Decal::CImpl::SetVectorAcross(const ON_3dVector& v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -493,6 +542,8 @@ void ON_Decal::CImpl::SetVectorAcross(const ON_3dVector& v)
 
 double ON_Decal::CImpl::Height(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_UNSET_VALUE == _cache.height)
   {
     _cache.height = GetParameter(ON_RDK_DECAL_HEIGHT, 1.0).AsDouble();
@@ -503,6 +554,8 @@ double ON_Decal::CImpl::Height(void) const
 
 void ON_Decal::CImpl::SetHeight(double v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -521,6 +574,8 @@ void ON_Decal::CImpl::SetHeight(double v)
 
 double ON_Decal::CImpl::Radius(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_UNSET_VALUE == _cache.radius)
   {
     _cache.radius = GetParameter(ON_RDK_DECAL_RADIUS, 1.0).AsDouble();
@@ -531,6 +586,8 @@ double ON_Decal::CImpl::Radius(void) const
 
 void ON_Decal::CImpl::SetRadius(double v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -570,6 +627,8 @@ ON_3dVector ON_Decal::CImpl::GetOriginOffset(void) const
 
 bool ON_Decal::CImpl::IsVisible(void) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (unset_bool == _cache.visible)
   {
     _cache.visible = GetParameter(ON_RDK_DECAL_IS_VISIBLE, true).AsBool();
@@ -580,6 +639,8 @@ bool ON_Decal::CImpl::IsVisible(void) const
 
 void ON_Decal::CImpl::SetIsVisible(bool b)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -599,12 +660,7 @@ void ON_Decal::CImpl::SetIsVisible(bool b)
 
 bool ON_Decal::CImpl::IsTemporary(void) const
 {
-  if (unset_bool == _cache.temporary)
-  {
-    _cache.temporary = GetParameter(ON_RDK_DECAL_IS_TEMPORARY, false).AsBool();
-  }
-
-  return 0 != _cache.temporary;
+  return _cache.temporary;
 }
 
 void ON_Decal::CImpl::SetIsTemporary(bool b)
@@ -612,15 +668,9 @@ void ON_Decal::CImpl::SetIsTemporary(bool b)
   if (!Writeable())
     return;
 
-  const int i = b ? 1 : 0;
-  if (_cache.temporary != i)
+  if (_cache.temporary != b)
   {
-    _cache.temporary = i;
-
-    if (!_cache_only)
-    {
-      SetParameter(ON_RDK_DECAL_IS_TEMPORARY, b);
-    }
+    _cache.temporary = b;
 
     SetCollectionChanged();
   }
@@ -628,6 +678,8 @@ void ON_Decal::CImpl::SetIsTemporary(bool b)
 
 void ON_Decal::CImpl::GetHorzSweep(double& sta, double& end) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_2dPoint::UnsetPoint == _cache.horz_sweep)
   {
     _cache.horz_sweep.x = GetParameter(ON_RDK_DECAL_HORZ_SWEEP_STA, 0.0).AsDouble();
@@ -640,6 +692,8 @@ void ON_Decal::CImpl::GetHorzSweep(double& sta, double& end) const
 
 void ON_Decal::CImpl::SetHorzSweep(double sta, double end)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -660,6 +714,8 @@ void ON_Decal::CImpl::SetHorzSweep(double sta, double end)
 
 void ON_Decal::CImpl::GetVertSweep(double& sta, double& end) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (ON_2dPoint::UnsetPoint == _cache.vert_sweep)
   {
     _cache.vert_sweep.x = GetParameter(ON_RDK_DECAL_VERT_SWEEP_STA, 0.0).AsDouble();
@@ -672,6 +728,8 @@ void ON_Decal::CImpl::GetVertSweep(double& sta, double& end) const
 
 void ON_Decal::CImpl::SetVertSweep(double sta, double end)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -692,6 +750,8 @@ void ON_Decal::CImpl::SetVertSweep(double sta, double end)
 
 void ON_Decal::CImpl::GetUVBounds(double& min_u, double& min_v, double& max_u, double& max_v) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (UNSET_4D_POINT == _cache.uv_bounds)
   {
     _cache.uv_bounds.x = GetParameter(ON_RDK_DECAL_MIN_U, 0.0).AsDouble();
@@ -708,6 +768,8 @@ void ON_Decal::CImpl::GetUVBounds(double& min_u, double& min_v, double& max_u, d
 
 void ON_Decal::CImpl::SetUVBounds(double min_u, double min_v, double max_u, double max_v)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!Writeable())
     return;
 
@@ -730,6 +792,8 @@ void ON_Decal::CImpl::SetUVBounds(double min_u, double min_v, double max_u, doub
 
 ON_XMLNode* ON_Decal::CImpl::FindCustomNodeForRenderEngine(const ON_UUID& renderEngineId) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   ON_XMLNode* child_node = nullptr;
   auto it = Node().GetChildIterator();
   while (nullptr != (child_node = it.GetNextChild()))
@@ -857,13 +921,14 @@ void ON_Decal::CImpl::ApplyTransformation(const ON_Xform& xform)
   if (xform.IsIdentity())
     return;
 
+  const ON_Decal::Mappings mapping = Mapping();
+  ON_ASSERT(ON_Decal::Mappings::UV != mapping);
+
   ON_3dPoint origin = Origin();
   ON_3dVector up = VectorUp();
   ON_3dVector across = VectorAcross();
 
   double radius = 0.0, height = 0.0;
-
-  const ON_Decal::Mappings mapping = Mapping();
 
   if ((Mappings::Cylindrical == mapping) || (Mappings::Spherical == mapping))
   {
@@ -1106,16 +1171,16 @@ bool ON_Decal::operator == (const ON_Decal& d) const
 {
   // This only checks if the basic parameters are equal. It ignores any custom data.
 
-  if (TextureInstanceId() != d.TextureInstanceId()) return false;
-  if (Mapping()           != d.Mapping())           return false;
-  if (Projection()        != d.Projection())        return false;
-  if (MapToInside()       != d.MapToInside())       return false;
-  if (Transparency()      != d.Transparency())      return false;
-  if (Origin()            != d.Origin())            return false;
-  if (VectorUp()          != d.VectorUp())          return false;
-  if (VectorAcross()      != d.VectorAcross())      return false;
-  if (Height()            != d.Height())            return false;
-  if (Radius()            != d.Radius())            return false;
+  if (AssetInstanceId()   != d.AssetInstanceId()) return false;
+  if (Mapping()           != d.Mapping())         return false;
+  if (Projection()        != d.Projection())      return false;
+  if (MapToInside()       != d.MapToInside())     return false;
+  if (Transparency()      != d.Transparency())    return false;
+  if (Origin()            != d.Origin())          return false;
+  if (VectorUp()          != d.VectorUp())        return false;
+  if (VectorAcross()      != d.VectorAcross())    return false;
+  if (Height()            != d.Height())          return false;
+  if (Radius()            != d.Radius())          return false;
 
   double sta1 = 0.0, end1 = 0.0, sta2 = 0.0, end2 = 0.0;
     GetHorzSweep(sta1, end1);
@@ -1150,14 +1215,24 @@ void ON_Decal::SetCacheOnly(void)
   _private->_cache_only = true;
 }
 
-ON_UUID ON_Decal::TextureInstanceId(void) const
+ON_DEPRECATED ON_UUID ON_Decal::TextureInstanceId(void) const
 {
-  return _private->TextureInstanceId();
+  return AssetInstanceId();
 }
 
-void ON_Decal::SetTextureInstanceId(const ON_UUID& id)
+ON_UUID ON_Decal::AssetInstanceId(void) const
 {
-  _private->SetTextureInstanceId(id);
+  return _private->AssetInstanceId();
+}
+
+ON_DEPRECATED void ON_Decal::SetTextureInstanceId(const ON_UUID& id)
+{
+  SetAssetInstanceId(id);
+}
+
+void ON_Decal::SetAssetInstanceId(const ON_UUID& id)
+{
+  _private->SetAssetInstanceId(id);
 }
 
 ON_Decal::Mappings ON_Decal::Mapping(void) const
@@ -1311,18 +1386,10 @@ bool ON_Decal::GetTextureMapping(ON_TextureMapping& mappingOut) const
   return _private->GetTextureMapping(mappingOut);
 }
 
-ON_DECAL_CRC ON_Decal::DecalCRC(void) const
-{
-  return ComputeDecalCRC(0, _private->Node());
-}
-
-ON__UINT32 ON_Decal::DataCRC(ON__UINT32 current_remainder) const
-{
-  return ComputeDecalCRC(current_remainder, _private->Node());
-}
-
 void ON_Decal::GetCustomXML(const ON_UUID& renderEngineId, ON_XMLNode& custom_param_node) const
 {
+  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
+
   custom_param_node.Clear();
   custom_param_node.SetTagName(ON_RDK_DECAL_CUSTOM_PARAMS);
 
@@ -1357,6 +1424,7 @@ bool ON_Decal::SetCustomXML(const ON_UUID& renderEngineId, const ON_XMLNode& cus
 
   // Attach the new custom node and set its 'renderer' property to be the render engine id.
   custom_node = _private->Node().AttachChildNode(new ON_XMLNode(ON_RDK_DECAL_CUSTOM));
+
   ON_XMLProperty prop(ON_RDK_DECAL_CUSTOM_RENDERER, renderEngineId);
   custom_node->SetProperty(prop);
 
@@ -1394,7 +1462,7 @@ void ON_Decal::AppendCustomXML(const ON_XMLNode& custom_node)
   {
     _private->Node().AttachChildNode(new ON_XMLNode(*child));
 
-    child = custom_node.NextSibling();
+    child = child->NextSibling();
   }
 }
 
@@ -1440,7 +1508,7 @@ public:
   ON_XMLVariant Projection(void) const        { return Value(ON_RDK_DECAL_PROJECTION, ON_RDK_DECAL_PROJECTION_NONE); }
   ON_XMLVariant MapToInside(void) const       { return Value(ON_RDK_DECAL_MAP_TO_INSIDE_ON, _def.MapToInside()); } 
   ON_XMLVariant Transparency(void) const      { return Value(ON_RDK_DECAL_TRANSPARENCY    , _def.Transparency()); }
-  ON_XMLVariant TextureInstanceId(void) const { return Value(ON_RDK_DECAL_TEXTURE_INSTANCE, _def.TextureInstanceId()); }
+  ON_XMLVariant AssetInstanceId(void) const   { return Value(ON_RDK_DECAL_ASSET_INSTANCE  , _def.AssetInstanceId()); }
   ON_XMLVariant Height(void) const            { return Value(ON_RDK_DECAL_HEIGHT          , _def.Height()); }
   ON_XMLVariant Radius(void) const            { return Value(ON_RDK_DECAL_RADIUS          , _def.Radius()); }
   ON_XMLVariant Origin(void) const            { return Value(ON_RDK_DECAL_ORIGIN          , _def.Origin()); }
@@ -1454,7 +1522,6 @@ public:
   ON_XMLVariant MinV(void) const              { return Value(ON_RDK_DECAL_MIN_V           , DefaultMinV()); }
   ON_XMLVariant MaxU(void) const              { return Value(ON_RDK_DECAL_MAX_U           , DefaultMaxU()); }
   ON_XMLVariant MaxV(void) const              { return Value(ON_RDK_DECAL_MAX_V           , DefaultMaxV()); }
-  ON_XMLVariant IsTemporary(void) const       { return Value(ON_RDK_DECAL_IS_TEMPORARY    , false); }
   ON_XMLVariant IsVisible(void) const         { return Value(ON_RDK_DECAL_IS_VISIBLE      , _def.IsVisible()); }
   ON_XMLVariant InstanceId(void) const        { return Value(ON_RDK_DECAL_INSTANCE_ID     , _def.Id()); }
 
@@ -1566,7 +1633,7 @@ static void DecalUpdateCRC_Custom(const ON_XMLNode& decal_node, ON_DECAL_CRC& cr
   }
 }
 
-ON_DECAL_CRC ON_Decal::ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XMLNode& decal_node) // Static.
+static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XMLNode& decal_node) // Static.
 {
   // The CRC of a decal is a unique value based on its state. It's created by CRC-ing all the decal properties
   // that affect the decal's appearance. We do not include the 'IsTemporary' property in the CRC because whether
@@ -1584,11 +1651,11 @@ ON_DECAL_CRC ON_Decal::ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XM
     DecalUpdateCRC(crc, d.Mapping()            ON_DECAL_PROP_NAME(L"mapping"));
     DecalUpdateCRC(crc, d.IsVisible()          ON_DECAL_PROP_NAME(L"visible"));
     DecalUpdateCRC(crc, d.Transparency()       ON_DECAL_PROP_NAME(L"transparency"));
-    DecalUpdateCRC(crc, d.TextureInstanceId()  ON_DECAL_PROP_NAME(L"texture_id"));
+    DecalUpdateCRC(crc, d.AssetInstanceId()    ON_DECAL_PROP_NAME(L"texture_id"));
 
     const ON_Decal::Mappings mapping = MappingFromString(d.Mapping().AsString());
 
-    if (Mappings::UV == mapping)
+    if (ON_Decal::Mappings::UV == mapping)
     {
       DecalUpdateCRC(crc, d.MinU()             ON_DECAL_PROP_NAME(L"min_u"));
       DecalUpdateCRC(crc, d.MinV()             ON_DECAL_PROP_NAME(L"min_v"));
@@ -1601,26 +1668,26 @@ ON_DECAL_CRC ON_Decal::ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XM
       DecalUpdateCRC(crc, d.VectorUp()         ON_DECAL_PROP_NAME(L"up"));
       DecalUpdateCRC(crc, d.VectorAcross()     ON_DECAL_PROP_NAME(L"across"));
 
-      if ((Mappings::Cylindrical == mapping) || (Mappings::Spherical == mapping))
+      if ((ON_Decal::Mappings::Cylindrical == mapping) || (ON_Decal::Mappings::Spherical == mapping))
       {
         DecalUpdateCRC(crc, d.MapToInside()    ON_DECAL_PROP_NAME(L"map_to_inside"));
         DecalUpdateCRC(crc, d.Radius()         ON_DECAL_PROP_NAME(L"radius"));
         DecalUpdateCRC(crc, d.HorzSweepSta()   ON_DECAL_PROP_NAME(L"horz_sweep_sta"));
         DecalUpdateCRC(crc, d.HorzSweepEnd()   ON_DECAL_PROP_NAME(L"horz_sweep_end"));
 
-        if (Mappings::Cylindrical == mapping)
+        if (ON_Decal::Mappings::Cylindrical == mapping)
         {
           DecalUpdateCRC(crc, d.Height()       ON_DECAL_PROP_NAME(L"height"));
         }
         else
-        if (Mappings::Spherical == mapping)
+        if (ON_Decal::Mappings::Spherical == mapping)
         {
           DecalUpdateCRC(crc, d.VertSweepSta() ON_DECAL_PROP_NAME(L"vert_sweep_sta"));
           DecalUpdateCRC(crc, d.VertSweepEnd() ON_DECAL_PROP_NAME(L"vert_sweep_end"));
         }
       }
       else
-      if (Mappings::Planar == mapping)
+      if (ON_Decal::Mappings::Planar == mapping)
       {
         DecalUpdateCRC(crc, d.Projection()     ON_DECAL_PROP_NAME(L"projection"));
       }
@@ -1636,9 +1703,28 @@ ON_DECAL_CRC ON_Decal::ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XM
   return crc;
 }
 
+ON_DECAL_CRC ON_DecalCRCFromNode(const ON_XMLNode& node)
+{
+  return ComputeDecalCRC(0, node);
+}
+
+ON_DECAL_CRC ON_Decal::DecalCRC(void) const
+{
+  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
+
+  return ComputeDecalCRC(0, _private->Node());
+}
+
+ON__UINT32 ON_Decal::DataCRC(ON__UINT32 current_remainder) const
+{
+  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
+
+  return ComputeDecalCRC(current_remainder, _private->Node());
+}
+
 // ON_DecalCollection
 
-ON_DecalCollection::ON_DecalCollection(ON_3dmObjectAttributes* attr)
+ON_DecalCollection::ON_DecalCollection(ON_3dmObjectAttributes& attr)
   :
   m_attr(attr)
 {
@@ -1651,7 +1737,9 @@ ON_DecalCollection::~ON_DecalCollection()
 
 int ON_DecalCollection::FindDecalIndex(const ON_DECAL_CRC decal_crc) const
 {
-  for (int i = 0; i < m_decals.Count(); i++)
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
+  for (int i = 0; i < m_decals.size(); i++)
   {
     if (m_decals[i]->DecalCRC() == decal_crc)
       return i;
@@ -1660,20 +1748,84 @@ int ON_DecalCollection::FindDecalIndex(const ON_DECAL_CRC decal_crc) const
   return -1;
 }
 
+std::shared_ptr<ON_Decal> ON_DecalCollection::AddDecal(void)
+{
+  // Ensure the array is populated before adding a new decal.
+  GetDecalArray();
+
+  std::shared_ptr<ON_Decal> decal;
+
+  ON_XMLNode* decals_node = m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS);
+  if (nullptr != decals_node)
+  {
+    // Add an XML node for the new decal.
+    auto* decal_node = new ON_XMLNode(ON_RDK_DECAL);
+    decals_node->AttachChildNode(decal_node);
+
+    // Add the new decal. It stores a pointer to the new XML node. This is safe because
+    // the decals have the same lifetime as the root node that owns the XML nodes.
+    decal = std::make_shared<ON_Decal>(*this, *decal_node);
+
+    {
+      std::lock_guard<std::recursive_mutex> lg(_mutex);
+      m_decals.push_back(decal);
+    }
+
+    SetChanged();
+  }
+
+  return decal;
+}
+
+bool ON_DecalCollection::RemoveDecal(const ON_Decal& decal)
+{
+  // Remove the decal from the XML by finding the XML node with the same decal CRC
+  // and then deleting that node.
+  const ON__UINT32 decal_crc = decal.DecalCRC();
+
+  const wchar_t* path = ON_RDK_UD_ROOT  ON_XML_SLASH  ON_RDK_DECALS;
+  ON_XMLNode* decals_node = m_root_node.GetNodeAtPath(path);
+  if (nullptr != decals_node)
+  {
+    auto it = decals_node->GetChildIterator();
+    ON_XMLNode* child_node = nullptr;
+    while (nullptr != (child_node = it.GetNextChild()))
+    {
+      if (ON_DecalCRCFromNode(*child_node) == decal_crc)
+      {
+        child_node->Remove();
+        break;
+      }
+    }
+  }
+
+  // Invalidate the cache so it gets rebuilt.
+  m_cache_valid = false;
+
+  return true;
+}
+
+void ON_DecalCollection::RemoveAllDecals(void)
+{
+  {
+    std::lock_guard<std::recursive_mutex> lg(_mutex);
+    m_root_node.Clear();
+    m_root_node.CreateNodeAtPath(ON_RDK_UD_ROOT);
+  }
+
+  ClearDecalArray();
+}
+
 void ON_DecalCollection::ClearDecalArray(void)
 {
   // 12th July 2023 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-75697
   // Only call SetChanged() if a decal is actually deleted.
-  const int count = m_decals.Count();
-  if (count > 0)
+
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
+  if (!m_decals.empty())
   {
-    for (int i = 0; i < count; i++)
-    {
-      delete m_decals[i];
-    }
-
-    m_decals.Destroy();
-
+    m_decals.clear();
     SetChanged();
   }
 
@@ -1698,10 +1850,12 @@ const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollecti
   // TLDR; don't copy the decal array because doing so somehow causes it to get out of sync with the underlying
   // user data (XML). But still clear the array (above) so it gets re-populated the next time it's used.
   //
-  //for (int i = 0; i < coll.m_decals.Count(); i++)
+  //for (const auto& decal : coll.m_decals)
   //{
-  //  ON_Decal* decal = coll.m_decals[i];
-  //  m_decals.Append(new ON_Decal(*this, *decal));
+  //  if (decal)
+  //  {
+  //    m_decals.push_back(std::make_shared<ON_Decal>(*decal));
+  //  }
   //}
   //
   //m_cache_valid = coll.m_cache_valid;
@@ -1709,8 +1863,10 @@ const ON_DecalCollection& ON_DecalCollection::operator = (const ON_DecalCollecti
   return *this;
 }
 
-const ON_SimpleArray<ON_Decal*>& ON_DecalCollection::GetDecalArray(void)
+const std::vector<std::shared_ptr<ON_Decal>>& ON_DecalCollection::GetDecalArray(void)
 {
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
   if (!m_cache_valid)
   {
     ClearDecalArray();
@@ -1724,29 +1880,41 @@ const ON_SimpleArray<ON_Decal*>& ON_DecalCollection::GetDecalArray(void)
 
 void ON_DecalCollection::Populate(void)
 {
-  if (nullptr == m_attr)
-    return;
-
-  ON_DecalObjectAttributesWrapper w(*m_attr);
+  ON_DecalObjectAttributesWrapper w(m_attr);
 
   // 25th February 2025 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-64608
   // I'm calling DecalsNodeForWrite() deliberately to circumvent the problem with the user data copy count.
   // See the comments in ON_XMLUserData::XMLRootForWrite(). If I don't do this, the Python use of this code
-  // doesn't work. I know, it's a hack, but I'm literally at my wits' end trying to work around these problems.
+  // doesn't work. I know, it's a hack, but I'm literally at my wits' end trying to work around this problem.
 
   const ON_XMLNode* decals_node = w.DecalsNodeForWrite(); // <---- Yes, ForWrite.
   if (nullptr != decals_node)
   {
     // Iterate over the decals under the decals node adding a new decal for each one.
-    ON_ASSERT(m_decals.Count() == 0);
+    ON_ASSERT(m_decals.size() == 0);
     auto it = decals_node->GetChildIterator();
     ON_XMLNode* decal_node = nullptr;
     while (nullptr != (decal_node = it.GetNextChild()))
     {
-      ON_Decal* decal = new ON_Decal(*this, *decal_node);
-      m_decals.Append(decal);
+      auto decal = std::make_shared<ON_Decal>(*this, *decal_node);
+      m_decals.push_back(decal);
     }
   }
+}
+
+bool ON_DecalCollection::FastHasDecals(const ON_3dmObjectAttributes& attr) // Static.
+{
+  // 4th May 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-94477
+  // Fast check to see if there are any decals on the object attributes.
+  const ON_XMLNode* decals_node = ON_DecalObjectAttributesWrapper::FastDecalsNode(attr);
+  if (nullptr != decals_node)
+  {
+    auto it = decals_node->GetChildIterator();
+    if (nullptr != it.GetNextChild())
+      return true;
+  }
+
+  return false;
 }
 
 void ON_DecalCollection::SetChanged(void)
@@ -1813,6 +1981,17 @@ ON_RdkUserData* ON_DecalObjectAttributesWrapperPrivate::UserDataForWrite(void)
   }
 
   return user_data;
+}
+
+const ON_XMLNode* ON_DecalObjectAttributesWrapper::FastDecalsNode(const ON_3dmObjectAttributes& attr) // Static.
+{
+  // 4th May 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-94477
+  // Get the decals node as quickly as possible.
+  const ON_RdkUserData* user_data = static_cast<const ON_RdkUserData*>(attr.GetUserData(ON_RdkUserData::Uuid()));
+  if (nullptr == user_data)
+    return nullptr;
+
+  return user_data->XMLRootForRead().GetNodeAtPath(decals_path);
 }
 
 const ON_XMLNode* ON_DecalObjectAttributesWrapper::DecalsNodeForRead(void) const

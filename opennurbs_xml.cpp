@@ -3777,7 +3777,7 @@ void* ON_XMLNode::PropertyIterator::EVF(const wchar_t*, void*)
 // TODO: Somehow I managed to port the non-rc version of the root node.
 //       TODO: We really need the rc version.
 
-static const ON_wString sXMLRootNodeName(L"xml");
+static const wchar_t* xml_root_node_name(L"xml");
 
 //class ON_XMLRootNodePrivate final // For future use.
 //{
@@ -3785,14 +3785,14 @@ static const ON_wString sXMLRootNodeName(L"xml");
 
 ON_XMLRootNode::ON_XMLRootNode()
   :
-  ON_XMLNode(sXMLRootNodeName)
+  ON_XMLNode(xml_root_node_name)
 {
   _private = nullptr; //new ON_XMLRootNodePrivate;
 }
 
 ON_XMLRootNode::ON_XMLRootNode(const ON_XMLNode& src)
   :
-  ON_XMLNode(sXMLRootNodeName)
+  ON_XMLNode(xml_root_node_name)
 {
   _private = nullptr; //new ON_XMLRootNodePrivate;
   *this = src;
@@ -3800,7 +3800,7 @@ ON_XMLRootNode::ON_XMLRootNode(const ON_XMLNode& src)
 
 ON_XMLRootNode::ON_XMLRootNode(const ON_XMLRootNode& src)
   :
-  ON_XMLNode(sXMLRootNodeName)
+  ON_XMLNode(xml_root_node_name)
 {
   _private = nullptr; //new ON_XMLRootNodePrivate;
   *this = src;
@@ -3902,7 +3902,7 @@ void ON_XMLRootNode::Clear(void)
 {
   ON_XMLNode::Clear();
 
-  SetTagName(sXMLRootNodeName);
+  SetTagName(xml_root_node_name);
 }
 
 // ON_XMLUserData -- Specializes ON_UserData for XML use.

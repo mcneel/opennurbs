@@ -1639,8 +1639,16 @@ bool ON_SubDLevel::Read(
     if ( archive_id <= 0 )
       break;    
 
-    if (0 == minor_version )
+    if (0 == minor_version)
+    {
+      // 2025-09-02, Pierre, RH-89056
+      // If we are exiting the read early because minor_version == 0,
+      // rc should be set to true!
+      rc = true;
       break;
+    }
+
+    // From here: read stuff from minor_version >= 1
 
     // ignore an obsolete 1/0 value that is never used.
     unsigned char another_ignored_c = 0;

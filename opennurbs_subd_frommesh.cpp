@@ -233,7 +233,7 @@ static bool Internal_CandidateTagIsBetterCreaseEnd(
   switch(current_tag)
   {
   case ON_SubDVertexTag::Unset:
-    if (ON_SubDVertexTag::Unset != candidate->m_vertex_tag )
+    if (ON_SubDVertexTag::Unset != candidate->m_vertex_tag)
       return true;
     break;
   case ON_SubDVertexTag::Smooth:
@@ -318,14 +318,14 @@ static bool Internal_CreateFromMesh_ValidateNonmanifoldVertexSector(
     return false;
   }
 
-  // make  best_candidate_edge a crease so corner sector is valid
+  // make best_candidate_edge a crease so corner sector is valid
   const_cast<ON_SubDEdge*>(best_candidate_edge)->m_edge_tag = ON_SubDEdgeTag::Crease;
   const ON_SubDVertexEdgeProperties best_ep = best_canditate_v1->EdgeProperties();
 
   ON_SubDVertexTag vtag;
-  if ( 1 == best_ep.m_crease_edge_count && 2 == best_ep.m_min_edge_face_count && 2 == best_ep.m_max_edge_face_count)
+  if (1 == best_ep.m_crease_edge_count && 2 == best_ep.m_min_edge_face_count && 2 == best_ep.m_max_edge_face_count)
     vtag = ON_SubDVertexTag::Dart;
-  else if ( 2 == best_ep.m_crease_edge_count && best_ep.m_max_edge_face_count <= 2 )
+  else if (2 == best_ep.m_crease_edge_count && best_ep.m_max_edge_face_count <= 2)
     vtag = ON_SubDVertexTag::Crease;
   else
     vtag = ON_SubDVertexTag::Corner;
@@ -385,7 +385,7 @@ class ON_NgonBoundaryChecker
 public:
   /*
   Parameters:
-    ngon  - [in]
+    ngon - [in]
       ngon to test
     mesh [in]
       mesh that ngon is a part of
@@ -441,11 +441,11 @@ ON_SubD* ON_SubD::CreateFromMesh(
     for (unsigned ni = 0; ni < ngon_count; ++ni)
     {
       const class ON_MeshNgon* ngon = level_zero_mesh->Ngon(ni);
-      if ( nullptr == ngon)
+      if (nullptr == ngon)
         continue;
       if (ngon->m_Vcount < 3 || ngon->m_Fcount <= 1)
         continue;
-      if ( false == bc.IsSimpleNgon(ngon, level_zero_mesh,bMustBeOrientedNgon) )
+      if (false == bc.IsSimpleNgon(ngon, level_zero_mesh,bMustBeOrientedNgon))
         ngons_with_holes.Append(ni);
     }
 
@@ -525,7 +525,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
 
   const ON_MeshFaceList mesh_face_list(mesh);
   const unsigned int mesh_face_count = mesh_face_list.FaceCount();
-  if ( mesh_face_count < 1 )
+  if (mesh_face_count < 1)
     return nullptr;
 
   const_cast<ON_Mesh*>(mesh)->NgonMap(true);
@@ -653,17 +653,17 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
       if (mesh_edges.UnsignedCount() - mesh_edge_count > max_subd_face_edge_count)
         max_subd_face_edge_count = mesh_edges.UnsignedCount() - mesh_edge_count;
     }
-    else if ( ngon->m_Fcount >= 1 )
+    else if (ngon->m_Fcount >= 1)
     {
       // This generally happens when the "ngon" has holes and it cannot be used as a subd control net polygon.
       //
       // Each tri or quad in the ngon will get added as a subd face.
       for (unsigned int nfi = 0; nfi < ngon->m_Fcount; nfi++)
       {
-        if ( nullptr == mesh_face_list.QuadFvi(ngon->m_fi[nfi],quad_vi))
+        if (nullptr == mesh_face_list.QuadFvi(ngon->m_fi[nfi],quad_vi))
           continue;
 
-        unsigned int quad_edge_count = 0;        
+        unsigned int quad_edge_count = 0;
         mesh_Vj = quad_vi[0];
         for (unsigned int fvi = 1; fvi <= 4; fvi++)
         {
@@ -690,7 +690,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
         }
       }
 
-      if ( mesh_edge_count == mesh_edges.UnsignedCount() )
+      if (mesh_edge_count == mesh_edges.UnsignedCount())
         continue;
     }
 
@@ -772,7 +772,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   //
   // If we are adding interior crease, set the mesh_edge_ref.m_mesh_Ni / m_mesh_Nj values used to detect creases.
   //
-  if ( ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge != crease_test )
+  if (ON_SubDFromMeshParameters::InteriorCreaseOption::AtMeshDoubleEdge != crease_test)
   {
     crease_test = ON_SubDFromMeshParameters::InteriorCreaseOption::None;
   }
@@ -819,11 +819,11 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
           edge_tag = ON_SubDEdgeTag::Crease;
       }
     }
-    if ( j-i != 2 )
+    if (j-i != 2)
       edge_tag = ON_SubDEdgeTag::Crease; // wire, boundary, or non-manifold edge
 
     // create the SubD edge.
-    ON_SubDVertex* v0[2] = { subd_V[mesh_edge0.m_mesh_Vi],  subd_V[mesh_edge0.m_mesh_Vj] };
+    ON_SubDVertex* v0[2] = { subd_V[mesh_edge0.m_mesh_Vi], subd_V[mesh_edge0.m_mesh_Vj] };
     ON_SubDEdge* e
       = (nullptr != v0[0] && nullptr != v0[1] && v0[0]->m_id != v0[1]->m_id)
       ? new_subd->AddEdgeWithSectorCoefficients(edge_tag, v0[0], ON_SubDSectorType::IgnoredSectorCoefficient, v0[1], ON_SubDSectorType::IgnoredSectorCoefficient)
@@ -837,7 +837,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
       ON_MeshNGonEdge& mesh_edge = mesh_edges[mesh_edge_map[i]];
       if (nullptr != e)
       {
-        const ON_SubDVertex* v[2] = { subd_V[mesh_edge.m_mesh_Vi],  subd_V[mesh_edge.m_mesh_Vj] };
+        const ON_SubDVertex* v[2] = { subd_V[mesh_edge.m_mesh_Vi], subd_V[mesh_edge.m_mesh_Vj] };
         if (v0[0] == v[0] && v0[1] == v[1])
           eptr = ON_SubDEdgePtr::Create(e, 0);
         else if (v0[0] == v[1] && v0[1] == v[0])
@@ -917,12 +917,12 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
     const unsigned edge_count = EP.UnsignedCount();
     ON_SubDFace* f 
       = (edge_count >= 3 && j - i == edge_count)
-      ?  new_subd->AddFace(EP.Array(), EP.UnsignedCount())
+      ? new_subd->AddFace(EP.Array(), EP.UnsignedCount())
       : nullptr;
     if (nullptr != f)
     {
       if (bCopyMeshTextureCoordinates)
-        new_subd->AddFaceTexturePoints(f, face_texture_points.Array(), face_texture_points.UnsignedCount() );
+        new_subd->AddFaceTexturePoints(f, face_texture_points.Array(), face_texture_points.UnsignedCount());
     }
     const unsigned actual_subd_face_id = (nullptr != f) ? f->m_id : 0;
     for ( /*empty init*/; i < j; ++i)
@@ -949,7 +949,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
 
 
     // Depending on the number of creased edges, a vertex on an interior crease here that
-    // is tagged as ON_SubDVertexTag::Crease  here may get changed 
+    // is tagged as ON_SubDVertexTag::Crease here may get changed 
     // to ON_SubDVertexTag::Dart or ON_SubDVertexTag::Corner below.
 
     for (unsigned int j = 0; j < 2; j++)
@@ -963,7 +963,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
       }
     }
 
-    if ( 2 == edge->m_face_count )
+    if (2 == edge->m_face_count)
       interior_crease_count++;
   }
 
@@ -986,7 +986,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
 
       k++; // processing another interior crease.
 
-      if ( ON_SubDVertexTag::Crease != edge->m_vertex[0]->m_vertex_tag
+      if (ON_SubDVertexTag::Crease != edge->m_vertex[0]->m_vertex_tag
           && ON_SubDVertexTag::Crease != edge->m_vertex[1]->m_vertex_tag)
         continue;
 
@@ -997,7 +997,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
           continue; // this vertex has already been processed.
 
         const ON_SubDVertexEdgeProperties ep = vertex->EdgeProperties();
-        if ( 0 == ep.m_null_edge_count && 0 == ep.m_unset_edge_count )
+        if (0 == ep.m_null_edge_count && 0 == ep.m_unset_edge_count)
         {
           if (ep.m_crease_edge_count >= 3)
           {
@@ -1080,7 +1080,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
   uptr.release();
 
   // If the input mesh is not oriented, fix the subd so it is.
-  if ( false == new_subd->IsOriented() )
+  if (false == new_subd->IsOriented())
     new_subd->Orient();
 
   const double max_convex_angle_radians = from_mesh_options->MaximumConvexCornerAngleRadians();
@@ -1103,7 +1103,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
     {
       if (ON_SubDVertexTag::Crease != vertex->m_vertex_tag)
         continue;
-      if ( 1 + vertex->m_face_count != vertex->m_edge_count )
+      if (1 + vertex->m_face_count != vertex->m_edge_count)
         continue;
 
       ON_SubDComponentPtrPair boundary_pair = vertex->BoundaryEdgePair();
@@ -1128,7 +1128,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
       for (unsigned short vei = 0; vei < vertex->m_face_count; ++vei)
       {
         const double a = Internal_FaceCornerAngleRadians(vertex, vertex->m_faces[vei]);
-        if (false == (a > 0.0 && a < ON_PI) )
+        if (false == (a > 0.0 && a < ON_PI))
         {
           vertex_angle_radians = ON_DBL_QNAN;
           break;
@@ -1163,7 +1163,7 @@ ON_SubD* ON_SubD::Internal_CreateFromMeshWithValidNgons(
         continue; // should never get here
 
 
-      vertex->m_vertex_tag = ON_SubDVertexTag::Corner;        
+      vertex->m_vertex_tag = ON_SubDVertexTag::Corner;
     }
   }
 
@@ -1309,7 +1309,7 @@ ON_SubD* ON_SubD::CreateSubDBox(
           ccnt++;
         if (iz == 0 || iz == facecount_z)
           ccnt++;
-        if (ccnt > 0) // On some face
+        if (ccnt > 0)  // On some face
         {
           ON_SubDVertexTag vtag = ON_SubDVertexTag::Smooth;
           if (edge_tag == ON_SubDEdgeTag::Crease)
@@ -2058,7 +2058,7 @@ bool ON_NgonBoundaryChecker::IsSimpleNgon(
 
   bool bBoundaryIsMarked = false;
   ON_FixedSizePoolIterator fspit(m_fsp);
-  for (ON_NgonBoundaryComponent* e = (ON_NgonBoundaryComponent * )fspit.FirstElement(); nullptr != e; e = (ON_NgonBoundaryComponent * )fspit.NextElement())
+  for (ON_NgonBoundaryComponent* e = (ON_NgonBoundaryComponent*)fspit.FirstElement(); nullptr != e; e = (ON_NgonBoundaryComponent*)fspit.NextElement())
   {
     if (1 != e->m_face_count)
       continue; // vertex components always have m_face_count = 0;
@@ -2091,7 +2091,7 @@ bool ON_NgonBoundaryChecker::IsSimpleNgon(
       // Walk along the boundary beginning at e0 and mark every edge in the boundary.
       ON_NgonBoundaryComponent* e0 = e;
       ON_NgonBoundaryComponent* v0 = e0->m_attached_to[0];
-      if ( nullptr == v0 || 0 != v0->m_mark)
+      if (nullptr == v0 || 0 != v0->m_mark)
       {
         ON_ERROR("Bug in this code - vertices should have m_mark = 0 at this point.");
         Internal_ReturnIsNotSimple();
@@ -2122,7 +2122,7 @@ bool ON_NgonBoundaryChecker::IsSimpleNgon(
         e1->m_mark = 1;
 
         // set v1 = "next" vertex in the boundary
-        if ( v1 == e1->m_attached_to[0])
+        if (v1 == e1->m_attached_to[0])
           v1 = e1->m_attached_to[1];
         else if (v1 == e1->m_attached_to[1])
         {

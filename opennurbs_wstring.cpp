@@ -2125,6 +2125,11 @@ const ON_wString ON_wString::RemoveSuffix(
 
 ON_wString::operator const wchar_t*() const
 {
+#if defined(ON_RUNTIME_APPLE_IOS)
+  //Morteza Feb 10,2026: RV-1446 iOS Crash: CRhinoDoc::GetPathName()
+  if (!this || ((uintptr_t)m_s & 0x1)) return L""; // detect corrupt pointers
+#endif
+  
   return ( nullptr == m_s || m_s == pEmptywString ) ? L"" : m_s;
 }
 
@@ -3326,7 +3331,7 @@ const ON_wString ON_wString::FormatToVulgarFraction(
   int denominator,
   bool bReduced,
   bool bProper,
-  unsigned proper_fraction_separator_cp,
+  unsigned int proper_fraction_separator_cp,
   bool bUseVulgarFractionCodePoints
 )
 {
