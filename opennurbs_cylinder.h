@@ -25,26 +25,29 @@ Description:
 class ON_CLASS ON_Cylinder
 {
 public:
-  ON_Cylinder(); // zeros all fields - cylinder is invalid
+  // zeros all fields - cylinder is invalid
+  ON_Cylinder(); 
 
-  ON_Cylinder( // infinite cylinder
-    const ON_Circle&  // point on the bottom plane
+  // infinite cylinder
+  ON_Cylinder( 
+    const ON_Circle& circle
     );
 
-  ON_Cylinder( // infinite cylinder
-    const ON_Circle&,  // point on the bottom plane
-    double             // height
+  // finite cylinder
+  ON_Cylinder( 
+    const ON_Circle& circle,
+    double height
     );
 
   ~ON_Cylinder();
 
   bool Create(
-    const ON_Circle&  // point on the bottom plane
+    const ON_Circle& circle
     );
 
   bool Create(
-    const ON_Circle&,  // point on the bottom plane
-    double               // height
+    const ON_Circle& circle,
+    double height
     );
 
   bool IsValid() const; // returns true if all fields contain reasonable
@@ -55,64 +58,77 @@ public:
                          // cylinder is infinite.
 
   const ON_3dVector& Axis() const;
+
   const ON_3dPoint& Center() const;
-  double Height() const; // returns 0 for infinite cylinder
+
+  // returns the height or 0 for infinite cylinder
+  double Height() const; 
+
   ON_Circle CircleAt( 
-        double // linear parameter
+        double linear_parameter // height from base circle's plane
         ) const;
+
   ON_Line LineAt( 
-        double // angular parameter
+        double angular_parameter // [0,2pi]
         ) const;
 
   // evaluate parameters and return point
   ON_3dPoint PointAt(
-    double, // angular parameter [0,2pi]
-    double  // linear parameter (height from base circle's plane)
+    double angular_parameter, // [0,2pi]
+    double linear_parameter   // height from base circle's plane
     ) const;
+
+  // evaluate parameters and return normal vector
   ON_3dPoint NormalAt(
-    double, // angular parameter [0,2pi]
-    double  // linear parameter (height from base circle's plane)
+    double angular_parameter, // [0,2pi]
+    double linear_parameter   // height from base circle's plane
     ) const;
 
   // returns parameters of point on cylinder that is closest to given point
   bool ClosestPointTo( 
-         ON_3dPoint, 
-         double*, // angular parameter [0,2pi]
-         double*  // linear parameter (height from base circle's plane)
+         ON_3dPoint P, 
+         double* angular_parameter, // [0,2pi]
+         double* linear_parameter   // height from base circle's plane
          ) const;
+
   // returns point on cylinder that is closest to given point
   ON_3dPoint ClosestPointTo( 
-         ON_3dPoint 
+         ON_3dPoint P
          ) const;
 
   // For intersections see ON_Intersect();
 
   // rotate cylinder about its origin
   bool Rotate(
-        double,               // sin(angle)
-        double,               // cos(angle)
-        const ON_3dVector&  // axis of rotation
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& rotation_axis
         );
+
+  // rotate cylinder along a given axis
   bool Rotate(
-        double,               // angle in radians
-        const ON_3dVector&  // axis of rotation
+        double angle_rad,
+        const ON_3dVector& rotation_axis
         );
 
   // rotate cylinder about a point and axis
   bool Rotate(
-        double,               // sin(angle)
-        double,               // cos(angle)
-        const ON_3dVector&, // axis of rotation
-        const ON_3dPoint&   // center of rotation
-        );
-  bool Rotate(
-        double,              // angle in radians
-        const ON_3dVector&, // axis of rotation
-        const ON_3dPoint&   // center of rotation
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& rotation_axis,
+        const ON_3dPoint& rotation_center
         );
 
+  // rotate cylinder about a point and axis
+  bool Rotate(
+        double angle_rad,
+        const ON_3dVector& rotation_axis,
+        const ON_3dPoint& rotation_center
+        );
+
+  // translate the cylinder along a vector
   bool Translate(
-        const ON_3dVector&
+        const ON_3dVector& translation_vector
         );
 
   // parameterization of NURBS surface does not match cylinder's transcendental parameterization

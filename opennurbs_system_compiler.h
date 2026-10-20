@@ -288,9 +288,7 @@
 #define ON_NOEXCEPT noexcept
 #endif
 
-#if defined(__has_extension) && __has_extension(cxx_rvalue_references) && !defined(ON_HAS_RVALUEREF)
-#define ON_HAS_RVALUEREF
-#elif defined(ON_HAS_RVALUEREF)
+#if !(defined(__has_extension) && __has_extension(cxx_rvalue_references))
 #undef ON_HAS_RVALUEREF
 #endif
 

@@ -1700,7 +1700,20 @@ Parameters:
   Km - [in]
     Curve's vector curvature evaluated from below
   Kp - [in]
-    Curve's vector curvature evaluated from below
+    Curve's vector curvature evaluated from above
+  cos_angle_tolerance - [in]
+    Cosine of the tangent angle tolerance. Values greater than
+    ON_DEFAULT_ANGLE_TOLERANCE_COSINE (tighter than 1 degree) are
+    treated as ON_DEFAULT_ANGLE_TOLERANCE_COSINE. If the resulting
+    angle is less than about 18 degrees, it is doubled for the
+    curvature direction test. With the default, Km and Kp are
+    discontinuous if the angle between them is greater than 2 degrees.
+  curvature_tolerance - [in]
+    If |Km - Kp| <= curvature_tolerance, then true is returned.
+    Otherwise, the direction test above and a relative magnitude
+    test are used. The relative magnitude test fails if
+    ||Km| - |Kp|| > ON_RELATIVE_CURVATURE_TOLERANCE*max(|Km|,|Kp|)
+    (5%). Increasing curvature_tolerance can only loosen the test.
 Returns:
   True if the change from Km to Kp should be considered
   G2 continuous.
@@ -1722,7 +1735,15 @@ Parameters:
   Km - [in]
     Curve's vector curvature evaluated from below
   Kp - [in]
-    Curve's vector curvature evaluated from below
+    Curve's vector curvature evaluated from above
+  cos_angle_tolerance - [in]
+    Ignored. Km and Kp are discontinuous if the angle between
+    them is greater than 90 degrees.
+  curvature_tolerance - [in]
+    If |Km - Kp| <= curvature_tolerance, then true is returned.
+    Otherwise, false is returned if exactly one of Km and Kp is
+    zero or the angle test above fails. Differences in curvature
+    magnitude are not tested.
 Returns:
   True if the change from Km to Kp should be considered
   Gsmooth continuous.

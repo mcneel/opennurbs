@@ -13428,6 +13428,8 @@ public:
     get_marked_edges_only - [in]
       If true, only combs that touch a marked edge are computed.
       If false, all combs are computed.
+      If true, get_Ku and get_Kv must both be true: the arrays hold the combs on
+      marked edges in both directions, and are not completely filled otherwise.
     P, Kuv - [out]
       Arrays of size (get_Ku + get_Kv) * sample_count * comb_count_arrays where
       Points and Curvatures along u-isos or along v-isos are stored.

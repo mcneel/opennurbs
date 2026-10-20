@@ -521,6 +521,20 @@ const ON_wString ON_TextContent::Internal_GetPlainText(bool evaluate_fields, boo
           : run->TextString();
         if (nullptr != str)
         {
+          // December 3, 2025 - Tim
+          // Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-90830
+          // Add a space before the fraction if is not the first
+          // chunk of text.
+          // RH-99587: not where the text already has a separator, like the start
+          // of a line, and before the run map entry so the entry points at the
+          // run's first character, not at the added space.
+          if (0 < ri && nullptr != wcschr(str, '/'))
+          {
+            const int length = plaintext.Length();
+            if (0 < length && !ON_IsUnicodeSpaceOrControlCodePoint((ON__UINT32)plaintext[length - 1]))
+              plaintext += " ";
+          }
+
           if (nullptr != runmap)
           {
             ON_3dex& map = runmap->AppendNew();
@@ -528,13 +542,6 @@ const ON_wString ON_TextContent::Internal_GetPlainText(bool evaluate_fields, boo
             map.j = plaintext.Length();
             map.k = (int)wcslen(str);
           }
-
-          // December 3, 2025 - Tim
-          // Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-90830
-          // Add a space before the fraction if is not the first 
-          // chunk of text.
-          if (0 < ri && nullptr != wcschr(str, '/'))
-            plaintext += " ";
 
           plaintext += str;
         }
@@ -1624,7 +1631,11 @@ ON_Mesh* ON_TextContent::Get2dPickMesh() const
   for (int ri = 0; ri < runcount; ri++)
   {
     const ON_TextRun* run = (*runs)[ri];
-    if (nullptr == run || ON_TextRun::RunType::kText != run->Type())
+    if (nullptr == run)
+      continue;
+    // 7 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-85234
+    // Evaluated field runs (stacked fractions) are pickable too
+    if (ON_TextRun::RunType::kText != run->Type() && ON_TextRun::RunType::kField != run->Type())
       continue;
 
     const ON_2dVector offset = run->Offset();
@@ -1811,15 +1822,32 @@ void ON_TextContent::GetGripPoints(ON_2dPoint& base, ON_2dPoint& width) const
 int ON_TextContent::FindAndStackFractions(ON_TextRunArray* runs, int i, ON_wString wstr)
 {
   if (nullptr == runs || 0 > i || runs->Count() - 1 < i
-    || wstr.IsEmpty() || ON_TextRun::RunType::kText != (*runs)[i]->Type())
+    || ON_TextRun::RunType::kText != (*runs)[i]->Type())
     return 0;
 
   int added = 0;
   ON_TextRun* run = (*runs)[i];
+
+  // 7 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-85234
+  // Undo stacking from the previous evaluation
+  if (ON_TextRun::Stacked::kNone != run->IsStacked() || nullptr != run->m_stacked_text)
+  {
+    run->SetStacked(ON_TextRun::Stacked::kNone);
+    delete run->m_stacked_text;
+    run->m_stacked_text = nullptr;
+  }
+
+  if (wstr.IsEmpty())
+    return 0;
+
   run->SetDisplayString(wstr);
   int start = wstr.Find(L"[[");
   if (wstr.Length() < start + 5)
     return 0;
+
+  // 7 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-85234
+  // A leading fraction stacks the field run itself
+  ON_wString leading_fraction;
 
   while (0 <= start && !wstr.IsEmpty())
   {
@@ -1830,23 +1858,30 @@ int ON_TextContent::FindAndStackFractions(ON_TextRunArray* runs, int i, ON_wStri
       if (0 <= end)
       {
         // Found a fraction...
-        if (0 < start)
-        {
-          ON_wString startstr = wstr.Left(start);
-          run->SetDisplayString(startstr);
-        }
-
-        ON_TextRun* stackedrun = ON_TextRun::GetManagedTextRun();
-        *stackedrun = *run;
         ON_wString str = wstr.Left(end).Right(end - start - 2);
-        stackedrun->SetStacked(ON_TextRun::Stacked::kStacked);
-        stackedrun->SetDisplayString(str);
-        ON__UINT32* cp = nullptr;
-        int cpcount = ON_TextContext::ConvertStringToCodepoints(str, cp);
-        ON_TextContent::CreateStackedText(stackedrun, cpcount, cp);
-        stackedrun->SetType(ON_TextRun::RunType::kField);
-        runs->InsertRun(i + 1, stackedrun);
-        added++;
+        if (0 == start && 0 == added && leading_fraction.IsEmpty())
+        {
+          leading_fraction = str;
+        }
+        else
+        {
+          if (0 < start && leading_fraction.IsEmpty())
+          {
+            ON_wString startstr = wstr.Left(start);
+            run->SetDisplayString(startstr);
+          }
+
+          ON_TextRun* stackedrun = ON_TextRun::GetManagedTextRun();
+          *stackedrun = *run;
+          stackedrun->SetStacked(ON_TextRun::Stacked::kStacked);
+          stackedrun->SetDisplayString(str);
+          ON__UINT32* cp = nullptr;
+          int cpcount = ON_TextContext::ConvertStringToCodepoints(str, cp);
+          ON_TextContent::CreateStackedText(stackedrun, cpcount, cp);
+          stackedrun->SetType(ON_TextRun::RunType::kField);
+          runs->InsertRun(i + 1, stackedrun);
+          added++;
+        }
 
         wstr = wstr.Right(wstr.Length() - end - 2);
         if (!wstr.IsEmpty())
@@ -1859,21 +1894,44 @@ int ON_TextContent::FindAndStackFractions(ON_TextRunArray* runs, int i, ON_wStri
             *endrun = *run;
             endrun->SetDisplayString(wstr);
             endrun->SetType(ON_TextRun::RunType::kField);
-            runs->InsertRun(i + 2, endrun);
+            runs->InsertRun(i + 1 + added, endrun);
             added++;
           }
         }
       }
+      else
+        break;
     }
     else
       break;
   }
+
+  if (leading_fraction.IsNotEmpty())
+  {
+    run->SetDisplayString(leading_fraction);
+    run->SetStacked(ON_TextRun::Stacked::kStacked);
+    ON_TextContent::CreateStackedText(run);
+  }
+
   return added;
 }
 
 
 bool ON_TextContent::CreateStackedText(ON_TextRun* run)
 {
+  if (nullptr == run)
+    return false;
+
+  // 7 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-85234
+  // A stacked field run stacks its evaluated value, not its formula
+  if (run->TextStringContains(L"%<"))
+  {
+    ON__UINT32* field_cp = nullptr;
+    const int field_cpcount = ON_TextContext::ConvertStringToCodepoints(run->DisplayString(), field_cp);
+    const bool rc = ON_TextContent::CreateStackedText(run, field_cpcount, field_cp);
+    onfree(field_cp);
+    return rc;
+  }
 
   int cpcount = (int)run->CodepointCount(run->UnicodeString());
   const ON__UINT32* cp = run->UnicodeString();
@@ -2115,7 +2173,10 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
   if (0 == run)
     return false;
 
-  if (ON_TextRun::RunType::kText != run->Type())
+  // 8 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-66356
+  // Measure field value runs too
+  //if (ON_TextRun::RunType::kText != run->Type())
+  if (ON_TextRun::RunType::kText != run->Type() && ON_TextRun::RunType::kField != run->Type())
     return false;
 
   const ON_Font* font = run->Font();
@@ -2125,7 +2186,7 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
   ON_TextBox text_box;
   const int line_count = ON_FontGlyph::GetGlyphListBoundingBox(run->DisplayString(), font, run->ApplyKerning(), run->LineSpaceScale(), text_box);
   bool rc = (line_count > 0 && text_box.IsSet());
-  if (line_count == 0 && ON_TextRun::RunType::kText == run->Type())
+  if (line_count == 0)
     run->SetBoundingBox(ON_2dPoint(0,0), ON_2dPoint(0,0));
 
   if (rc)
@@ -2142,8 +2203,10 @@ bool ON_TextContent::MeasureTextRun(ON_TextRun* run)
     maxpt.Transform(scale_xform);
     advance.Transform(scale_xform);
     // Store bbox and advance on ON_TextRun in Model units not scaled by annotation scale
-    if (ON_TextRun::RunType::kText == run->Type())
-      run->SetBoundingBox(minpt, maxpt);
+    // 8 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-66356
+    // Field value runs need their bbox too
+    //if (ON_TextRun::RunType::kText == run->Type())
+    run->SetBoundingBox(minpt, maxpt);
     run->SetAdvance(advance);
   }
   return rc;
@@ -2762,7 +2825,10 @@ bool ON_TextContent::MeasureTextRunArray(
           : default_advance;
         run->SetAdvance(ON_2dVector(advance_x, 0.0));
       }
-      else if (ON_TextRun::RunType::kText == runtype)
+      // 8 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-66356
+      // Field value runs take part in line width and line offsets
+      //else if (ON_TextRun::RunType::kText == runtype)
+      else if (ON_TextRun::RunType::kText == runtype || ON_TextRun::RunType::kField == runtype)
       {
         if (run->IsStacked() != ON_TextRun::Stacked::kNone)
         {
@@ -3165,11 +3231,12 @@ bool ON_TextContent::FormatDistanceAndTolerance(
   bool alt,
   ON_wString& formatted_string)
 {
+  if (nullptr == dimstyle)
+    dimstyle = &ON_DimStyle::Default;
   if (ON_DimStyle::tolerance_format::Limits != dimstyle->ToleranceFormat())
     ON_TextContent::FormatDistance(distance_in, units_in, dimstyle, alt, formatted_string);
   if (ON_DimStyle::tolerance_format::None != dimstyle->ToleranceFormat())
     ON_TextContent::FormatTolerance(distance_in, units_in, dimstyle, alt, formatted_string);
-  
   return true;
 }
 

@@ -931,17 +931,22 @@ public:
         tangency kink dtype is returns 3
     cos_angle_tolerance - [in] default = cos(1 degree) Used only
         when c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the
-        cosine of the angle between two tangent vectors is 
+        cosine of the angle between two tangent vectors is
         <= cos_angle_tolerance, then a G1 discontinuity is reported.
-    curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used 
-        only when c is ON::continuity::G2_continuous.  If K0 and K1 are 
-        curvatures evaluated from above and below and 
-        |K0 - K1| > curvature_tolerance, then a curvature 
-        discontinuity is reported.
+        For G2, the curvature direction test is looser. See
+        ON_IsG2CurvatureContinuous() for details.
+    curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used
+        only when c is ON::continuity::G2_continuous.  If K0 and K1 are
+        curvatures evaluated from above and below and
+        |K0 - K1| <= curvature_tolerance, then the curvature is
+        considered continuous. Otherwise, the direction and relative
+        magnitude tests described in ON_IsG2CurvatureContinuous()
+        are used. Increasing curvature_tolerance can only loosen
+        the test.
   Returns:
     Parametric continuity tests c = (C0_continuous, ..., G2_continuous):
 
-      true if a parametric discontinuity was found strictly 
+      true if a parametric discontinuity was found strictly
       between t0 and t1. Note well that all curves are 
       parametrically continuous at the ends of their domains.
 
@@ -1003,17 +1008,27 @@ public:
         c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the cosine
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
+        For G2, the curvature direction test is looser. See
+        ON_IsG2CurvatureContinuous() for details.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::continuity::G2_continuous or ON::continuity::Gsmooth_continuous.  
+        c is ON::continuity::G2_continuous or ON::continuity::Gsmooth_continuous.
         ON::continuity::G2_continuous:
-          If K0 and K1 are curvatures evaluated
-          from above and below and |K0 - K1| > curvature_tolerance,
-          then a curvature discontinuity is reported.
+          If K0 and K1 are curvatures evaluated from above and below
+          and |K0 - K1| <= curvature_tolerance, then the curvature is
+          considered continuous. Otherwise, the direction and relative
+          magnitude tests described in ON_IsG2CurvatureContinuous()
+          are used. Increasing curvature_tolerance can only loosen
+          the test.
         ON::continuity::Gsmooth_continuous:
           If K0 and K1 are curvatures evaluated from above and below
-          and the angle between K0 and K1 is at least twice angle tolerance
-          or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
-          then a curvature discontinuity is reported.
+          and |K0 - K1| <= curvature_tolerance, then the curvature is
+          considered continuous. Otherwise, a curvature discontinuity
+          is reported if exactly one of K0 and K1 is zero, or if the
+          angle between K0 and K1 is greater than 90 degrees. A change
+          in curvature magnitude alone is not reported, except that
+          polycurves and NURBS curves also report visibly different
+          transitions between adjacent coplanar arcs. See
+          ON_IsGsmoothCurvatureContinuous() for details.
   Returns:
     true if the curve has at least the c type continuity at 
     the parameter t.

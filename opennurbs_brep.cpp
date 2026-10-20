@@ -11226,6 +11226,17 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     ON_BrepTrim& trim0 = m_T[trim0_index[eti]];
     ON_BrepTrim& trim1 = m_T[trim1_index[eti]];
     ON_BrepTrim& trim = NewTrim( edge, trim0.m_bRev3d, c2i );
+
+    // https://mcneel.myjetbrains.com/youtrack/issue/RH-99498
+    // NewTrim() sets the trims bounding box from the curves control points.
+    // If the loops bounding box is tight these control points may poke outside the loops box.
+    // Instead, set the trims bounding box to the union of the joined trims.
+    if (trim0.m_pbox.IsValid() && trim1.m_pbox.IsValid())
+    {
+      trim.m_pbox = trim0.m_pbox;
+      trim.m_pbox.Union(trim1.m_pbox);
+    }
+
 		// Set trim tolerance
 		for(int i=0; i<2; i++){
 			if( trim0.m_tolerance[i]<0 || trim1.m_tolerance[i]<0)
