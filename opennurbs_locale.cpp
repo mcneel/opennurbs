@@ -875,6 +875,9 @@ ON_Locale ON_Locale::FromWindowsLCID(
   case ON_Locale::WindowsLCID::ru_RU_LCID:
     return ON_Locale::FromWindowsLCIDAndName(windows_lcid, "ru-RU" );
     break;
+  case ON_Locale::WindowsLCID::tr_TR_LCID:
+    return ON_Locale::FromWindowsLCIDAndName(windows_lcid, "tr-TR" );
+    break;
   case ON_Locale::WindowsLCID::zh_CN_LCID:
     // "Hans" script is implied by BCP 47 and should not be in the language tag
     return ON_Locale::FromWindowsLCIDAndName(windows_lcid, "zh-CN" );

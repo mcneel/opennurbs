@@ -302,17 +302,22 @@ bool ON_Leader::GetTextXform(
       case ON_TextMask::MaskFrame::CapsuleFrame:
       case ON_TextMask::MaskFrame::HexagonCapsuleFrame:
         {
+          // 13 Oct 2026 S. Baer (RH-99550)
+          // textblock_width, textblock_height, text_gap and landing_length are all
+          // in unscaled text units. text_pt2 is in leader plane (model) units, so
+          // every length added to it has to be multiplied by dimscale.
           double half_height = dimscale * (textblock_height * 0.5 + mask_border);
           double radius = half_height;
+          double half_width = dimscale * (textblock_width * 0.5 + text_gap);
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
 
           if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
           {
-            text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap - radius * 0.5));
+            text_pt2 = text_pt2 + (tail_dir * (half_width - radius * 0.5));
           }
           else if (fabs(tail_dir.x) > 0.1)
           {

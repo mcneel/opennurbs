@@ -690,7 +690,7 @@ const ON_SubDComponentRef& ON_SubDComponentRefList::Append(
   {
     if (subd_ref.SubD().IsEmpty())
       break;
-    if (false == component_ptr.IsNull())
+    if (component_ptr.IsNull())
       break;
     const ON_SubDComponentRef r(ON_SubDComponentRef::Create(subd_ref, component_ptr, component_location,reference_id));
     return Append(&r);

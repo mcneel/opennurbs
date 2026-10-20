@@ -77,6 +77,9 @@ public:
     // Russian, Russia
     ru_RU_LCID = 0x0419, // 1049 decimal
 
+    // Turkish, Turkey, Latn script implied
+    tr_TR_LCID = 0x041f, // 1055 decimal
+
     // According to https://en.wikipedia.org/wiki/Chinese_language, Chinese is a family of language
     // varieties, often mutually unintelligible.  Specifying both Script and REGION
     // (zh-Hans-CN or zh-Hant-TW) doesn't narrow things down nearly enough. 

@@ -3645,7 +3645,9 @@ bool RtfComposer::ComposeFromRuns(
             run_strings += L" ";
         }
 
-        if (ON_TextRun::RunType::kField != run->Type() && run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
+        // 7 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-85234
+        // A stacked field run writes its formula
+        if (ON_TextRun::RunType::kField != run->Type() && run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0 && !run->TextStringContains(L"%<"))
         {
           // RH-64720 - Only do this if the stack isn't from a field  
           run_strings += L"[[";
@@ -3974,7 +3976,13 @@ const ON_wString RtfComposer::ComposeAppleRTF(
       if (addspace)
         run_strings += L" ";
 
-      if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
+      // 7 Oct 2026 - Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-85234
+      // A stacked field run writes its formula
+      if (ON_TextRun::RunType::kText == run->Type() && run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0 && run->TextStringContains(L"%<"))
+      {
+        GetRunText(run, run_strings, true_bool);
+      }
+      else if (run->IsStacked() == ON_TextRun::Stacked::kStacked && run->m_stacked_text != 0)
       {
         run_strings += L"[[";
         GetRunText(run->m_stacked_text->m_top_run, run_strings, true_bool);

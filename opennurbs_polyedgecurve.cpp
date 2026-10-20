@@ -130,7 +130,7 @@ bool ON_PolyEdgeSegment::Create(
     m_brep = brep;
     m_component_index = edge->ComponentIndex();
     m_edge_domain = m_edge->Domain();
-    m_trim_domain = m_trim->Domain();
+
     ON_CurveProxy::SetProxyCurve( 
                       c3,
                       edge->ProxyCurveDomain()

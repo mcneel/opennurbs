@@ -93,6 +93,7 @@ private:
   ON_MemoryAllocationTracking& operator=(const ON_MemoryAllocationTracking&) = delete;
 };
 
+
 #endif
 
 #endif
