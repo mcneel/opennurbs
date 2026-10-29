@@ -142,7 +142,8 @@ public:
   /// CurvatureKinkZeroTolerance(). The default can be overridden by calling
   /// SetCurvatureKinkZeroTolerance().
   /// If the length of a curvature vector is &lt;= CurvatureKinkZeroTolerance(),
-  /// then that curvature vector is treated as zero. 
+  /// then that curvature is treated as flat: its length is treated as
+  /// CurvatureKinkZeroTolerance() and its direction is ignored.
   /// Thus, if CurvatureKinkZeroTolerance() = 0, then the setting does nothing.
   /// When CurvatureKinkZeroTolerance() &gt; 0, this is a scale dependent test.
   /// The default setting is 0.
@@ -313,14 +314,15 @@ public:
   /// </returns>
 
   /// <summary>
-  /// True if the angle between curvature_from_below and curvature_from_above is &gt; CurvatureKinkAngleDegrees()
-  /// or the ratio min/max &lt; CurvatureKinkRadiusRatio(), where
-  /// min and max are the minimum and maximum lengths of curvature_from_below and curvature_from_above. 
-  /// Both of these tests are scale independent.
-  /// If an input curvature vector has length &lt;= CurvatureKinkZeroTolerance(), then that
-  /// curvature is treated as zero. When is CurvatureKinkZeroTolerance() &gt; 0, the
-  /// test is scale dependent. The default value is chosen to work reasonably well
-  /// for most models at most scales.
+  /// True if the ratio min/max &lt;= CurvatureKinkRadiusRatio(), where min and max are the
+  /// minimum and maximum lengths of curvature_from_below and curvature_from_above,
+  /// or if the angle between curvature_from_below and curvature_from_above is &gt; KinkAngleDegrees().
+  /// If a curvature vector has length &lt;= CurvatureKinkZeroTolerance(), it is treated as flat:
+  /// its length is treated as CurvatureKinkZeroTolerance() in the ratio and its direction is
+  /// ignored, so the angle test is only done when both lengths are &gt; CurvatureKinkZeroTolerance().
+  /// Two flat curvatures are never a kink.
+  /// When CurvatureKinkZeroTolerance() = 0, both tests are scale independent.
+  /// When CurvatureKinkZeroTolerance() &gt; 0, the test is scale dependent.
   /// </summary>
   /// <param name="curvature_from_below"></param>
   /// <param name="curvature_from_above"></param>
@@ -388,14 +390,14 @@ public:
   double CurvatureKinkRadiusRatio() const;
 
   /// <summary>
-  /// If the curvature &lt;= CurvatureKinkZeroTolerance(), then it
-  /// is treated as zero curvature. Put another way, if 
-  /// (radius of curvature) *  CurvatureKinkZeroTolerance() &gt;= 1,
-  /// then the radius is treated as infinite.
+  /// If the curvature &lt;= CurvatureKinkZeroTolerance(), then it is treated as flat:
+  /// its value is treated as CurvatureKinkZeroTolerance() and the direction of the
+  /// curvature vector is ignored. Put another way, every radius of curvature
+  /// &gt;= 1/CurvatureKinkZeroTolerance() is treated as 1/CurvatureKinkZeroTolerance().
   /// If CurvatureKinkZeroTolerance() &gt; 0, then the curvature
   /// kink test is scale dependent.
   /// If CurvatureKinkZeroTolerance() = 0, then the curvature kink
-  /// test is indpendent of scale.
+  /// test is independent of scale.
   /// </summary>
   /// <returns></returns>
   double CurvatureKinkZeroTolerance() const;
@@ -414,10 +416,10 @@ public:
   );
 
   /// <summary>
-  /// When CurvatureKinkZeroTolerance() is &gt 0, IsCurvatureKink() is scale dependent.
+  /// When CurvatureKinkZeroTolerance() is &gt; 0, IsCurvatureKink() is scale dependent.
   /// Otherwise all the tests performed by ON_CurveKinkDefinition
   /// are independent of scale. The default value
-  /// ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance &gt; 0. 
+  /// ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance is 0. 
   /// If you know of a finite radius R that should be considered flat,
   /// then calling SetCurvatureKinkZeroTolerance(1.0/R) is a reasonable thing
   /// to consider. If you want a "mathematically perfect" scale independent
@@ -428,7 +430,8 @@ public:
   /// 0 &lt;= curvature_zero_tolerance
   /// Negative and non-finite values are treated as ON_CurveKinkDefinition::DefaultCurvatureKinkZeroTolerance.
   /// If the length of a curvature vector is &lt;= curvature_zero_tolerance,
-  /// then that curvature is treated as zero.
+  /// then that curvature is treated as flat: its length is treated as
+  /// curvature_zero_tolerance and its direction is ignored.
   /// In particular, passing 0.0 disables curvature zero tolerance checks.
   /// </param>
   void SetCurvatureKinkZeroTolerance(
@@ -436,13 +439,21 @@ public:
   );
 
   /// <summary>
-  /// Calculates the curvature radius ratio and the angle between the two curvature vectors.
+  /// Calculates the curvature radius ratio and the angle between the two curvature vectors,
+  /// as used by IsCurvatureKink().
   /// </summary>
   /// <param name="k0"></param>
   /// <param name="k1"></param>
-  /// <param name="curvatureRadiusRatio"></param>
-  /// <param name="angleDegrees">If one or both of the vectors have zero length, this returns ON_UNSET_VALUE</param>
+  /// <param name="curvatureRadiusRatio">
+  /// min/max of the lengths of k0 and k1, where a length &lt;= CurvatureKinkZeroTolerance()
+  /// is treated as CurvatureKinkZeroTolerance(). This is 1 when both lengths are
+  /// &lt;= CurvatureKinkZeroTolerance().
+  /// </param>
+  /// <param name="angleDegrees">
+  /// The angle between k0 and k1. If one or both lengths are &lt;= CurvatureKinkZeroTolerance(),
+  /// the direction is ignored and this returns ON_UNSET_VALUE.
   /// <returns>True if calculation is successful</returns>
+  /// </param>
   bool ComputeCurvatureRadiusRatio(const ON_3dVector& k0, const ON_3dVector& k1, double& curvatureRadiusRatio, double& angleDegrees) const;
 
   /// <summary>
@@ -480,7 +491,8 @@ private:
 
   /// <summary>
   /// Optional custom curvature kink zero tolerance to use instead of DefaultCurvatureKinkZeroTolerance.
-  /// If curvature &lt;= m_curvature_zero_tolerance, then that curvature is treated as zero.
+  /// If curvature &lt;= m_curvature_kink_zero_tolerance, then that curvature is treated as flat
+  /// (see CurvatureKinkZeroTolerance()).
   /// This is the only scale dependent setting in ON_CurveKinkDefinition.
   /// </summary>
   double m_curvature_kink_zero_tolerance = ON_DBL_QNAN;
