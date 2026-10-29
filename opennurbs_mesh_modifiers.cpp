@@ -232,6 +232,8 @@ ON_Displacement::ON_Displacement(const ON_XMLNode& dsp_node)
 }
 
 ON_Displacement::ON_Displacement(const ON_Displacement& dsp)
+  :
+  ON_MeshModifier(ON_XMLNode(ON_DISPLACEMENT_ROOT))
 {
   m_impl_dsp = new CImplDSP;
   operator = (dsp);
@@ -777,6 +779,8 @@ ON_EdgeSoftening::ON_EdgeSoftening(const ON_XMLNode& node)
 }
 
 ON_EdgeSoftening::ON_EdgeSoftening(const ON_EdgeSoftening& es)
+  :
+  ON_MeshModifier(ON_XMLNode(ON_EDGE_SOFTENING_ROOT))
 {
   operator = (es);
 }
@@ -974,6 +978,8 @@ ON_Thickening::ON_Thickening(const ON_XMLNode& node)
 }
 
 ON_Thickening::ON_Thickening(const ON_Thickening& t)
+  :
+  ON_MeshModifier(ON_XMLNode(ON_THICKENING_ROOT))
 {
   operator = (t);
 }
@@ -1159,6 +1165,8 @@ ON_CurvePiping::ON_CurvePiping(const ON_XMLNode& node)
 }
 
 ON_CurvePiping::ON_CurvePiping(const ON_CurvePiping& cp)
+  :
+  ON_MeshModifier(ON_XMLNode(ON_CURVE_PIPING_ROOT))
 {
   operator = (cp);
 }
@@ -1167,6 +1175,7 @@ const ON_CurvePiping& ON_CurvePiping::operator = (const ON_CurvePiping& cp)
 {
   if (this != &cp)
   {
+    SetOn      (cp.On());
     SetRadius  (cp.Radius());
     SetSegments(cp.Segments());
     SetFaceted (cp.Faceted());
@@ -1179,6 +1188,7 @@ const ON_CurvePiping& ON_CurvePiping::operator = (const ON_CurvePiping& cp)
 
 bool ON_CurvePiping::operator == (const ON_CurvePiping& cp) const
 {
+  if (On()       != cp.On())       return false;
   if (Radius()   != cp.Radius())   return false;
   if (Segments() != cp.Segments()) return false;
   if (Faceted()  != cp.Faceted())  return false;
@@ -1409,6 +1419,8 @@ ON_ShutLining::ON_ShutLining(const ON_XMLNode& sl_node)
 }
 
 ON_ShutLining::ON_ShutLining(const ON_ShutLining& sl)
+  :
+  ON_MeshModifier(ON_XMLNode(ON_SHUTLINING_ROOT))
 {
   m_impl_sl = new CImplSL;
   operator = (sl);
@@ -1536,8 +1548,7 @@ ON_ShutLining::CurveIterator ON_ShutLining::GetCurveIterator(void) const
 ON_ShutLining::Curve& ON_ShutLining::AddCurve(void)
 {
   std::lock_guard<std::recursive_mutex> lg(m_impl->_mutex);
-  ON_XMLNode* curve_node = m_impl->Node().AttachChildNode(new ON_XMLNode(ON_SHUTLINING_CURVE));
-  Curve* curve = new Curve(*curve_node);
+  Curve* curve = new Curve(ON_XMLNode(ON_SHUTLINING_CURVE));
   m_impl_sl->m_curves.Append(curve);
 
   return *curve;

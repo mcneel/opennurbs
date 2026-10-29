@@ -2328,7 +2328,7 @@ double ON_MaximumCoordinate(const double* data, int dim, bool is_rat, int count,
 #define ON_unset_point ON_3dPoint::UnsetPoint
 // OBSOLETE - use ON_3dPoint::UnsetPoint
 #define ON_UNSET_POINT ON_3dPoint::UnsetPoint
-// OBSOLETE - use ON_3dPoint::UnsetVector
+// OBSOLETE - use ON_3dVector::UnsetVector
 #define ON_UNSET_VECTOR ON_3dVector::UnsetVector
 // OBSOLETE - use ON_3dPoint::Origin
 #define ON_origin ON_3dPoint::Origin

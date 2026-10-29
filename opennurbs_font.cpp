@@ -2484,9 +2484,12 @@ int ON_FontList::CompareEnglishFamilyAndFaceName(ON_Font const* const* lhs, ON_F
 int ON_FontList::CompareEnglishWindowsLogfontName(ON_Font const* const* lhs, ON_Font const* const* rhs)
 {
   ON_ManagedFonts_CompareFontPointer(lhs, rhs);
+  // October 21, 2026 - Tim
+  // Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-45901
+  // Compared LocalizedFirst names, so the English LOGFONT pass repeated the localized one.
   return ON_wString::CompareOrdinal(
-    lhs_font->WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst), 
-    rhs_font->WindowsLogfontName(ON_Font::NameLocale::LocalizedFirst),
+    lhs_font->WindowsLogfontName(ON_Font::NameLocale::English),
+    rhs_font->WindowsLogfontName(ON_Font::NameLocale::English),
     true
   );
 }
@@ -11012,6 +11015,21 @@ bool ON_Font::WriteV5(
   return rc;
 }
 
+// True when installed_font is the face named by the English family and face names saved in a file.
+static bool Internal_IsSameFace(
+  const ON_Font* installed_font,
+  const ON_wString& en_family_name,
+  const ON_wString& en_face_name
+)
+{
+  return
+    nullptr != installed_font
+    && en_family_name.IsNotEmpty()
+    && en_face_name.IsNotEmpty()
+    && ON_wString::EqualOrdinal(installed_font->FamilyName(ON_Font::NameLocale::English), en_family_name, true)
+    && ON_wString::EqualOrdinal(installed_font->FaceName(ON_Font::NameLocale::English), en_face_name, true);
+}
+
 bool ON_Font::Read(
   ON_BinaryArchive& file // restore definition from binary archive
   )
@@ -11246,26 +11264,84 @@ bool ON_Font::Read(
     }
 
     // version 1.5 explicit names in loc and en and PANOSE1 settings
-    if (!file.ReadString(m_locale_name))
+    ON_wString locale_name;
+    ON_wString loc_postscript_name;
+    ON_wString en_postscript_name;
+    ON_wString loc_windows_logfont_name;
+    ON_wString en_windows_logfont_name;
+    ON_wString loc_family_name;
+    ON_wString en_family_name;
+    ON_wString loc_face_name;
+    ON_wString en_face_name;
+    ON_PANOSE1 panose1;
+    if (!file.ReadString(locale_name))
       break;
-    if (!file.ReadString(m_loc_postscript_name))
+    if (!file.ReadString(loc_postscript_name))
       break;
-    if (!file.ReadString(m_en_postscript_name))
+    if (!file.ReadString(en_postscript_name))
       break;
-    if (!file.ReadString(m_loc_windows_logfont_name))
+    if (!file.ReadString(loc_windows_logfont_name))
       break;
-    if (!file.ReadString(m_en_windows_logfont_name))
+    if (!file.ReadString(en_windows_logfont_name))
       break;
-    if (!file.ReadString(m_loc_family_name))
+    if (!file.ReadString(loc_family_name))
       break;
-    if (!file.ReadString(m_en_family_name))
+    if (!file.ReadString(en_family_name))
       break;
-    if (!file.ReadString(m_loc_face_name))
+    if (!file.ReadString(loc_face_name))
       break;
-    if (!file.ReadString(m_en_face_name))
+    if (!file.ReadString(en_face_name))
       break;
-    if (!m_panose1.Read(file))
+    if (!panose1.Read(file))
       break;
+
+    // October 21, 2026 - Tim
+    // Fix for https://mcneel.myjetbrains.com/youtrack/issue/RH-45901
+    // The lookup above used the saving device's localized names. A font saved under another
+    // Windows language (e.g. DFKai-SB's Chinese name) is not found, so retry with the English names.
+    // Only accept the same face: a substitute must stay a missing font so a save keeps its names.
+    if (nullptr == installed_font && (en_windows_logfont_name.IsNotEmpty() || en_family_name.IsNotEmpty()))
+    {
+      const ON_Font* en_installed_font = ON_Font::InstalledFontList().FromNames(
+        en_postscript_name,
+        en_windows_logfont_name,
+        en_family_name,
+        en_face_name,
+        font_weight,
+        font_stretch,
+        font_style,
+        false,
+        true
+      );
+      if (Internal_IsSameFace(en_installed_font, en_family_name, en_face_name))
+      {
+        installed_font = en_installed_font;
+        const double point_size = m_point_size;
+        *this = *installed_font;
+        this->m_font_bUnderlined = bUnderlined;
+        this->m_font_bStrikethrough = bStrikethrough;
+        this->m_point_size = point_size;
+        if (bSetAppleFontWeightTrait)
+          m_apple_font_weight_trait = apple_font_weight_trait;
+      }
+    }
+
+    // Keep the installed font's names when it is the saved face. Copying the saved names over
+    // them left a font that did not equal the installed font when the languages differ.
+    // A substitute face keeps the saved names, as before.
+    if (false == Internal_IsSameFace(installed_font, en_family_name, en_face_name))
+    {
+      m_locale_name = locale_name;
+      m_loc_postscript_name = loc_postscript_name;
+      m_en_postscript_name = en_postscript_name;
+      m_loc_windows_logfont_name = loc_windows_logfont_name;
+      m_en_windows_logfont_name = en_windows_logfont_name;
+      m_loc_family_name = loc_family_name;
+      m_en_family_name = en_family_name;
+      m_loc_face_name = loc_face_name;
+      m_en_face_name = en_face_name;
+      m_panose1 = panose1;
+    }
 
 
     if (minor_verision <= 5)
