@@ -1499,7 +1499,7 @@ int ON_InstanceDefinition::Internal_InstanceGeometryIdIndex(
 ) const
 {
   if (ON_nil_uuid == id || m_object_uuid.Count() <= 0 )
-    return false;
+    return ON_UNSET_INT_INDEX;
   for (int i = 0; i < m_object_uuid.Count(); i++)
   {
     if (m_object_uuid[i] == id)
