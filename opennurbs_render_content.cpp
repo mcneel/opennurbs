@@ -965,9 +965,29 @@ bool ON_RenderContent::IsChild(void) const
 	return nullptr != _private->m_parent;
 }
 
+// A copy of a render content is a new content: it, and each of its own children, gets a new id.
+static void ON_RenderContent_RenewIds(ON_RenderContent& rc)
+{
+  rc.SetId();
+  auto it = rc.GetChildIterator();
+  ON_RenderContent* child = nullptr;
+  while (nullptr != (child = it.GetNextChild()))
+  {
+    ON_RenderContent_RenewIds(*child);
+  }
+}
+
 bool ON_RenderContent::SetChild(const ON_RenderContent& child, const wchar_t* child_slot_name)
 {
-  return _private->SetChild(child.Duplicate(), child_slot_name);
+  // The child is set as a copy. Give the copy (and its children) new ids, so that a child taken
+  // from the model is not in it twice under one id.
+  ON_RenderContent* copy = child.Duplicate();
+  if (nullptr != copy)
+  {
+    ON_RenderContent_RenewIds(*copy);
+  }
+
+  return _private->SetChild(copy, child_slot_name);
 }
 
 bool ON_RenderContent::DeleteChild(const wchar_t* child_slot_name)
