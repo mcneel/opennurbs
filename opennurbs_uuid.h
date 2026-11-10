@@ -621,7 +621,15 @@ public:
     // Read two 32-bit words (Data1, and Data2/Data3) with 4-byte-aligned reads -
     // NOT a size_t* cast, since ON_UUID is only guaranteed 4-byte aligned.
     const ON__UINT32* d = reinterpret_cast<const ON__UINT32*>(&uuid.Data1);
+#if defined(ON_RUNTIME_WASM) && defined(ON_32BIT_RUNTIME)
+    // wasm32, to support the wasm32 build of rhino3dm (rhino3dm.js): size_t is 32 bits,
+    // where shifting it by 32 is undefined. Combine the words in 64 bits and fold them.
+    // Every other platform keeps the expression below, so its hash values do not change.
+    const ON__UINT64 h = (static_cast<ON__UINT64>(d[0]) << 32) | static_cast<ON__UINT64>(d[1]);
+    return static_cast<size_t>(h ^ (h >> 32));
+#else
     return (static_cast<size_t>(d[0]) << 32) | static_cast<size_t>(d[1]);
+#endif
   }
 };
 

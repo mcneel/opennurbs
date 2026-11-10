@@ -274,6 +274,10 @@ bool ON_PostEffect::operator == (const ON_PostEffect& pep) const
   if (_impl->_type       != pep._impl->_type)       return false;
   if (_impl->_local_name != pep._impl->_local_name) return false;
 
+  // ALB 2026.11.09 RH-99970 Compares on and shown, which are not parameters.
+  if (On()    != pep.On())    return false;
+  if (Shown() != pep.Shown()) return false;
+
   ON_PostEffectParams p1, p2;
   GetAllParameters(p1);
   pep.GetAllParameters(p2);
@@ -293,6 +297,19 @@ bool ON_PostEffect::operator == (const ON_PostEffect& pep) const
   }
 
   delete it;
+
+  // ALB 2026.11.09 RH-99970 Also not equal when the other has a parameter this one doesn't.
+  if (equal)
+  {
+    it = p2.AsXMLParameters().NewIterator();
+    while (equal && it->Next(param_name, param_value2))
+    {
+      if (!p1.GetParam(param_name, param_value1))
+        equal = false;
+    }
+
+    delete it;
+  }
 
   return equal;
 }

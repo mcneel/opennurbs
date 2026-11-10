@@ -686,6 +686,8 @@ bool ON_PlaneSurface::SetExtents(
 {
   if ( dir < 0 || dir > 1 || !extents.IsIncreasing() )
     return false;
+  // 6-Nov-2026 Dale Fugier
+  DestroySurfaceTree();
   m_extents[dir] = extents;
   if ( bSyncDomain )
     m_domain[dir] = m_extents[dir];

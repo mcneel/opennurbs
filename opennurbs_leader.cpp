@@ -341,7 +341,7 @@ bool ON_Leader::GetTextXform(
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
           
           text_pt2 = text_pt2 + (tail_dir * radius);
@@ -353,7 +353,7 @@ bool ON_Leader::GetTextXform(
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
           
           double scale = 1.0;
@@ -376,7 +376,7 @@ bool ON_Leader::GetTextXform(
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
 
           ON_2dVector along(tail_dir);
@@ -404,7 +404,7 @@ bool ON_Leader::GetTextXform(
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
 
           ON_2dVector along(tail_dir);
@@ -472,7 +472,7 @@ bool ON_Leader::GetTextXform(
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
           
           ON_2dVector along(tail_dir);
@@ -523,12 +523,12 @@ bool ON_Leader::GetTextXform(
           if (landing_length > 0.0)
           {
             tail_dir = tail_dir.x < 0 ? ON_2dVector(-1, 0) : ON_2dVector(1, 0);
-            text_pt2 = text_pt2 + (tail_dir * landing_length);
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * landing_length));
           }
 
           if (ON_DimStyle::ContentAngleStyle::Aligned == textangle_style && landing_length == 0.0)
           {
-            text_pt2 = text_pt2 + (tail_dir * (textblock_width * 0.5 + text_gap));
+            text_pt2 = text_pt2 + (tail_dir * (dimscale * (textblock_width * 0.5 + text_gap)));
           }
 
           double cornerRadius = half_height * 0.5;

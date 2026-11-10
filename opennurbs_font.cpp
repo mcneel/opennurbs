@@ -25,6 +25,14 @@
 #include "opennurbs_win_dwrite.h"
 #include "opennurbs_apple_nsfont.h"
 
+// ALB 2026.10.31 RH-99762 One lock for every ON_FontList call, because lookups sort the shared lists.
+static std::recursive_mutex& ON_Internal_FontListMutex()
+{
+  // Never deleted, so font calls made during exit can still lock it.
+  static std::recursive_mutex* font_list_mutex = new std::recursive_mutex();
+  return *font_list_mutex;
+}
+
 // Do not put this class in a public header file or SDK.
 // It will be modified at unexpected times in unexpected ways. Any code outside of this file
 // that uses the implementation will crash unexpectedly.
@@ -823,6 +831,7 @@ const ON_Font* ON_ManagedFonts::GetFromSerialNumber(
   unsigned int managed_font_serial_number
   )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (0 == m_managed_fonts.Count())
   {
     // Put ON_Font::Default as the first entry in this list.
@@ -858,6 +867,7 @@ const ON_Font* ON_ManagedFonts::GetFromFontCharacteristics(
   bool bCreateIfNotFound
 )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if ( 0 == m_managed_fonts.Count() )
   {
     // Put ON_Font::Default as the first entry in this list.
@@ -2674,6 +2684,7 @@ unsigned int ON_Font::GetManagedFontList(
   ON_SimpleArray< const ON_Font* >& managed_fonts
   )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   const ON_SimpleArray< const ON_Font* >& a = ON_ManagedFonts::ManagedFonts().ByIndex();
   if (&a != &managed_fonts)
     managed_fonts = a;
@@ -2684,6 +2695,7 @@ unsigned int ON_Font::GetInstalledFontList(
   ON_SimpleArray< const ON_Font* >& installed_fonts
   )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   const ON_SimpleArray< const ON_Font* >& a = ON_ManagedFonts::InstalledFonts().ByFamilyName();
   if (&a != &installed_fonts)
     installed_fonts = a;
@@ -2695,6 +2707,7 @@ unsigned int ON_Font::GetInstalledFontFamily(
   ON_SimpleArray< const ON_Font* >& installed_fonts
 )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   installed_fonts.SetCount(0);
   if (nullptr == font_family_name || 0 == font_family_name[0])
     return 0;
@@ -3862,6 +3875,7 @@ const ON_2dex ON_FontList::Internal_SearchSortedList(
 
 void ON_FontList::Internal_EmptyLists()
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   m_by_index.SetCount(0);
   m_unsorted.SetCount(0);
   m_sorted.m_by_font_characteristics_hash.SetCount(0);
@@ -3980,6 +3994,7 @@ static int Internal_CompareFontCharacteristicsHashEtc(ON_Font const* const* lhs,
 
 void ON_FontList::Internal_UpdateSortedLists() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   const int unsorted_count = m_unsorted.Count();
   if (unsorted_count <= 0)
     return;
@@ -4116,6 +4131,7 @@ ON_FontList::~ON_FontList()
 
 unsigned int ON_FontList::Count() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return m_by_index.UnsignedCount();
 }
 
@@ -4128,6 +4144,7 @@ const ON_Font* ON_FontList::FromFontCharacteristicsHash(
   ON_SHA1_Hash font_characteristics_hash, 
   bool bReturnFirst) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (font_characteristics_hash.IsZeroDigestOrEmptyContentHash())
     return nullptr;
 
@@ -4173,6 +4190,7 @@ const ON_Font* ON_FontList::FromPostScriptName(
   const wchar_t* postscript_name
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromPostScriptName(postscript_name, ON_Font::Weight::Normal, ON_Font::Stretch::Condensed, ON_Font::Style::Upright, false, false);
 }
   
@@ -4183,6 +4201,7 @@ const ON_Font* ON_FontList::FromPostScriptName(
   ON_Font::Style prefered_style
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     postscript_name,
     nullptr,
@@ -4205,6 +4224,7 @@ const ON_Font* ON_FontList::FromPostScriptName(
   bool bStrikethrough
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     postscript_name,
     nullptr,
@@ -4225,6 +4245,7 @@ const ON_Font* ON_FontList::FromWindowsLogfontName(
   const wchar_t* windows_logfont_name
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromWindowsLogfontName(windows_logfont_name, ON_Font::Weight::Normal, ON_Font::Stretch::Condensed, ON_Font::Style::Upright);
 }
 
@@ -4235,6 +4256,7 @@ const ON_Font* ON_FontList::FromWindowsLogfontName(
   ON_Font::Style prefered_style
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     nullptr,
     windows_logfont_name,
@@ -4257,6 +4279,7 @@ const ON_Font* ON_FontList::FromWindowsLogfontName(
   bool bStrikethrough
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     nullptr,
     windows_logfont_name,
@@ -4278,6 +4301,7 @@ const ON_Font* ON_FontList::FromFamilyName(
   const wchar_t* prefered_face_name
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromFamilyName(family_name, prefered_face_name, ON_Font::Weight::Normal, ON_Font::Stretch::Medium, ON_Font::Style::Upright);
 }
   
@@ -4289,6 +4313,7 @@ const ON_Font* ON_FontList::FromFamilyName(
   ON_Font::Style prefered_style
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     nullptr,
     nullptr,
@@ -4312,6 +4337,7 @@ const ON_Font* ON_FontList::FromFamilyName(
   bool bStrikethrough
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     nullptr,
     nullptr,
@@ -4336,6 +4362,7 @@ const ON_Font* ON_FontList::FromRichTextProperties(
   bool bStrikethrough
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   // ballpark weight and stretch values. Closest match is returned.
   const ON_Font::Weight prefered_weight = bRtfBold ? ON_Font::Weight::Bold : ON_Font::Weight::Normal;
   const ON_Font::Stretch prefered_stretch = ON_Font::Stretch::Medium;
@@ -4372,6 +4399,7 @@ const ON_Font* ON_FontList::FromNames(
   bool bRequireStyleMatch
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   const bool bMatchUnderlineStrikethroughAndPointSize = false;
   return Internal_FromNames(
     postscript_name,
@@ -4405,6 +4433,7 @@ const ON_Font* ON_FontList::FromNames(
   double point_size
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   bool bMatchUnderlineStrikethroughAndPointSize = true;
   return Internal_FromNames(
     postscript_name,
@@ -4440,6 +4469,7 @@ const ON_Font* ON_FontList::Internal_FromNames(
   double point_size
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (ON_Font::Stretch::Unset == prefered_stretch)
     bRequireStyleMatch = false;
 
@@ -4718,6 +4748,7 @@ unsigned int ON_FontList::FontListFromNames(
   ON_SimpleArray< const ON_Font* >& font_list
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   const unsigned int font_list_count0 = font_list.UnsignedCount();
 
   ON_Font key;
@@ -4801,6 +4832,7 @@ const ON_Font* ON_FontList::FromFontProperties(
   bool bRequireStyleMatch
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     font_properties->PostScriptName(m_name_locale),
     font_properties->WindowsLogfontName(m_name_locale),
@@ -4823,6 +4855,7 @@ const ON_Font* ON_FontList::FromFontProperties(
   double point_size
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return FromNames(
     font_properties->PostScriptName(m_name_locale),
     font_properties->WindowsLogfontName(m_name_locale),
@@ -4846,6 +4879,7 @@ const ON_Font* ON_FontList::FamilyMemberWithWeightStretchStyle(
   ON_Font::Style desired_style
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   ON_Font key;
   key.m_loc_family_name = family_name;
   key.m_loc_family_name.TrimLeftAndRight();
@@ -4885,6 +4919,7 @@ const ON_Font* ON_FontList::FamilyMemberWithWeightStretchStyle(
   ON_Font::Style desired_style
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (nullptr == font)
     font = &ON_Font::Default;
   else if ( font->FamilyName().IsEmpty() && font->FaceName().IsEmpty() && font->WindowsLogfontName().IsEmpty() )
@@ -5041,36 +5076,42 @@ const ON_Font* ON_Font::ManagedFamilyMemberWithWeightStretchStyle(
 
 const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByPostScriptName() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   Internal_UpdateSortedLists();
   return m_sorted.m_by_postscript_name;
 }
 
 const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByWindowsLogfontName() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   Internal_UpdateSortedLists();
   return m_sorted.m_by_windows_logfont_name;
 }
 
 const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByFamilyName() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   Internal_UpdateSortedLists();
   return m_sorted.m_by_family_name;
 }
 
 const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByQuartetName() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   Internal_UpdateSortedLists();
   return m_sorted.m_by_quartet_name;
 }
 
 const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByFontCharacteristicsHash() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   Internal_UpdateSortedLists();
   return m_sorted.m_by_font_characteristics_hash;
 }
 
 const ON_SimpleArray< const class ON_Font* >& ON_FontList::ByIndex() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   return m_by_index;
 }
 
@@ -5099,6 +5140,7 @@ const ON_FontFaceQuartet ON_FontList::QuartetFromQuartetName(
   const wchar_t* quartet_name
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   for (;;)
   {
     ON_FontFaceQuartet qname(quartet_name, nullptr, nullptr, nullptr, nullptr);
@@ -5142,6 +5184,7 @@ const ON_Font* ON_FontList::FontFromQuartetProperties(
   bool bItalic
 ) const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   ON_FontFaceQuartet qname(quartet_name, nullptr, nullptr, nullptr, nullptr);
   if (qname.QuartetName().IsEmpty())
     return nullptr;
@@ -5202,6 +5245,7 @@ ON_3udex Internal_StretchSlantWeightDex(unsigned max_stretch_dex, unsigned max_w
 
 const ON_ClassArray< ON_FontFaceQuartet >& ON_FontList::QuartetList() const
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   // call ByQuartetName() first to insure m_quartet_list[] is set correctly.
   const ON_SimpleArray<const ON_Font*>& a = this->ByQuartetName();
   
@@ -5698,6 +5742,7 @@ unsigned int ON_FontList::AddFont(
   bool bCheckforDuplicates
 )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (nullptr == font)
     return false;
 
@@ -5735,23 +5780,12 @@ unsigned int ON_FontList::AddFont(
     }
   }
 
-  m_by_index.Append(font);
-
-  int count = m_by_index.Count();
-  if (count > 1)
-  {
-    for (int i = count - 2; i <= 0; i--)
-    {
-      // font = m_by_index[i+1]
-      const ON_Font* a = m_by_index[i];
-      if (a->RuntimeSerialNumber() <= font->RuntimeSerialNumber())
-        break;
-
-      // almost never happens so bubble insertion is ok
-      m_by_index[i] = font;
-      m_by_index[i + 1] = a;
-    }
-  }
+  // ON_ManagedFonts::GetFromSerialNumber() binary searches m_by_index by serial number.
+  const auto serial_number = [](const ON_Font* f) { return (nullptr != f) ? f->RuntimeSerialNumber() : 0U; };
+  int i = m_by_index.Count();
+  while (i > 0 && serial_number(m_by_index[i - 1]) > serial_number(font))
+    i--;
+  m_by_index.Insert(i, font);
 
   m_unsorted.Append(font);
   m_quartet_list.SetCount(0);
@@ -5763,6 +5797,7 @@ unsigned int ON_FontList::AddFonts(
   const ON_SimpleArray< const ON_Font* >& fonts
 )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   const size_t font_count = fonts.UnsignedCount();
   const ON_Font * const * font_list = fonts.Array();
   return AddFonts(font_count,font_list);
@@ -5773,6 +5808,7 @@ unsigned int ON_FontList::AddFonts(
   const ON_Font * const * font_list
 )
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (nullptr == font_list || font_count <= 0)
     return 0;
 
@@ -14257,6 +14293,7 @@ void ON_ManagedFonts::Internal_SetFakeWindowsLogfontNames(
 
 const ON_FontList& ON_ManagedFonts::InstalledFonts()
 {
+  std::lock_guard<std::recursive_mutex> font_list_lock(ON_Internal_FontListMutex());
   if (0 == List.m_installed_fonts.Count())
   {
     ON_MemoryAllocationTracking disable_tracking(false);

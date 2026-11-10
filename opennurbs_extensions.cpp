@@ -3323,8 +3323,6 @@ bool ONX_Model::Write(const wchar_t* filename, int version, ON_TextLog* error_lo
 
 bool ONX_Model::Write(ON_BinaryArchive& archive, int version, ON_TextLog* error_log) const
 {
-  m_private->UpdateRDKUserData(version);
-
   if ( 0 != version )
   {
     if (  version < 2
@@ -3333,11 +3331,16 @@ bool ONX_Model::Write(ON_BinaryArchive& archive, int version, ON_TextLog* error_
       || (version >= 50 && 0 != (version % 10))
       )
     {
-      version = 0;
       if ( error_log) error_log->Print("ONX_Model::Write version parameter = %d; it must be 0, or >= 2 and <= %d, or a multiple of 10 >= 50 and <= %d.\n",
                       version,ON_BinaryArchive::CurrentArchiveVersion()/10,ON_BinaryArchive::CurrentArchiveVersion());
+      version = 0;
     }
   }
+
+  // RH-99881: validate the version before updating the RDK user data. An invalid version
+  // (e.g. 100 while the current archive version is 90) used to reach the mesh modifier
+  // XML code, which called ON_BinaryArchive::SetArchive3dmVersion with it and hit ON_ERROR.
+  m_private->UpdateRDKUserData(version);
 
   if ( !archive.WriteMode() )
   {

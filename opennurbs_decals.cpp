@@ -126,6 +126,31 @@ static ON_Decal::Mappings MappingFromString(const ON_wString& s)
   return ON_Decal::Mappings::None;
 }
 
+static const wchar_t* MappingToString(ON_Decal::Mappings m)
+{
+  switch (m)
+  {
+  default: ON_ASSERT(false);
+  case ON_Decal::Mappings::None:        return ON_RDK_DECAL_MAPPING_NONE;
+  case ON_Decal::Mappings::Planar:      return ON_RDK_DECAL_MAPPING_PLANAR;
+  case ON_Decal::Mappings::Spherical:   return ON_RDK_DECAL_MAPPING_SPHERICAL;
+  case ON_Decal::Mappings::Cylindrical: return ON_RDK_DECAL_MAPPING_CYLINDRICAL;
+  case ON_Decal::Mappings::UV:          return ON_RDK_DECAL_MAPPING_UV;
+  }
+}
+
+static const wchar_t* ProjectionToString(ON_Decal::Projections p)
+{
+  switch (p)
+  {
+  default: ON_ASSERT(false);
+  case ON_Decal::Projections::None:     return ON_RDK_DECAL_PROJECTION_NONE;
+  case ON_Decal::Projections::Forward:  return ON_RDK_DECAL_PROJECTION_FORWARD;
+  case ON_Decal::Projections::Backward: return ON_RDK_DECAL_PROJECTION_BACKWARD;
+  case ON_Decal::Projections::Both:     return ON_RDK_DECAL_PROJECTION_BOTH;
+  }
+}
+
 class ON_Decal::CImpl : public ON_InternalXMLImpl
 {
 public:
@@ -178,6 +203,10 @@ public:
   bool HitTest(const ON_3dPoint& point, const ON_3dVector& normal, ON_2dPoint& uvOut) const;
 
   void ApplyTransformation(const ON_Xform& xform);
+
+  ON_DECAL_CRC ComputeCRC(ON__UINT32 current_remainder) const;
+
+  class CacheReader;
 
   virtual ON_wString NameOfRootNode(void) const override { return ON_RDK_DECAL; }
 
@@ -312,20 +341,9 @@ void ON_Decal::CImpl::SetMapping(Mappings m)
   {
     _cache.mapping = m;
 
-    const wchar_t* s = L"";
     if (!_cache_only)
     {
-      switch (m)
-      {
-      default: ON_ASSERT(false);
-      case Mappings::None:        s = ON_RDK_DECAL_MAPPING_NONE;        break;
-      case Mappings::Planar:      s = ON_RDK_DECAL_MAPPING_PLANAR;      break;
-      case Mappings::Spherical:   s = ON_RDK_DECAL_MAPPING_SPHERICAL;   break;
-      case Mappings::Cylindrical: s = ON_RDK_DECAL_MAPPING_CYLINDRICAL; break;
-      case Mappings::UV:          s = ON_RDK_DECAL_MAPPING_UV;          break;
-      }
-
-      SetParameter(ON_RDK_DECAL_MAPPING, s);
+      SetParameter(ON_RDK_DECAL_MAPPING, MappingToString(m));
     }
 
     SetCollectionChanged();
@@ -360,19 +378,9 @@ void ON_Decal::CImpl::SetProjection(Projections v)
   {
     _cache.projection = v;
 
-    const wchar_t* s = L"";
     if (!_cache_only)
     {
-      switch (v)
-      {
-      default: ON_ASSERT(false);
-      case ON_Decal::Projections::None:     s = ON_RDK_DECAL_PROJECTION_NONE;     break;
-      case ON_Decal::Projections::Forward:  s = ON_RDK_DECAL_PROJECTION_FORWARD;  break;
-      case ON_Decal::Projections::Backward: s = ON_RDK_DECAL_PROJECTION_BACKWARD; break;
-      case ON_Decal::Projections::Both:     s = ON_RDK_DECAL_PROJECTION_BOTH;     break;
-      }
-
-      SetParameter(ON_RDK_DECAL_PROJECTION, s);
+      SetParameter(ON_RDK_DECAL_PROJECTION, ProjectionToString(v));
     }
 
     SetCollectionChanged();
@@ -1633,7 +1641,45 @@ static void DecalUpdateCRC_Custom(const ON_XMLNode& decal_node, ON_DECAL_CRC& cr
   }
 }
 
-static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XMLNode& decal_node) // Static.
+/* Class ON_Decal::CImpl::CacheReader
+
+   4th November 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-100016
+   This object reads the decal properties of a cache-only decal from its cached values, returning them the same
+   way ON_DecalNodeReader returns them from the XML. A cache-only decal never writes its properties to its XML,
+   so the XML still holds whatever the decal was copied from, however much it has changed since.
+
+*/
+class ON_Decal::CImpl::CacheReader
+{
+public:
+  CacheReader(const CImpl& impl) : _impl(impl) { }
+
+  ON_XMLVariant Mapping(void) const           { return MappingToString(_impl.Mapping()); }
+  ON_XMLVariant Projection(void) const        { return ProjectionToString(_impl.Projection()); }
+  ON_XMLVariant MapToInside(void) const       { return _impl.MapToInside(); }
+  ON_XMLVariant Transparency(void) const      { return _impl.Transparency(); }
+  ON_XMLVariant AssetInstanceId(void) const   { return _impl.AssetInstanceId(); }
+  ON_XMLVariant Height(void) const            { return _impl.Height(); }
+  ON_XMLVariant Radius(void) const            { return _impl.Radius(); }
+  ON_XMLVariant Origin(void) const            { return _impl.Origin(); }
+  ON_XMLVariant VectorUp(void) const          { return ON_3dPoint(_impl.VectorUp()); }
+  ON_XMLVariant VectorAcross(void) const      { return ON_3dPoint(_impl.VectorAcross()); }
+  ON_XMLVariant HorzSweepSta(void) const      { double a, b; _impl.GetHorzSweep(a, b); return a; }
+  ON_XMLVariant HorzSweepEnd(void) const      { double a, b; _impl.GetHorzSweep(a, b); return b; }
+  ON_XMLVariant VertSweepSta(void) const      { double a, b; _impl.GetVertSweep(a, b); return a; }
+  ON_XMLVariant VertSweepEnd(void) const      { double a, b; _impl.GetVertSweep(a, b); return b; }
+  ON_XMLVariant MinU(void) const              { double a, b, c, d; _impl.GetUVBounds(a, b, c, d); return a; }
+  ON_XMLVariant MinV(void) const              { double a, b, c, d; _impl.GetUVBounds(a, b, c, d); return b; }
+  ON_XMLVariant MaxU(void) const              { double a, b, c, d; _impl.GetUVBounds(a, b, c, d); return c; }
+  ON_XMLVariant MaxV(void) const              { double a, b, c, d; _impl.GetUVBounds(a, b, c, d); return d; }
+  ON_XMLVariant IsVisible(void) const         { return _impl.IsVisible(); }
+
+private:
+  const CImpl& _impl;
+};
+
+template <class READER>
+static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32 current_remainder, const READER& d, const ON_XMLNode& decal_node) // Static.
 {
   // The CRC of a decal is a unique value based on its state. It's created by CRC-ing all the decal properties
   // that affect the decal's appearance. We do not include the 'IsTemporary' property in the CRC because whether
@@ -1641,63 +1687,76 @@ static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XMLNo
   // property because a decal being visible or invisible actually affects its appearance. Also, the RDK change
   // queue relies on the CRC to update the viewport so including the visibility is critical. Furthermore, the
   // CRC only includes the properties that are relevant for the decal's mapping type.
+  //
+  // 4th November 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-100016
+  // The properties are read through 'd', which is either an ON_DecalNodeReader that reads them from the XML or
+  // an ON_Decal::CImpl::CacheReader that reads them from a cache-only decal's cached values. Custom data is
+  // always read from the XML because a cache-only decal never changes it.
 
   ON_DECAL_CRC crc = current_remainder;
+
+  DecalUpdateCRC(crc, d.Mapping()            ON_DECAL_PROP_NAME(L"mapping"));
+  DecalUpdateCRC(crc, d.IsVisible()          ON_DECAL_PROP_NAME(L"visible"));
+  DecalUpdateCRC(crc, d.Transparency()       ON_DECAL_PROP_NAME(L"transparency"));
+  DecalUpdateCRC(crc, d.AssetInstanceId()    ON_DECAL_PROP_NAME(L"texture_id"));
+
+  const ON_Decal::Mappings mapping = MappingFromString(d.Mapping().AsString());
+
+  if (ON_Decal::Mappings::UV == mapping)
+  {
+    DecalUpdateCRC(crc, d.MinU()             ON_DECAL_PROP_NAME(L"min_u"));
+    DecalUpdateCRC(crc, d.MinV()             ON_DECAL_PROP_NAME(L"min_v"));
+    DecalUpdateCRC(crc, d.MaxU()             ON_DECAL_PROP_NAME(L"max_u"));
+    DecalUpdateCRC(crc, d.MaxV()             ON_DECAL_PROP_NAME(L"max_v"));
+  }
+  else
+  {
+    DecalUpdateCRC(crc, d.Origin()           ON_DECAL_PROP_NAME(L"origin"));
+    DecalUpdateCRC(crc, d.VectorUp()         ON_DECAL_PROP_NAME(L"up"));
+    DecalUpdateCRC(crc, d.VectorAcross()     ON_DECAL_PROP_NAME(L"across"));
+
+    if ((ON_Decal::Mappings::Cylindrical == mapping) || (ON_Decal::Mappings::Spherical == mapping))
+    {
+      DecalUpdateCRC(crc, d.MapToInside()    ON_DECAL_PROP_NAME(L"map_to_inside"));
+      DecalUpdateCRC(crc, d.Radius()         ON_DECAL_PROP_NAME(L"radius"));
+      DecalUpdateCRC(crc, d.HorzSweepSta()   ON_DECAL_PROP_NAME(L"horz_sweep_sta"));
+      DecalUpdateCRC(crc, d.HorzSweepEnd()   ON_DECAL_PROP_NAME(L"horz_sweep_end"));
+
+      if (ON_Decal::Mappings::Cylindrical == mapping)
+      {
+        DecalUpdateCRC(crc, d.Height()       ON_DECAL_PROP_NAME(L"height"));
+      }
+      else
+      if (ON_Decal::Mappings::Spherical == mapping)
+      {
+        DecalUpdateCRC(crc, d.VertSweepSta() ON_DECAL_PROP_NAME(L"vert_sweep_sta"));
+        DecalUpdateCRC(crc, d.VertSweepEnd() ON_DECAL_PROP_NAME(L"vert_sweep_end"));
+      }
+    }
+    else
+    if (ON_Decal::Mappings::Planar == mapping)
+    {
+      DecalUpdateCRC(crc, d.Projection()     ON_DECAL_PROP_NAME(L"projection"));
+    }
+  }
+
+  DecalUpdateCRC_Custom(decal_node, crc);
+
+  // Make sure it's not nil.
+  if (crc == ON_NIL_DECAL_CRC)
+    crc = 0xFFFFFFFF;
+
+  return crc;
+}
+
+static ON_DECAL_CRC ComputeDecalCRC(ON__UINT32 current_remainder, const ON_XMLNode& decal_node) // Static.
+{
+  auto crc = current_remainder;
 
   if (decal_node.TagName() == ON_RDK_DECAL)
   {
     const ON_DecalNodeReader d(&decal_node);
-
-    DecalUpdateCRC(crc, d.Mapping()            ON_DECAL_PROP_NAME(L"mapping"));
-    DecalUpdateCRC(crc, d.IsVisible()          ON_DECAL_PROP_NAME(L"visible"));
-    DecalUpdateCRC(crc, d.Transparency()       ON_DECAL_PROP_NAME(L"transparency"));
-    DecalUpdateCRC(crc, d.AssetInstanceId()    ON_DECAL_PROP_NAME(L"texture_id"));
-
-    const ON_Decal::Mappings mapping = MappingFromString(d.Mapping().AsString());
-
-    if (ON_Decal::Mappings::UV == mapping)
-    {
-      DecalUpdateCRC(crc, d.MinU()             ON_DECAL_PROP_NAME(L"min_u"));
-      DecalUpdateCRC(crc, d.MinV()             ON_DECAL_PROP_NAME(L"min_v"));
-      DecalUpdateCRC(crc, d.MaxU()             ON_DECAL_PROP_NAME(L"max_u"));
-      DecalUpdateCRC(crc, d.MaxV()             ON_DECAL_PROP_NAME(L"max_v"));
-    }
-    else
-    {
-      DecalUpdateCRC(crc, d.Origin()           ON_DECAL_PROP_NAME(L"origin"));
-      DecalUpdateCRC(crc, d.VectorUp()         ON_DECAL_PROP_NAME(L"up"));
-      DecalUpdateCRC(crc, d.VectorAcross()     ON_DECAL_PROP_NAME(L"across"));
-
-      if ((ON_Decal::Mappings::Cylindrical == mapping) || (ON_Decal::Mappings::Spherical == mapping))
-      {
-        DecalUpdateCRC(crc, d.MapToInside()    ON_DECAL_PROP_NAME(L"map_to_inside"));
-        DecalUpdateCRC(crc, d.Radius()         ON_DECAL_PROP_NAME(L"radius"));
-        DecalUpdateCRC(crc, d.HorzSweepSta()   ON_DECAL_PROP_NAME(L"horz_sweep_sta"));
-        DecalUpdateCRC(crc, d.HorzSweepEnd()   ON_DECAL_PROP_NAME(L"horz_sweep_end"));
-
-        if (ON_Decal::Mappings::Cylindrical == mapping)
-        {
-          DecalUpdateCRC(crc, d.Height()       ON_DECAL_PROP_NAME(L"height"));
-        }
-        else
-        if (ON_Decal::Mappings::Spherical == mapping)
-        {
-          DecalUpdateCRC(crc, d.VertSweepSta() ON_DECAL_PROP_NAME(L"vert_sweep_sta"));
-          DecalUpdateCRC(crc, d.VertSweepEnd() ON_DECAL_PROP_NAME(L"vert_sweep_end"));
-        }
-      }
-      else
-      if (ON_Decal::Mappings::Planar == mapping)
-      {
-        DecalUpdateCRC(crc, d.Projection()     ON_DECAL_PROP_NAME(L"projection"));
-      }
-    }
-
-    DecalUpdateCRC_Custom(decal_node, crc);
-
-    // Make sure it's not nil.
-    if (crc == ON_NIL_DECAL_CRC)
-      crc = 0xFFFFFFFF;
+    crc = ComputeDecalCRC(current_remainder, d, decal_node);
   }
 
   return crc;
@@ -1708,18 +1767,32 @@ ON_DECAL_CRC ON_DecalCRCFromNode(const ON_XMLNode& node)
   return ComputeDecalCRC(0, node);
 }
 
+ON_DECAL_CRC ON_Decal::CImpl::ComputeCRC(ON__UINT32 current_remainder) const
+{
+  std::lock_guard<std::recursive_mutex> lg(_mutex);
+
+  if (!_cache_only)
+    return ComputeDecalCRC(current_remainder, Node());
+
+  // 4th November 2026 John Croudy, https://mcneel.myjetbrains.com/youtrack/issue/RH-100016
+  // A cache-only decal never writes its properties to its XML, so computing the CRC from the XML gave the
+  // value the decal had when it was copied, however much it had changed since. The dynamic decal that follows
+  // a dragged decal widget is cache-only, so its CRC stayed the same for the whole drag, and the display,
+  // which uses the CRC to tell whether a decal has changed, kept drawing the decal where it was before the
+  // drag. Read the properties from the cached values instead.
+  const CacheReader d(*this);
+
+  return ComputeDecalCRC(current_remainder, d, Node());
+}
+
 ON_DECAL_CRC ON_Decal::DecalCRC(void) const
 {
-  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
-
-  return ComputeDecalCRC(0, _private->Node());
+  return _private->ComputeCRC(0);
 }
 
 ON__UINT32 ON_Decal::DataCRC(ON__UINT32 current_remainder) const
 {
-  std::lock_guard<std::recursive_mutex> lg(_private->_mutex);
-
-  return ComputeDecalCRC(current_remainder, _private->Node());
+  return _private->ComputeCRC(current_remainder);
 }
 
 // ON_DecalCollection
