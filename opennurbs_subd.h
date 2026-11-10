@@ -30,20 +30,40 @@
 //
 // This packing assumes that ON_SubDVertex, ON_SubDEdge and ON_SubDFace are allocated on
 // an 8 byte boundary (they contain doubles) and that pointers are 8 bytes wide.
+//
+// wasm32 exception, to support the wasm32 build of rhino3dm (rhino3dm.js): WebAssembly
+// has 32-bit pointers but aligns doubles on 8 bytes, so the low three bits of every
+// component address are still free and the packing works. The alignment static_asserts
+// at the end of this file are the real guard and apply everywhere, wasm32 included.
+// Native 32-bit builds stay unsupported (on x86, doubles are only 4 byte aligned).
+#if !(defined(ON_RUNTIME_WASM) && defined(ON_32BIT_RUNTIME))
 static_assert(8 == ON_SIZEOF_POINTER, "SubD component pointers require 64-bit pointers.");
+#endif
+
+// The underlying type of ON_SubDComponentPtrTypesAndMasks is ON__UINT_PTR everywhere
+// except wasm32, to support the wasm32 build of rhino3dm (rhino3dm.js): PointerMask does
+// not fit a 32-bit ON__UINT_PTR, so wasm32 uses ON__UINT64. Every use casts the values to
+// ON__UINT_PTR, which truncates PointerMask to 0xFFFFFFF8, the correct 32-bit mask.
+// (A macro defined outside the RH_C_SHARED_ENUM region, because methodgen copies the
+// region into C#; it is #undef'd after the region.)
+#if defined(ON_RUNTIME_WASM) && defined(ON_32BIT_RUNTIME)
+#define ON_SUBD_COMPONENT_PTR_ENUM_TYPE ON__UINT64
+#else
+#define ON_SUBD_COMPONENT_PTR_ENUM_TYPE ON__UINT_PTR
+#endif
 
 // NOTE: RhinoCommon mirrors this bit layout in the internal
 // Rhino.Geometry.SubDComponent.SubDComponentPtr struct, so that the .NET SDK can decode a
 // component pointer without a round trip. The .NET enum is generated from this one, which
 // keeps the two from drifting apart. It is typed as ulong there, which assumes 64-bit
-// pointers; the static_assert below enforces that.
+// pointers; the static_assert above enforces that for every .NET platform.
 #pragma region RH_C_SHARED_ENUM [ON_SubDComponentPtrTypesAndMasks] [Rhino.Geometry.SubDComponent.SubDComponentPtrTypesAndMasks] [internal:ulong:nested]
 /// <summary>
 /// ON_SubDComponentPtrTypesAndMasks contains the bit layout used by ON_SubDComponentPtr,
 /// ON_SubDVertexPtr, ON_SubDEdgePtr and ON_SubDFacePtr to pack a component pointer, a
 /// direction bit and a component type into a single unsigned integer.
 /// </summary>
-enum class ON_SubDComponentPtrTypesAndMasks : ON__UINT_PTR
+enum class ON_SubDComponentPtrTypesAndMasks : ON_SUBD_COMPONENT_PTR_ENUM_TYPE
 {
   /// <summary>The component type is not set.</summary>
   UnsetType =     0x0U,
@@ -63,6 +83,7 @@ enum class ON_SubDComponentPtrTypesAndMasks : ON__UINT_PTR
   PointerMask =   0xFFFFFFFFFFFFFFF8U
 };
 #pragma endregion
+#undef ON_SUBD_COMPONENT_PTR_ENUM_TYPE
 
 /// <summary>
 /// ON_SubDGetControlNetMeshPriority specifies what type of ON_SubD information
@@ -6488,7 +6509,7 @@ public:
 #pragma region RH_C_SHARED_ENUM [ON_SubD::SubDFriendlyKnotType] [Rhino.Geometry.SubDFriendlyKnotType] [byte]
   /// <summary>
   /// ON_SubD::SubDFriendlyKnotType identifies the types of subd friendly NURBS knot vectors.
-  /// SubD friendly NURBS curves and surfacaes are always cubic and nonrational.
+  /// SubD friendly NURBS curves and surfaces are always cubic and nonrational.
   /// Any time there is a multiple knot, the 2nd derivative is zero at the corresponding parameter.
   /// SubD friendly NURBS curves are either periodic or have zero 2nd derivative at the ends.
   /// </summary>    

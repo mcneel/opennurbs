@@ -3254,6 +3254,11 @@ public:
   /*
   Returns:
     The list of managed fonts in a class with lots of searching tools.
+  Remarks:
+    Searches are safe from any thread. The list grows when any thread makes a new
+    managed font, so arrays from ByIndex(), ByFamilyName(), QuartetList() and the
+    other By...() functions can change while you use them.
+    Use ON_Font::GetManagedFontList() to get a copy.
   */
   static const class ON_FontList& ManagedFontList();
 
@@ -3342,6 +3347,9 @@ public:
   /*
   Returns:
     The list of installed fonts in a class with lots of searching tools.
+  Remarks:
+    Searches are safe from any thread. The list is filled once, on the first call,
+    and does not change after that.
   */
   static const class ON_FontList& InstalledFontList();
 

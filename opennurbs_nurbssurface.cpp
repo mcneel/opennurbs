@@ -1493,6 +1493,10 @@ ON_NurbsSurface::IsClosed( int dir ) const
 bool
 ON_NurbsSurface::MakeClosed(int dir, double tolerance)
 {
+  // 6-Nov-2026 Dale Fugier
+  if (dir < 0 || dir > 1)
+    return false;
+
   ClampEnd(dir, 2);
 
   int i;
@@ -1537,6 +1541,9 @@ ON_NurbsSurface::IsClosable(
   double min_rel_size
 ) const
 {
+  // 6-Nov-2026 Dale Fugier
+  if (dir < 0 || dir > 1)
+    return false;
 
   if (IsPeriodic(dir) || !IsClamped(dir))
     return false;
@@ -1556,7 +1563,8 @@ ON_NurbsSurface::IsClosable(
   {
     double t = gv[i];
     ON_Curve* iso = IsoCurve(dir, t);
-    if (!iso->IsClosable(tolerance, min_abs_size, min_rel_size))
+    // IsoCurve() returns nullptr for an invalid surface.
+    if (nullptr == iso || !iso->IsClosable(tolerance, min_abs_size, min_rel_size))
     {
       closable = false;
     }
