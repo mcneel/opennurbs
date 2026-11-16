@@ -160,16 +160,41 @@ bool ON_PolyCurve::GetBBox( // returns true if successful
   return rc;
 }
 
-bool
-ON_PolyCurve::Transform( const ON_Xform& xform )
+bool ON_PolyCurve::Transform(const ON_Xform& xform)
 {
   TransformUserData(xform);
   DestroyRuntimeCache();
   const int count = Count();
-  int segment_index;
-  bool rc = (count>0) ? true : false;
-  for ( segment_index = 0; segment_index < count && rc; segment_index++ ) {
-    rc = m_segment[segment_index]->Transform( xform );
+
+  // Remember which joints are joined so transform round-off can't open them.
+  ON_SimpleArray<bool> joined(count > 1 ? count - 1 : 0);
+  for (int i = 0; i < count - 1; i++)
+    joined.Append(!HasGapAt(i));
+  const bool bWasClosed = (count > 1) && IsClosed();
+
+  int segment_index = 0;
+  bool rc = (count > 0) ? true : false;
+  for (segment_index = 0; segment_index < count && rc; segment_index++) {
+    rc = m_segment[segment_index]->Transform(xform);
+  }
+
+  if (rc && count > 1)
+  {
+    for (int i = 0; i < count - 1; i++)
+    {
+      if (joined[i] && HasGapAt(i))
+        CloseGap(i + 1, 0);
+    }
+    if (bWasClosed && !IsClosed())
+    {
+      ON_Curve* first = m_segment[0];
+      ON_Curve* last = m_segment[count - 1];
+      if (0 == ON_ArcCurve::Cast(last) || 0 != ON_ArcCurve::Cast(first))
+        last->SetEndPoint(first->PointAtStart());
+      else
+        first->SetStartPoint(last->PointAtEnd());
+    }
+    DestroyRuntimeCache();
   }
   return rc;
 }

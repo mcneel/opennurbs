@@ -966,21 +966,23 @@ bool ON_CurveKinkDefinition::ComputeCurvatureRadiusRatio(const ON_3dVector& K0, 
   angle_degrees = ON_UNSET_VALUE;
   
   // first check to see if the curvature vector should be considered zero.
-  if (IsCurvatureZero(k0)) k0 = 0;
-  if (IsCurvatureZero(k1)) k1 = 0;
+  const bool bZero0 = IsCurvatureZero(k0);
+  const bool bZero1 = IsCurvatureZero(k1);
+  if (bZero0) k0 = CurvatureKinkZeroTolerance();
+  if (bZero1) k1 = CurvatureKinkZeroTolerance();
 
   const double max_kappa = (k0 >= k1) ? k0 : k1;
   const double min_kappa = (k0 <= k1) ? k0 : k1;
 
-  if (max_kappa == 0) // both values are zero
+  if (bZero0 && bZero1) // both values are zero-equivalent
   {
     radius_ratio = 1.0;
     return true;
   }
 
-  if (min_kappa > 0)
+  if (!bZero0 && !bZero1)
   {
-    // only if both vectors have length, calculate the angle
+    // only if both curvatures are above the zero tolerance, calculate the angle
     angle_degrees = ON_3dVector::AngleDegrees(K0, K1);
   }
     
@@ -1034,10 +1036,10 @@ bool ON_CurveKinkDefinition::IsCurvatureKink(ON_3dVector curvature_from_below, O
   if (kappa_ratio >= 0.0 && kappa_ratio < 1.0 && kappa_ratio <= this->CurvatureKinkRadiusRatio()*(1.0 + ON_SQRT_EPSILON))
     return true;
 
-  if (IsCurvatureZero(kappa[0])) kappa[0] = 0.0;
-  if (IsCurvatureZero(kappa[1])) kappa[1] = 0.0;
+  if (IsCurvatureZero(kappa[0])) kappa[0] = CurvatureKinkZeroTolerance();
+  if (IsCurvatureZero(kappa[1])) kappa[1] = CurvatureKinkZeroTolerance();
   const double min_kappa = (kappa[0] <= kappa[1]) ? kappa[0] : kappa[1];
-  if (min_kappa > 0.0)
+  if (min_kappa > CurvatureKinkZeroTolerance())
   {
     if (angle_degrees > this->KinkAngleDegrees())
       return true;
