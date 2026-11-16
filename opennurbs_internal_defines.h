@@ -58,7 +58,7 @@ bool GetEntireDecalXML(const ON_3dmObjectAttributes& attr, ON_XMLRootNode& xmlOu
 void CreateMeshModifiersFromXML(const ONX_Model& model, int archive_3dm_version);
 void CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version);
 bool GetMeshModifierObjectInformation(const ON_Object& object, ON_wString& xml, int archive_3dm_version);
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier& mm, int archive_3dm_version);
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, int archive_3dm_version);
 bool IsRDKDocumentInformation(const ONX_Model_UserData& docud);
 
 template <class T> inline T Lerp(float  t, const T& l, const T& h) { return l + T(t) * (h - l); }

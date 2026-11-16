@@ -6375,12 +6375,15 @@ static ON_UserData* GetMeshModifierUserData(ON_Object& object, const ON_UUID& uu
   return new_ud;
 }
 
-void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier& mm, int archive_3dm_version)
+void SetMeshModifierObjectInformation(ON_Object& object, const ON_MeshModifier* mm, int archive_3dm_version)
 {
-  ON_XMLRootNode root;
-  mm.AddChildXML(root);
+  if (nullptr == mm)
+    return; // Can't create user data for non-existent mesh modifiers.
 
-  ON_UserData* ud = GetMeshModifierUserData(object, mm.Uuid());
+  ON_XMLRootNode root;
+  mm->AddChildXML(root);
+
+  ON_UserData* ud = GetMeshModifierUserData(object, mm->Uuid());
   if (nullptr != ud)
   {
     SetXMLToUserData(root.String(), *ud, archive_3dm_version);
