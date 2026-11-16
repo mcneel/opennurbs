@@ -2026,7 +2026,10 @@ void CreateXMLFromMeshModifiers(const ONX_Model& model, int archive_3dm_version)
     if (nullptr == attr)
       continue; // No attributes on component.
 
-    ON_MeshModifiers& mm = attr->MeshModifiers();
+    // Use the const accessors: they return nullptr for a mesh modifier the object does not have.
+    // The non-const ones create it (and the attributes' private data), so every object would be
+    // written with default user data for all five modifiers.
+    const ON_MeshModifiers& mm = static_cast<const ON_3dmObjectAttributes*>(attr)->MeshModifiers();
     SetMeshModifierObjectInformation(*attr, mm.Displacement(),  archive_3dm_version);
     SetMeshModifierObjectInformation(*attr, mm.EdgeSoftening(), archive_3dm_version);
     SetMeshModifierObjectInformation(*attr, mm.Thickening(),    archive_3dm_version);
