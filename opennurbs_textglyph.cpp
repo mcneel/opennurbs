@@ -1372,8 +1372,9 @@ bool ON_FontGlyph::GetStringContours(
   ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& string_contours
 )
 {
+  // RH-99722
   return GetStringContours(text_string, font, bSingleStrokeFont, text_height,
-                           1.0 == small_caps_scale, small_caps_scale, string_contours);
+                           small_caps_scale > ON_ZERO_TOLERANCE && 1.0 != small_caps_scale, small_caps_scale, string_contours);
 }
 
 bool ON_FontGlyph::GetStringContours(
